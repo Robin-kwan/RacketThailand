@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { SUPPORTED_SPORTS } from "@/data/sportMeta";
 import { buildSportPagePayload } from "@/server/sportContent";
 
@@ -6,11 +6,21 @@ type Params = {
   code: string;
 };
 
+type ParamsInput = Params | Promise<Params>;
+
+async function resolveParams(params: ParamsInput): Promise<Params> {
+  if (typeof (params as Promise<Params>).then === "function") {
+    return params as Promise<Params>;
+  }
+  return params as Params;
+}
+
 export async function GET(
-  _request: Request,
-  { params }: { params: Params },
+  _request: NextRequest,
+  { params }: { params: ParamsInput },
 ): Promise<NextResponse> {
-  const payload = await buildSportPagePayload(params.code);
+  const resolved = await resolveParams(params);
+  const payload = await buildSportPagePayload(resolved.code);
 
   if (!payload) {
     return NextResponse.json(
