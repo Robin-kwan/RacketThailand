@@ -1,0 +1,20 @@
+{
+  "landing": {
+    "heroTitle": "Choose your sport and dive into its universe.",
+    "heroDescription": "The root domain is intentionally simple—pick the color that matches your sport to jump into the Supabase-powered experience.",
+    "sportSectionTitle": "Sport directories",
+    "sportSectionDescription": "Each button links to the `/[sport]` route with a locale prefix (e.g., /en/badminton), mirroring the real subdomains.",
+    "contactPrompt": "Need a new sport or partnership? hello@racketthailand.com"
+  },
+  "sport": {
+    "emptyTitle": "Sport data unavailable",
+    "emptyDescription": "Make sure the `sports` table has a row whose `code` matches this route and that SUPABASE_URL / SERVICE_ROLE_KEY are configured.",
+    "emptyCta": "Back to landing",
+    "featureEmpty": "This module will populate automatically as soon as Supabase rows exist for this sport.",
+    "stats": {
+      "courts": "Courts indexed",
+      "groups": "Groups running",
+      "matches": "Matches logged"
+    }
+  }
+}
