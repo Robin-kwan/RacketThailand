@@ -12,15 +12,12 @@ type SearchParams = {
   lang?: string;
 };
 
-type SearchParamInput = SearchParams | Promise<SearchParams> | undefined;
+type SearchParamInput = Promise<SearchParams> | undefined;
 
 async function resolveSearchParams(
   searchParams?: SearchParamInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 

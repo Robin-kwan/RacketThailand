@@ -14,6 +14,7 @@ export type CourtRecord = {
   created_at: string | null;
   updated_at?: string | null;
   created_by?: string | null;
+  sport_id?: string | null;
   court_photos?: { image_url: string | null; is_primary: boolean | null }[];
 };
 

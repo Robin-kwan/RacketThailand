@@ -66,22 +66,25 @@ export async function POST(request: Request) {
       group?.name && court.name
         ? `${group.name} requested verification for ${court.name}`
         : "New group verification request";
-    await supabase
-      .from("notifications")
-      .insert({
-        recipient_id: court.created_by,
-        type: "court-group-request",
-        message,
-        metadata: {
-          courtId: payload.courtId,
-          courtName: court.name,
-          groupId: payload.groupId,
-          groupName: group?.name ?? null,
-        },
-      })
-      .select("id")
-      .single()
-      .catch(() => null);
+    try {
+      await supabase
+        .from("notifications")
+        .insert({
+          recipient_id: court.created_by,
+          type: "court-group-request",
+          message,
+          metadata: {
+            courtId: payload.courtId,
+            courtName: court.name,
+            groupId: payload.groupId,
+            groupName: group?.name ?? null,
+          },
+        })
+        .select("id")
+        .single();
+    } catch {
+      // Swallow notification errors so they don't block the request
+    }
   }
 
   return NextResponse.json({ ok: true, id: inserted?.id });

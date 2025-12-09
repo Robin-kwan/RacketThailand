@@ -58,7 +58,8 @@ export function GroupFinder({
   total,
 }: GroupFinderProps) {
   const [search, setSearch] = useState("");
-  const [visibility, setVisibility] = useState<"" | "public" | "private">("");
+  type VisibilityFilter = "" | "public" | "private";
+  const [visibility, setVisibility] = useState<VisibilityFilter>("");
   const [groups, setGroups] = useState(initialGroups);
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(total);
@@ -66,11 +67,12 @@ export function GroupFinder({
     locale === DEFAULT_LOCALE ? "" : `?lang=${locale}`;
 
   const visibilityOptions = useMemo(
-    () => [
-      { value: "", label: copy.filterAll },
-      { value: "public", label: copy.filterPublic },
-      { value: "private", label: copy.filterPrivate },
-    ],
+    () =>
+      [
+        { value: "" as VisibilityFilter, label: copy.filterAll },
+        { value: "public" as VisibilityFilter, label: copy.filterPublic },
+        { value: "private" as VisibilityFilter, label: copy.filterPrivate },
+      ],
     [copy.filterAll, copy.filterPrivate, copy.filterPublic],
   );
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { GroupCreationForm } from "@/components/groups/group-creation-form";
+import type { Option } from "@/components/groups/group-form";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -10,18 +11,12 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
 type SearchParams = { lang?: string };
-type SearchParamsInput =
-  | SearchParams
-  | Promise<SearchParams>
-  | undefined;
+type SearchParamsInput = Promise<SearchParams> | undefined;
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 
@@ -125,6 +120,7 @@ export default async function CreateGroupPage({
     publicDescription: t("groups.form.publicDescription"),
     privateLabel: t("groups.form.privateLabel"),
     privateDescription: t("groups.form.privateDescription"),
+    scheduleLabel: t("groups.form.scheduleLabel"),
     scheduleRemove: t("groups.form.scheduleRemove"),
     scheduleDay: t("groups.form.scheduleDay"),
     scheduleStart: t("groups.form.scheduleStart"),

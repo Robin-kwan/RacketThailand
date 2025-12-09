@@ -11,27 +11,18 @@ import {
 import { fetchCourtsBySport } from "@/server/courtFinder";
 
 type Params = { sport: string };
-type ParamsInput = Params | Promise<Params>;
+type ParamsInput = Promise<Params>;
 type SearchParams = { lang?: string };
-type SearchParamsInput =
-  | SearchParams
-  | Promise<SearchParams>
-  | undefined;
+type SearchParamsInput = Promise<SearchParams> | undefined;
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
-  if (typeof (params as Promise<Params>).then === "function") {
-    return params as Promise<Params>;
-  }
-  return params as Params;
+  return params;
 }
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 

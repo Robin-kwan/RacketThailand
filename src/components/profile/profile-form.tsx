@@ -29,6 +29,7 @@ type ProfileCopy = {
   defaultSportPlaceholder: string;
   avatarLabel: string;
   avatarHelper: string;
+  avatarLimit: string;
   avatarUpload: string;
   save: string;
   saving: string;

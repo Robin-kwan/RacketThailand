@@ -204,7 +204,6 @@ function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
           onKeyDown={handleInputKeyDown}
           onChange={handleInputChange}
           aria-haspopup="listbox"
-          aria-expanded={open}
         />
         {open && (
           <div

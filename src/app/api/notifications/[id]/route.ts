@@ -7,8 +7,9 @@ type Params = {
 
 export async function PATCH(
   _request: Request,
-  { params }: { params: Params },
+  { params }: { params: Promise<Params> },
 ) {
+  const resolvedParams = await params;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -20,7 +21,7 @@ export async function PATCH(
   const { error } = await supabase
     .from("notifications")
     .update({ read_at: new Date().toISOString() })
-    .eq("id", params.id)
+    .eq("id", resolvedParams.id)
     .eq("recipient_id", user.id);
 
   if (error) {

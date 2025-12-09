@@ -18,15 +18,12 @@ type SportRow = {
   code: string;
 };
 
-type SearchParamInput = SearchParams | Promise<SearchParams> | undefined;
+type SearchParamInput = Promise<SearchParams> | undefined;
 
 async function resolveSearchParams(
   searchParams?: SearchParamInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 
@@ -79,7 +76,7 @@ export default async function ProfileEditPage({
   const supabase = await createSupabaseServerClient();
   const { user, profile } = await fetchOrCreateProfile(supabase);
   const { data: sportRows } = await supabase
-    .from<SportRow>("sports")
+    .from("sports")
     .select("id,code")
     .order("code");
 
@@ -107,7 +104,8 @@ export default async function ProfileEditPage({
     genericError: t("profile.genericError"),
   };
 
-  const sports = (sportRows ?? []).map((sport) => ({
+  const typedSports = (sportRows ?? []) as SportRow[];
+  const sports = typedSports.map((sport) => ({
     id: sport.id,
     label: SPORT_META[sport.code]?.name[locale] ?? sport.code,
   }));

@@ -17,8 +17,8 @@ type SearchParams = {
   lang?: string;
 };
 
-type ParamsInput = Params | Promise<Params>;
-type SearchParamInput = SearchParams | Promise<SearchParams> | undefined;
+type ParamsInput = Promise<Params>;
+type SearchParamInput = Promise<SearchParams> | undefined;
 
 export function generateStaticParams() {
   return SUPPORTED_SPORTS.map((sport) => ({ sport }));
@@ -28,17 +28,11 @@ async function resolveSearchParams(
   searchParams?: SearchParamInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
-  if (typeof (params as Promise<Params>).then === "function") {
-    return params as Promise<Params>;
-  }
-  return params as Params;
+  return params;
 }
 
 export async function generateMetadata({

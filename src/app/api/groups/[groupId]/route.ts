@@ -2,15 +2,12 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type RouteParams = { groupId: string };
-type RouteParamsInput = RouteParams | Promise<RouteParams>;
+type RouteParamsInput = Promise<RouteParams>;
 
 async function resolveParams(
   params: RouteParamsInput,
 ): Promise<RouteParams> {
-  if (typeof (params as Promise<RouteParams>).then === "function") {
-    return params as Promise<RouteParams>;
-  }
-  return params as RouteParams;
+  return params;
 }
 
 type SessionPayload = {

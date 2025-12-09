@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+type ToastVariant = "success" | "error" | "info";
+
 type Toast = {
   id: number;
-  variant: "success" | "error";
+  variant: ToastVariant;
   message: string;
 };
 
 type ToastEventDetail = {
-  variant: "success" | "error";
+  variant: ToastVariant;
   message: string;
 };
 
@@ -50,7 +52,9 @@ export function Toaster() {
           className={`pointer-events-auto rounded-2xl border px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 ${
             toast.variant === "success"
               ? "border-emerald-500 bg-emerald-600"
-              : "border-rose-500 bg-rose-600"
+              : toast.variant === "error"
+                ? "border-rose-500 bg-rose-600"
+                : "border-slate-400 bg-slate-600"
           }`}
         >
           {toast.message}

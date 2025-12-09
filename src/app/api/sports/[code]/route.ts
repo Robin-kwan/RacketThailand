@@ -6,13 +6,10 @@ type Params = {
   code: string;
 };
 
-type ParamsInput = Params | Promise<Params>;
+type ParamsInput = Promise<Params>;
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
-  if (typeof (params as Promise<Params>).then === "function") {
-    return params as Promise<Params>;
-  }
-  return params as Params;
+  return params;
 }
 
 export async function GET(

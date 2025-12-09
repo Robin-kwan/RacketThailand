@@ -21,6 +21,7 @@ type BaseAutocompleteProps = {
   placeholder?: string;
   helperText?: string;
   onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
+  className?: string;
 };
 
 export function BaseAutocomplete({
@@ -31,6 +32,7 @@ export function BaseAutocomplete({
   placeholder,
   helperText,
   onChange,
+  className = "",
 }: BaseAutocompleteProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
@@ -82,7 +84,7 @@ export function BaseAutocomplete({
   const inputValue = open ? query : displayValue;
 
   return (
-    <div className="space-y-2" ref={containerRef}>
+    <div className={`space-y-2 ${className}`} ref={containerRef}>
       <label className="text-sm font-semibold text-slate-700">{label}</label>
       <div className="relative">
         <input

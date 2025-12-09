@@ -12,8 +12,9 @@ type UpdatePayload = {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Params },
+  { params }: { params: Promise<Params> },
 ) {
+  const resolvedParams = await params;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -49,7 +50,7 @@ export async function PATCH(
   const { data: link, error: linkError } = await supabase
     .from("court_groups")
     .select("id,court_id")
-    .eq("id", params.id)
+    .eq("id", resolvedParams.id)
     .single();
 
   if (linkError || !link) {
@@ -82,7 +83,7 @@ export async function PATCH(
       verified_by: timestamp ? user.id : null,
       verified_at: timestamp,
     })
-    .eq("id", params.id);
+    .eq("id", resolvedParams.id);
 
   if (updateError) {
     return NextResponse.json(

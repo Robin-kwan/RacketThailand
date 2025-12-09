@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CourtRecord } from "@/server/courtFinder";
-import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import {
+  DEFAULT_LOCALE,
+  buildLocalizedPath,
+  type Locale,
+} from "@/lib/i18n";
 import { BaseSelect } from "@/components/base-select";
 
 type CourtFinderCopy = {

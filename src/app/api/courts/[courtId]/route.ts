@@ -49,18 +49,13 @@ async function requireCourtAccess(courtId: string) {
 
 type RouteParams = { courtId: string };
 
-async function resolveParams(
-  params: RouteParams | Promise<RouteParams>,
-): Promise<RouteParams> {
-  if (typeof (params as Promise<RouteParams>).then === "function") {
-    return params as Promise<RouteParams>;
-  }
-  return params as RouteParams;
+async function resolveParams(params: Promise<RouteParams>): Promise<RouteParams> {
+  return params;
 }
 
 export async function PATCH(
   request: Request,
-  options: { params: RouteParams | Promise<RouteParams> },
+  options: { params: Promise<RouteParams> },
 ) {
   const resolved = await resolveParams(options.params);
   const { supabase, user, error } = await requireCourtAccess(resolved.courtId);

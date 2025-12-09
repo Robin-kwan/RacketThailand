@@ -55,10 +55,11 @@ function extractStoragePath(url: string | null) {
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { photoId: string } },
+  { params }: { params: Promise<{ photoId: string }> },
 ) {
+  const resolvedParams = await params;
   const { supabase, error, photo } = await requirePhotoPermission(
-    params.photoId,
+    resolvedParams.photoId,
   );
   if (error === "UNAUTHORIZED") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -73,7 +74,7 @@ export async function DELETE(
   const { error: deleteError } = await supabase
     .from("court_photos")
     .delete()
-    .eq("id", params.photoId);
+    .eq("id", resolvedParams.photoId);
   if (deleteError) {
     return NextResponse.json(
       { error: deleteError.message },
@@ -91,8 +92,9 @@ export async function DELETE(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { photoId: string } },
+  { params }: { params: Promise<{ photoId: string }> },
 ) {
+  const resolvedParams = await params;
   const body = (await request.json().catch(() => ({}))) as {
     action?: string;
   };
@@ -101,7 +103,7 @@ export async function PATCH(
   }
 
   const { supabase, error, photo } = await requirePhotoPermission(
-    params.photoId,
+    resolvedParams.photoId,
   );
   if (error === "UNAUTHORIZED") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -127,7 +129,7 @@ export async function PATCH(
   await supabase
     .from("court_photos")
     .update({ is_primary: true })
-    .eq("id", params.photoId);
+    .eq("id", resolvedParams.photoId);
 
   return NextResponse.json({ ok: true });
 }

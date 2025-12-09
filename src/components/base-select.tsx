@@ -17,6 +17,7 @@ type BaseSelectProps = {
   helperText?: string;
   labelHidden?: boolean;
   className?: string;
+  disabled?: boolean;
 };
 
 export function BaseSelect({
@@ -29,6 +30,7 @@ export function BaseSelect({
   helperText,
   labelHidden = false,
   className = "",
+  disabled = false,
 }: BaseSelectProps) {
   const selectId = useId();
   const wrapperClasses = [
@@ -53,6 +55,7 @@ export function BaseSelect({
           value={value}
           onChange={onChange}
           required={required}
+          disabled={disabled}
           className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none transition focus:border-slate-400 focus:bg-white"
         >
           {options.map((option) => (

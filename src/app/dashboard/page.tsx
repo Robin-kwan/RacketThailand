@@ -6,6 +6,7 @@ import {
   buildLocalizedPath,
   getTranslator,
   normalizeLocale,
+  type Locale,
 } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
@@ -14,18 +15,12 @@ type SearchParams = {
   lang?: string;
 };
 
-type SearchParamsInput =
-  | SearchParams
-  | Promise<SearchParams>
-  | undefined;
+type SearchParamsInput = Promise<SearchParams> | undefined;
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 
@@ -61,7 +56,7 @@ function CourtCard({
   locale,
 }: {
   court: OwnedCourtRow;
-  locale: string;
+  locale: Locale;
 }) {
   const sportCode = court.sports?.code ?? null;
   const accent = getSportAccent(sportCode);
@@ -112,7 +107,7 @@ function GroupCard({
   locale,
 }: {
   group: OwnedGroupRow;
-  locale: string;
+  locale: Locale;
 }) {
   const sportCode = group.sports?.code ?? null;
   const accent = getSportAccent(sportCode);
@@ -204,13 +199,33 @@ export default async function DashboardPage({
   }
   const { data: requests } = await requestQuery;
   const requestCards =
-    requests?.map((request) => ({
-      id: request.id,
-      created_at: request.created_at,
-      note: request.note,
-      groups: request.groups,
-      courts: request.courts,
-    })) ?? [];
+    requests?.map((request) => {
+      const groupData = Array.isArray(request.groups)
+        ? request.groups[0]
+        : request.groups;
+      const courtData = Array.isArray(request.courts)
+        ? request.courts[0]
+        : request.courts;
+      return {
+        id: request.id,
+        created_at: request.created_at,
+        note: request.note,
+        groups: groupData
+          ? {
+              id: groupData.id,
+              name: groupData.name,
+              description: groupData.description,
+            }
+          : null,
+        courts: courtData
+          ? {
+              id: courtData.id,
+              name: courtData.name,
+              province: courtData.province,
+            }
+          : null,
+      };
+    }) ?? [];
 
   const [{ data: ownedCourtsData }, { data: ownedGroupsData }] =
     await Promise.all([

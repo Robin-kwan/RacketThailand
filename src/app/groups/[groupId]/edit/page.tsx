@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { GroupEditForm } from "@/components/groups/group-edit-form";
+import type { Option } from "@/components/groups/group-form";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -10,27 +11,18 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
 type Params = { groupId: string };
-type ParamsInput = Params | Promise<Params>;
+type ParamsInput = Promise<Params>;
 type SearchParams = { lang?: string };
-type SearchParamsInput =
-  | SearchParams
-  | Promise<SearchParams>
-  | undefined;
+type SearchParamsInput = Promise<SearchParams> | undefined;
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
-  if (typeof (params as Promise<Params>).then === "function") {
-    return params as Promise<Params>;
-  }
-  return params as Params;
+  return params;
 }
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 
@@ -222,6 +214,7 @@ export default async function EditGroupPage({
     publicDescription: t("groups.form.publicDescription"),
     privateLabel: t("groups.form.privateLabel"),
     privateDescription: t("groups.form.privateDescription"),
+    scheduleLabel: t("groups.form.scheduleLabel"),
     scheduleRemove: t("groups.form.scheduleRemove"),
     scheduleDay: t("groups.form.scheduleDay"),
     scheduleStart: t("groups.form.scheduleStart"),

@@ -14,15 +14,12 @@ type SearchParams = {
 const gradientOverlay =
   "bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.18),_rgba(255,255,255,0.95)_60%)]";
 
-type SearchParamInput = SearchParams | Promise<SearchParams> | undefined;
+type SearchParamInput = Promise<SearchParams> | undefined;
 
 async function resolveSearchParams(
   searchParams?: SearchParamInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 

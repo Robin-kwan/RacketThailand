@@ -52,26 +52,17 @@ type SearchParams = {
   lang?: string;
 };
 
-type ParamsInput = Params | Promise<Params>;
-type SearchParamsInput =
-  | SearchParams
-  | Promise<SearchParams>
-  | undefined;
+type ParamsInput = Promise<Params>;
+type SearchParamsInput = Promise<SearchParams> | undefined;
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
-  if (typeof (params as Promise<Params>).then === "function") {
-    return params as Promise<Params>;
-  }
-  return params as Params;
+  return params;
 }
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
-  if (typeof (searchParams as Promise<SearchParams>).then === "function") {
-    return searchParams as Promise<SearchParams>;
-  }
   return searchParams;
 }
 
