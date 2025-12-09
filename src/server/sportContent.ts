@@ -1,76 +1,10 @@
-import { getSportMeta } from "@/data/sportMeta";
+import { FEATURE_DESCRIPTIONS, getSportMeta } from "@/data/sportMeta";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type {
   SportFeatureCard,
   SportFeatureGroup,
   SportPagePayload,
 } from "@/types/sports";
-
-const FEATURE_DESCRIPTIONS: Record<
-  string,
-  {
-    labelTh: string;
-    labelEn: string;
-    table: string;
-    descriptionTh: string;
-    descriptionEn: string;
-  }
-> = {
-  courts: {
-    labelTh: "ระบบค้นหาคอร์ท",
-    labelEn: "Court Finder",
-    table: "`courts` + `court_photos`",
-    descriptionTh:
-      "ข้อมูลคอร์ทแบบมีพิกัด ราคา และรูปภาพ เพื่อให้ผู้เล่นกรองตามจังหวัด/เขตได้ทันที",
-    descriptionEn:
-      "Unified venue data with geo, pricing, and media so sport seekers can filter by district instantly.",
-  },
-  groups: {
-    labelTh: "ค้นหากลุ่ม/พาร์ทเนอร์",
-    labelEn: "Group Finder",
-    table: "`groups` + `group_members`",
-    descriptionTh:
-      "ค้นหากลุ่มแบบสาธารณะ/ส่วนตัว พร้อมระดับฝีมือและบทบาทเจ้าของกลุ่ม",
-    descriptionEn:
-      "Community discovery with owner/admin roles, visibility toggles, and skill filters.",
-  },
-  community: {
-    labelTh: "กระดานคอมมูนิตี้",
-    labelEn: "Community Board",
-    table: "`posts` + `comments`",
-    descriptionTh:
-      "โพสต์คำถาม ข่าว และรีวิวที่ผูกกับกีฬา/กลุ่ม พร้อมระบบคอมเมนต์ภายใต้บัญชีเดียว",
-    descriptionEn:
-      "Discussions, news, and reviews moderated by shared Supabase Auth sessions.",
-  },
-  matches: {
-    labelTh: "แมตช์ & สกอร์บอร์ด",
-    labelEn: "Matches & Scoreboard",
-    table: "`matches` + `match_participants` + `match_games`",
-    descriptionTh:
-      "สร้างแมตช์ กำหนดทีม และบันทึกสกอร์รายเกม พร้อมเชื่อมโยงคอร์ท/กลุ่ม",
-    descriptionEn:
-      "Team assignments, score-by-score tracking, and lifecycle statuses tied to each sport.",
-  },
-  profiles: {
-    labelTh: "โปรไฟล์หลายกีฬา",
-    labelEn: "Multi-sport Profiles",
-    table: "`profiles` + `profile_sports`",
-    descriptionTh:
-      "บัญชีเดียวสำหรับทุกกีฬา เก็บระดับฝีมือและความชอบต่อกีฬาแต่ละประเภท",
-    descriptionEn:
-      "One identity across all subdomains with per-sport skills and preferences.",
-  },
-  feedback: {
-    labelTh: "ศูนย์แจ้งปัญหา/ข้อเสนอแนะ",
-    labelEn: "Feedback & Reports",
-    table: "`feedback`",
-    descriptionTh:
-      "ระบบทิกเก็ตสำหรับแจ้งบั๊ก ฟีดแบ็ก หรือรายงานผู้ใช้ ให้แอดมินติดตามสถานะได้",
-    descriptionEn:
-      "Trust desk pipeline for bugs, feature ideas, and community safety reports.",
-  },
-};
 
 type CourtRow = {
   id: string;
@@ -89,11 +23,7 @@ type GroupRow = {
   id: string;
   name: string | null;
   description: string | null;
-  location: string | null;
-  skill_min: string | null;
-  skill_max: string | null;
   is_public: boolean | null;
-  owner_id: string | null;
   created_at: string | null;
 };
 
@@ -182,14 +112,10 @@ function mapGroups(rows: GroupRow[]): SportFeatureCard[] {
   return rows.map((group) => ({
     title: group.name ?? "Untitled group",
     subtitle: compactDetails([
-      group.location,
-      group.is_public ? "Public" : "Private",
+      group.is_public ? "Public group" : "Private group",
     ]).join(" · "),
     details: compactDetails([
       group.description,
-      group.skill_min || group.skill_max
-        ? `Skill: ${group.skill_min ?? "Any"} – ${group.skill_max ?? "Any"}`
-        : null,
       group.created_at ? `Started ${formatDate(group.created_at)}` : null,
     ]),
   }));
@@ -306,8 +232,7 @@ export async function buildSportPagePayload(
     });
 
     const groupsPromise = supabaseSelect<GroupRow>("groups", {
-      select:
-        "id,name,description,location,skill_min,skill_max,is_public,owner_id,created_at",
+        select: "id,name,description,is_public,created_at",
       sport_id: `eq.${sportId}`,
       order: "created_at.desc",
       limit: "4",
@@ -394,15 +319,13 @@ export async function buildSportPagePayload(
 
     return {
       code: sportRow.code,
-      name: sportRow.name ?? meta.name,
+      name: meta.name,
       accent: meta.accent,
       gradient: meta.gradient,
       hero: {
-        kicker: `${sportRow.code}.racketthailand.com`,
-        headlineTh: meta.heroHeadlineTh,
-        headlineEn: meta.heroHeadlineEn,
-        descriptionTh: meta.heroDescriptionTh,
-        descriptionEn: meta.heroDescriptionEn,
+        kicker: sportRow.code,
+        headline: meta.heroHeadline,
+        description: meta.heroDescription,
         stats: [
           { key: "courts" as const, value: formatCount(courtsRes.count) },
           { key: "groups" as const, value: formatCount(groupsRes.count) },
@@ -411,10 +334,8 @@ export async function buildSportPagePayload(
       },
       features,
       closing: {
-        titleTh: meta.closingTitleTh,
-        titleEn: meta.closingTitleEn,
-        detailTh: meta.closingDetailTh,
-        detailEn: meta.closingDetailEn,
+        title: meta.closingTitle,
+        detail: meta.closingDetail,
         actions: meta.closingActions,
       },
     };

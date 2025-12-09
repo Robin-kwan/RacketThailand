@@ -26,6 +26,8 @@ The landing page remains lightweight, while every sport route displays real feat
    | --- | --- |
    | `SUPABASE_URL` | Supabase project URL. |
    | `SUPABASE_SERVICE_ROLE_KEY` | Service role key used by the server to aggregate sport data. Keep this secret (server-only). |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL exposed to the browser for Auth. |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key used client-side for login/signup. |
 
 3. Run the dev server
    ```bash
@@ -48,6 +50,12 @@ The landing page remains lightweight, while every sport route displays real feat
 ## Subdomain & locale routing
 
 In production you can map each subdomain (e.g., `badminton.racketthailand.com`) to the same deployment. Locale handling is implemented via query parameters (`?lang=en`) plus an in-app toggle—Thai remains the default if no parameter is supplied. Both the landing page and sport pages share the same Supabase-backed aggregation logic, so switching languages only affects the copy.
+
+## Localization
+
+- Translations are handled by [`next-intl`](https://next-intl-docs.vercel.app/) with message files in `src/messages/{locale}.json`.
+- The helper in `src/lib/i18n.ts` normalizes the `?lang=` query, loads the correct messages, and exposes a `t('namespace.key')` translator for pages.
+- Sport-specific copy (e.g., closing CTAs, feature labels) stores localized values in `src/data/sportMeta.ts`, so adding more languages means updating a single object instead of sprinkling ternaries throughout the UI.
 
 ## Sport API contract
 

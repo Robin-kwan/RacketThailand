@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg width='480' height='360' viewBox='0 0 480 360' fill='none' xmlns='http://www.w3.org/2000/svg'>
+  <defs>
+    <linearGradient id='grad-tabletennis' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='#C8A5F0' stop-opacity='0.85'/>
+      <stop offset='100%' stop-color='#9B5DE5' stop-opacity='0.95'/>
+    </linearGradient>
+    <linearGradient id='lines-tabletennis' x1='0%' y1='0%' x2='100%' y2='0%'>
+      <stop offset='0%' stop-color='rgba(255,255,255,0.15)'/>
+      <stop offset='100%' stop-color='rgba(255,255,255,0.02)'/>
+    </linearGradient>
+  </defs>
+  <rect width='480' height='360' fill='#05060b'/>
+  <rect x='8' y='8' width='464' height='344' rx='24' fill='url(#grad-tabletennis)'/>
+  <g stroke='url(#lines-tabletennis)' stroke-width='2'>
+    <path d='M -160 352 L -80 8' stroke-linecap='round'/><path d='M -80 352 L 0 8' stroke-linecap='round'/><path d='M 0 352 L 80 8' stroke-linecap='round'/><path d='M 80 352 L 160 8' stroke-linecap='round'/><path d='M 160 352 L 240 8' stroke-linecap='round'/><path d='M 240 352 L 320 8' stroke-linecap='round'/><path d='M 320 352 L 400 8' stroke-linecap='round'/><path d='M 400 352 L 480 8' stroke-linecap='round'/>
+  </g>
+  <g fill='rgba(255,255,255,0.3)'>
+    <circle cx='72.0' cy='90.0' r='12'/>
+    <circle cx='384.0' cy='234.0' r='18'/>
+    <circle cx='288.0' cy='72.0' r='8'/>
+  </g>
+</svg>

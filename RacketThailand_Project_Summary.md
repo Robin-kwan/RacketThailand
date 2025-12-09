@@ -62,7 +62,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `default_sport` (uuid → sports.id)
   - `location` (e.g. `'Bangkok - Bang Na'`)
   - `avatar_url`
-  - `is_admin` (boolean) – for platform admins/moderators
+  - `status` (text, default `'member'`; allowed values: `'member'`, `'court_manager'`, `'admin'`)
   - `created_at`
 
 ### 3. profile_sports
@@ -93,9 +93,11 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `line_id`
   - `website_url`
   - `price_note`
+  - `opening_hours` (text; optional human-readable schedule)
   - `is_active` (boolean)
   - `created_by` (uuid → profiles.id)
   - `created_at`
+  - `updated_at` (timestamptz default `now()`)
 
 ### 5. court_photos
 - Photos for courts.
@@ -116,13 +118,39 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `sport_id` (uuid → sports.id)
   - `name`
   - `description`
-  - `location` (free text)
-  - `skill_min`, `skill_max` (text)
   - `is_public` (boolean)
   - `owner_id` (uuid → profiles.id)
   - `created_at`
+  - `updated_at` (timestamptz default `now()`)
 
-### 7. group_members
+> Cleanup note: if older deployments still have `location`, `skill_min`, or `skill_max` columns on `public.groups`, remove them with:
+> ```sql
+> alter table public.groups
+>   drop column if exists location,
+>   drop column if exists skill_min,
+>   drop column if exists skill_max;
+> ```
+>
+> Earlier versions also stored `default_court_id` and `schedule` directly on `public.groups`. Migrate those rows into `group_sessions` (below) and drop the legacy columns:
+> ```sql
+> alter table public.groups
+>   drop column if exists default_court_id,
+>   drop column if exists schedule;
+> ```
+
+### 7. group_sessions *(new)*
+- Weekly sessions owned by each community group.
+- Columns:
+  - `id` (uuid)
+  - `group_id` (uuid → groups.id on delete cascade)
+  - `court_id` (uuid → courts.id on delete cascade)
+  - `day` (text enum: `sunday` … `saturday`)
+  - `start_time` (time)
+  - `end_time` (time)
+  - `created_at`
+  - `updated_at`
+
+### 8. group_members
 - Links profiles to groups.
 - Supports multiple admins per group via `role`.
 - Columns:
@@ -132,7 +160,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `joined_at`
 - Primary key: (`group_id`, `profile_id`).
 
-### 8. posts
+### 9. posts
 - Community board posts.
 - Used for:
   - Discussions
@@ -150,7 +178,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `is_pinned` (boolean)
   - `created_at`
 
-### 9. comments
+### 10. comments
 - Comments on posts.
 - Columns:
   - `id` (uuid)
@@ -159,7 +187,40 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `content`
   - `created_at`
 
-### 10. matches
+### 11. notifications *(new)*
+- Keeps a history of system notifications (e.g., court verification requests).
+- Columns:
+  - `id` (uuid, PK, default `gen_random_uuid()`)
+  - `recipient_id` (uuid → profiles.id)
+  - `type` (text, e.g. `'court-group-request'`)
+  - `message` (text, optional fallback message)
+  - `metadata` (`jsonb`, stores contextual IDs/names)
+  - `read_at` (timestamptz, nullable)
+  - `created_at` (timestamptz default `now()`)
+- Suggested Supabase SQL:
+  ```sql
+  create table if not exists public.notifications (
+    id uuid primary key default gen_random_uuid(),
+    recipient_id uuid not null references public.profiles(id) on delete cascade,
+    type text not null,
+    message text,
+    metadata jsonb,
+    read_at timestamptz,
+    created_at timestamptz default now()
+  );
+  alter table public.notifications enable row level security;
+  create policy "Recipients can view notifications"
+    on public.notifications for select
+    using (recipient_id = auth.uid());
+  create policy "Recipients can mark notifications"
+    on public.notifications for update
+    using (recipient_id = auth.uid());
+  create policy "System inserts notifications"
+    on public.notifications for insert
+    with check (auth.role() = 'service_role');
+  ```
+
+### 12. matches
 - Represents a match for scoreboard / match tracking.
 - Can be linked to a group and a court.
 - Columns:
@@ -172,7 +233,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `created_by` (uuid → profiles.id)
   - `created_at`
 
-### 11. match_participants
+### 13. match_participants
 - Who is playing in a match and which team they are on.
 - Columns:
   - `match_id` (uuid → matches.id)
@@ -181,7 +242,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `is_winner` (boolean)
 - Primary key: (`match_id`, `profile_id`).
 
-### 12. match_games
+### 14. match_games
 - Game-level scores within a match (e.g. best-of-3 games).
 - Columns:
   - `id` (uuid)
@@ -191,7 +252,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `team_b_score` (int)
   - `created_at`
 
-### 13. feedback
+### 15. feedback
 - Handles both **general feedback** and **reports**.
 - Can optionally attach context (sport, group, court, match, post, reported user).
 - Columns:
