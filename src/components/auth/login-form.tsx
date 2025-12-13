@@ -2,7 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import {
+  createSupabaseBrowserClient,
+  setAuthStorageMode,
+  type AuthStorageMode,
+} from "@/lib/supabase-browser";
 import type { Locale } from "@/lib/i18n";
 import { buildLocalizedPath } from "@/lib/i18n";
 
@@ -35,6 +39,7 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -52,6 +57,10 @@ export function LoginForm({
     setSubmitting(true);
     setError(null);
     setSuccess(null);
+
+    const mode: AuthStorageMode = rememberMe ? "local" : "session";
+    setAuthStorageMode(mode);
+
     const { data: loginData, error: signInError } =
       await supabase.auth.signInWithPassword({
         email,
@@ -87,7 +96,9 @@ export function LoginForm({
     }
 
     setSuccess("Signed in successfully.");
-    router.replace(buildLocalizedPath(redirectTo, locale));
+    const target = buildLocalizedPath(redirectTo, locale);
+    router.replace(target);
+    router.refresh();
   };
 
   if (!isMounted) {
@@ -139,7 +150,12 @@ export function LoginForm({
       </div>
       <div className="flex items-center justify-between text-sm">
         <label className="flex items-center gap-2 text-slate-600">
-          <input type="checkbox" className="rounded border-slate-300" />
+          <input
+            type="checkbox"
+            className="rounded border-slate-300"
+            checked={rememberMe}
+            onChange={(event) => setRememberMe(event.target.checked)}
+          />
           {copy.rememberMe}
         </label>
         <button type="button" className="font-semibold text-slate-700">
