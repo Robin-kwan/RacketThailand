@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { ensureCourtGroupLinks } from "@/server/groupSessions";
 import { fetchGroupsBySport } from "@/server/groupFinder";
 
 type SessionPayload = {
@@ -151,6 +152,12 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    await ensureCourtGroupLinks(
+      supabase,
+      groupId,
+      normalizedSessions.map((session) => session.courtId),
+    );
   }
 
   return NextResponse.json({ ok: true, groupId });

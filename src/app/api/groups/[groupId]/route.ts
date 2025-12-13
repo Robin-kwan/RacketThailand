@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { ensureCourtGroupLinks } from "@/server/groupSessions";
 
 type RouteParams = { groupId: string };
 type RouteParamsInput = Promise<RouteParams>;
@@ -162,6 +163,12 @@ export async function PATCH(
           { status: 500 },
         );
       }
+
+      await ensureCourtGroupLinks(
+        supabase,
+        resolved.groupId,
+        normalizedSessions.map((session) => session.courtId),
+      );
     }
   }
 
