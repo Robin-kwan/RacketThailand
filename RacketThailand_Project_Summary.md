@@ -89,11 +89,12 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `district`
   - `province`
   - `lat`, `lng`
+  - `google_place_id` (text; optional reference to Google Maps)
   - `phone`
   - `line_id`
   - `website_url`
   - `price_note`
-  - `opening_hours` (text; optional human-readable schedule)
+  - `opening_hours` (jsonb; structured weekly schedule)
   - `is_active` (boolean)
   - `created_by` (uuid → profiles.id)
   - `created_at`

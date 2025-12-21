@@ -8,6 +8,7 @@ import {
 } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import type { OpeningHoursEntry } from "@/lib/opening-hours";
 
 type Params = { courtId: string };
 type ParamsInput = Promise<Params>;
@@ -60,14 +61,16 @@ export default async function EditCourtPage({
     district: string | null;
     province: string | null;
     price_note: string | null;
-    opening_hours: string | null;
+    opening_hours: OpeningHoursEntry[] | null;
     phone: string | null;
     line_id: string | null;
     website_url: string | null;
     created_by: string | null;
+    latitude: string | null;
+    longitude: string | null;
   }>("courts", {
     select:
-      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by",
+      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by,latitude,longitude",
     id: `eq.${resolvedParams.courtId}`,
     limit: "1",
   });
@@ -113,10 +116,12 @@ export default async function EditCourtPage({
     district: court.district ?? "",
     province: court.province ?? "",
     price_note: court.price_note ?? "",
-     opening_hours: court.opening_hours ?? "",
+    opening_hours: court.opening_hours ?? null,
     phone: court.phone ?? "",
     line_id: court.line_id ?? "",
     website_url: court.website_url ?? "",
+    latitude: court.latitude ?? "",
+    longitude: court.longitude ?? "",
   };
 
   const copy = {
@@ -132,11 +137,15 @@ export default async function EditCourtPage({
     phone: t("admin.phone"),
     line: t("admin.line"),
     website: t("admin.website"),
+    placeSearch: t("admin.placeSearch"),
+    placeSearchHelper: t("admin.placeSearchHelper"),
+    placeSearchNoResults: t("admin.placeSearchNoResults"),
     submit: t("admin.updateSubmit"),
     submitting: t("admin.updateSubmitting"),
     success: t("admin.updateSuccess"),
     error: t("admin.error"),
     photos: t("admin.photos"),
+    locationMissing: t("admin.locationMissing"),
   };
 
   return (

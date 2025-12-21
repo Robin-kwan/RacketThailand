@@ -11,6 +11,7 @@ import { HeaderSubLabel } from "@/components/header-sub-label";
 import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { fetchCourtDetail } from "@/server/courtFinder";
+import { ensureAllDays } from "@/lib/opening-hours";
 
 function getGroupCover(group: {
   sports?: { code: string } | null;
@@ -56,8 +57,28 @@ function formatTimeValue(value: string, locale: string) {
   return formatter.format(date);
 }
 
-function formatTimeRange(start: string, end: string, locale: string) {
-  return `${formatTimeValue(start, locale)} – ${formatTimeValue(end, locale)}`;
+function isClockValue(value: string) {
+  return /^\d{2}:\d{2}$/.test(value);
+}
+
+function formatRangeDisplay(
+  open: string,
+  close: string | null,
+  locale: string,
+) {
+  if (open === "Open" && !close) {
+    return locale === "th" ? "เปิดตลอดเวลา" : "Open 24 hours";
+  }
+  if (!close) {
+    return isClockValue(open) ? formatTimeValue(open, locale) : open;
+  }
+  const formattedOpen = isClockValue(open)
+    ? formatTimeValue(open, locale)
+    : open;
+  const formattedClose = isClockValue(close)
+    ? formatTimeValue(close, locale)
+    : close;
+  return `${formattedOpen} – ${formattedClose}`;
 }
 
 type Params = {
@@ -113,6 +134,16 @@ export default async function CourtPage({
           is_primary: true,
         },
       ];
+
+  const openingHourEntries = ensureAllDays(detail.court.opening_hours);
+  const hasAnyHours = openingHourEntries.some(
+    (entry) => entry.ranges.length > 0,
+  );
+  const todayKey = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+  })
+    .format(new Date())
+    .toLowerCase();
 
   const copy = {
     contact: t("courtPage.contact"),
@@ -195,12 +226,51 @@ export default async function CourtPage({
                   {detail.court.price_note}
                 </li>
               )}
-              {detail.court.opening_hours && (
+              {hasAnyHours && (
                 <li>
                   <strong className="text-slate-900">
                     {copy.hours}:
-                  </strong>{" "}
-                  {detail.court.opening_hours}
+                  </strong>
+                  <div className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white/60 text-sm">
+                    {openingHourEntries.map((entry) => {
+                      const normalizedDay = entry.day.toLowerCase().trim();
+                      const isToday =
+                        normalizedDay.startsWith(todayKey.slice(0, 3)) ||
+                        normalizedDay.includes(todayKey);
+                      const dayLabel = getDayLabel(normalizedDay, locale);
+                      const display =
+                        entry.ranges?.length > 0
+                          ? entry.ranges
+                              .map((range) =>
+                                formatRangeDisplay(
+                                  range.open,
+                                  range.close,
+                                  locale,
+                                ),
+                              )
+                              .join(", ")
+                          : locale === "th"
+                            ? "ปิด"
+                            : "Closed";
+                      return (
+                        <div
+                          key={`${entry.day}-${display}`}
+                          className={`flex items-center justify-between px-4 py-2 ${isToday ? "bg-emerald-50" : ""}`}
+                        >
+                          <span
+                            className={`text-sm ${isToday ? "font-semibold text-slate-900" : "text-slate-600"}`}
+                          >
+                            {dayLabel}
+                          </span>
+                          <span
+                            className={`text-sm text-right ${isToday ? "font-semibold text-emerald-700" : "text-slate-600"}`}
+                          >
+                            {display}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </li>
               )}
               {detail.court.phone && (

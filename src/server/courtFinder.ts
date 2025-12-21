@@ -1,4 +1,5 @@
 import { supabaseSelect } from "@/lib/supabaseRest";
+import type { OpeningHoursEntry } from "@/lib/opening-hours";
 
 export type CourtRecord = {
   id: string;
@@ -7,7 +8,7 @@ export type CourtRecord = {
   district: string | null;
   province: string | null;
   price_note: string | null;
-  opening_hours: string | null;
+  opening_hours: OpeningHoursEntry[] | null;
   phone: string | null;
   line_id: string | null;
   website_url: string | null;

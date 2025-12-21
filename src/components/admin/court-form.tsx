@@ -8,6 +8,18 @@ import {
   CourtFormFields,
   CourtFormValues,
 } from "@/components/admin/court-form-fields";
+import {
+  PlaceSearchField,
+  type PlaceResolution,
+} from "@/components/admin/place-search-field";
+import {
+  OpeningHoursEditor,
+} from "@/components/admin/opening-hours-editor";
+import {
+  createAlwaysOpenSchedule,
+  ensureAllDays,
+  type OpeningHoursEntry,
+} from "@/lib/opening-hours";
 
 type SportOption = {
   id: string;
@@ -27,11 +39,15 @@ type CourtFormProps = {
     phone: string;
     line: string;
     website: string;
+    placeSearch: string;
+    placeSearchHelper: string;
+    placeSearchNoResults: string;
     photos: string;
     submit: string;
     submitting: string;
     success: string;
     error: string;
+    locationMissing: string;
   };
 };
 
@@ -47,13 +63,17 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
     district: "",
     province: "",
     price_note: "",
-    opening_hours: "",
     phone: "",
     line_id: "",
     website_url: "",
+    latitude: "",
+    longitude: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
+  const [openingHours, setOpeningHours] = useState<OpeningHoursEntry[]>(
+    createAlwaysOpenSchedule(),
+  );
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -66,10 +86,35 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
     event.preventDefault();
     setSubmitting(true);
 
+    if (!form.latitude || !form.longitude) {
+      showToast({
+        variant: "error",
+        message: copy.locationMissing,
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    const parsedHours = openingHours.filter(
+      (entry) => entry.ranges.length > 0,
+    );
+    if (parsedHours.length === 0) {
+      showToast({
+        variant: "error",
+        message: "Please add at least one opening hour range.",
+      });
+      setSubmitting(false);
+      return;
+    }
     const response = await fetch("/api/admin/courts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        opening_hours: parsedHours,
+        latitude: Number(form.latitude),
+        longitude: Number(form.longitude),
+      }),
     });
 
     const data = await response.json().catch(() => ({}));
@@ -125,16 +170,59 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
       district: "",
       province: "",
       price_note: "",
-      opening_hours: "",
       phone: "",
       line_id: "",
       website_url: "",
+      latitude: "",
+      longitude: "",
     }));
     setImages([]);
+    setOpeningHours(createAlwaysOpenSchedule());
+  };
+
+  const handlePlaceResolution = (resolution: PlaceResolution) => {
+    const coords = resolution.coordinates;
+    setStructuredHours(resolution.place?.openingHoursStructured ?? null);
+    const structured = ensureAllDays(
+      resolution.place?.openingHoursStructured ?? null,
+    );
+    setOpeningHours(structured);
+    setForm((prev) => ({
+      ...prev,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      name: resolution.place?.name ?? prev.name,
+      address: resolution.place?.address ?? prev.address,
+      district: resolution.place?.district ?? prev.district,
+      province: resolution.place?.province ?? prev.province,
+      phone: resolution.place?.phone ?? prev.phone,
+      website_url: resolution.place?.website ?? prev.website_url,
+    }));
   };
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      <PlaceSearchField
+        label={copy.placeSearch}
+        helper={copy.placeSearchHelper}
+        noResults={copy.placeSearchNoResults}
+        onResolve={handlePlaceResolution}
+        currentCoordinates={
+          form.latitude && form.longitude
+            ? { latitude: form.latitude, longitude: form.longitude }
+            : null
+        }
+      />
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-slate-700">
+          {copy.openingHours}
+        </label>
+        <OpeningHoursEditor
+          value={openingHours}
+          onChange={setOpeningHours}
+        />
+      </div>
+
       <CourtFormFields
         values={form}
         sports={sports}

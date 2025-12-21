@@ -8,6 +8,17 @@ import {
   CourtFormValues,
 } from "@/components/admin/court-form-fields";
 import { showToast } from "@/components/toaster";
+import {
+  PlaceSearchField,
+  type PlaceResolution,
+} from "@/components/admin/place-search-field";
+import {
+  OpeningHoursEditor,
+} from "@/components/admin/opening-hours-editor";
+import {
+  ensureAllDays,
+  type OpeningHoursEntry,
+} from "@/lib/opening-hours";
 
 type SportOption = {
   id: string;
@@ -22,10 +33,12 @@ type CourtRecord = {
   district: string;
   province: string;
   price_note: string;
-  opening_hours: string;
+  opening_hours: OpeningHoursEntry[] | null;
   phone: string;
   line_id: string;
   website_url: string;
+  latitude: string;
+  longitude: string;
 };
 
 type ExistingPhoto = {
@@ -38,6 +51,31 @@ type EditablePhoto = ExistingPhoto & {
   status: "existing" | "new";
   file?: File;
 };
+
+const formatPayload = (changes: Partial<CourtFormValues>) => {
+  const payload: Record<string, unknown> = {};
+  (Object.keys(changes) as (keyof CourtFormValues)[]).forEach((key) => {
+    const value = changes[key];
+    if (value === undefined) return;
+    if (key === "latitude" || key === "longitude") {
+      if (value === "") {
+        payload[key] = null;
+        return;
+      }
+      const numeric = Number(value);
+      if (Number.isNaN(numeric)) {
+        return;
+      }
+      payload[key] = numeric;
+    } else {
+      payload[key] = value;
+    }
+  });
+  return payload;
+};
+
+const sanitizeHours = (entries: OpeningHoursEntry[]) =>
+  entries.filter((entry) => entry.ranges.length > 0);
 
 type CourtEditFormProps = {
   court: CourtRecord;
@@ -56,11 +94,15 @@ type CourtEditFormProps = {
     phone: string;
     line: string;
     website: string;
+    placeSearch: string;
+    placeSearchHelper: string;
+    placeSearchNoResults: string;
     submit: string;
     submitting: string;
     success: string;
     error: string;
     photos: string;
+    locationMissing: string;
   };
 };
 
@@ -81,10 +123,11 @@ export function CourtEditForm({
     district: court.district,
     province: court.province,
     price_note: court.price_note,
-    opening_hours: court.opening_hours,
     phone: court.phone,
     line_id: court.line_id,
     website_url: court.website_url,
+    latitude: court.latitude,
+    longitude: court.longitude,
   });
   const initialFormRef = useRef<CourtFormValues>({ ...form });
   const [photos, setPhotos] = useState<EditablePhoto[]>(
@@ -96,6 +139,16 @@ export function CourtEditForm({
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [openingHours, setOpeningHours] = useState<OpeningHoursEntry[]>(
+    ensureAllDays(court.opening_hours),
+  );
+  const initialHoursRef = useRef(
+    JSON.stringify(
+      (court.opening_hours ?? []).filter(
+        (entry) => entry.ranges?.length > 0,
+      ),
+    ),
+  );
   const initialPrimaryIdRef = useRef(
     existingPhotos.find((photo) => photo.is_primary)?.id ?? null,
   );
@@ -142,9 +195,26 @@ export function CourtEditForm({
     event.preventDefault();
     if (submitting) return;
     setSubmitting(true);
+    const normalizedStructured = sanitizeHours(openingHours);
+    if (normalizedStructured.length === 0) {
+      showToast({
+        variant: "error",
+        message: "Please add at least one opening hour range.",
+      });
+      setSubmitting(false);
+      return;
+    }
+    if (!form.latitude || !form.longitude) {
+      showToast({ variant: "error", message: copy.locationMissing });
+      setSubmitting(false);
+      return;
+    }
 
     const formChanges = computeFormChanges();
-    const shouldUpdateForm = Object.keys(formChanges).length > 0;
+    const structuredChanged =
+      JSON.stringify(normalizedStructured) !== initialHoursRef.current;
+    const shouldUpdateForm =
+      Object.keys(formChanges).length > 0 || structuredChanged;
     const hasDeletions = deletedPhotoIds.length > 0;
     const hasNewPhotos = photos.some((photo) => photo.status === "new");
     const currentPrimaryId =
@@ -165,10 +235,14 @@ export function CourtEditForm({
 
     try {
       if (shouldUpdateForm) {
+        const payload = formatPayload(formChanges);
+        if (structuredChanged) {
+          payload.opening_hours = normalizedStructured;
+        }
         const response = await fetch(`/api/courts/${court.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formChanges),
+          body: JSON.stringify(payload),
         });
         const data = await response.json().catch(() => ({}));
 
@@ -176,6 +250,9 @@ export function CourtEditForm({
           throw new Error(data?.error || copy.error);
         }
         initialFormRef.current = { ...form };
+        if (structuredChanged) {
+          initialHoursRef.current = JSON.stringify(normalizedStructured);
+        }
       }
 
       if (shouldUpdatePhotos) {
@@ -355,8 +432,47 @@ export function CourtEditForm({
     event.target.value = "";
   };
 
+  const handlePlaceResolution = (resolution: PlaceResolution) => {
+    const coords = resolution.coordinates;
+    const structured = ensureAllDays(
+      resolution.place?.openingHoursStructured ?? null,
+    );
+    setOpeningHours(structured);
+    setForm((prev) => ({
+      ...prev,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      name: resolution.place?.name ?? prev.name,
+      address: resolution.place?.address ?? prev.address,
+      district: resolution.place?.district ?? prev.district,
+      province: resolution.place?.province ?? prev.province,
+      phone: resolution.place?.phone ?? prev.phone,
+      website_url: resolution.place?.website ?? prev.website_url,
+    }));
+  };
+
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      <PlaceSearchField
+        label={copy.placeSearch}
+        helper={copy.placeSearchHelper}
+        noResults={copy.placeSearchNoResults}
+        onResolve={handlePlaceResolution}
+        currentCoordinates={
+          form.latitude && form.longitude
+            ? { latitude: form.latitude, longitude: form.longitude }
+            : null
+        }
+      />
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-slate-700">
+          {copy.openingHours}
+        </label>
+        <OpeningHoursEditor
+          value={openingHours}
+          onChange={(next) => setOpeningHours(next)}
+        />
+      </div>
       <CourtFormFields
         values={form}
         copy={copy}

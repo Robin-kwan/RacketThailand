@@ -496,7 +496,7 @@ export function GroupForm({
                 key={block.id}
                 className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <BaseAutocomplete
                     label={copy.sessionCourt}
                     name={`session-court-${block.id}`}
@@ -507,13 +507,15 @@ export function GroupForm({
                     options={courtOptions}
                     className="flex-1"
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeCourtBlock(block.id)}
-                    className="text-xs font-semibold text-rose-600 hover:text-rose-800"
-                  >
-                    {copy.sessionsRemoveCourt}
-                  </button>
+                  <div className="flex align-end">
+                    <button
+                      type="button"
+                      onClick={() => removeCourtBlock(block.id)}
+                      className="text-xs font-semibold text-rose-600 hover:text-rose-800"
+                    >
+                      {copy.sessionsRemoveCourt}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import type { OpeningHoursEntry } from "@/lib/opening-hours";
 
 type CourtPayload = {
   sportId: string;
@@ -8,10 +9,12 @@ type CourtPayload = {
   district?: string;
   province: string;
   price_note?: string;
-  opening_hours?: string;
+  opening_hours?: OpeningHoursEntry[] | null;
   phone?: string;
   line_id?: string;
   website_url?: string;
+  latitude: number;
+  longitude: number;
 };
 
 async function requireCourtManager() {
@@ -46,7 +49,14 @@ export async function POST(request: Request) {
   }
 
   const payload = (await request.json()) as CourtPayload;
-  if (!payload.sportId || !payload.name) {
+  if (
+    !payload.sportId ||
+    !payload.name ||
+    typeof payload.latitude !== "number" ||
+    typeof payload.longitude !== "number" ||
+    Number.isNaN(payload.latitude) ||
+    Number.isNaN(payload.longitude)
+  ) {
     return NextResponse.json(
       { error: "Missing required court fields." },
       { status: 400 },
@@ -62,10 +72,12 @@ export async function POST(request: Request) {
       district: payload.district || null,
       province: payload.province,
       price_note: payload.price_note || null,
-      opening_hours: payload.opening_hours || null,
+      opening_hours: payload.opening_hours ?? null,
       phone: payload.phone || null,
       line_id: payload.line_id || null,
       website_url: payload.website_url || null,
+      latitude: payload.latitude,
+      longitude: payload.longitude,
       created_by: user.id,
       updated_at: new Date().toISOString(),
     })

@@ -15,10 +15,11 @@ export type CourtFormValues = {
   district: string;
   province: string;
   price_note: string;
-  opening_hours: string;
   phone: string;
   line_id: string;
   website_url: string;
+  latitude: string;
+  longitude: string;
 };
 
 export type CourtFormCopy = {
@@ -48,19 +49,17 @@ type FieldName =
   | "district"
   | "province"
   | "price_note"
-  | "opening_hours"
   | "phone"
   | "line_id"
   | "website_url";
 
 const fieldConfigs: { name: FieldName; labelKey: keyof CourtFormCopy; required: boolean }[] = [
   { name: "name", labelKey: "name", required: true },
-  { name: "address", labelKey: "address", required: false },
-  { name: "district", labelKey: "district", required: false },
-  { name: "province", labelKey: "province", required: false },
-  { name: "price_note", labelKey: "price", required: false },
-  { name: "opening_hours", labelKey: "openingHours", required: false },
-  { name: "phone", labelKey: "phone", required: false },
+  { name: "address", labelKey: "address", required: true },
+  { name: "district", labelKey: "district", required: true },
+  { name: "province", labelKey: "province", required: true },
+  { name: "price_note", labelKey: "price", required: true },
+  { name: "phone", labelKey: "phone", required: true },
   { name: "line_id", labelKey: "line", required: false },
   { name: "website_url", labelKey: "website", required: false },
 ];
