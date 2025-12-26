@@ -15,6 +15,7 @@ type CourtPayload = Partial<{
   website_url?: string;
   latitude?: number;
   longitude?: number;
+  googlePlaceId?: string | null;
 }>;
 
 async function requireCourtAccess(courtId: string) {
@@ -102,10 +103,13 @@ export async function PATCH(
     update.website_url = payload.website_url ?? null;
   }
   if (payload.latitude !== undefined) {
-    update.latitude = payload.latitude;
+    update.lat = payload.latitude;
   }
   if (payload.longitude !== undefined) {
-    update.longitude = payload.longitude;
+    update.lng = payload.longitude;
+  }
+  if (payload.googlePlaceId !== undefined) {
+    update.google_place_id = payload.googlePlaceId ?? null;
   }
 
   if (Object.keys(update).length === 0) {

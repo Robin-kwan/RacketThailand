@@ -60,6 +60,15 @@ export default async function CourtFinderPage({
     emptyDescription: t("courtFinder.emptyDescription"),
     backLink: t("courtFinder.backLink"),
     lastUpdated: t("courtFinder.lastUpdated"),
+    nearbyButton: t("courtFinder.nearbyButton"),
+    nearbyFinding: t("courtFinder.nearbyFinding"),
+    nearbyClear: t("courtFinder.nearbyClear"),
+    nearbyUnsupported: t("courtFinder.nearbyUnsupported"),
+    nearbyDenied: t("courtFinder.nearbyDenied"),
+    nearbyActive: t("courtFinder.nearbyActive"),
+    distanceLabel: t("courtFinder.distanceLabel"),
+    mapHeading: t("courtFinder.mapHeading"),
+    openMaps: t("courtFinder.openMaps"),
   };
 
   return (

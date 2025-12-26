@@ -11,7 +11,9 @@ import {
 
 type HeaderConfigContextValue = {
   subLabel?: string;
+  sportSlug?: string;
   setSubLabel: Dispatch<SetStateAction<string | undefined>>;
+  setSportSlug: Dispatch<SetStateAction<string | undefined>>;
 };
 
 const HeaderConfigContext = createContext<HeaderConfigContextValue | null>(
@@ -24,8 +26,11 @@ export function HeaderConfigProvider({
   children: ReactNode;
 }) {
   const [subLabel, setSubLabel] = useState<string | undefined>();
+  const [sportSlug, setSportSlug] = useState<string | undefined>();
   return (
-    <HeaderConfigContext.Provider value={{ subLabel, setSubLabel }}>
+    <HeaderConfigContext.Provider
+      value={{ subLabel, sportSlug, setSubLabel, setSportSlug }}
+    >
       {children}
     </HeaderConfigContext.Provider>
   );

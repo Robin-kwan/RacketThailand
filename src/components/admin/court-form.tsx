@@ -68,6 +68,7 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
     website_url: "",
     latitude: "",
     longitude: "",
+    googlePlaceId: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
@@ -175,6 +176,7 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
       website_url: "",
       latitude: "",
       longitude: "",
+      googlePlaceId: "",
     }));
     setImages([]);
     setOpeningHours(createAlwaysOpenSchedule());
@@ -197,6 +199,7 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
       province: resolution.place?.province ?? prev.province,
       phone: resolution.place?.phone ?? prev.phone,
       website_url: resolution.place?.website ?? prev.website_url,
+      googlePlaceId: resolution.place?.placeId ?? resolution.placeId ?? prev.googlePlaceId,
     }));
   };
 
@@ -211,6 +214,11 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
           form.latitude && form.longitude
             ? { latitude: form.latitude, longitude: form.longitude }
             : null
+        }
+        initialQuery={
+          form.googlePlaceId
+            ? [form.name, form.address].filter(Boolean).join(" · ")
+            : ""
         }
       />
       <div className="space-y-2">

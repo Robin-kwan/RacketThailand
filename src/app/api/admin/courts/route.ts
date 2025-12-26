@@ -15,6 +15,7 @@ type CourtPayload = {
   website_url?: string;
   latitude: number;
   longitude: number;
+  googlePlaceId?: string | null;
 };
 
 async function requireCourtManager() {
@@ -76,8 +77,9 @@ export async function POST(request: Request) {
       phone: payload.phone || null,
       line_id: payload.line_id || null,
       website_url: payload.website_url || null,
-      latitude: payload.latitude,
-      longitude: payload.longitude,
+      lat: payload.latitude,
+      lng: payload.longitude,
+      google_place_id: payload.googlePlaceId ?? null,
       created_by: user.id,
       updated_at: new Date().toISOString(),
     })

@@ -23,7 +23,9 @@ type PatchGroupPayload = {
   name?: string;
   description?: string;
   sessions?: SessionPayload[];
-  isPublic?: boolean;
+  playerAmount?: number | string | null;
+  phone?: string | null;
+  lineId?: string | null;
 };
 
 function normalizeSessions(sessions?: SessionPayload[]) {
@@ -39,6 +41,30 @@ function normalizeSessions(sessions?: SessionPayload[]) {
       (session) =>
         session.courtId && session.day && session.start && session.end,
     );
+}
+
+function normalizePlayerAmount(value?: number | string | null) {
+  if (typeof value === "number") {
+    if (Number.isFinite(value) && value > 0) {
+      return Math.round(value);
+    }
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.round(parsed);
+    }
+  }
+  return null;
+}
+
+function normalizeContact(value?: string | null) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 async function requireGroupAccess(groupId: string) {
@@ -104,8 +130,14 @@ export async function PATCH(
       ? payload.description.trim()
       : null;
   }
-  if (typeof payload.isPublic === "boolean") {
-    update.is_public = payload.isPublic;
+  if (payload.playerAmount !== undefined) {
+    update.player_amount = normalizePlayerAmount(payload.playerAmount);
+  }
+  if (payload.phone !== undefined) {
+    update.phone = normalizeContact(payload.phone);
+  }
+  if (payload.lineId !== undefined) {
+    update.line_id = normalizeContact(payload.lineId);
   }
 
   const normalizedSessions = normalizeSessions(payload.sessions);

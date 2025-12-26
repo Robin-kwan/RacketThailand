@@ -39,6 +39,7 @@ type CourtRecord = {
   website_url: string;
   latitude: string;
   longitude: string;
+  google_place_id: string | null;
 };
 
 type ExistingPhoto = {
@@ -128,6 +129,7 @@ export function CourtEditForm({
     website_url: court.website_url,
     latitude: court.latitude,
     longitude: court.longitude,
+    googlePlaceId: court.google_place_id ?? "",
   });
   const initialFormRef = useRef<CourtFormValues>({ ...form });
   const [photos, setPhotos] = useState<EditablePhoto[]>(
@@ -191,11 +193,26 @@ export function CourtEditForm({
     return diff;
   };
 
+  const formHasChanges =
+    Object.keys(computeFormChanges()).length > 0;
+  const normalizedHours = sanitizeHours(openingHours);
+  const structuredChanged =
+    JSON.stringify(normalizedHours) !== initialHoursRef.current;
+  const hasDeletions = deletedPhotoIds.length > 0;
+  const hasNewPhotos = photos.some((photo) => photo.status === "new");
+  const currentPrimaryId =
+    photos.find((photo) => photo.is_primary)?.id ?? null;
+  const primaryChanged = currentPrimaryId !== initialPrimaryIdRef.current;
+  const photoChanges =
+    hasDeletions || hasNewPhotos || primaryChanged;
+  const hasPendingChanges =
+    formHasChanges || structuredChanged || photoChanges;
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting) return;
     setSubmitting(true);
-    const normalizedStructured = sanitizeHours(openingHours);
+    const normalizedStructured = normalizedHours;
     if (normalizedStructured.length === 0) {
       showToast({
         variant: "error",
@@ -448,6 +465,10 @@ export function CourtEditForm({
       province: resolution.place?.province ?? prev.province,
       phone: resolution.place?.phone ?? prev.phone,
       website_url: resolution.place?.website ?? prev.website_url,
+      googlePlaceId:
+        resolution.place?.placeId ??
+        resolution.placeId ??
+        prev.googlePlaceId,
     }));
   };
 
@@ -462,6 +483,11 @@ export function CourtEditForm({
           form.latitude && form.longitude
             ? { latitude: form.latitude, longitude: form.longitude }
             : null
+        }
+        initialQuery={
+          form.googlePlaceId
+            ? [form.name, form.address].filter(Boolean).join(" · ")
+            : ""
         }
       />
       <div className="space-y-2">
@@ -553,7 +579,7 @@ export function CourtEditForm({
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !hasPendingChanges}
         className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? `${copy.submitting}...` : copy.submit}

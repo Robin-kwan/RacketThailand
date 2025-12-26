@@ -6,7 +6,7 @@ import {
 } from "@/lib/google-places";
 import type { MapCoordinates } from "@/lib/google-maps";
 
-const GOOGLE_PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 type RequestPayload = {
   placeId?: string;
@@ -16,12 +16,13 @@ type RequestPayload = {
 type SuccessResponse = {
   coordinates: MapCoordinates;
   place?: PlaceDetailsPayload | null;
+  placeId?: string;
 };
 
 export async function POST(request: Request) {
-  if (!GOOGLE_PLACES_KEY) {
+  if (!GOOGLE_MAPS_KEY) {
     return NextResponse.json(
-      { error: "Google Places API key is not configured." },
+      { error: "Google Maps API key is not configured." },
       { status: 500 },
     );
   }
@@ -49,10 +50,10 @@ export async function POST(request: Request) {
   detailsUrl.searchParams.set("place_id", payload.placeId);
   detailsUrl.searchParams.set(
     "fields",
-    "name,formatted_address,address_component,opening_hours,website,international_phone_number,formatted_phone_number,geometry",
+    "name,formatted_address,address_component,opening_hours,website,international_phone_number,formatted_phone_number,geometry,place_id",
   );
   detailsUrl.searchParams.set("language", "th");
-  detailsUrl.searchParams.set("key", GOOGLE_PLACES_KEY);
+  detailsUrl.searchParams.set("key", GOOGLE_MAPS_KEY);
   if (payload.sessionToken) {
     detailsUrl.searchParams.set("sessiontoken", payload.sessionToken);
   }
@@ -97,10 +98,13 @@ export async function POST(request: Request) {
     longitude: location.lng.toString(),
   };
 
-  const place = normalizePlaceDetails(data.result);
+  const place = normalizePlaceDetails(
+    { ...data.result, place_id: data.result.place_id ?? payload.placeId },
+  );
 
   return NextResponse.json<SuccessResponse>({
     coordinates,
     place,
+    placeId: data.result.place_id ?? payload.placeId,
   });
 }

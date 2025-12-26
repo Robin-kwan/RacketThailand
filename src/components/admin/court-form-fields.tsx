@@ -20,6 +20,7 @@ export type CourtFormValues = {
   website_url: string;
   latitude: string;
   longitude: string;
+  googlePlaceId: string;
 };
 
 export type CourtFormCopy = {
@@ -89,14 +90,30 @@ export function CourtFormFields({
           <label className="text-sm font-semibold text-slate-700">
             {copy[field.labelKey]}
           </label>
-          <input
-            type="text"
-            name={field.name}
-            value={values[field.name]}
-            onChange={onChange}
-            required={field.required}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
-          />
+          {field.name === "price_note" ? (
+            <>
+              <textarea
+                name={field.name}
+                value={values[field.name]}
+                onChange={onChange}
+                required={field.required}
+                rows={4}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+              />
+              <p className="text-xs text-slate-500">
+                Supports basic HTML (e.g., &lt;strong&gt;, &lt;br/&gt;).
+              </p>
+            </>
+          ) : (
+            <input
+              type="text"
+              name={field.name}
+              value={values[field.name]}
+              onChange={onChange}
+              required={field.required}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+            />
+          )}
         </div>
       ))}
       {extras}

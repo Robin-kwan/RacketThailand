@@ -9,6 +9,8 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { CourtGallery } from "@/components/court-gallery";
+import { HeaderSubLabel } from "@/components/header-sub-label";
+import { HeaderSportScope } from "@/components/header-sport-scope";
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
@@ -73,23 +75,15 @@ type GroupRow = {
   sports: { code: string; name: string | null } | null;
   owner_id: string | null;
   updated_at: string | null;
-  is_public: boolean | null;
+  player_amount: number | null;
+  phone: string | null;
+  line_id: string | null;
 };
 
 type OwnerProfile = {
   id: string;
   display_name: string | null;
   username: string | null;
-};
-
-type MemberRow = {
-  role: string | null;
-  profiles: {
-    id: string;
-    display_name: string | null;
-    username: string | null;
-    avatar_url: string | null;
-  } | null;
 };
 
 type GroupPhotoRow = {
@@ -120,6 +114,11 @@ export default async function GroupDetailPage({
   searchParams?: SearchParamsInput;
 }) {
   const resolvedParams = await resolveParams(params);
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidPattern.test(resolvedParams.groupId)) {
+    notFound();
+  }
   const resolvedSearch = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedSearch?.lang);
   const t = await getTranslator(locale);
@@ -129,7 +128,8 @@ export default async function GroupDetailPage({
   } = await supabase.auth.getUser();
 
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
-    select: "id,name,description,owner_id,sports(code,name),updated_at,is_public",
+    select:
+      "id,name,description,owner_id,sports(code,name),updated_at,player_amount,phone,line_id",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -138,7 +138,7 @@ export default async function GroupDetailPage({
     notFound();
   }
 
-  const [{ data: owners }, { data: members }, { data: photoRows }, { data: sessionRows }] =
+  const [{ data: owners }, { data: photoRows }, { data: sessionRows }] =
     await Promise.all([
       group.owner_id
         ? supabaseSelect<OwnerProfile>("profiles", {
@@ -147,11 +147,6 @@ export default async function GroupDetailPage({
             limit: "1",
           })
         : Promise.resolve({ data: [] as OwnerProfile[] }),
-      supabaseSelect<MemberRow>("group_members", {
-        select: "role,profiles(id,display_name,username,avatar_url)",
-        group_id: `eq.${group.id}`,
-        order: "joined_at.asc",
-      }),
       supabaseSelect<GroupPhotoRow>("group_photos", {
         select: "id,image_url,is_primary",
         group_id: `eq.${group.id}`,
@@ -166,7 +161,6 @@ export default async function GroupDetailPage({
     ]);
 
   const owner = owners?.[0] ?? null;
-  const memberList = members ?? [];
   const sportCode = group.sports?.code;
   const accent = SPORT_META[sportCode ?? ""]?.accent ?? "#0f172a";
   const fallbackImage =
@@ -220,24 +214,25 @@ export default async function GroupDetailPage({
 
   const copy = {
     owner: t("groups.detail.owner"),
-    members: t("groups.detail.members"),
-    membersEmpty: t("groups.detail.membersEmpty"),
     scheduleAny: t("groups.detail.scheduleAny"),
     edit: t("groups.detail.edit"),
     updated: t("groups.detail.updated"),
-    visibility: t("groups.detail.visibility"),
-    visibilityPublic: t("groups.detail.visibilityPublic"),
-    visibilityPrivate: t("groups.detail.visibilityPrivate"),
     sessionsTitle: t("groups.detail.sessionsTitle"),
     sessionsEmpty: t("groups.detail.sessionsEmpty"),
+    playerAmount: t("groups.detail.playerAmount"),
+    phone: t("groups.detail.phone"),
+    line: t("groups.detail.line"),
   };
   const canEdit =
     sessionUser?.id && group.owner_id
       ? sessionUser.id === group.owner_id
       : false;
+  const sportName = group.sports?.name ?? undefined;
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-slate-900 md:px-10">
+      <HeaderSportScope sportSlug={sportCode ?? undefined} />
+      <HeaderSubLabel value={sportName} />
       <CourtGallery gallery={gallery} courtName={group.name} />
       <section
         className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur"
@@ -270,20 +265,48 @@ export default async function GroupDetailPage({
         <div className="mt-6 grid gap-5 rounded-3xl border border-slate-100 bg-slate-50/60 px-6 py-5 sm:grid-cols-2">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              {copy.visibility}
-            </p>
-            <p className="text-base font-semibold text-slate-900">
-              {group.is_public ? copy.visibilityPublic : copy.visibilityPrivate}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
               {copy.owner}
             </p>
             <p className="text-base font-semibold text-slate-900">
               {owner?.display_name ?? owner?.username ?? "—"}
             </p>
           </div>
+          {typeof group.player_amount === "number" &&
+            Number.isFinite(group.player_amount) && (
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  {copy.playerAmount}
+                </p>
+                <p className="text-base font-semibold text-slate-900">
+                  {group.player_amount}
+                </p>
+              </div>
+            )}
+          {group.phone && (
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                {copy.phone}
+              </p>
+              <p className="text-base font-semibold text-slate-900">
+                <a
+                  href={`tel:${group.phone}`}
+                  className="underline decoration-dotted"
+                >
+                  {group.phone}
+                </a>
+              </p>
+            </div>
+          )}
+          {group.line_id && (
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                {copy.line}
+              </p>
+              <p className="text-base font-semibold text-slate-900">
+                {group.line_id}
+              </p>
+            </div>
+          )}
           {group.updated_at && (
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
@@ -346,47 +369,6 @@ export default async function GroupDetailPage({
         </div>
       </section>
 
-      <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-lg shadow-slate-100">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900">
-            {copy.members}
-          </h2>
-          <span className="text-sm text-slate-500">
-            {memberList.length}{" "}
-            {memberList.length === 1 ? "member" : "members"}
-          </span>
-        </div>
-        {memberList.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-600">
-            {copy.membersEmpty}
-          </p>
-        ) : (
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {memberList.map((member) => (
-              <li
-                key={`${member.profiles?.id}-${member.role ?? "member"}`}
-                className="flex items-center gap-3 rounded-2xl border border-slate-100 px-4 py-3"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-base font-semibold text-slate-600">
-                  {member.profiles?.display_name?.charAt(0)?.toUpperCase() ??
-                    member.profiles?.username?.charAt(0)?.toUpperCase() ??
-                    "M"}
-                </div>
-                <div className="flex flex-col">
-                  <p className="font-semibold text-slate-900">
-                    {member.profiles?.display_name ??
-                      member.profiles?.username ??
-                      "Member"}
-                  </p>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                    {member.role ?? "member"}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </main>
   );
 }

@@ -7,6 +7,7 @@ import type { PlaceDetailsPayload } from "@/lib/google-places";
 export type PlaceResolution = {
   coordinates: MapCoordinates;
   place?: PlaceDetailsPayload | null;
+  placeId?: string;
 };
 
 type Suggestion = {
@@ -22,9 +23,10 @@ type PlaceSearchFieldProps = {
   onResolve: (resolution: PlaceResolution) => void;
   placeholder?: string;
   currentCoordinates?: MapCoordinates | null;
+  initialQuery?: string;
 };
 
-const SEARCH_DELAY = 250;
+const SEARCH_DELAY = 300;
 
 export function PlaceSearchField({
   label,
@@ -33,11 +35,11 @@ export function PlaceSearchField({
   placeholder = "Search for a venue, mall, or court",
   onResolve,
   currentCoordinates,
+  initialQuery,
 }: PlaceSearchFieldProps) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery ?? "");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [resolving, setResolving] = useState(false);
   const sessionToken = useMemo(
@@ -48,6 +50,10 @@ export function PlaceSearchField({
     [],
   );
   const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setQuery(initialQuery ?? "");
+  }, [initialQuery]);
 
   useEffect(() => {
     if (blurTimeoutRef.current) {
@@ -79,21 +85,14 @@ export function PlaceSearchField({
         if (response.ok && data?.predictions) {
           setSuggestions(data.predictions);
           setOpen(data.predictions.length > 0);
-          setStatus(
-            data.predictions.length === 0 ? noResults : "Select a result.",
-          );
         } else {
           setSuggestions([]);
           setOpen(false);
-          setStatus(
-            data?.error ?? "Unable to search Google Maps right now.",
-          );
         }
       } catch {
         if (controller.signal.aborted) return;
         setSuggestions([]);
         setOpen(false);
-        setStatus("Unable to search Google Maps right now.");
       } finally {
         setSearching(false);
       }
@@ -107,7 +106,6 @@ export function PlaceSearchField({
   const handleSelect = async (suggestion: Suggestion) => {
     setOpen(false);
     setResolving(true);
-    setStatus("Importing details from Google Maps…");
     setQuery(suggestion.description);
     try {
       const response = await fetch("/api/places/details", {
@@ -120,15 +118,13 @@ export function PlaceSearchField({
       });
       const data = await response.json().catch(() => null);
       if (response.ok && data?.coordinates) {
-        onResolve(data);
-        setStatus("Location imported from Google Maps.");
-      } else {
-        setStatus(
-          data?.error ?? "Unable to import place details. Try another search.",
-        );
-      }
+        onResolve({
+          coordinates: data.coordinates,
+          place: data.place,
+          placeId: data.placeId ?? suggestion.placeId,
+        });
+      } 
     } catch {
-      setStatus("Unable to import place details. Try another search.");
     } finally {
       setResolving(false);
     }
@@ -203,13 +199,6 @@ export function PlaceSearchField({
           </div>
         )}
       </div>
-      {status && <p className="text-xs text-slate-500">{status}</p>}
-      {currentCoordinates?.latitude && currentCoordinates?.longitude && (
-        <p className="text-xs text-slate-400">
-          Current coordinates: {currentCoordinates.latitude},{" "}
-          {currentCoordinates.longitude}
-        </p>
-      )}
       <p className="text-xs text-slate-400">{helper}</p>
     </div>
   );

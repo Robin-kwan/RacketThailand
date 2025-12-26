@@ -57,7 +57,21 @@ export function Toaster() {
                 : "border-slate-400 bg-slate-600"
           }`}
         >
-          {toast.message}
+          <div className="flex items-start gap-3">
+            <p className="flex-1">{toast.message}</p>
+            <button
+              type="button"
+              onClick={() =>
+                setToasts((current) =>
+                  current.filter((entry) => entry.id !== toast.id),
+                )
+              }
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white transition hover:bg-white/40"
+              aria-label="Dismiss notification"
+            >
+              ×
+            </button>
+          </div>
         </div>
       ))}
     </div>,

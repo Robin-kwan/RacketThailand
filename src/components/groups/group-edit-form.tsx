@@ -40,7 +40,9 @@ type GroupRecord = {
   name: string;
   description: string;
   sessions: GroupFormValues["sessions"];
-  isPublic: boolean;
+  playerAmount?: string | null;
+  phone?: string | null;
+  line_id?: string | null;
 };
 
 type GroupEditFormProps = {
@@ -81,8 +83,10 @@ export function GroupEditForm({
     sportId: group.sportId,
     name: group.name,
     description: group.description,
-    isPublic: group.isPublic,
     sessions: group.sessions,
+    playerAmount: group.playerAmount ?? "",
+    phone: group.phone ?? "",
+    lineId: group.line_id ?? "",
   };
 
   const normalizePrimary = (list: EditablePhoto[]) => {
@@ -160,7 +164,9 @@ export function GroupEditForm({
     sportId: string;
     name: string;
     description: string;
-    isPublic: boolean;
+    playerAmount?: string;
+    phone?: string;
+    lineId?: string;
     sessions: { courtId: string; day: string; start: string; end: string }[];
   }) => {
     setSubmitting(true);
@@ -180,7 +186,9 @@ export function GroupEditForm({
         name: payload.name,
         description: payload.description,
         sessions: payload.sessions,
-        isPublic: payload.isPublic,
+        playerAmount: payload.playerAmount,
+        phone: payload.phone,
+        lineId: payload.lineId,
       }),
     });
     const data = await response.json().catch(() => ({}));

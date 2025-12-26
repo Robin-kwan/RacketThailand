@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CourtEditForm } from "@/components/admin/court-edit-form";
+import { HeaderSportScope } from "@/components/header-sport-scope";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -68,9 +69,10 @@ export default async function EditCourtPage({
     created_by: string | null;
     latitude: string | null;
     longitude: string | null;
+    google_place_id: string | null;
   }>("courts", {
     select:
-      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by,latitude,longitude",
+      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id",
     id: `eq.${resolvedParams.courtId}`,
     limit: "1",
   });
@@ -102,6 +104,9 @@ export default async function EditCourtPage({
     order: "is_primary.desc,created_at.asc",
   });
 
+  const currentSportSlug =
+    sports?.find((sport) => sport.id === court.sport_id)?.code ?? undefined;
+
   const sportOptions =
     sports?.map((sport) => ({
       id: sport.id,
@@ -122,6 +127,7 @@ export default async function EditCourtPage({
     website_url: court.website_url ?? "",
     latitude: court.latitude ?? "",
     longitude: court.longitude ?? "",
+    google_place_id: court.google_place_id ?? null,
   };
 
   const copy = {
@@ -149,7 +155,9 @@ export default async function EditCourtPage({
   };
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
+    <>
+      <HeaderSportScope sportSlug={currentSportSlug} />
+      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
       <div>
         <Link
           href={buildLocalizedPath(`/courts/${court.id}`, locale)}
@@ -176,5 +184,6 @@ export default async function EditCourtPage({
         </div>
       </section>
     </main>
+    </>
   );
 }

@@ -54,69 +54,27 @@ export default async function Landing({
             </div>
           </header>
 
-          <section className="w-full space-y-6">
-            <div className="space-y-2">
-              <p className="text-sm uppercase tracking-[0.3em] text-slate-500">
-                {t("landing.sportSectionTitle")}
-              </p>
-              <p className="text-slate-600">
-                {t("landing.sportSectionDescription")}
-              </p>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2">
+          <section className="w-full">
+            <div className="grid gap-6">
               {LANDING_SPORTS.map((sport) => (
                 <Link
                   key={sport.code}
                   href={buildLocalizedPath(`/${sport.code}`, locale)}
                 >
-                  <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-200 transition hover:-translate-y-1 hover:border-slate-300">
-                    <div className="relative h-48 w-full overflow-hidden">
+                  <article className="overflow-hidden rounded-[40px] border border-slate-200 shadow-lg shadow-slate-200 transition hover:-translate-y-1 hover:border-slate-300">
+                    <div className="relative h-48 w-full overflow-hidden rounded-[40px] md:h-60">
                       <Image
                         src={sport.coverImage}
                         alt={`${sport.name[locale]} cover`}
                         fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 50vw"
                         className="object-cover"
                         priority={sport.code === "badminton"}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      <div className="absolute inset-x-0 bottom-5 flex flex-col gap-1 px-6 text-white">
-                        <h3 className="text-2xl font-semibold">
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 flex items-end p-6">
+                        <span className="rounded-full bg-white/20 px-6 py-2 text-base font-semibold uppercase tracking-[0.3em] text-white backdrop-blur">
                           {sport.name[locale]}
-                        </h3>
-                      </div>
-                    </div>
-                    <div className="flex flex-1 flex-col gap-4 px-6 py-6 text-left">
-                      <p className="text-sm text-slate-600">
-                        {sport.description[locale]}
-                      </p>
-                      <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase text-slate-500">
-                        {sport.highlights[locale].map((item) => (
-                          <span
-                            key={item}
-                            className="rounded-full border border-slate-200 px-3 py-1 bg-white/60"
-                          >
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-auto pt-1 text-sm font-semibold text-slate-800">
-                        <span className="inline-flex items-center gap-2">
-                          {t("landing.cardCta")}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            className="h-4 w-4"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
                         </span>
                       </div>
                     </div>

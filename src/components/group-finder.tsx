@@ -9,22 +9,37 @@ import {
   buildLocalizedPath,
   type Locale,
 } from "@/lib/i18n";
+import { BaseSelect } from "@/components/base-select";
+import { NearbyMap, type NearbyMapCourt } from "@/components/nearby-map";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type GroupFinderCopy = {
   searchPlaceholder: string;
-  visibilityLabel: string;
-  filterAll: string;
-  filterPublic: string;
-  filterPrivate: string;
   reset: string;
   emptyTitle: string;
   emptyDescription: string;
   backLink: string;
   sessionsLabel: string;
   scheduleAnytime: string;
-  privacyPublic: string;
-  privacyPrivate: string;
   lastUpdated: string;
+  dayFilterLabel: string;
+  anyDayLabel: string;
+  startTimeLabel: string;
+  endTimeLabel: string;
+  anyTimeLabel: string;
+  nearbyButton: string;
+  nearbyFinding: string;
+  nearbyClear: string;
+  nearbyUnsupported: string;
+  nearbyDenied: string;
+  nearbyActive: string;
+  distanceLabel: string;
+  mapHeading: string;
+  nearbyListTitle: string;
+  openMaps: string;
+  playerAmountLabel: string;
+  phoneLabel: string;
+  lineLabel: string;
 };
 
 type GroupFinderProps = {
@@ -39,12 +54,116 @@ type GroupFinderProps = {
 };
 
 const PAGE_SIZE = 12;
+type LocationState = { latitude: number; longitude: number };
+
+const TIME_VALUES = Array.from({ length: 48 }, (_, index) => {
+  const hours = Math.floor(index / 2)
+    .toString()
+    .padStart(2, "0");
+  const minutes = index % 2 === 0 ? "00" : "30";
+  return `${hours}:${minutes}`;
+});
+
+const MINUTES_IN_DAY = 24 * 60;
+
+const parseCoordinate = (value?: number | string | null) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
 
 function formatTime(value?: string | null) {
   if (!value) return null;
   const [hours, minutes] = value.split(":");
   if (!hours || !minutes) return value;
   return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+}
+
+function formatTimeFilterLabel(value: string, locale: Locale) {
+  const [hours, minutes] = value.split(":").map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return value;
+  }
+  const formatter = new Intl.DateTimeFormat(
+    locale === "th" ? "th-TH" : "en-US",
+    { hour: "numeric", minute: "2-digit" },
+  );
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return formatter.format(date);
+}
+
+function timeStringToMinutes(value?: string | null) {
+  if (!value) return null;
+  const [hours, minutes] = value.split(":").map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return null;
+  }
+  return hours * 60 + minutes;
+}
+
+function normalizeEndMinutes(
+  startMinutes: number | null,
+  endMinutes: number | null,
+) {
+  if (endMinutes === null || startMinutes === null) {
+    return endMinutes;
+  }
+  if (endMinutes <= startMinutes) {
+    return endMinutes + MINUTES_IN_DAY;
+  }
+  return endMinutes;
+}
+
+function adjustRangeForFilter(
+  startMinutes: number | null,
+  endMinutes: number | null,
+) {
+  if (startMinutes !== null && endMinutes !== null && endMinutes <= startMinutes) {
+    return {
+      start: startMinutes,
+      end: endMinutes + MINUTES_IN_DAY,
+    };
+  }
+  return { start: startMinutes, end: endMinutes };
+}
+
+function filterGroupsByTime(
+  groups: GroupRecord[],
+  startTime: string,
+  endTime: string,
+) {
+  const filterStartMinutes = timeStringToMinutes(startTime);
+  const filterEndMinutesRaw = timeStringToMinutes(endTime);
+  const { start: filterStart, end: filterEnd } = adjustRangeForFilter(
+    filterStartMinutes,
+    filterEndMinutesRaw,
+  );
+  if (filterStart === null && filterEnd === null) {
+    return groups;
+  }
+  return groups.filter((group) => {
+    const sessions = group.group_sessions;
+    if (!sessions || sessions.length === 0) {
+      return false;
+    }
+    return sessions.some((session) => {
+      const sessionStart = timeStringToMinutes(session.start_time);
+      const sessionEndRaw = timeStringToMinutes(session.end_time);
+      if (sessionStart === null || sessionEndRaw === null) {
+        return false;
+      }
+      const sessionEnd = normalizeEndMinutes(sessionStart, sessionEndRaw);
+      const matchesStart =
+        filterStart === null || sessionEnd === null || sessionEnd >= filterStart;
+      const matchesEnd =
+        filterEnd === null || sessionStart <= filterEnd;
+      return matchesStart && matchesEnd;
+    });
+  });
 }
 
 export function GroupFinder({
@@ -58,23 +177,22 @@ export function GroupFinder({
   total,
 }: GroupFinderProps) {
   const [search, setSearch] = useState("");
-  type VisibilityFilter = "" | "public" | "private";
-  const [visibility, setVisibility] = useState<VisibilityFilter>("");
-  const [groups, setGroups] = useState(initialGroups);
+  const debouncedSearch = useDebounce(search);
+  const [dayFilter, setDayFilter] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [serverGroups, setServerGroups] = useState(initialGroups);
   const [loading, setLoading] = useState(false);
-  const [count, setCount] = useState(total);
+  const [userLocation, setUserLocation] = useState<LocationState | null>(null);
+  const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
+  const [locatingNearby, setLocatingNearby] = useState(false);
+  const [prioritizeNearby, setPrioritizeNearby] = useState(false);
   const localeQuery =
     locale === DEFAULT_LOCALE ? "" : `?lang=${locale}`;
 
-  const visibilityOptions = useMemo(
-    () =>
-      [
-        { value: "" as VisibilityFilter, label: copy.filterAll },
-        { value: "public" as VisibilityFilter, label: copy.filterPublic },
-        { value: "private" as VisibilityFilter, label: copy.filterPrivate },
-      ],
-    [copy.filterAll, copy.filterPrivate, copy.filterPublic],
-  );
+  useEffect(() => {
+    setServerGroups(initialGroups);
+  }, [initialGroups]);
 
   useEffect(() => {
     let isActive = true;
@@ -85,26 +203,196 @@ export function GroupFinder({
         limit: PAGE_SIZE.toString(),
       });
       if (search) params.set("q", search);
-      if (visibility) params.set("visibility", visibility);
+      if (dayFilter) params.set("day", dayFilter);
       const response = await fetch(`/api/groups?${params.toString()}`, {
         cache: "no-store",
       });
       const data = await response.json();
       if (!isActive) return;
-      setGroups(data.groups ?? []);
-      setCount(data.count ?? 0);
+      setServerGroups(data.groups ?? []);
       setLoading(false);
     };
     load();
     return () => {
       isActive = false;
     };
-  }, [sportCode, search, visibility]);
+  }, [sportCode, debouncedSearch, dayFilter]);
 
   const handleReset = () => {
     setSearch("");
-    setVisibility("");
+    setDayFilter("");
+    setStartTime("");
+    setEndTime("");
+    setPrioritizeNearby(false);
+    setNearbyStatus(null);
   };
+
+  const dayOptions = useMemo(
+    () => [
+      { value: "", label: copy.anyDayLabel },
+      ...Object.entries(dayLabels).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    ],
+    [copy.anyDayLabel, dayLabels],
+  );
+
+  const timeOptions = useMemo(
+    () => [
+      { value: "", label: copy.anyTimeLabel },
+      ...TIME_VALUES.map((value) => ({
+        value,
+        label: formatTimeFilterLabel(value, locale),
+      })),
+    ],
+    [copy.anyTimeLabel, locale],
+  );
+
+  const endTimeOptions = useMemo(() => {
+    if (!startTime) return timeOptions;
+    const startMinutes = timeStringToMinutes(startTime);
+    if (startMinutes === null) {
+      return timeOptions;
+    }
+    return [
+      { value: "", label: copy.anyTimeLabel },
+      ...TIME_VALUES.filter((time) => {
+        const optionMinutes = timeStringToMinutes(time);
+        if (optionMinutes === null) return false;
+        const normalizedOption =
+          optionMinutes === 0 ? MINUTES_IN_DAY : optionMinutes;
+        return normalizedOption > startMinutes;
+      }).map((value) => ({
+        value,
+        label: formatTimeFilterLabel(value, locale),
+      })),
+    ];
+  }, [copy.anyTimeLabel, startTime, locale, timeOptions]);
+
+  const filteredGroups = useMemo(
+    () => filterGroupsByTime(serverGroups, startTime, endTime),
+    [serverGroups, startTime, endTime],
+  );
+  const count = filteredGroups.length;
+
+  const handleRequestNearby = () => {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      setNearbyStatus(copy.nearbyUnsupported);
+      return;
+    }
+    setLocatingNearby(true);
+    setNearbyStatus(copy.nearbyFinding);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords: LocationState = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        setUserLocation(coords);
+        setPrioritizeNearby(true);
+        setNearbyStatus(copy.nearbyActive);
+        setLocatingNearby(false);
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setNearbyStatus(copy.nearbyDenied);
+        } else {
+          setNearbyStatus(copy.nearbyUnsupported);
+        }
+        setLocatingNearby(false);
+      },
+    );
+  };
+
+  const handleClearNearby = () => {
+    setPrioritizeNearby(false);
+    setNearbyStatus(null);
+  };
+
+  const groupsWithLocation = useMemo(() => {
+    return filteredGroups.map((group) => {
+      const sessionsWithCoords =
+        group.group_sessions?.filter((session) => {
+          const lat = parseCoordinate(session.courts?.latitude);
+          const lng = parseCoordinate(session.courts?.longitude);
+          return lat !== null && lng !== null;
+        }) ?? [];
+      return { group, sessionsWithCoords };
+    });
+  }, [filteredGroups]);
+
+  const groupsWithDistance = useMemo(() => {
+    return groupsWithLocation.map(({ group, sessionsWithCoords }) => {
+      if (!userLocation) {
+        return {
+          group,
+          distanceKm: null as number | null,
+          nearestCourt: null as {
+            id: string;
+            name: string | null;
+            latitude: number;
+            longitude: number;
+          } | null,
+        };
+      }
+      let bestDistance = Number.POSITIVE_INFINITY;
+      let bestCourt: {
+        id: string;
+        name: string | null;
+        latitude: number;
+        longitude: number;
+        href: string;
+      } | null = null;
+      sessionsWithCoords.forEach((session) => {
+        const lat = parseCoordinate(session.courts?.latitude);
+        const lng = parseCoordinate(session.courts?.longitude);
+        const courtId = session.courts?.id;
+        if (lat === null || lng === null || !courtId) return;
+        const distance = haversineDistance(userLocation, {
+          latitude: lat,
+          longitude: lng,
+        });
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestCourt = {
+            id: courtId,
+            name: session.courts?.name ?? "Court",
+            latitude: lat,
+            longitude: lng,
+            href: `/courts/${courtId}${locale === DEFAULT_LOCALE ? "" : `?lang=${locale}`}`,
+          };
+        }
+      });
+      return {
+        group,
+        distanceKm:
+          bestCourt && Number.isFinite(bestDistance) ? bestDistance : null,
+        nearestCourt: bestCourt,
+      };
+    });
+  }, [groupsWithLocation, userLocation]);
+
+  const displayedGroups = useMemo(() => {
+    if (prioritizeNearby && userLocation) {
+      return [...groupsWithDistance].sort((a, b) => {
+        const aDist = a.distanceKm ?? Number.POSITIVE_INFINITY;
+        const bDist = b.distanceKm ?? Number.POSITIVE_INFINITY;
+        return aDist - bDist;
+      });
+    }
+    return groupsWithDistance;
+  }, [groupsWithDistance, prioritizeNearby, userLocation]);
+
+  const mapCourts = useMemo(() => {
+    const courtMap = new Map<string, NearbyMapCourt>();
+    groupsWithDistance.forEach(({ nearestCourt }) => {
+      if (nearestCourt && !courtMap.has(nearestCourt.id)) {
+        courtMap.set(nearestCourt.id, nearestCourt);
+      }
+    });
+    return Array.from(courtMap.values()).slice(0, 15);
+  }, [groupsWithDistance]);
 
   const renderSessions = (group: GroupRecord) => {
     if (!group.group_sessions || group.group_sessions.length === 0) {
@@ -137,61 +425,173 @@ export function GroupFinder({
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end">
-          <div className="flex-1 space-y-2">
-            <label className="text-sm font-semibold text-slate-700">
-              {copy.searchPlaceholder}
-            </label>
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={copy.searchPlaceholder}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
-            />
-          </div>
-          <div className="w-full md:w-64">
-            <p className="text-sm font-semibold text-slate-700">
-              {copy.visibilityLabel}
-            </p>
-            <div className="mt-2 flex gap-2">
-              {visibilityOptions.map((option) => (
-                <button
-                  key={option.value || "all"}
-                  type="button"
-                  onClick={() =>
-                    setVisibility(
-                      option.value === visibility ? "" : option.value,
-                    )
-                  }
-                  className={`flex-1 rounded-2xl border px-3 py-2 text-sm font-semibold transition ${
-                    option.value === visibility
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-400 hover:text-slate-900"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700">
+            {copy.searchPlaceholder}
+          </label>
+          <input
+            type="text"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={copy.searchPlaceholder}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          />
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-between text-sm text-slate-500">
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <BaseSelect
+            label={copy.dayFilterLabel}
+            name="dayFilter"
+            value={dayFilter}
+            onChange={(event) => setDayFilter(event.target.value)}
+            options={dayOptions}
+          />
+          <BaseSelect
+            label={copy.startTimeLabel}
+            name="startTime"
+            value={startTime}
+            onChange={(event) => setStartTime(event.target.value)}
+            options={timeOptions}
+          />
+          <BaseSelect
+            label={copy.endTimeLabel}
+            name="endTime"
+            value={endTime}
+            onChange={(event) => setEndTime(event.target.value)}
+            options={endTimeOptions}
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
           <p>
             {count.toLocaleString("en-US")} groups ·{" "}
             {loading ? "loading..." : "live data"}
           </p>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="text-slate-700 underline-offset-4 hover:underline"
-          >
-            {copy.reset}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRequestNearby}
+              disabled={locatingNearby}
+              className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
+            </button>
+            {prioritizeNearby && (
+              <button
+                type="button"
+                onClick={handleClearNearby}
+                className="text-slate-700 underline-offset-4 hover:underline"
+              >
+                {copy.nearbyClear}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-slate-700 underline-offset-4 hover:underline"
+            >
+              {copy.reset}
+            </button>
+          </div>
         </div>
+        {nearbyStatus && (
+          <p className="mt-2 text-sm text-slate-500">{nearbyStatus}</p>
+        )}
       </div>
 
-      {groups.length === 0 ? (
+      {prioritizeNearby && userLocation && mapCourts.length > 0 && (
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+            {copy.mapHeading}
+          </p>
+          <div className="mt-4">
+            <NearbyMap userLocation={userLocation} courts={mapCourts} />
+          </div>
+          <div className="mt-4 space-y-3">
+            <p className="text-sm font-semibold text-slate-700">
+              {copy.nearbyListTitle}
+            </p>
+            {displayedGroups
+              .filter((entry) => entry.distanceKm !== null)
+              .slice(0, 4)
+              .map((entry) => (
+                <div
+                  key={`nearby-${entry.group.id}`}
+                  className="flex flex-wrap items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {entry.group.name ?? "Community group"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)} km
+                    </p>
+                    {typeof entry.group.player_amount === "number" &&
+                      Number.isFinite(entry.group.player_amount) && (
+                        <p className="text-xs text-slate-500">
+                          {copy.playerAmountLabel}: {entry.group.player_amount}
+                        </p>
+                      )}
+                  </div>
+                  {entry.nearestCourt && (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.latitude},${userLocation.longitude}&destination=${entry.nearestCourt.latitude},${entry.nearestCourt.longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800"
+                    >
+                      {copy.openMaps}
+                    </a>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {prioritizeNearby && userLocation && mapCourts.length === 0 && (
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+            {copy.nearbyListTitle}
+          </p>
+          <div className="mt-4 space-y-3">
+            {displayedGroups
+              .filter((entry) => entry.distanceKm !== null)
+              .slice(0, 4)
+              .map((entry) => (
+                <div
+                  key={`nearby-${entry.group.id}`}
+                  className="flex flex-wrap items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {entry.group.name ?? "Community group"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)} km
+                    </p>
+                    {typeof entry.group.player_amount === "number" &&
+                      Number.isFinite(entry.group.player_amount) && (
+                        <p className="text-xs text-slate-500">
+                          {copy.playerAmountLabel}: {entry.group.player_amount}
+                        </p>
+                      )}
+                  </div>
+                  {entry.nearestCourt && (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.latitude},${userLocation.longitude}&destination=${entry.nearestCourt.latitude},${entry.nearestCourt.longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800"
+                    >
+                      {copy.openMaps}
+                    </a>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {displayedGroups.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">
           <p className="text-xl font-semibold text-slate-900">
             {copy.emptyTitle}
@@ -206,20 +606,17 @@ export function GroupFinder({
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {groups.map((group) => {
+          {displayedGroups.map((entry) => {
+            const { group, distanceKm } = entry;
             const primaryPhoto =
               group.group_photos?.find((photo) => photo.is_primary)
                 ?.image_url ??
               group.group_photos?.[0]?.image_url ??
               fallbackImage;
-            const privacyChip = group.is_public
-              ? copy.privacyPublic
-              : copy.privacyPrivate;
             return (
-              <Link
+              <div
                 key={group.id}
-                href={`/groups/${group.id}${localeQuery}`}
-                className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-md shadow-slate-200 transition hover:-translate-y-1"
+                className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-md shadow-slate-200"
               >
                 <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
                   <div className="relative h-36 w-full">
@@ -232,32 +629,56 @@ export function GroupFinder({
                     />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-2xl font-semibold text-slate-900">
+              <div className="space-y-1">
+                  <a
+                    href={`/groups/${group.id}${localeQuery}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-2xl font-semibold text-indigo-600 underline-offset-4 hover:underline"
+                  >
                     {group.name ?? "Community group"}
-                  </h3>
-                  {group.description && (
-                    <p className="text-sm text-slate-600 line-clamp-2">
-                      {group.description}
+                  </a>
+                {group.description && (
+                  <p className="text-sm text-slate-600 line-clamp-2">
+                    {group.description}
+                  </p>
+                )}
+                <div className="text-xs text-slate-500">
+                  {group.phone && (
+                    <p>
+                      {copy.phoneLabel}: {group.phone}
+                    </p>
+                  )}
+                  {group.line_id && (
+                    <p>
+                      {copy.lineLabel}: {group.line_id}
                     </p>
                   )}
                 </div>
-                {renderSessions(group)}
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-500">
-                  <span
-                    className="inline-flex rounded-full px-3 py-1"
-                    style={{ backgroundColor: `${accent}15`, color: accent }}
-                  >
-                    {privacyChip}
-                  </span>
-                  {group.updated_at && (
-                    <span className="text-[11px] text-slate-400">
-                      {copy.lastUpdated}{" "}
-                      {new Date(group.updated_at).toLocaleDateString("en-US")}
-                    </span>
+                {typeof group.player_amount === "number" &&
+                  Number.isFinite(group.player_amount) && (
+                    <p className="text-xs font-semibold text-slate-500">
+                      {copy.playerAmountLabel}: {group.player_amount}
+                    </p>
                   )}
+              </div>
+                {renderSessions(group)}
+                <div className="flex items-center justify-end text-xs uppercase tracking-[0.3em] text-slate-500">
+                  <div className="flex flex-col items-end gap-1 text-[11px] tracking-normal">
+                    {group.updated_at && (
+                      <span className="text-slate-400">
+                        {copy.lastUpdated}{" "}
+                        {new Date(group.updated_at).toLocaleDateString("en-US")}
+                      </span>
+                    )}
+                    {prioritizeNearby && distanceKm !== null && (
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
+                        {copy.distanceLabel}: {distanceKm.toFixed(1)} km
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
@@ -265,3 +686,19 @@ export function GroupFinder({
     </div>
   );
 }
+const EARTH_RADIUS_KM = 6371;
+
+const haversineDistance = (a: LocationState, b: LocationState) => {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+  const sinLat = Math.sin(dLat / 2);
+  const sinLon = Math.sin(dLon / 2);
+  const haversine =
+    sinLat * sinLat +
+    Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon;
+  const c = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  return EARTH_RADIUS_KM * c;
+};

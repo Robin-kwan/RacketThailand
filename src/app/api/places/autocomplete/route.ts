@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const GOOGLE_PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 type Prediction = {
   description: string;
@@ -20,9 +20,9 @@ type AutocompleteResponse = {
 };
 
 export async function GET(request: Request) {
-  if (!GOOGLE_PLACES_KEY) {
+  if (!GOOGLE_MAPS_KEY) {
     return NextResponse.json(
-      { error: "Google Places API key is not configured." },
+      { error: "Google Maps API key is not configured." },
       { status: 500 },
     );
   }
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
   endpoint.searchParams.set("sessiontoken", sessionToken);
   endpoint.searchParams.set("language", "th");
   endpoint.searchParams.set("types", "establishment");
-  endpoint.searchParams.set("key", GOOGLE_PLACES_KEY);
+  endpoint.searchParams.set("key", GOOGLE_MAPS_KEY);
 
   const response = await fetch(endpoint);
   const data = (await response.json()) as {

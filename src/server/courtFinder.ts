@@ -17,6 +17,8 @@ export type CourtRecord = {
   created_by?: string | null;
   sport_id?: string | null;
   court_photos?: { image_url: string | null; is_primary: boolean | null }[];
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 type SportRow = {
@@ -81,7 +83,7 @@ export async function fetchCourtsBySport(
 
   const params: Record<string, string> = {
     select:
-      "id,name,address,district,province,price_note,phone,line_id,website_url,created_at,updated_at,court_photos(image_url,is_primary)",
+      "id,name,address,district,province,price_note,phone,line_id,website_url,created_at,updated_at,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
     sport_id: `eq.${sportRow.id}`,
     order: "created_at.desc",
   };
@@ -127,29 +129,28 @@ type CourtGroupLink = {
   verified_by: string | null;
   verified_at: string | null;
   note: string | null;
-  groups: {
-    id: string;
-    name: string | null;
-    description: string | null;
-    sports?: { code: string } | null;
-    group_photos?: {
-      image_url: string | null;
-      is_primary: boolean | null;
-    }[] | null;
-    group_sessions?: {
-      court_id: string;
-      day: string;
-      start_time: string | null;
-      end_time: string | null;
-    }[] | null;
-    is_public?: boolean | null;
-  } | null;
+    groups: {
+      id: string;
+      name: string | null;
+      description: string | null;
+      sports?: { code: string } | null;
+      group_photos?: {
+        image_url: string | null;
+        is_primary: boolean | null;
+      }[] | null;
+      group_sessions?: {
+        court_id: string;
+        day: string;
+        start_time: string | null;
+        end_time: string | null;
+      }[] | null;
+    } | null;
 };
 
 export async function fetchCourtDetail(courtId: string) {
   const { data: courts } = await supabaseSelect<CourtRecord>("courts", {
     select:
-      "id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_at,updated_at,sport_id,created_by",
+      "id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_at,updated_at,sport_id,created_by,latitude:lat,longitude:lng",
     id: `eq.${courtId}`,
     limit: "1",
   });
@@ -174,7 +175,7 @@ export async function fetchCourtDetail(courtId: string) {
       }),
       supabaseSelect<CourtGroupLink>("court_groups", {
         select:
-          "id,verification_status,verified_by,verified_at,note,groups(id,name,description,sports(code),group_photos(image_url,is_primary),group_sessions(court_id,day,start_time,end_time),is_public)",
+          "id,verification_status,verified_by,verified_at,note,groups(id,name,description,sports(code),group_photos(image_url,is_primary),group_sessions(court_id,day,start_time,end_time))",
         court_id: `eq.${courtId}`,
         order: "created_at.desc",
       }),

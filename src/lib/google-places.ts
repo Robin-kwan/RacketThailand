@@ -19,6 +19,7 @@ export type PlaceDetailsPayload = {
   website?: string;
   openingHours?: string;
   openingHoursStructured?: OpeningHoursEntry[];
+  placeId?: string;
 };
 
 const DISTRICT_TYPES = [
@@ -57,6 +58,7 @@ export function normalizePlaceDetails(
     website?: string;
     international_phone_number?: string;
     formatted_phone_number?: string;
+    place_id?: string;
   },
   fallback?: PlaceDetailsPayload,
 ): PlaceDetailsPayload {
@@ -87,5 +89,6 @@ export function normalizePlaceDetails(
       structured.length > 0
         ? structured
         : fallback?.openingHoursStructured,
+    placeId: result.place_id ?? fallback?.placeId,
   };
 }

@@ -13,7 +13,7 @@ import {
 
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
-const GOOGLE_PLACES_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 type RequestPayload = {
   link?: string;
@@ -101,14 +101,14 @@ async function resolveCoordinates(link: string): Promise<MapCoordinates | null> 
 async function resolvePlaceDetails(
   coordinates: MapCoordinates,
 ): Promise<PlaceDetailsPayload | null> {
-  if (!GOOGLE_PLACES_KEY) return null;
+  if (!GOOGLE_MAPS_KEY) return null;
   const latlng = `${coordinates.latitude},${coordinates.longitude}`;
 
   const geocodeUrl = new URL(
     "https://maps.googleapis.com/maps/api/geocode/json",
   );
   geocodeUrl.searchParams.set("latlng", latlng);
-  geocodeUrl.searchParams.set("key", GOOGLE_PLACES_KEY);
+  geocodeUrl.searchParams.set("key", GOOGLE_MAPS_KEY);
   geocodeUrl.searchParams.set("language", "th");
   const geocodeResponse = await fetch(geocodeUrl);
   const geocodeData = (await geocodeResponse.json()) as {
@@ -155,7 +155,7 @@ async function resolvePlaceDetails(
     "name,formatted_address,address_component,opening_hours,website,international_phone_number",
   );
   detailsUrl.searchParams.set("language", "th");
-  detailsUrl.searchParams.set("key", GOOGLE_PLACES_KEY);
+  detailsUrl.searchParams.set("key", GOOGLE_MAPS_KEY);
   const detailResponse = await fetch(detailsUrl);
   const detailData = (await detailResponse.json()) as {
     status: string;
