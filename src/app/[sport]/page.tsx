@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { buildSportPagePayload } from "@/server/sportContent";
 import { SUPPORTED_SPORTS, getSportMeta } from "@/data/sportMeta";
 import { HeaderSubLabel } from "@/components/header-sub-label";
+import { HeaderSportScope } from "@/components/header-sport-scope";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -95,6 +96,7 @@ export default async function SportPage({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
       <section
         className={`bg-gradient-to-br ${sport.gradient} from-30% via-70% to-100% px-6 py-20 md:px-12`}
@@ -136,6 +138,68 @@ export default async function SportPage({
             >
               {t("sport.groupFinderCta")}
             </Link>
+          </div>
+        </div>
+      </section>
+      <section className="bg-white px-6 py-12 text-slate-900 md:px-12">
+        <div className="mx-auto flex max-w-5xl flex-col gap-8">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+              {t("sport.useNowTitle")}
+            </p>
+            <p className="text-sm text-slate-600">
+              {t("sport.useNowDescription")}
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {[
+              {
+                title: t("sport.useNowCourtsTitle", {
+                  sport: sport.name[locale],
+                }),
+                body: t("sport.useNowCourtsBody"),
+                href: buildLocalizedPath(`/${sport.code}/court-finder`, locale),
+                cta: t("courtFinder.cta"),
+              },
+              {
+                title: t("sport.useNowGroupsTitle", {
+                  sport: sport.name[locale],
+                }),
+                body: t("sport.useNowGroupsBody"),
+                href: buildLocalizedPath(`/${sport.code}/group-finder`, locale),
+                cta: t("sport.groupFinderCta"),
+              },
+            ].map((feature) => (
+              <article
+                key={feature.title}
+                className="rounded-3xl border border-slate-200 bg-slate-50/80 p-6 shadow-sm shadow-slate-200"
+              >
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {feature.title}
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">{feature.body}</p>
+                <Link
+                  href={feature.href}
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 underline-offset-4 hover:underline"
+                >
+                  {feature.cta}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="h-4 w-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </Link>
+              </article>
+            ))}
           </div>
         </div>
       </section>

@@ -75,11 +75,15 @@ export default async function DashboardAddCourtPage({
     phone: t("admin.phone"),
     line: t("admin.line"),
     website: t("admin.website"),
+    placeSearch: t("admin.placeSearch"),
+    placeSearchHelper: t("admin.placeSearchHelper"),
+    placeSearchNoResults: t("admin.placeSearchNoResults"),
     photos: t("admin.photos"),
     submit: t("admin.submit"),
     submitting: t("admin.submitting"),
     success: t("admin.success"),
     error: t("admin.error"),
+    locationMissing: t("admin.locationMissing"),
   };
 
   return (

@@ -5,6 +5,7 @@ import { HeaderConfigProvider } from "@/components/header-context";
 import { SiteHeader } from "@/components/site-header";
 import { ToasterProvider } from "@/components/toaster-provider";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { ScrollReset } from "@/components/scroll-reset";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,20 +32,31 @@ export default async function RootLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  let isAdmin = false;
+  let profile: {
+    status: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null = null;
   if (user) {
-    const { data: profile } = await supabase
+    const { data } = await supabase
       .from("profiles")
-      .select("status")
+      .select("status,display_name,avatar_url")
       .eq("id", user.id)
       .single();
-    isAdmin = profile?.status === "admin";
+    profile = data ?? null;
   }
+  const isAdmin = profile?.status === "admin";
   const headerUser = user
     ? {
         email: user.email ?? "",
-        avatarUrl: user.user_metadata?.avatar_url ?? null,
-        fullName: user.user_metadata?.full_name ?? null,
+        avatarUrl:
+          profile?.avatar_url ??
+          (user.user_metadata?.avatar_url as string | null) ??
+          null,
+        fullName:
+          profile?.display_name ??
+          (user.user_metadata?.full_name as string | null) ??
+          null,
       }
     : null;
 
@@ -54,10 +66,12 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <HeaderConfigProvider>
+          <ScrollReset />
           <ToasterProvider />
-          <div className="sticky top-0 z-50 mx-auto w-full max-w-5xl px-6 pt-6 md:px-10">
+          <div className="sticky top-0 z-50 w-full">
             <SiteHeader user={headerUser} isAdmin={isAdmin} />
           </div>
+          <div className="w-full" aria-hidden="true" />
           {children}
         </HeaderConfigProvider>
       </body>

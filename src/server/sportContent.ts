@@ -23,7 +23,6 @@ type GroupRow = {
   id: string;
   name: string | null;
   description: string | null;
-  is_public: boolean | null;
   created_at: string | null;
 };
 
@@ -112,12 +111,9 @@ function mapGroups(rows: GroupRow[]): SportFeatureCard[] {
   return rows.map((group) => ({
     title: group.name ?? "Untitled group",
     subtitle: compactDetails([
-      group.is_public ? "Public group" : "Private group",
-    ]).join(" · "),
-    details: compactDetails([
-      group.description,
       group.created_at ? `Started ${formatDate(group.created_at)}` : null,
-    ]),
+    ]).join(" · "),
+    details: compactDetails([group.description]),
   }));
 }
 
@@ -232,7 +228,7 @@ export async function buildSportPagePayload(
     });
 
     const groupsPromise = supabaseSelect<GroupRow>("groups", {
-        select: "id,name,description,is_public,created_at",
+        select: "id,name,description,created_at",
       sport_id: `eq.${sportId}`,
       order: "created_at.desc",
       limit: "4",
@@ -329,7 +325,6 @@ export async function buildSportPagePayload(
         stats: [
           { key: "courts" as const, value: formatCount(courtsRes.count) },
           { key: "groups" as const, value: formatCount(groupsRes.count) },
-          { key: "matches" as const, value: formatCount(matchesRes.count) },
         ],
       },
       features,

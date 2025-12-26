@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CourtEditForm } from "@/components/admin/court-edit-form";
+import { HeaderSportScope } from "@/components/header-sport-scope";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import type { OpeningHoursEntry } from "@/lib/opening-hours";
 
 type Params = { courtId: string };
 type ParamsInput = Promise<Params>;
@@ -60,14 +62,17 @@ export default async function EditCourtPage({
     district: string | null;
     province: string | null;
     price_note: string | null;
-    opening_hours: string | null;
+    opening_hours: OpeningHoursEntry[] | null;
     phone: string | null;
     line_id: string | null;
     website_url: string | null;
     created_by: string | null;
+    latitude: string | null;
+    longitude: string | null;
+    google_place_id: string | null;
   }>("courts", {
     select:
-      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by",
+      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id",
     id: `eq.${resolvedParams.courtId}`,
     limit: "1",
   });
@@ -99,6 +104,9 @@ export default async function EditCourtPage({
     order: "is_primary.desc,created_at.asc",
   });
 
+  const currentSportSlug =
+    sports?.find((sport) => sport.id === court.sport_id)?.code ?? undefined;
+
   const sportOptions =
     sports?.map((sport) => ({
       id: sport.id,
@@ -113,10 +121,13 @@ export default async function EditCourtPage({
     district: court.district ?? "",
     province: court.province ?? "",
     price_note: court.price_note ?? "",
-     opening_hours: court.opening_hours ?? "",
+    opening_hours: court.opening_hours ?? null,
     phone: court.phone ?? "",
     line_id: court.line_id ?? "",
     website_url: court.website_url ?? "",
+    latitude: court.latitude ?? "",
+    longitude: court.longitude ?? "",
+    google_place_id: court.google_place_id ?? null,
   };
 
   const copy = {
@@ -132,15 +143,21 @@ export default async function EditCourtPage({
     phone: t("admin.phone"),
     line: t("admin.line"),
     website: t("admin.website"),
+    placeSearch: t("admin.placeSearch"),
+    placeSearchHelper: t("admin.placeSearchHelper"),
+    placeSearchNoResults: t("admin.placeSearchNoResults"),
     submit: t("admin.updateSubmit"),
     submitting: t("admin.updateSubmitting"),
     success: t("admin.updateSuccess"),
     error: t("admin.error"),
     photos: t("admin.photos"),
+    locationMissing: t("admin.locationMissing"),
   };
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
+    <>
+      <HeaderSportScope sportSlug={currentSportSlug} />
+      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
       <div>
         <Link
           href={buildLocalizedPath(`/courts/${court.id}`, locale)}
@@ -167,5 +184,6 @@ export default async function EditCourtPage({
         </div>
       </section>
     </main>
+    </>
   );
 }

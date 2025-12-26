@@ -89,11 +89,12 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `district`
   - `province`
   - `lat`, `lng`
+  - `google_place_id` (text; optional reference to Google Maps)
   - `phone`
   - `line_id`
   - `website_url`
   - `price_note`
-  - `opening_hours` (text; optional human-readable schedule)
+  - `opening_hours` (jsonb; structured weekly schedule)
   - `is_active` (boolean)
   - `created_by` (uuid → profiles.id)
   - `created_at`
@@ -118,8 +119,10 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `sport_id` (uuid → sports.id)
   - `name`
   - `description`
-  - `is_public` (boolean)
   - `owner_id` (uuid → profiles.id)
+  - `player_amount` (integer, optional — average number of players per session)
+  - `phone` (text, optional contact number)
+  - `line_id` (text, optional LINE ID)
   - `created_at`
   - `updated_at` (timestamptz default `now()`)
 
@@ -150,17 +153,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `created_at`
   - `updated_at`
 
-### 8. group_members
-- Links profiles to groups.
-- Supports multiple admins per group via `role`.
-- Columns:
-  - `group_id` (uuid → groups.id)
-  - `profile_id` (uuid → profiles.id)
-  - `role` (text: `'member'`, `'admin'`)
-  - `joined_at`
-- Primary key: (`group_id`, `profile_id`).
-
-### 9. posts
+### 8. posts
 - Community board posts.
 - Used for:
   - Discussions
@@ -178,7 +171,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `is_pinned` (boolean)
   - `created_at`
 
-### 10. comments
+### 9. comments
 - Comments on posts.
 - Columns:
   - `id` (uuid)
@@ -187,7 +180,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `content`
   - `created_at`
 
-### 11. notifications *(new)*
+### 10. notifications *(new)*
 - Keeps a history of system notifications (e.g., court verification requests).
 - Columns:
   - `id` (uuid, PK, default `gen_random_uuid()`)
@@ -220,7 +213,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
     with check (auth.role() = 'service_role');
   ```
 
-### 12. matches
+### 11. matches
 - Represents a match for scoreboard / match tracking.
 - Can be linked to a group and a court.
 - Columns:
@@ -233,7 +226,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `created_by` (uuid → profiles.id)
   - `created_at`
 
-### 13. match_participants
+### 12. match_participants
 - Who is playing in a match and which team they are on.
 - Columns:
   - `match_id` (uuid → matches.id)
@@ -242,7 +235,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `is_winner` (boolean)
 - Primary key: (`match_id`, `profile_id`).
 
-### 14. match_games
+### 13. match_games
 - Game-level scores within a match (e.g. best-of-3 games).
 - Columns:
   - `id` (uuid)
@@ -252,7 +245,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `team_b_score` (int)
   - `created_at`
 
-### 15. feedback
+### 14. feedback
 - Handles both **general feedback** and **reports**.
 - Can optionally attach context (sport, group, court, match, post, reported user).
 - Columns:
@@ -288,7 +281,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - Any authenticated user can insert courts/photos.
   - Only the `created_by` user can update court details.
 
-- **groups & group_members**
+- **groups**
   - Public groups are readable by everyone.
   - Owners can update their groups.
   - Users can join/leave groups as themselves.
@@ -316,7 +309,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
 ## Main MVP Features Mapped to Schema
 
 - **Court Finder** → `courts`, `court_photos`, filtered by `sport_id`, `province`, `district`.
-- **Group Finder** → `groups`, `group_members`, filtered by `sport_id`, `location`, skill range.
+- **Group Finder** → `groups`, filtered by sport and schedule (day/time) plus proximity sorting.
 - **Community Board** → `posts`, `comments`, with optional `sport_id` and `group_id`.
 - **Scoreboard / Matches** → `matches`, `match_participants`, `match_games`.
 - **Multi-sport Profiles** → `profiles`, `profile_sports`, plus `default_sport`.
@@ -331,3 +324,9 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - Scalability with indexes
   - Ability to extend later (chat, tournaments, booking, etc.)
 - No per-sport duplicated tables; everything filters on `sport_id`.
+
+## Recent UI Enhancements
+
+- Court finder’s “Find nearby courts” view now embeds a live Google Maps instance with a blue dot for the user location plus labeled pins for nearby courts, matching the Google Maps experience requested by stakeholders.
+- All Google Maps/Places integrations (client map plus server API routes) now read the single `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` value from `.env.local`. For Advanced Marker labels, optionally define `NEXT_PUBLIC_GOOGLE_MAP_ID` with a vector map ID—otherwise the map will gracefully fall back to classic pins.
+- Group finder now supports filtering by day and half-hour time slots plus a “Find nearby groups” option that geolocates the user, centers the court map, and surfaces the closest sessions.

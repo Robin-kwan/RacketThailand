@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Clock3, Trash2 } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import { BaseAutocomplete } from "@/components/base-autocomplete";
-import { GroupVisibilityToggle } from "@/components/groups/group-visibility-toggle";
 
 export type Option = {
   value: string;
@@ -24,12 +23,28 @@ export type CourtSessionBlock = {
   slots: SessionSlot[];
 };
 
+const normalizeSessions = (blocks: CourtSessionBlock[]) =>
+  blocks
+    .flatMap((block) =>
+      block.slots.map((slot) => ({
+        courtId: block.courtId,
+        day: slot.day,
+        start: slot.start,
+        end: slot.end,
+      })),
+    )
+    .filter(
+      (session) =>
+        session.courtId && session.day && session.start && session.end,
+    );
 export type GroupFormValues = {
   sportId: string;
   name: string;
   description: string;
-  isPublic: boolean;
   sessions: CourtSessionBlock[];
+  playerAmount?: string | null;
+  phone?: string | null;
+  lineId?: string | null;
 };
 
 export type GroupFormCopy = {
@@ -43,25 +58,28 @@ export type GroupFormCopy = {
   sessionsRemoveCourt: string;
   sessionsEmpty: string;
   sessionCourt: string;
-  privacyLabel: string;
-  privacyHint: string;
-  publicLabel: string;
-  publicDescription: string;
-  privateLabel: string;
-  privateDescription: string;
   scheduleLabel: string;
   scheduleDay: string;
   scheduleStart: string;
   scheduleEnd: string;
   scheduleRemove: string;
+  playerAmountLabel: string;
+  playerAmountPlaceholder: string;
+  playerAmountHelp: string;
+  phoneLabel: string;
+  phonePlaceholder: string;
+  lineLabel: string;
+  linePlaceholder: string;
 };
 
 type SubmitPayload = {
   sportId: string;
   name: string;
   description: string;
-  isPublic: boolean;
   sessions: { courtId: string; day: string; start: string; end: string }[];
+  playerAmount?: string;
+  phone?: string;
+  lineId?: string;
 };
 
 type GroupFormProps = {
@@ -258,7 +276,9 @@ export function GroupForm({
     sportId: initialValues.sportId,
     name: initialValues.name,
     description: initialValues.description,
-    isPublic: initialValues.isPublic,
+    playerAmount: initialValues.playerAmount ?? "",
+    phone: initialValues.phone ?? "",
+    lineId: initialValues.lineId ?? "",
   });
   const [courtSessions, setCourtSessions] = useState<CourtSessionBlock[]>(
     initialValues.sessions,
@@ -326,10 +346,6 @@ export function GroupForm({
         }),
       );
     }
-  };
-
-  const updateVisibility = (value: boolean) => {
-    setForm((prev) => ({ ...prev, isPublic: value }));
   };
 
   const addCourtBlock = () => {
@@ -400,20 +416,40 @@ export function GroupForm({
     );
   };
 
-  const flattenSessions = () =>
-    courtSessions
-      .flatMap((block) =>
-        block.slots.map((slot) => ({
-          courtId: block.courtId,
-          day: slot.day,
-          start: slot.start,
-          end: slot.end,
-        })),
-      )
-      .filter(
-        (session) =>
-          session.courtId && session.day && session.start && session.end,
-      );
+  const serializedSessions = useMemo(
+    () => normalizeSessions(courtSessions),
+    [courtSessions],
+  );
+
+  const initialSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        sportId: initialValues.sportId,
+        name: initialValues.name,
+        description: initialValues.description,
+        playerAmount: initialValues.playerAmount ?? "",
+        phone: initialValues.phone ?? "",
+        lineId: initialValues.lineId ?? "",
+        sessions: normalizeSessions(initialValues.sessions),
+      }),
+    [initialValues],
+  );
+
+  const currentSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        sportId: form.sportId,
+        name: form.name,
+        description: form.description,
+        playerAmount: form.playerAmount,
+        phone: form.phone,
+        lineId: form.lineId,
+        sessions: serializedSessions,
+      }),
+    [form, serializedSessions],
+  );
+
+  const hasChanges = currentSnapshot !== initialSnapshot;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -421,8 +457,10 @@ export function GroupForm({
       sportId: form.sportId,
       name: form.name,
       description: form.description,
-      isPublic: form.isPublic,
-      sessions: flattenSessions(),
+      playerAmount: form.playerAmount,
+      phone: form.phone,
+      lineId: form.lineId,
+      sessions: serializedSessions,
     });
   };
 
@@ -462,18 +500,50 @@ export function GroupForm({
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
         />
       </div>
-      <GroupVisibilityToggle
-        isPublic={form.isPublic}
-        onChange={updateVisibility}
-        copy={{
-          label: copy.privacyLabel,
-          hint: copy.privacyHint,
-          publicLabel: copy.publicLabel,
-          publicDescription: copy.publicDescription,
-          privateLabel: copy.privateLabel,
-          privateDescription: copy.privateDescription,
-        }}
-      />
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-slate-700">
+          {copy.playerAmountLabel}
+        </label>
+        <p className="text-xs text-slate-500">{copy.playerAmountHelp}</p>
+        <input
+          type="number"
+          name="playerAmount"
+          min="1"
+          inputMode="numeric"
+          placeholder={copy.playerAmountPlaceholder}
+          value={form.playerAmount}
+          onChange={updateForm}
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+        />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700">
+            {copy.phoneLabel}
+          </label>
+          <input
+            type="tel"
+            name="phone"
+            value={form.phone}
+            onChange={updateForm}
+            placeholder={copy.phonePlaceholder}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-slate-700">
+            {copy.lineLabel}
+          </label>
+          <input
+            type="text"
+            name="lineId"
+            value={form.lineId}
+            onChange={updateForm}
+            placeholder={copy.linePlaceholder}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          />
+        </div>
+      </div>
       <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 p-4">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-slate-700">
@@ -496,7 +566,7 @@ export function GroupForm({
                 key={block.id}
                 className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <BaseAutocomplete
                     label={copy.sessionCourt}
                     name={`session-court-${block.id}`}
@@ -507,13 +577,15 @@ export function GroupForm({
                     options={courtOptions}
                     className="flex-1"
                   />
-                  <button
-                    type="button"
-                    onClick={() => removeCourtBlock(block.id)}
-                    className="text-xs font-semibold text-rose-600 hover:text-rose-800"
-                  >
-                    {copy.sessionsRemoveCourt}
-                  </button>
+                  <div className="flex items-end justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removeCourtBlock(block.id)}
+                      className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-600"
+                    >
+                      <Trash2 className="h-6 w-6" />
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -600,7 +672,7 @@ export function GroupForm({
       {photoSection}
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !hasChanges}
         className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? `${submittingLabel}...` : submitLabel}

@@ -15,7 +15,9 @@ type GroupPayload = {
   name: string;
   description?: string;
   sessions?: SessionPayload[];
-  isPublic?: boolean;
+  playerAmount?: number | string;
+  phone?: string | null;
+  lineId?: string | null;
 };
 
 export async function GET(request: Request) {
@@ -30,19 +32,19 @@ export async function GET(request: Request) {
 
   const limit = Number(searchParams.get("limit") ?? "12");
   const offset = Number(searchParams.get("offset") ?? "0");
-  const visibilityParam = searchParams.get("visibility");
-  const visibility =
-    visibilityParam === "public" || visibilityParam === "private"
-      ? visibilityParam
-      : undefined;
   const search = searchParams.get("q") ?? undefined;
+  const day = searchParams.get("day") ?? undefined;
+  const startTime = searchParams.get("start") ?? undefined;
+  const endTime = searchParams.get("end") ?? undefined;
 
   try {
     const result = await fetchGroupsBySport(sport, {
       limit: Number.isFinite(limit) && limit > 0 ? limit : 12,
       offset: Number.isFinite(offset) && offset > 0 ? offset : 0,
       search,
-      visibility,
+      day,
+      startTime,
+      endTime,
     });
     if (!result.sport) {
       return NextResponse.json(
@@ -80,6 +82,30 @@ function normalizeSessions(sessions?: SessionPayload[]) {
     );
 }
 
+function normalizePlayerAmount(value?: number | string | null) {
+  if (typeof value === "number") {
+    if (Number.isFinite(value) && value > 0) {
+      return Math.round(value);
+    }
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.round(parsed);
+    }
+  }
+  return null;
+}
+
+function normalizeContact(value?: string | null) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -99,6 +125,11 @@ export async function POST(request: Request) {
   }
 
   const normalizedSessions = normalizeSessions(payload.sessions);
+  const normalizedPlayerAmount = normalizePlayerAmount(
+    payload.playerAmount,
+  );
+  const normalizedPhone = normalizeContact(payload.phone);
+  const normalizedLine = normalizeContact(payload.lineId);
 
   const { data: insertedGroup, error: insertGroupError } = await supabase
     .from("groups")
@@ -107,9 +138,10 @@ export async function POST(request: Request) {
       name: payload.name.trim(),
       description: payload.description?.trim() || null,
       owner_id: user.id,
-      is_public:
-        typeof payload.isPublic === "boolean" ? payload.isPublic : true,
       updated_at: new Date().toISOString(),
+      player_amount: normalizedPlayerAmount,
+      phone: normalizedPhone,
+      line_id: normalizedLine,
     })
     .select("id")
     .single();
@@ -122,17 +154,6 @@ export async function POST(request: Request) {
   }
 
   const groupId = insertedGroup.id;
-
-  await supabase.from("group_members").upsert(
-    {
-      group_id: groupId,
-      profile_id: user.id,
-      role: "owner",
-    },
-    {
-      onConflict: "group_id,profile_id",
-    },
-  );
 
   if (normalizedSessions.length > 0) {
     const { error: sessionsError } = await supabase

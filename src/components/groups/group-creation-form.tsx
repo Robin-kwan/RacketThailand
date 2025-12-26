@@ -45,8 +45,10 @@ export function GroupCreationForm({
       sportId: sports[0]?.value ?? "",
       name: "",
       description: "",
-      isPublic: true,
       sessions: [],
+      playerAmount: "",
+      phone: "",
+      lineId: "",
     }),
     [sports],
   );
@@ -55,7 +57,9 @@ export function GroupCreationForm({
     sportId: string;
     name: string;
     description: string;
-    isPublic: boolean;
+    playerAmount?: string;
+    phone?: string;
+    lineId?: string;
     sessions: { courtId: string; day: string; start: string; end: string }[];
   }) => {
     setSubmitting(true);

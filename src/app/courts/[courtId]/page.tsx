@@ -8,9 +8,12 @@ import {
 } from "@/lib/i18n";
 import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
+import { HeaderSportScope } from "@/components/header-sport-scope";
 import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { fetchCourtDetail } from "@/server/courtFinder";
+import { CourtMap } from "@/components/court-map";
+import { ensureAllDays } from "@/lib/opening-hours";
 
 function getGroupCover(group: {
   sports?: { code: string } | null;
@@ -56,8 +59,35 @@ function formatTimeValue(value: string, locale: string) {
   return formatter.format(date);
 }
 
+function isClockValue(value: string) {
+  return /^\d{2}:\d{2}$/.test(value);
+}
+
+function formatRangeDisplay(
+  open: string,
+  close: string | null,
+  locale: string,
+) {
+  if (open === "Open" && !close) {
+    return locale === "th" ? "เปิดตลอดเวลา" : "Open 24 hours";
+  }
+  if (!close) {
+    return isClockValue(open) ? formatTimeValue(open, locale) : open;
+  }
+  const formattedOpen = isClockValue(open)
+    ? formatTimeValue(open, locale)
+    : open;
+  const formattedClose = isClockValue(close)
+    ? formatTimeValue(close, locale)
+    : close;
+  return `${formattedOpen} – ${formattedClose}`;
+}
+
 function formatTimeRange(start: string, end: string, locale: string) {
-  return `${formatTimeValue(start, locale)} – ${formatTimeValue(end, locale)}`;
+  return `${formatTimeValue(start, locale)} – ${formatTimeValue(
+    end,
+    locale,
+  )}`;
 }
 
 type Params = {
@@ -87,6 +117,11 @@ export default async function CourtPage({
   searchParams?: SearchParamsInput;
 }) {
   const resolvedParams = await resolveParams(params);
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidPattern.test(resolvedParams.courtId)) {
+    notFound();
+  }
   const resolvedSearch = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedSearch?.lang);
   const t = await getTranslator(locale);
@@ -100,10 +135,6 @@ export default async function CourtPage({
     notFound();
   }
 
-  const sportLink = detail.sport
-    ? buildLocalizedPath(`/${detail.sport.code}`, locale)
-    : buildLocalizedPath("/", locale);
-
   const gallery = detail.photos.length
     ? detail.photos
     : [
@@ -114,6 +145,29 @@ export default async function CourtPage({
         },
       ];
 
+  const openingHourEntries = ensureAllDays(detail.court.opening_hours);
+  const hasAnyHours = openingHourEntries.some(
+    (entry) => entry.ranges.length > 0,
+  );
+  const numericLatitude =
+    detail.court.latitude !== undefined && detail.court.latitude !== null
+      ? Number(detail.court.latitude)
+      : null;
+  const numericLongitude =
+    detail.court.longitude !== undefined && detail.court.longitude !== null
+      ? Number(detail.court.longitude)
+      : null;
+  const hasMapCoordinates =
+    typeof numericLatitude === "number" &&
+    !Number.isNaN(numericLatitude) &&
+    typeof numericLongitude === "number" &&
+    !Number.isNaN(numericLongitude);
+  const todayKey = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+  })
+    .format(new Date())
+    .toLowerCase();
+
   const copy = {
     contact: t("courtPage.contact"),
     address: t("courtPage.address"),
@@ -123,9 +177,6 @@ export default async function CourtPage({
     website: t("courtPage.website"),
     hours: t("courtPage.hours"),
     back: t("courtPage.back"),
-    sportLink: t("courtPage.sportLink", {
-      sport: detail.sport?.name ?? "",
-    }),
     groupsTitle: t("courtPage.groupsTitle"),
     groupsEmpty: t("courtPage.groupsEmpty"),
     verified: t("courtPage.verified"),
@@ -135,8 +186,7 @@ export default async function CourtPage({
     edit: t("courtPage.edit"),
     updated: t("courtPage.updated"),
     groupScheduleAny: t("groups.detail.scheduleAny"),
-    groupVisibilityPublic: t("groups.detail.visibilityPublic"),
-    groupVisibilityPrivate: t("groups.detail.visibilityPrivate"),
+    backToGroupFinder: t("courtPage.backToGroupFinder"),
   };
 
   const canEdit =
@@ -144,8 +194,18 @@ export default async function CourtPage({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <HeaderSportScope sportSlug={detail.sport?.code ?? undefined} />
       <HeaderSubLabel value={detail.sport?.name ?? undefined} />
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 pb-20 pt-10 md:px-10">
+        <Link
+          href={buildLocalizedPath(
+            `/${detail.sport?.code ?? ""}`,
+            locale,
+          )}
+          className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+        >
+          ← {copy.back}
+        </Link>
         <header className="space-y-3 border-b border-slate-200 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -173,7 +233,7 @@ export default async function CourtPage({
         </header>
         <CourtGallery gallery={gallery} courtName={detail.court.name} />
 
-        <section className="grid gap-8 rounded-[32px] border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/70 backdrop-blur md:grid-cols-2">
+        <section className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-slate-900">
               {copy.contact}
@@ -191,16 +251,60 @@ export default async function CourtPage({
                 <li>
                   <strong className="text-slate-900">
                     {copy.price}:
-                  </strong>{" "}
-                  {detail.court.price_note}
+                  </strong>
+                  <div
+                    className="prose prose-sm mt-1 max-w-none text-slate-600"
+                    dangerouslySetInnerHTML={{
+                      __html: detail.court.price_note,
+                    }}
+                  />
                 </li>
               )}
-              {detail.court.opening_hours && (
+              {hasAnyHours && (
                 <li>
                   <strong className="text-slate-900">
                     {copy.hours}:
-                  </strong>{" "}
-                  {detail.court.opening_hours}
+                  </strong>
+                  <div className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white/60 text-sm">
+                    {openingHourEntries.map((entry) => {
+                      const normalizedDay = entry.day.toLowerCase().trim();
+                      const isToday =
+                        normalizedDay.startsWith(todayKey.slice(0, 3)) ||
+                        normalizedDay.includes(todayKey);
+                      const dayLabel = getDayLabel(normalizedDay, locale);
+                      const display =
+                        entry.ranges?.length > 0
+                          ? entry.ranges
+                              .map((range) =>
+                                formatRangeDisplay(
+                                  range.open,
+                                  range.close,
+                                  locale,
+                                ),
+                              )
+                              .join(", ")
+                          : locale === "th"
+                            ? "ปิด"
+                            : "Closed";
+                      return (
+                        <div
+                          key={`${entry.day}-${display}`}
+                          className={`flex items-center justify-between px-4 py-2 ${isToday ? "bg-emerald-50" : ""}`}
+                        >
+                          <span
+                            className={`text-sm ${isToday ? "font-semibold text-slate-900" : "text-slate-600"}`}
+                          >
+                            {dayLabel}
+                          </span>
+                          <span
+                            className={`text-sm text-right ${isToday ? "font-semibold text-emerald-700" : "text-slate-600"}`}
+                          >
+                            {display}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </li>
               )}
               {detail.court.phone && (
@@ -236,24 +340,13 @@ export default async function CourtPage({
               )}
             </ul>
           </div>
-          <div className="space-y-4">
-            {(
-              detail.court.updated_at ?? detail.court.created_at
-            ) && (
-              <p className="text-sm text-slate-500">
-                {copy.updated}:{" "}
-                {new Date(
-                  detail.court.updated_at ?? detail.court.created_at ?? new Date(),
-                ).toLocaleString("en-US")}
-              </p>
-            )}
-            <Link
-              href={sportLink}
-              className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-            >
-              {copy.sportLink}
-            </Link>
-          </div>
+          {hasMapCoordinates && (
+            <CourtMap
+              name={detail.court.name ?? "Court location"}
+              latitude={numericLatitude as number}
+              longitude={numericLongitude as number}
+            />
+          )}
         </section>
 
         <section className="rounded-[32px] border border-slate-200 bg-white px-6 py-8 shadow-xl shadow-slate-200">
@@ -263,7 +356,7 @@ export default async function CourtPage({
           {detail.groups.length === 0 ? (
             <p className="mt-3 text-sm text-slate-600">{copy.groupsEmpty}</p>
           ) : (
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {detail.groups.map((group) => {
                 const status = group.verification_status ?? "pending";
                 const statusLabel =
@@ -343,13 +436,6 @@ export default async function CourtPage({
                             {group.groups.description}
                           </p>
                         )}
-                        {group.groups && (
-                          <p className="mt-2 text-xs font-semibold text-slate-600">
-                            {group.groups.is_public
-                              ? copy.groupVisibilityPublic
-                              : copy.groupVisibilityPrivate}
-                          </p>
-                        )}
                         <div className="mt-2 text-xs text-slate-500">
                           {scheduleEntries.length > 0 ? (
                             <ul className="space-y-1">
@@ -389,19 +475,16 @@ export default async function CourtPage({
               })}
             </div>
           )}
-        </section>
-
-        <div>
           <Link
             href={buildLocalizedPath(
-              `/${detail.sport?.code ?? ""}`,
+              `/${detail.sport?.code ?? ""}/groups`,
               locale,
             )}
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
           >
-            {copy.back}
+            ← {copy.backToGroupFinder}
           </Link>
-        </div>
+        </section>
       </main>
     </div>
   );

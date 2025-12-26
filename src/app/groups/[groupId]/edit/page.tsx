@@ -9,6 +9,8 @@ import {
 } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { HeaderSubLabel } from "@/components/header-sub-label";
+import { HeaderSportScope } from "@/components/header-sport-scope";
 
 type Params = { groupId: string };
 type ParamsInput = Promise<Params>;
@@ -59,9 +61,12 @@ export default async function EditGroupPage({
     name: string | null;
     description: string | null;
     owner_id: string | null;
-    is_public: boolean | null;
+    player_amount: number | null;
+    phone: string | null;
+    line_id: string | null;
   }>("groups", {
-    select: "id,sport_id,name,description,owner_id,is_public",
+    select:
+      "id,sport_id,name,description,owner_id,player_amount,phone,line_id",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -175,13 +180,24 @@ export default async function EditGroupPage({
         })
       : [];
 
+  const currentSport =
+    sports?.find((sport) => sport.id === group.sport_id) ?? null;
+  const currentSportSlug = currentSport?.code ?? undefined;
+  const currentSportLabel =
+    currentSport?.name ?? currentSport?.code ?? undefined;
+
   const formGroup = {
     id: group.id,
     sportId: group.sport_id,
     name: group.name ?? "",
     description: group.description ?? "",
     sessions: sanitizedSessions,
-    isPublic: group.is_public ?? true,
+    playerAmount:
+      typeof group.player_amount === "number"
+        ? String(group.player_amount)
+        : "",
+    phone: group.phone ?? "",
+    lineId: group.line_id ?? "",
   };
 
   const dayKeys = [
@@ -208,17 +224,18 @@ export default async function EditGroupPage({
     sessionsRemoveCourt: t("groups.form.sessionsRemoveCourt"),
     sessionsEmpty: t("groups.form.sessionsEmpty"),
     sessionCourt: t("groups.form.sessionCourt"),
-    privacyLabel: t("groups.form.privacyLabel"),
-    privacyHint: t("groups.form.privacyHint"),
-    publicLabel: t("groups.form.publicLabel"),
-    publicDescription: t("groups.form.publicDescription"),
-    privateLabel: t("groups.form.privateLabel"),
-    privateDescription: t("groups.form.privateDescription"),
     scheduleLabel: t("groups.form.scheduleLabel"),
     scheduleRemove: t("groups.form.scheduleRemove"),
     scheduleDay: t("groups.form.scheduleDay"),
     scheduleStart: t("groups.form.scheduleStart"),
     scheduleEnd: t("groups.form.scheduleEnd"),
+    playerAmountLabel: t("groups.form.playerAmountLabel"),
+    playerAmountPlaceholder: t("groups.form.playerAmountPlaceholder"),
+    playerAmountHelp: t("groups.form.playerAmountHelp"),
+    phoneLabel: t("groups.form.phoneLabel"),
+    phonePlaceholder: t("groups.form.phonePlaceholder"),
+    lineLabel: t("groups.form.lineLabel"),
+    linePlaceholder: t("groups.form.linePlaceholder"),
     photos: t("groups.form.photos"),
     submit: t("groups.edit.submit"),
     submitting: t("groups.edit.submitting"),
@@ -227,7 +244,10 @@ export default async function EditGroupPage({
   };
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
+    <>
+      <HeaderSportScope sportSlug={currentSportSlug} />
+      <HeaderSubLabel value={currentSportLabel} />
+      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
       <div>
         <Link
           href={buildLocalizedPath(`/groups/${group.id}`, locale)}
@@ -258,5 +278,6 @@ export default async function EditGroupPage({
             </div>
       </section>
     </main>
+    </>
   );
 }

@@ -56,7 +56,7 @@ export function BaseSelect({
           onChange={onChange}
           required={required}
           disabled={disabled}
-          className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none transition focus:border-slate-400 focus:bg-white"
+          className={`w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none transition focus:border-slate-400 focus:bg-white ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           {options.map((option) => (
             <option key={`${name}-${option.value}`} value={option.value}>
