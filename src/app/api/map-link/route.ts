@@ -5,7 +5,6 @@ import {
   type MapCoordinates,
 } from "@/lib/google-maps";
 import {
-  extractAddressComponent,
   normalizePlaceDetails,
   type GoogleAddressComponent,
   type PlaceDetailsPayload,
@@ -131,13 +130,13 @@ async function resolvePlaceDetails(
 
   const baseDetails: PlaceDetailsPayload = {
     address: primary.formatted_address,
-    district: extractAddressComponent(baseComponents, [
+    district: pickAddressComponent(baseComponents, [
       "administrative_area_level_2",
       "sublocality_level_1",
       "sublocality",
       "locality",
     ]),
-    province: extractAddressComponent(baseComponents, [
+    province: pickAddressComponent(baseComponents, [
       "administrative_area_level_1",
     ]),
   };
@@ -176,7 +175,7 @@ async function resolvePlaceDetails(
   return normalizePlaceDetails(detailData.result, baseDetails);
 }
 
-function extractAddressComponent(
+function pickAddressComponent(
   components: GoogleAddressComponent[],
   types: string[],
 ): string | undefined {

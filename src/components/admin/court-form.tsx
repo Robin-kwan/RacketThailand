@@ -77,7 +77,9 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
   );
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -184,7 +186,6 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
 
   const handlePlaceResolution = (resolution: PlaceResolution) => {
     const coords = resolution.coordinates;
-    setStructuredHours(resolution.place?.openingHoursStructured ?? null);
     const structured = ensureAllDays(
       resolution.place?.openingHoursStructured ?? null,
     );
@@ -210,11 +211,6 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
         helper={copy.placeSearchHelper}
         noResults={copy.placeSearchNoResults}
         onResolve={handlePlaceResolution}
-        currentCoordinates={
-          form.latitude && form.longitude
-            ? { latitude: form.latitude, longitude: form.longitude }
-            : null
-        }
         initialQuery={
           form.googlePlaceId
             ? [form.name, form.address].filter(Boolean).join(" · ")

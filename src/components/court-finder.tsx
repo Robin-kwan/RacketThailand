@@ -119,7 +119,7 @@ export function CourtFinder({
         sport: sportCode,
         limit: PAGE_SIZE.toString(),
       });
-      if (search) params.set("q", search);
+      if (debouncedSearch) params.set("q", debouncedSearch);
       if (province) params.set("province", province);
       const response = await fetch(`/api/courts?${params.toString()}`, {
         cache: "no-store",

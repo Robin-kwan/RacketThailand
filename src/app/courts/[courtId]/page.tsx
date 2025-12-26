@@ -186,6 +186,7 @@ export default async function CourtPage({
     edit: t("courtPage.edit"),
     updated: t("courtPage.updated"),
     groupScheduleAny: t("groups.detail.scheduleAny"),
+    backToGroupFinder: t("courtPage.backToGroupFinder"),
   };
 
   const canEdit =

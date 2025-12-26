@@ -22,7 +22,6 @@ type PlaceSearchFieldProps = {
   noResults: string;
   onResolve: (resolution: PlaceResolution) => void;
   placeholder?: string;
-  currentCoordinates?: MapCoordinates | null;
   initialQuery?: string;
 };
 
@@ -34,7 +33,6 @@ export function PlaceSearchField({
   noResults,
   placeholder = "Search for a venue, mall, or court",
   onResolve,
-  currentCoordinates,
   initialQuery,
 }: PlaceSearchFieldProps) {
   const [query, setQuery] = useState(initialQuery ?? "");

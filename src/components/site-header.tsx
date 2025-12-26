@@ -113,6 +113,7 @@ export function SiteHeader({
       href: buildLocalizedPath(definition.path, locale),
     }));
   }, [
+    activeSport,
     activeSportSlug,
     labels.sportHome,
     labels.brand,
@@ -177,7 +178,6 @@ export function SiteHeader({
     };
     document.addEventListener("mousedown", handleClick);
     return () => {
-      window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("mousedown", handleClick);
     };
   }, []);

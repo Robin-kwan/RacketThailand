@@ -176,7 +176,7 @@ export function CourtEditForm({
   };
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -479,11 +479,6 @@ export function CourtEditForm({
         helper={copy.placeSearchHelper}
         noResults={copy.placeSearchNoResults}
         onResolve={handlePlaceResolution}
-        currentCoordinates={
-          form.latitude && form.longitude
-            ? { latitude: form.latitude, longitude: form.longitude }
-            : null
-        }
         initialQuery={
           form.googlePlaceId
             ? [form.name, form.address].filter(Boolean).join(" · ")

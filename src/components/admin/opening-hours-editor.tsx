@@ -6,6 +6,7 @@ import {
   ensureAllDays,
   createEmptySchedule,
   type OpeningHoursEntry,
+  type OpeningHoursRange,
 } from "@/lib/opening-hours";
 
 type OpeningHoursEditorProps = {

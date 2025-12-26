@@ -45,12 +45,10 @@ type GroupFinderCopy = {
 type GroupFinderProps = {
   sportCode: string;
   locale: Locale;
-  accent: string;
   fallbackImage: string;
   copy: GroupFinderCopy;
   dayLabels: Record<string, string>;
   initialGroups: GroupRecord[];
-  total: number;
 };
 
 const PAGE_SIZE = 12;
@@ -169,12 +167,10 @@ function filterGroupsByTime(
 export function GroupFinder({
   sportCode,
   locale,
-  accent,
   fallbackImage,
   copy,
   dayLabels,
   initialGroups,
-  total,
 }: GroupFinderProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
@@ -202,7 +198,7 @@ export function GroupFinder({
         sport: sportCode,
         limit: PAGE_SIZE.toString(),
       });
-      if (search) params.set("q", search);
+      if (debouncedSearch) params.set("q", debouncedSearch);
       if (dayFilter) params.set("day", dayFilter);
       const response = await fetch(`/api/groups?${params.toString()}`, {
         cache: "no-store",
@@ -328,22 +324,11 @@ export function GroupFinder({
         return {
           group,
           distanceKm: null as number | null,
-          nearestCourt: null as {
-            id: string;
-            name: string | null;
-            latitude: number;
-            longitude: number;
-          } | null,
+          nearestCourt: null as NearbyMapCourt | null,
         };
       }
       let bestDistance = Number.POSITIVE_INFINITY;
-      let bestCourt: {
-        id: string;
-        name: string | null;
-        latitude: number;
-        longitude: number;
-        href: string;
-      } | null = null;
+      let bestCourt: NearbyMapCourt | null = null;
       sessionsWithCoords.forEach((session) => {
         const lat = parseCoordinate(session.courts?.latitude);
         const lng = parseCoordinate(session.courts?.longitude);
@@ -371,7 +356,7 @@ export function GroupFinder({
         nearestCourt: bestCourt,
       };
     });
-  }, [groupsWithLocation, userLocation]);
+  }, [groupsWithLocation, userLocation, locale]);
 
   const displayedGroups = useMemo(() => {
     if (prioritizeNearby && userLocation) {

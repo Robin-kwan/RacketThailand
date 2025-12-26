@@ -70,6 +70,7 @@ export async function POST(request: Request) {
       international_phone_number?: string;
       formatted_phone_number?: string;
       geometry?: { location?: { lat?: number; lng?: number } };
+      place_id?: string;
     };
     error_message?: string;
   };

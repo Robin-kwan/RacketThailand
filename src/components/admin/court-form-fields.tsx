@@ -40,7 +40,7 @@ type CourtFormFieldsProps = {
   values: CourtFormValues;
   sports: SportOption[];
   copy: CourtFormCopy;
-  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   extras?: ReactNode;
 };
 

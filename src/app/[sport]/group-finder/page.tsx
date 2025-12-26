@@ -124,12 +124,10 @@ export default async function GroupFinderPage({
         <GroupFinder
           sportCode={resolvedParams.sport}
           locale={locale}
-          accent={meta.accent}
           fallbackImage={meta.coverImage}
           copy={copy}
           dayLabels={dayLabels}
           initialGroups={groupData.groups}
-          total={groupData.count}
         />
       </main>
     </div>

@@ -177,9 +177,7 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
     });
     let mapInstance: google.maps.Map | null = null;
     let userMarker: google.maps.Marker | null = null;
-    const courtMarkers: Array<
-      google.maps.Marker | google.maps.marker.AdvancedMarkerElement
-    > = [];
+    const courtMarkers: Array<() => void> = [];
     const labelOverlays: google.maps.OverlayView[] = [];
     let isActive = true;
 
@@ -228,7 +226,9 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
           marker.addListener("click", () => {
             window.open(court.href, "_blank", "noopener,noreferrer");
           });
-          courtMarkers.push(marker);
+          courtMarkers.push(() => {
+            (marker as google.maps.marker.AdvancedMarkerElement).map = null;
+          });
         } else {
           const fallbackMarker = new maps.Marker({
             map: mapInstance as google.maps.Map,
@@ -241,7 +241,7 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
           fallbackMarker.addListener("click", () => {
             window.open(court.href, "_blank", "noopener,noreferrer");
           });
-          courtMarkers.push(fallbackMarker);
+          courtMarkers.push(() => fallbackMarker.setMap(null));
           if (court.name) {
             const overlay = createLabelOverlay(
               maps,
@@ -261,7 +261,7 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
 
     return () => {
       isActive = false;
-      courtMarkers.forEach((marker) => marker.setMap(null));
+      courtMarkers.forEach((clearMarker) => clearMarker());
       labelOverlays.forEach((overlay) => overlay.setMap(null));
       userMarker?.setMap(null);
       mapInstance = null;
