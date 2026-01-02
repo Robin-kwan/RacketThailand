@@ -20,6 +20,7 @@ type LoginCopy = {
   emailNotVerified: string;
   passwordToggleShow: string;
   passwordToggleHide: string;
+  googleButton: string;
 };
 
 type LoginFormProps = {
@@ -41,6 +42,7 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     // Set once so the server HTML matches the first client render.
@@ -101,6 +103,26 @@ export function LoginForm({
     router.refresh();
   };
 
+  const handleGoogleLogin = async () => {
+    if (typeof window === "undefined") return;
+    setError(null);
+    setSuccess(null);
+    setGoogleLoading(true);
+    const redirectPath = buildLocalizedPath(redirectTo, locale);
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set("next", redirectPath);
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: callbackUrl.toString(),
+      },
+    });
+    if (oauthError) {
+      setGoogleLoading(false);
+      setError(oauthError.message);
+    }
+  };
+
   if (!isMounted) {
     return (
       <div className="mt-8 space-y-4">
@@ -113,65 +135,77 @@ export function LoginForm({
   }
 
   return (
-    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
-          {copy.emailLabel}
-        </label>
-        <input
-          type="email"
-          name="email"
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
-          placeholder="name@email.com"
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
-          {copy.passwordLabel}
-        </label>
-        <div className="relative">
+    <>
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-700">
+            {copy.emailLabel}
+          </label>
           <input
-            type={showPassword ? "text" : "password"}
-            name="password"
+            type="email"
+            name="email"
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
-            placeholder="••••••••"
-            minLength={8}
+            placeholder="name@email.com"
             required
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute inset-y-0 right-3 text-xs font-semibold text-slate-600"
-          >
-            {showPassword ? copy.passwordToggleHide : copy.passwordToggleShow}
+        </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-700">
+            {copy.passwordLabel}
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+              placeholder="••••••••"
+              minLength={8}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-3 text-xs font-semibold text-slate-600"
+            >
+              {showPassword ? copy.passwordToggleHide : copy.passwordToggleShow}
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <label className="flex items-center gap-2 text-slate-600">
+            <input
+              type="checkbox"
+              className="rounded border-slate-300"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
+            />
+            {copy.rememberMe}
+          </label>
+          <button type="button" className="font-semibold text-slate-700">
+            {copy.forgotPassword}
           </button>
         </div>
-      </div>
-      <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-slate-600">
-          <input
-            type="checkbox"
-            className="rounded border-slate-300"
-            checked={rememberMe}
-            onChange={(event) => setRememberMe(event.target.checked)}
-          />
-          {copy.rememberMe}
-        </label>
-        <button type="button" className="font-semibold text-slate-700">
-          {copy.forgotPassword}
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {success && <p className="text-sm text-emerald-600">{success}</p>}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? `${copy.button}...` : copy.button}
+        </button>
+        <p className="text-sm text-slate-500">{copy.agreeTerms}</p>
+      </form>
+      <div className="mt-6">
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {googleLoading ? `${copy.googleButton}...` : copy.googleButton}
         </button>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {success && <p className="text-sm text-emerald-600">{success}</p>}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {submitting ? `${copy.button}...` : copy.button}
-      </button>
-      <p className="text-sm text-slate-500">{copy.agreeTerms}</p>
-    </form>
+    </>
   );
 }

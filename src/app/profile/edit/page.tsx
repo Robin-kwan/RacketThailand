@@ -125,7 +125,7 @@ export default async function ProfileEditPage({
         </section>
         <aside className="flex flex-1 flex-col gap-4 rounded-[32px] border border-slate-200 bg-white/70 p-8 shadow-inner shadow-slate-200">
           <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-500">
+            <p className="text-xs font-semibold uppercase text-slate-500">
               {t("header.brand")}
             </p>
             <h2 className="text-2xl font-semibold text-slate-900">

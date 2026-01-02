@@ -90,7 +90,7 @@ function CourtCard({
           {[court.district, court.province].filter(Boolean).join(" · ")}
         </p>
       </div>
-      <div className="flex gap-3 text-xs uppercase tracking-[0.3em] text-slate-500">
+      <div className="flex gap-3 text-xs font-semibold uppercase text-slate-500">
         <span
           className="inline-flex rounded-full px-3 py-1"
           style={{ backgroundColor: `${accent}15`, color: accent }}
@@ -137,7 +137,7 @@ function GroupCard({
         <h3 className="text-lg font-semibold text-slate-900">
           {group.name ?? "Community group"}
         </h3>
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+        <p className="text-xs font-semibold uppercase text-slate-500">
           {group.sports?.code
             ? SPORT_META[group.sports.code]?.name[locale] ??
               group.sports.code
@@ -149,7 +149,7 @@ function GroupCard({
           </p>
         )}
       </div>
-      <div className="flex gap-3 text-xs uppercase tracking-[0.3em] text-slate-500">
+      <div className="flex gap-3 text-xs font-semibold uppercase text-slate-500">
         <span
           className="inline-flex rounded-full px-3 py-1"
           style={{ backgroundColor: `${accent}15`, color: accent }}
@@ -274,7 +274,7 @@ export default async function DashboardPage({
             {canAddCourts && (
               <Link
                 href={buildLocalizedPath("/dashboard/courts/new", locale)}
-                className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-700"
+                className="text-xs font-semibold uppercase text-slate-500 hover:text-slate-700"
               >
                 {copy.addCourtCta}
               </Link>
@@ -300,7 +300,7 @@ export default async function DashboardPage({
             </h2>
             <Link
               href={buildLocalizedPath("/groups/create", locale)}
-              className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-700"
+              className="text-xs font-semibold uppercase text-slate-500 hover:text-slate-700"
             >
               {t("groups.form.submit")}
             </Link>
@@ -321,7 +321,7 @@ export default async function DashboardPage({
 
       {ownedCourts.length > 0 && (
         <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+          <p className="text-xs font-semibold uppercase text-slate-400">
             Dashboard · Courts
           </p>
           <h2 className="mt-3 text-2xl font-semibold text-slate-900">

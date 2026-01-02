@@ -26,7 +26,7 @@ export const SPORT_META: Record<string, SportMeta> = {
   badminton: {
     code: "badminton",
     name: l("แบดมินตัน", "Badminton"),
-    accent: "#FF4D6D",
+    accent: "#E03357",
     gradient: "from-rose-500/30 via-orange-500/20 to-amber-500/10",
     coverImage: "/sports/badminton.png",
     heroHeadline: l("คอร์ทและกลุ่มแบดในระบบเดียว", "Badminton courts & groups in one place."),
@@ -56,7 +56,7 @@ export const SPORT_META: Record<string, SportMeta> = {
   padel: {
     code: "padel",
     name: l("พาเดล", "Padel"),
-    accent: "#FF9F1C",
+    accent: "#E07F00",
     gradient: "from-orange-500/30 via-amber-500/20 to-rose-500/10",
     coverImage: "/sports/padel.png",
     heroHeadline: l("คอร์ทและกลุ่มพาเดลในที่เดียว", "Padel courts & groups in one place."),
@@ -86,7 +86,7 @@ export const SPORT_META: Record<string, SportMeta> = {
   pickleball: {
     code: "pickleball",
     name: l("พิคเคิลบอล", "Pickleball"),
-    accent: "#2EC4B6",
+    accent: "#229A8F",
     gradient: "from-emerald-400/30 via-teal-400/20 to-cyan-500/10",
     coverImage: "/sports/pickleball.png",
     heroHeadline: l("คอร์ทและกลุ่มพิคเคิลบอลในระบบเดียว", "Pickleball courts & groups in one place."),
@@ -116,7 +116,7 @@ export const SPORT_META: Record<string, SportMeta> = {
   tennis: {
     code: "tennis",
     name: l("เทนนิส", "Tennis"),
-    accent: "#5C7CFA",
+    accent: "#3C57D6",
     gradient: "from-indigo-500/30 via-blue-500/20 to-sky-400/10",
     coverImage: "/sports/tennis.png",
     heroHeadline: l("คอร์ทและกลุ่มเทนนิสในระบบเดียว", "Tennis courts & groups in one place."),
@@ -146,7 +146,7 @@ export const SPORT_META: Record<string, SportMeta> = {
   tabletennis: {
     code: "tabletennis",
     name: l("ปิงปอง", "Table Tennis"),
-    accent: "#9B5DE5",
+    accent: "#7E38CE",
     gradient: "from-purple-500/30 via-fuchsia-400/20 to-pink-400/10",
     coverImage: "/sports/tabletennis.png",
     heroHeadline: l("คอร์ทและคลับปิงปองในระบบเดียว", "Table tennis clubs & groups in one place."),

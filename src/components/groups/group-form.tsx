@@ -588,7 +588,7 @@ export function GroupForm({
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  <p className="text-xs font-semibold uppercase text-slate-500">
                     {copy.sessionsTitle ?? copy.scheduleLabel}
                   </p>
                   {block.slots.map((slot) => {

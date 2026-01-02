@@ -230,145 +230,145 @@ export default async function GroupDetailPage({
   const sportName = group.sports?.name ?? undefined;
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-slate-900 md:px-10">
-      <HeaderSportScope sportSlug={sportCode ?? undefined} />
-      <HeaderSubLabel value={sportName} />
-      <CourtGallery gallery={gallery} courtName={group.name} />
-      <section
-        className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur"
-        style={{
-          boxShadow: `0 25px 60px ${accent}20`,
-        }}
-      >
-        <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
-          Group · {group.sports?.name ?? "RacketThailand"}
-        </p>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="mt-3 text-4xl font-semibold">{group.name}</h1>
-          {canEdit && (
-            <Link
-              href={buildLocalizedPath(
-                `/groups/${group.id}/edit`,
-                locale,
-              )}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-            >
-              {copy.edit}
-            </Link>
-          )}
-        </div>
-        {group.description && (
-          <p className="mt-2 text-sm text-slate-600">
-            {group.description}
+    <div className="bg-[#020617] text-slate-100">
+      <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-slate-100 md:px-10">
+        <HeaderSportScope sportSlug={sportCode ?? undefined} />
+        <HeaderSubLabel value={sportName} />
+        <CourtGallery gallery={gallery} courtName={group.name} />
+        <section
+          className="rounded-[32px] border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-black/50 backdrop-blur"
+          style={{
+            boxShadow: `0 25px 60px ${accent}33`,
+          }}
+        >
+          <p className="text-xs font-semibold uppercase text-slate-400">
+            Group · {group.sports?.name ?? "RacketThailand"}
           </p>
-        )}
-        <div className="mt-6 grid gap-5 rounded-3xl border border-slate-100 bg-slate-50/60 px-6 py-5 sm:grid-cols-2">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              {copy.owner}
-            </p>
-            <p className="text-base font-semibold text-slate-900">
-              {owner?.display_name ?? owner?.username ?? "—"}
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="mt-3 text-4xl font-semibold text-white">
+              {group.name}
+            </h1>
+            {canEdit && (
+              <Link
+                href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
+                className="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-500"
+              >
+                {copy.edit}
+              </Link>
+            )}
           </div>
-          {typeof group.player_amount === "number" &&
-            Number.isFinite(group.player_amount) && (
+          {group.description && (
+            <p className="mt-2 text-sm text-slate-300">{group.description}</p>
+          )}
+          <div className="mt-6 grid gap-5 rounded-3xl border border-slate-800 bg-slate-900/50 px-6 py-5 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                {copy.owner}
+              </p>
+              <p className="text-base font-semibold text-white">
+                {owner?.display_name ?? owner?.username ?? "—"}
+              </p>
+            </div>
+            {typeof group.player_amount === "number" &&
+              Number.isFinite(group.player_amount) && (
+                <div>
+                  <p className="text-xs font-semibold uppercase text-slate-400">
+                    {copy.playerAmount}
+                  </p>
+                  <p className="text-base font-semibold text-white">
+                    {group.player_amount}
+                  </p>
+                </div>
+              )}
+            {group.phone && (
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  {copy.playerAmount}
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  {copy.phone}
                 </p>
-                <p className="text-base font-semibold text-slate-900">
-                  {group.player_amount}
-                </p>
-              </div>
-            )}
-          {group.phone && (
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                {copy.phone}
-              </p>
-              <p className="text-base font-semibold text-slate-900">
-                <a
-                  href={`tel:${group.phone}`}
-                  className="underline decoration-dotted"
-                >
-                  {group.phone}
-                </a>
-              </p>
-            </div>
-          )}
-          {group.line_id && (
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                {copy.line}
-              </p>
-              <p className="text-base font-semibold text-slate-900">
-                {group.line_id}
-              </p>
-            </div>
-          )}
-          {group.updated_at && (
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                {copy.updated}
-              </p>
-              <p className="text-base font-semibold text-slate-900">
-                {new Date(group.updated_at).toLocaleString("en-US")}
-              </p>
-            </div>
-          )}
-          <div className="sm:col-span-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              {copy.sessionsTitle}
-            </p>
-            {sessionGroups.length === 0 ? (
-              <p className="text-base font-semibold text-slate-900">
-                {copy.sessionsEmpty}
-              </p>
-            ) : (
-              <div className="mt-3 space-y-3">
-                {sessionGroups.map((entry, index) => (
-                  <div
-                    key={entry.court?.id ?? `session-${index}`}
-                    className="rounded-2xl border border-slate-200 bg-white/60 px-4 py-3"
+                <p className="text-base font-semibold text-white">
+                  <a
+                    href={`tel:${group.phone}`}
+                    className="underline decoration-dotted"
                   >
-                    {entry.court ? (
-                      <Link
-                        href={buildLocalizedPath(
-                          `/courts/${entry.court.id}`,
-                          locale,
-                        )}
-                        className="text-sm font-semibold text-indigo-600 underline-offset-2 hover:underline"
-                      >
-                        {entry.court.name ?? "Linked court"}
-                      </Link>
-                    ) : (
-                      <p className="text-sm font-semibold text-slate-900">
-                        {t("groups.detail.court")}
-                      </p>
-                    )}
-                    <ul className="mt-2 space-y-1 text-sm font-semibold text-slate-900">
-                      {entry.sessions.map((session) => (
-                        <li key={`${session.id}-${session.day}-${session.start_time}`}>
-                          {getDayLabel(session.day, locale)} ·{" "}
-                          {session.start_time && session.end_time
-                            ? formatTimeRange(
-                                session.start_time,
-                                session.end_time,
-                                locale,
-                              )
-                            : copy.scheduleAny}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                    {group.phone}
+                  </a>
+                </p>
               </div>
             )}
+            {group.line_id && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  {copy.line}
+                </p>
+                <p className="text-base font-semibold text-white">
+                  {group.line_id}
+                </p>
+              </div>
+            )}
+            {group.updated_at && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  {copy.updated}
+                </p>
+                <p className="text-base font-semibold text-white">
+                  {new Date(group.updated_at).toLocaleString("en-US")}
+                </p>
+              </div>
+            )}
+            <div className="sm:col-span-2">
+              <p className="text-xs font-semibold uppercase text-slate-400">
+                {copy.sessionsTitle}
+              </p>
+              {sessionGroups.length === 0 ? (
+                <p className="text-base font-semibold text-white">
+                  {copy.sessionsEmpty}
+                </p>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {sessionGroups.map((entry, index) => (
+                    <div
+                      key={entry.court?.id ?? `session-${index}`}
+                      className="rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3"
+                    >
+                      {entry.court ? (
+                        <Link
+                          href={buildLocalizedPath(
+                            `/courts/${entry.court.id}`,
+                            locale,
+                          )}
+                          className="text-sm font-semibold text-sky-300 underline-offset-2 hover:underline"
+                        >
+                          {entry.court.name ?? "Linked court"}
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-semibold text-white">
+                          {t("groups.detail.court")}
+                        </p>
+                      )}
+                      <ul className="mt-2 space-y-1 text-sm font-semibold text-slate-200">
+                        {entry.sessions.map((session) => (
+                          <li
+                            key={`${session.id}-${session.day}-${session.start_time}`}
+                          >
+                            {getDayLabel(session.day, locale)} ·{" "}
+                            {session.start_time && session.end_time
+                              ? formatTimeRange(
+                                  session.start_time,
+                                  session.end_time,
+                                  locale,
+                                )
+                              : copy.scheduleAny}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
-
-    </main>
+        </section>
+      </main>
+    </div>
   );
 }

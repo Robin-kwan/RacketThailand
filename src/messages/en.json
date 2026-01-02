@@ -15,10 +15,19 @@
     "groupFinder": "Group finder"
   },
   "landing": {
-    "heroTitle": "Find courts and weekly groups for every racket sport.",
+    "heroTitle": "Pick your sport and get started",
     "heroDescription": "Pick your sport to browse verified venues, see active groups, and contact organizers—every portal shares the same account.",
     "contactPrompt": "Have new courts or groups to add? hello@racketthailand.com",
-    "cardCta": "Open portal"
+    "cardCta": "Open portal",
+    "feedbackTitle": "Share quick feedback",
+    "feedbackSubtitle": "Already signed in? Tell us about bugs, feature ideas, or courts we should verify next.",
+    "feedbackSubjectLabel": "Subject",
+    "feedbackSubjectPlaceholder": "What should we improve?",
+    "feedbackMessageLabel": "Message",
+    "feedbackMessagePlaceholder": "Describe the issue or idea so we can act on it.",
+    "feedbackSubmit": "Send feedback",
+    "feedbackSuccess": "Thanks! Your note is in our queue.",
+    "feedbackError": "We couldn't send that. Please try again."
   },
   "sport": {
     "emptyTitle": "Sport data unavailable",
@@ -52,6 +61,7 @@
     "passwordRequirements": "Use at least 8 characters with uppercase, lowercase, a number, and a symbol.",
     "rememberMe": "Remember me on this device",
     "forgotPassword": "Forgot password?",
+    "googleButton": "Continue with Google",
     "loginButton": "Sign in",
     "signupButton": "Create account",
     "switchToSignup": "Need an account? Sign up",
