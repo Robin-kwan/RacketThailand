@@ -296,7 +296,7 @@ export function CourtFinder({
 
       {prioritizeNearby && userLocation && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+          <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.mapHeading}
           </p>
           <div className="mt-4">
@@ -413,7 +413,7 @@ export function CourtFinder({
                   </li>
                 )}
               </ul>
-              <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-slate-500">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase text-slate-500">
                 <span
                   className="inline-flex rounded-full px-3 py-1"
                   style={{ backgroundColor: `${accent}15`, color: accent }}
@@ -421,7 +421,7 @@ export function CourtFinder({
                   {court.province || "TH"}
                 </span>
                 {distanceKm !== null && (
-                  <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 normal-case tracking-normal">
+                  <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 normal-case">
                     {copy.distanceLabel}: {distanceKm.toFixed(1)} km
                   </span>
                 )}

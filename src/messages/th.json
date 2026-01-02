@@ -15,10 +15,19 @@
     "groupFinder": "ค้นหากลุ่ม"
   },
   "landing": {
-    "heroTitle": "ค้นหาคอร์ทและกลุ่มประจำทุกกีฬาแร็กเก็ต",
+    "heroTitle": "เลือกกีฬาและเริ่มต้นได้เลย",
     "heroDescription": "เลือกกีฬาที่เล่นเพื่อดูคอร์ทยืนยันแล้ว กลุ่มที่เปิดรับสมาชิก และช่องทางติดต่อ—all ใช้บัญชีเดียวกัน",
     "contactPrompt": "มีคอร์ทหรือกลุ่มใหม่? hello@racketthailand.com",
-    "cardCta": "เข้าสู่พอร์ทัล"
+    "cardCta": "เข้าสู่พอร์ทัล",
+    "feedbackTitle": "บอกความเห็นให้เรารู้",
+    "feedbackSubtitle": "เมื่อเข้าสู่ระบบแล้ว สามารถแจ้งบั๊ก ไอเดีย หรือคอร์ทที่อยากให้เพิ่มได้ทันที",
+    "feedbackSubjectLabel": "หัวข้อ",
+    "feedbackSubjectPlaceholder": "อยากให้ปรับปรุงอะไร?",
+    "feedbackMessageLabel": "รายละเอียด",
+    "feedbackMessagePlaceholder": "เล่าเกี่ยวกับปัญหา ไอเดีย หรือข้อมูลเพิ่มเติมให้เราฟัง",
+    "feedbackSubmit": "ส่งคำติชม",
+    "feedbackSuccess": "ขอบคุณ! เราได้รับข้อความแล้ว",
+    "feedbackError": "ส่งไม่สำเร็จ กรุณาลองอีกครั้ง"
   },
   "sport": {
     "emptyTitle": "ยังไม่มีข้อมูลสำหรับกีฬานี้",
@@ -52,6 +61,7 @@
     "passwordRequirements": "รหัสผ่านต้องยาวอย่างน้อย 8 ตัว และมีตัวพิมพ์เล็ก พิมพ์ใหญ่ ตัวเลข และสัญลักษณ์",
     "rememberMe": "จำการเข้าสู่ระบบ",
     "forgotPassword": "ลืมรหัสผ่าน?",
+    "googleButton": "เข้าสู่ระบบด้วย Google",
     "loginButton": "เข้าสู่ระบบ",
     "signupButton": "สร้างบัญชี",
     "switchToSignup": "ยังไม่มีบัญชี? สมัครสมาชิก",

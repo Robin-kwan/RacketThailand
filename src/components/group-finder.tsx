@@ -484,7 +484,7 @@ export function GroupFinder({
 
       {prioritizeNearby && userLocation && mapCourts.length > 0 && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+          <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.mapHeading}
           </p>
           <div className="mt-4">
@@ -534,7 +534,7 @@ export function GroupFinder({
 
       {prioritizeNearby && userLocation && mapCourts.length === 0 && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+          <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.nearbyListTitle}
           </p>
           <div className="mt-4 space-y-3">
@@ -648,8 +648,8 @@ export function GroupFinder({
                   )}
               </div>
                 {renderSessions(group)}
-                <div className="flex items-center justify-end text-xs uppercase tracking-[0.3em] text-slate-500">
-                  <div className="flex flex-col items-end gap-1 text-[11px] tracking-normal">
+                <div className="flex items-center justify-end text-xs font-semibold uppercase text-slate-500">
+                  <div className="flex flex-col items-end gap-1 text-[11px]">
                     {group.updated_at && (
                       <span className="text-slate-400">
                         {copy.lastUpdated}{" "}

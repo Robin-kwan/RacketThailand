@@ -64,6 +64,7 @@ export function SiteHeader({
 }: SiteHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const isLandingPage = pathname === "/";
   const searchParams = useSearchParams();
   const { subLabel: customSubLabel, sportSlug: overrideSportSlug } =
     useHeaderConfig();
@@ -130,8 +131,11 @@ export function SiteHeader({
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const localeMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const closeMobileNav = () => setMobileNavOpen(false);
 
   const handleLocaleSelect = (targetLocale: Locale) => {
     const params = new URLSearchParams(searchParams?.toString());
@@ -145,6 +149,7 @@ export function SiteHeader({
       scroll: false,
     });
     setLocaleMenuOpen(false);
+    closeMobileNav();
   };
   const handleLogout = async () => {
     setMenuOpen(false);
@@ -175,21 +180,28 @@ export function SiteHeader({
       ) {
         setLocaleMenuOpen(false);
       }
+      if (
+        mobileMenuRef.current &&
+        event.target instanceof Node &&
+        !mobileMenuRef.current.contains(event.target)
+      ) {
+        setMobileNavOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClick);
     return () => {
       document.removeEventListener("mousedown", handleClick);
     };
   }, []);
-
   const headerClass =
     "relative w-full bg-white/90 py-6 px-4 text-sm text-slate-900 shadow-lg shadow-slate-900/5 backdrop-blur transition-all duration-300 md:px-8";
 
   return (
-    <header
-      className={headerClass}
-      style={accentGlowStyle}
-    >
+    <>
+      <header
+        className={headerClass}
+        style={accentGlowStyle}
+      >
       <span
         className="pointer-events-none absolute inset-0 opacity-60"
         style={{
@@ -200,75 +212,81 @@ export function SiteHeader({
         className="pointer-events-none absolute inset-x-0 top-0 h-1 opacity-90"
         style={accentStripeStyle}
       />
-      <div className="relative z-10 flex w-full flex-col gap-4">
+      <div className="relative z-20 mx-auto flex w-full max-w-screen-xl flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-4 md:gap-6">
+          <div className="flex w-full items-center justify-between gap-4 md:w-auto md:gap-6">
             <Link
               href={buildLocalizedPath("/", locale)}
               className="flex items-center gap-4"
             >
-              <div
-                className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/70 bg-white p-1 shadow-inner"
-                style={{
-                  boxShadow: `0 18px 40px ${accent}33`,
-                }}
-              >
-                <span
-                  className="absolute inset-0 rounded-2xl opacity-70"
-                  style={{
-                    background: `linear-gradient(135deg, ${accent}, rgba(15,23,42,0.5))`,
-                  }}
-                />
-                <Image
-                  src="/logo.svg"
-                  alt="RacketThailand logo"
-                  width={44}
-                  height={44}
-                  priority
-                  className="relative z-10"
-                />
-              </div>
               <div className="text-left">
-                <p className="text-lg font-semibold tracking-wide text-slate-900">
+                <p className="text-lg font-semibold text-slate-900">
                   {labels.brand}
                 </p>
-                <p className="text-[11px] uppercase tracking-[0.4em] text-slate-500">
-                  <span style={{ color: accent }}>{resolvedSubLabel}</span>
+                <p className="text-[11px] font-semibold uppercase text-slate-500">
+                  <span style={{ color: isLandingPage ? "#f8fafc" : accent }}>
+                    {resolvedSubLabel}
+                  </span>
                 </p>
               </div>
             </Link>
             {navLinks.length > 0 && (
-              <nav className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
-                {navLinks.map((link) => {
-                  const isLinkActive =
-                    pathname === link.path ||
-                    (link.path !== "/" && pathname.startsWith(`${link.path}/`));
-                  return (
-                    <Link
-                      key={link.path}
-                      href={link.href}
-                      aria-current={isLinkActive ? "page" : undefined}
-                      className={`rounded-full px-4 py-2 transition ${
-                        isLinkActive
-                          ? "text-white"
-                          : "border border-transparent hover:border-slate-200 hover:text-slate-900"
-                      }`}
-                      style={
-                        isLinkActive
-                          ? {
-                              backgroundColor: accent,
-                              boxShadow: `0 12px 25px ${accent}44`,
-                            }
-                          : undefined
-                      }
-                    >
-                      {link.label}
-                    </Link>
-                  );
-                })}
-              </nav>
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(true)}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-xl text-slate-200 shadow-sm hover:border-slate-500 md:hidden"
+                aria-label="Open navigation menu"
+              >
+                ☰
+              </button>
             )}
           </div>
+          {navLinks.length > 0 && (
+            <nav className="hidden flex-wrap items-center gap-2 text-xs font-semibold text-slate-600 md:flex">
+              {navLinks.map((link) => {
+                const isLinkActive =
+                  pathname === link.path ||
+                  (link.path !== "/" && pathname.startsWith(`${link.path}/`));
+                return (
+                  <Link
+                    key={link.path}
+                    href={link.href}
+                    aria-current={isLinkActive ? "page" : undefined}
+                    className={`rounded-full px-4 py-2 transition ${
+                      isLinkActive
+                        ? "text-white"
+                        : "border border-transparent"
+                    }`}
+                    style={
+                      isLinkActive
+                        ? {
+                            backgroundColor: accent,
+                            boxShadow: `0 12px 25px ${accent}44`,
+                          }
+                        : {
+                            color: accent,
+                            borderColor: "transparent",
+                          }
+                    }
+                    onMouseEnter={(event) => {
+                      if (isLinkActive) return;
+                      event.currentTarget.style.color = "#fff";
+                      event.currentTarget.style.backgroundColor = `${accent}22`;
+                      event.currentTarget.style.borderColor = accent;
+                    }}
+                    onMouseLeave={(event) => {
+                      if (isLinkActive) return;
+                      event.currentTarget.style.color = accent;
+                      event.currentTarget.style.backgroundColor = "transparent";
+                      event.currentTarget.style.borderColor = "transparent";
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
           <div className="flex flex-wrap items-center justify-end gap-2">
             {isAuthenticated && (
               <NotificationsMenu locale={locale} copy={notificationCopy} />
@@ -365,26 +383,20 @@ export function SiteHeader({
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="hidden items-center gap-2 md:flex">
                 <Link
                   href={buildLocalizedPath("/login", locale)}
                   className="rounded-full border border-slate-200/70 bg-white/80 px-4 py-2 font-semibold text-slate-700 shadow-sm hover:border-slate-400"
                 >
                   {labels.login}
                 </Link>
-                <Link
-                  href={buildLocalizedPath("/signup", locale)}
-                  className="rounded-full bg-slate-900 px-4 py-2 font-semibold text-white shadow-sm shadow-slate-900/30 hover:bg-slate-800"
-                >
-                  {labels.signup}
-                </Link>
               </div>
             )}
-            <div className="relative" ref={localeMenuRef}>
+            <div className="relative hidden md:block" ref={localeMenuRef}>
               <button
                 type="button"
                 onClick={() => setLocaleMenuOpen((prev) => !prev)}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/70 bg-white/80 text-xl shadow-sm hover:border-slate-400"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-xl text-slate-200 shadow-sm hover:border-slate-500"
                 aria-label={LOCALE_INFO[locale].label}
               >
                 <Image
@@ -396,16 +408,16 @@ export function SiteHeader({
                 />
               </button>
               {localeMenuOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-2xl border border-slate-200/80 bg-white/95 p-2 text-sm shadow-xl shadow-slate-900/10 backdrop-blur">
+                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-2xl border border-slate-700 bg-slate-900/95 p-2 text-sm text-slate-100 shadow-xl shadow-slate-900/30 backdrop-blur">
                   {(Object.keys(LOCALE_INFO) as Locale[]).map((option) => (
                     <button
                       key={option}
                       type="button"
                       onClick={() => handleLocaleSelect(option)}
-                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left hover:bg-slate-50 ${
+                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left ${
                         option === locale
-                          ? "font-semibold text-slate-900"
-                          : "text-slate-600"
+                          ? "bg-slate-800 font-semibold text-white"
+                          : "text-slate-300 hover:bg-slate-800/60"
                       }`}
                     >
                       <Image
@@ -424,6 +436,148 @@ export function SiteHeader({
           </div>
         </div>
       </div>
-    </header>
+      </header>
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-[999] flex md:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            aria-label="Close menu overlay"
+            onClick={closeMobileNav}
+          />
+          <aside
+            ref={mobileMenuRef}
+            className="relative ml-auto flex h-full w-80 flex-col gap-6 border-l border-slate-800 bg-[#050a1a] p-6 text-slate-100"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-300">
+                  {labels.brand}
+                </p>
+                <p className="text-xs font-semibold uppercase text-slate-500">
+                  {resolvedSubLabel}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeMobileNav}
+                className="rounded-full border border-slate-700 p-3 text-slate-200 hover:border-slate-500"
+                aria-label="Close menu"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="h-4 w-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m6 6 12 12M6 18 18 6"
+                  />
+                </svg>
+              </button>
+            </div>
+            {navLinks.length > 0 && (
+              <nav className="space-y-2">
+                {navLinks.map((link) => {
+                  const isLinkActive =
+                    pathname === link.path ||
+                    (link.path !== "/" && pathname.startsWith(`${link.path}/`));
+                  return (
+                    <Link
+                      key={link.path}
+                      href={link.href}
+                      onClick={closeMobileNav}
+                      className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold ${
+                        isLinkActive
+                          ? "border-slate-600 bg-slate-900 text-white"
+                          : "border-transparent bg-slate-900/40 text-slate-200"
+                      }`}
+                    >
+                      {link.label}
+                      {isLinkActive && <span aria-hidden>•</span>}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
+            <div className="space-y-3">
+              {isAuthenticated ? (
+                <>
+                  <p className="text-xs font-semibold uppercase text-slate-500">
+                    {user?.email}
+                  </p>
+                  <Link
+                    href={buildLocalizedPath("/profile/edit", locale)}
+                    className="block rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100"
+                    onClick={closeMobileNav}
+                  >
+                    {labels.profile}
+                  </Link>
+                  <Link
+                    href={buildLocalizedPath("/dashboard", locale)}
+                    className="block rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100"
+                    onClick={closeMobileNav}
+                  >
+                    {labels.dashboard}
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href={buildLocalizedPath("/admin", locale)}
+                      className="block rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100"
+                      onClick={closeMobileNav}
+                    >
+                      {labels.admin}
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileNav();
+                      void handleLogout();
+                    }}
+                    className="w-full rounded-xl border border-slate-800 px-4 py-3 text-left text-sm font-semibold text-rose-300"
+                  >
+                    {labels.logout}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href={buildLocalizedPath("/login", locale)}
+                  className="block rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100"
+                  onClick={closeMobileNav}
+                >
+                  {labels.login}
+                </Link>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-slate-500">
+                {labels.language}
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                {(Object.keys(LOCALE_INFO) as Locale[]).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleLocaleSelect(option)}
+                    className={`flex items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold ${
+                      option === locale
+                        ? "border-slate-600 text-white"
+                        : "border-slate-800 text-slate-300"
+                    }`}
+                  >
+                    {LOCALE_INFO[option].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

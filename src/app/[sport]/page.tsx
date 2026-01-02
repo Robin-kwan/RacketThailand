@@ -84,7 +84,7 @@ export default async function SportPage({
           <div className="flex justify-center">
             <Link
               href={buildLocalizedPath("/", locale)}
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-slate-800 hover:border-slate-500"
+              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold uppercase text-slate-800 hover:border-slate-500"
             >
               {t("sport.emptyCta")}
             </Link>
@@ -119,22 +119,22 @@ export default async function SportPage({
                 <p className="text-3xl font-semibold text-white">
                   {stat.value}
                 </p>
-                <p className="text-xs uppercase tracking-[0.3em]">
-                  {t(`sport.stats.${stat.key}`)}
-                </p>
+            <p className="text-xs font-semibold uppercase">
+              {t(`sport.stats.${stat.key}`)}
+            </p>
               </div>
             ))}
           </div>
           <div className="flex flex-wrap gap-4">
             <Link
               href={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-900 shadow-lg shadow-slate-900/20"
+              className="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-slate-900 shadow-lg shadow-slate-900/20"
             >
               {t("courtFinder.cta")}
             </Link>
             <Link
               href={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
-              className="rounded-full border border-white/70 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:border-white"
+              className="rounded-full border border-white/70 px-6 py-3 text-sm font-semibold uppercase text-white hover:border-white"
             >
               {t("sport.groupFinderCta")}
             </Link>
@@ -144,7 +144,7 @@ export default async function SportPage({
       <section className="bg-white px-6 py-12 text-slate-900 md:px-12">
         <div className="mx-auto flex max-w-5xl flex-col gap-8">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+            <p className="text-xs font-semibold uppercase text-slate-400">
               {t("sport.useNowTitle")}
             </p>
             <p className="text-sm text-slate-600">

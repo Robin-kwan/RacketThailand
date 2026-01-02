@@ -81,7 +81,7 @@ export function CourtRequestList({
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-slate-500">
+              <p className="text-sm font-semibold uppercase text-slate-500">
                 {copy.badge}
               </p>
               <h3 className="text-2xl font-semibold text-slate-900">

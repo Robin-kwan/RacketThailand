@@ -46,6 +46,7 @@ export default async function LoginPage({
     emailNotVerified: t("auth.emailNotVerified"),
     passwordToggleShow: t("auth.passwordShow"),
     passwordToggleHide: t("auth.passwordHide"),
+    googleButton: t("auth.googleButton"),
   };
 
   return (
