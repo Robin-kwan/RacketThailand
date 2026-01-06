@@ -183,9 +183,6 @@ export function GroupFinder({
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
-  const localeQuery =
-    locale === DEFAULT_LOCALE ? "" : `?lang=${locale}`;
-
   useEffect(() => {
     setServerGroups(initialGroups);
   }, [initialGroups]);
@@ -429,6 +426,7 @@ export function GroupFinder({
             value={dayFilter}
             onChange={(event) => setDayFilter(event.target.value)}
             options={dayOptions}
+            variant="light"
           />
           <BaseSelect
             label={copy.startTimeLabel}
@@ -436,6 +434,7 @@ export function GroupFinder({
             value={startTime}
             onChange={(event) => setStartTime(event.target.value)}
             options={timeOptions}
+            variant="light"
           />
           <BaseSelect
             label={copy.endTimeLabel}
@@ -443,6 +442,7 @@ export function GroupFinder({
             value={endTime}
             onChange={(event) => setEndTime(event.target.value)}
             options={endTimeOptions}
+            variant="light"
           />
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
@@ -455,7 +455,7 @@ export function GroupFinder({
               type="button"
               onClick={handleRequestNearby}
               disabled={locatingNearby}
-              className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed"
             >
               {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
             </button>
@@ -598,55 +598,52 @@ export function GroupFinder({
                 ?.image_url ??
               group.group_photos?.[0]?.image_url ??
               fallbackImage;
+            const groupHref = buildLocalizedPath(`/groups/${group.id}`, locale);
             return (
-              <div
+              <Link
                 key={group.id}
-                className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-md shadow-slate-200"
+                href={groupHref}
+                className="group flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-md shadow-slate-200 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400"
               >
                 <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
-                  <div className="relative h-36 w-full">
+                  <div className="relative aspect-[4/3] w-full">
                     <Image
                       src={primaryPhoto}
                       alt={group.name ?? "Group photo"}
                       fill
                       sizes="(max-width:768px) 100vw, 50vw"
-                      className="object-cover"
+                      className="object-cover transition duration-300 group-hover:scale-105"
                     />
                   </div>
                 </div>
-              <div className="space-y-1">
-                  <a
-                    href={`/groups/${group.id}${localeQuery}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-2xl font-semibold text-indigo-600 underline-offset-4 hover:underline"
-                  >
+                <div className="space-y-1 text-left">
+                  <p className="text-2xl font-semibold text-slate-900">
                     {group.name ?? "Community group"}
-                  </a>
-                {group.description && (
-                  <p className="text-sm text-slate-600 line-clamp-2">
-                    {group.description}
                   </p>
-                )}
-                <div className="text-xs text-slate-500">
-                  {group.phone && (
-                    <p>
-                      {copy.phoneLabel}: {group.phone}
+                  {group.description && (
+                    <p className="text-sm text-slate-600 line-clamp-2">
+                      {group.description}
                     </p>
                   )}
-                  {group.line_id && (
-                    <p>
-                      {copy.lineLabel}: {group.line_id}
-                    </p>
-                  )}
+                  <div className="text-xs text-slate-500">
+                    {group.phone && (
+                      <p>
+                        {copy.phoneLabel}: {group.phone}
+                      </p>
+                    )}
+                    {group.line_id && (
+                      <p>
+                        {copy.lineLabel}: {group.line_id}
+                      </p>
+                    )}
+                  </div>
+                  {typeof group.player_amount === "number" &&
+                    Number.isFinite(group.player_amount) && (
+                      <p className="text-xs font-semibold text-slate-500">
+                        {copy.playerAmountLabel}: {group.player_amount}
+                      </p>
+                    )}
                 </div>
-                {typeof group.player_amount === "number" &&
-                  Number.isFinite(group.player_amount) && (
-                    <p className="text-xs font-semibold text-slate-500">
-                      {copy.playerAmountLabel}: {group.player_amount}
-                    </p>
-                  )}
-              </div>
                 {renderSessions(group)}
                 <div className="flex items-center justify-end text-xs font-semibold uppercase text-slate-500">
                   <div className="flex flex-col items-end gap-1 text-[11px]">
@@ -663,7 +660,7 @@ export function GroupFinder({
                     )}
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

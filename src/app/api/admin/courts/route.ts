@@ -12,6 +12,7 @@ type CourtPayload = {
   opening_hours?: OpeningHoursEntry[] | null;
   phone?: string;
   line_id?: string;
+  lineQrUrl?: string | null;
   website_url?: string;
   latitude: number;
   longitude: number;
@@ -76,6 +77,7 @@ export async function POST(request: Request) {
       opening_hours: payload.opening_hours ?? null,
       phone: payload.phone || null,
       line_id: payload.line_id || null,
+      line_qr_url: payload.lineQrUrl ?? null,
       website_url: payload.website_url || null,
       lat: payload.latitude,
       lng: payload.longitude,

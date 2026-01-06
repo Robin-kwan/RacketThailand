@@ -94,7 +94,7 @@ export function MultiImageInput({
 
   return (
     <div className="space-y-3">
-      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      <label className="text-sm font-semibold text-slate-100">{label}</label>
       <input
         ref={inputRef}
         type="file"
@@ -103,7 +103,7 @@ export function MultiImageInput({
         className="hidden"
         onChange={handleFileChange}
       />
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-rose-400">{error}</p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {previews.map((preview) => (
           <BaseImageCard
@@ -132,7 +132,7 @@ export function MultiImageInput({
           <button
             type="button"
             onClick={handleAddClick}
-            className={`flex ${cardHeightClass} items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-3xl text-slate-400 hover:border-slate-500 hover:text-slate-600`}
+            className={`flex ${cardHeightClass} items-center justify-center rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 text-3xl text-slate-300 hover:border-slate-500 hover:text-white`}
           >
             +
           </button>

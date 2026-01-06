@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { BaseImageCard } from "@/components/base-image-card";
+import { LineQrUploader } from "@/components/line-qr-uploader";
 import {
   CourtFormFields,
   CourtFormValues,
@@ -40,6 +41,7 @@ type CourtRecord = {
   latitude: string;
   longitude: string;
   google_place_id: string | null;
+  lineQrUrl?: string | null;
 };
 
 type ExistingPhoto = {
@@ -94,6 +96,7 @@ type CourtEditFormProps = {
     openingHours: string;
     phone: string;
     line: string;
+    lineQr: string;
     website: string;
     placeSearch: string;
     placeSearchHelper: string;
@@ -151,6 +154,19 @@ export function CourtEditForm({
       ),
     ),
   );
+  const [lineQrPreview, setLineQrPreview] = useState<string | null>(
+    court.lineQrUrl ?? null,
+  );
+  const [lineQrFile, setLineQrFile] = useState<File | null>(null);
+  const [lineQrRemovalPending, setLineQrRemovalPending] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (lineQrPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(lineQrPreview);
+      }
+    };
+  }, [lineQrPreview]);
   const initialPrimaryIdRef = useRef(
     existingPhotos.find((photo) => photo.is_primary)?.id ?? null,
   );
@@ -276,6 +292,9 @@ export function CourtEditForm({
         setUploading(true);
         await handlePhotoOperations(primaryChanged);
       }
+      if (lineQrFile || lineQrRemovalPending) {
+        await handleLineQrUpdate();
+      }
       showToast({ variant: "success", message: copy.success });
     } catch (error) {
       console.error(error);
@@ -399,6 +418,55 @@ export function CourtEditForm({
       nextPhotos.find((photo) => photo.is_primary)?.id ?? null;
   };
 
+  const handleLineQrUpdate = async () => {
+    if (lineQrFile && lineQrPreview) {
+      const ext = lineQrFile.name.split(".").pop();
+      const filePath = `${court.id}/line-qr.${ext ?? "jpg"}`;
+      const { error: uploadError } = await supabase.storage
+        .from(COURT_BUCKET)
+        .upload(filePath, lineQrFile, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: lineQrFile.type,
+        });
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(COURT_BUCKET).getPublicUrl(filePath);
+      const response = await fetch(`/api/courts/${court.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lineQrUrl: publicUrl }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || copy.error);
+      }
+      if (lineQrPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(lineQrPreview);
+      }
+      setLineQrPreview(publicUrl);
+      setLineQrFile(null);
+      setLineQrRemovalPending(false);
+      return;
+    }
+    if (lineQrRemovalPending) {
+      const response = await fetch(`/api/courts/${court.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lineQrUrl: null }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || copy.error);
+      }
+      setLineQrPreview(null);
+      setLineQrRemovalPending(false);
+    }
+  };
+
   const handleRemovePhoto = (photoId: string) => {
     if (uploading) return;
     setPhotos((prev) => {
@@ -447,6 +515,19 @@ export function CourtEditForm({
       return next;
     });
     event.target.value = "";
+  };
+
+  const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
+    if (lineQrPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(lineQrPreview);
+    }
+    setLineQrFile(file);
+    setLineQrPreview(previewUrl ?? null);
+    if (file) {
+      setLineQrRemovalPending(false);
+    } else if (!previewUrl) {
+      setLineQrRemovalPending(Boolean(lineQrPreview));
+    }
   };
 
   const handlePlaceResolution = (resolution: PlaceResolution) => {
@@ -500,73 +581,81 @@ export function CourtEditForm({
         sports={sports}
         onChange={handleChange}
         extras={
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-700">
-                {copy.photos}
-              </p>
-              {(uploading || submitting) && (
-                <span className="flex items-center gap-1 text-xs text-slate-500">
-                  <svg
-                    className="h-3 w-3 animate-spin"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
+          <div className="space-y-4">
+            <LineQrUploader
+              label={copy.lineQr}
+              previewUrl={lineQrPreview}
+              onChange={handleLineQrChange}
+              disabled={submitting || uploading}
+            />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-700">
+                  {copy.photos}
+                </p>
+                {(uploading || submitting) && (
+                  <span className="flex items-center gap-1 text-xs text-slate-500">
+                    <svg
+                      className="h-3 w-3 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                      />
+                    </svg>
+                    Working...
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {photos
+                  .slice()
+                  .sort((a, b) => Number(b.is_primary) - Number(a.is_primary))
+                  .map((photo) => (
+                    <BaseImageCard
+                      key={photo.id}
+                      imageUrl={photo.image_url ?? undefined}
+                      alt="Court photo"
+                      onRemove={() => handleRemovePhoto(photo.id)}
+                      disabled={uploading || submitting}
+                      heightClass="h-40"
+                      footer={
+                        <button
+                          type="button"
+                          onClick={() => handleSetPrimary(photo.id)}
+                          className={`font-semibold ${photo.is_primary ? "text-emerald-300" : "text-slate-200"}`}
+                          disabled={photo.is_primary || uploading || submitting}
+                        >
+                          {photo.is_primary ? "Primary" : "Make primary"}
+                        </button>
+                      }
                     />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                  ))}
+                {photos.length < 8 && (
+                  <label className="flex h-40 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-3xl text-slate-400 hover:border-slate-500 hover:text-slate-600 focus-within:border-slate-500">
+                    <span>+</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleAddPhotos}
+                      disabled={uploading || submitting}
                     />
-                  </svg>
-                  Working...
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {photos
-                .slice()
-                .sort((a, b) => Number(b.is_primary) - Number(a.is_primary))
-                .map((photo) => (
-                  <BaseImageCard
-                    key={photo.id}
-                    imageUrl={photo.image_url ?? undefined}
-                    alt="Court photo"
-                    onRemove={() => handleRemovePhoto(photo.id)}
-                    disabled={uploading || submitting}
-                    heightClass="h-40"
-                    footer={
-                      <button
-                        type="button"
-                        onClick={() => handleSetPrimary(photo.id)}
-                        className={`font-semibold ${photo.is_primary ? "text-emerald-300" : "text-slate-200"}`}
-                        disabled={photo.is_primary || uploading || submitting}
-                      >
-                        {photo.is_primary ? "Primary" : "Make primary"}
-                      </button>
-                    }
-                  />
-                ))}
-              {photos.length < 8 && (
-                <label className="flex h-40 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-3xl text-slate-400 hover:border-slate-500 hover:text-slate-600 focus-within:border-slate-500">
-                  <span>+</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleAddPhotos}
-                    disabled={uploading || submitting}
-                  />
-                </label>
-              )}
+                  </label>
+                )}
+              </div>
             </div>
           </div>
         }
@@ -575,7 +664,7 @@ export function CourtEditForm({
       <button
         type="submit"
         disabled={submitting || !hasPendingChanges}
-        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+      className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {submitting ? `${copy.submitting}...` : copy.submit}
       </button>

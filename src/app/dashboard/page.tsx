@@ -72,7 +72,7 @@ function CourtCard({
       className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-md shadow-slate-200 transition hover:-translate-y-1"
     >
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
-        <div className="relative h-36 w-full">
+        <div className="relative aspect-[4/3] w-full">
           <Image
             src={primaryPhoto}
             alt={court.name ?? "Court image"}
@@ -123,7 +123,7 @@ function GroupCard({
       className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 text-sm text-slate-600 shadow-md shadow-slate-200 transition hover:-translate-y-1"
     >
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
-        <div className="relative h-36 w-full">
+        <div className="relative aspect-[4/3] w-full">
           <Image
             src={primaryPhoto}
             alt={group.name ?? "Group photo"}
@@ -281,9 +281,15 @@ export default async function DashboardPage({
             )}
           </div>
           {ownedCourts.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-600">
-              {copy.ownedCourtsEmpty}
-            </p>
+            <div className="mt-4 space-y-3 text-sm text-slate-600">
+              <p>{copy.ownedCourtsEmpty}</p>
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500">
+                <span aria-hidden>ℹ️</span>
+                <span className="font-semibold text-slate-600">
+                  Add a court by contacting racketthailand@gmail.com
+                </span>
+              </div>
+            </div>
           ) : (
             <div className="mt-4 grid gap-4">
               {ownedCourts.map((court) => (

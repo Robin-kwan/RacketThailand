@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { ensureCourtGroupLinks } from "@/server/groupSessions";
+import { requireGroupAccess } from "@/server/groupAccess";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 type RouteParams = { groupId: string };
 type RouteParamsInput = Promise<RouteParams>;
@@ -26,6 +27,7 @@ type PatchGroupPayload = {
   playerAmount?: number | string | null;
   phone?: string | null;
   lineId?: string | null;
+  lineQrUrl?: string | null;
 };
 
 function normalizeSessions(sessions?: SessionPayload[]) {
@@ -67,40 +69,12 @@ function normalizeContact(value?: string | null) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-async function requireGroupAccess(groupId: string) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) {
-    return { supabase, user: null, error: "UNAUTHORIZED" };
-  }
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("status")
-    .eq("id", user.id)
-    .single();
-  if (profile?.status === "admin") {
-    return { supabase, user, error: null };
-  }
-  const { data: group } = await supabase
-    .from("groups")
-    .select("owner_id")
-    .eq("id", groupId)
-    .single();
-  if (group?.owner_id !== user.id) {
-    return { supabase, user, error: "FORBIDDEN" };
-  }
-  return { supabase, user, error: null };
-}
-
 export async function PATCH(
   request: Request,
   options: { params: RouteParamsInput },
 ) {
   const resolved = await resolveParams(options.params);
-  const { supabase, user, error } = await requireGroupAccess(
+  const { user, error } = await requireGroupAccess(
     resolved.groupId,
   );
   if (error === "UNAUTHORIZED") {
@@ -139,8 +113,19 @@ export async function PATCH(
   if (payload.lineId !== undefined) {
     update.line_id = normalizeContact(payload.lineId);
   }
+  if (payload.lineQrUrl !== undefined) {
+    if (
+      typeof payload.lineQrUrl === "string" &&
+      payload.lineQrUrl.trim().length > 0
+    ) {
+      update.line_qr_url = payload.lineQrUrl.trim();
+    } else {
+      update.line_qr_url = null;
+    }
+  }
 
   const normalizedSessions = normalizeSessions(payload.sessions);
+  const adminSupabase = getSupabaseAdminClient();
   const hasSessionPayload = Array.isArray(payload.sessions);
   const shouldUpdateGroup = Object.keys(update).length > 0;
 
@@ -153,7 +138,7 @@ export async function PATCH(
   if (shouldUpdateGroup) {
     update.updated_at = new Date().toISOString();
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminSupabase
       .from("groups")
       .update(update)
       .eq("id", resolved.groupId);
@@ -167,7 +152,7 @@ export async function PATCH(
   }
 
   if (hasSessionPayload) {
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await adminSupabase
       .from("group_sessions")
       .delete()
       .eq("group_id", resolved.groupId);
@@ -178,7 +163,7 @@ export async function PATCH(
       );
     }
     if (normalizedSessions.length > 0) {
-      const { error: insertError } = await supabase
+      const { error: insertError } = await adminSupabase
         .from("group_sessions")
         .insert(
           normalizedSessions.map((session) => ({
@@ -197,7 +182,7 @@ export async function PATCH(
       }
 
       await ensureCourtGroupLinks(
-        supabase,
+        adminSupabase,
         resolved.groupId,
         normalizedSessions.map((session) => session.courtId),
       );

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import {
   buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
@@ -37,6 +39,16 @@ const DAY_LABELS: Record<string, { en: string; th: string }> = {
   thursday: { en: "Thursday", th: "วันพฤหัสบดี" },
   friday: { en: "Friday", th: "วันศุกร์" },
   saturday: { en: "Saturday", th: "วันเสาร์" },
+};
+
+const SCHEMA_DAY_MAP: Record<string, string> = {
+  monday: "https://schema.org/Monday",
+  tuesday: "https://schema.org/Tuesday",
+  wednesday: "https://schema.org/Wednesday",
+  thursday: "https://schema.org/Thursday",
+  friday: "https://schema.org/Friday",
+  saturday: "https://schema.org/Saturday",
+  sunday: "https://schema.org/Sunday",
 };
 
 function getDayLabel(day: string, locale: string) {
@@ -90,6 +102,20 @@ function formatTimeRange(start: string, end: string, locale: string) {
   )}`;
 }
 
+function toSchemaOpenTime(value: string) {
+  if (!value || value === "Open") {
+    return "00:00";
+  }
+  return value;
+}
+
+function toSchemaCloseTime(value: string | null, openValue: string) {
+  if (!value || value === "Open") {
+    return openValue === "Open" ? "23:59" : "23:59";
+  }
+  return value;
+}
+
 type Params = {
   courtId: string;
 };
@@ -107,6 +133,85 @@ async function resolveSearchParams(
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
   return searchParams;
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: ParamsInput;
+  searchParams?: SearchParamsInput;
+}): Promise<Metadata> {
+  const resolvedParams = await resolveParams(params);
+  const resolvedSearch = await resolveSearchParams(searchParams);
+  const locale = normalizeLocale(resolvedSearch?.lang);
+  const detail = await fetchCourtDetail(resolvedParams.courtId);
+  if (!detail?.court) {
+    return {
+      title: "Court not found | RacketThailand",
+    };
+  }
+  const court = detail.court;
+  const sportMeta = detail.sport?.code
+    ? SPORT_META[detail.sport.code]
+    : undefined;
+  const sportName =
+    sportMeta?.name?.[locale] ??
+    detail.sport?.name ??
+    (locale === "th" ? "สนามกีฬา" : "Racket sport");
+  const locationParts = [court.district, court.province]
+    .filter((part): part is string => Boolean(part && part.trim()))
+    .join(", ");
+  const descriptionParts = [
+    court.address,
+    locationParts,
+    court.price_note ? `Pricing: ${court.price_note}` : null,
+    court.phone ? `Phone: ${court.phone}` : null,
+  ].filter(Boolean);
+  const description =
+    descriptionParts.join(" · ") ||
+    `${sportName} venue listed on RacketThailand.`;
+  const canonicalPath = `/courts/${resolvedParams.courtId}`;
+  const canonical = buildCanonicalUrl(canonicalPath, locale);
+  const alternateLanguages = buildLocaleAlternates(canonicalPath);
+  const heroImage =
+    detail.photos?.find((photo) => photo.is_primary)?.image_url ??
+    detail.photos?.[0]?.image_url ??
+    sportMeta?.coverImage ??
+    undefined;
+
+  return {
+    title: `${court.name ?? sportName}${
+      locationParts ? ` in ${locationParts}` : ""
+    } | ${sportName} | RacketThailand`,
+    description,
+    alternates: {
+      canonical,
+      languages: alternateLanguages,
+    },
+    openGraph: {
+      title: `${court.name ?? sportName}${
+        locationParts ? ` in ${locationParts}` : ""
+      } | RacketThailand`,
+      description,
+      url: canonical,
+      type: "website",
+      images: heroImage
+        ? [
+            {
+              url: heroImage,
+              alt: `${court.name ?? sportName} court photo`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${court.name ?? sportName} | RacketThailand`,
+      description,
+      images: heroImage ? [heroImage] : undefined,
+    },
+  };
 }
 
 export default async function CourtPage({
@@ -174,6 +279,7 @@ export default async function CourtPage({
     price: t("courtPage.price"),
     phone: t("courtPage.phone"),
     line: t("courtPage.line"),
+    lineQr: t("courtPage.lineQr"),
     website: t("courtPage.website"),
     hours: t("courtPage.hours"),
     back: t("courtPage.back"),
@@ -191,6 +297,47 @@ export default async function CourtPage({
 
   const canEdit =
     user?.id && detail.court.created_by ? user.id === detail.court.created_by : false;
+  const canonicalPath = `/courts/${detail.court.id}`;
+  const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
+  const primaryImage = gallery[0]?.image_url ?? null;
+  const openingHoursSpecification = openingHourEntries.flatMap((entry) =>
+    entry.ranges.map((range) => ({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: SCHEMA_DAY_MAP[entry.day] ?? "https://schema.org/DayOfWeek",
+      opens: toSchemaOpenTime(range.open),
+      closes: toSchemaCloseTime(range.close, range.open),
+    })),
+  );
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SportsActivityLocation",
+    "@id": canonicalUrl,
+    name: detail.court.name ?? "Court",
+    url: canonicalUrl,
+    image: primaryImage ?? undefined,
+    telephone: detail.court.phone ?? undefined,
+    priceRange: detail.court.price_note ?? undefined,
+    sameAs: detail.court.website_url ? [detail.court.website_url] : undefined,
+    address:
+      detail.court.address || detail.court.district || detail.court.province
+        ? {
+            "@type": "PostalAddress",
+            streetAddress: detail.court.address ?? undefined,
+            addressLocality: detail.court.district ?? undefined,
+            addressRegion: detail.court.province ?? undefined,
+          }
+        : undefined,
+    geo: hasMapCoordinates
+      ? {
+          "@type": "GeoCoordinates",
+          latitude: numericLatitude,
+          longitude: numericLongitude,
+        }
+      : undefined,
+    openingHoursSpecification: openingHoursSpecification.length
+      ? openingHoursSpecification
+      : undefined,
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -265,12 +412,13 @@ export default async function CourtPage({
                   <strong className="text-slate-900">
                     {copy.hours}:
                   </strong>
-                  <div className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white/60 text-sm">
-                    {openingHourEntries.map((entry) => {
+                  <div className="mt-2 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/40 text-sm">
+                    {openingHourEntries.map((entry, entryIndex) => {
                       const normalizedDay = entry.day.toLowerCase().trim();
                       const isToday =
                         normalizedDay.startsWith(todayKey.slice(0, 3)) ||
                         normalizedDay.includes(todayKey);
+                      const isEven = entryIndex % 2 === 0;
                       const dayLabel = getDayLabel(normalizedDay, locale);
                       const display =
                         entry.ranges?.length > 0
@@ -289,15 +437,29 @@ export default async function CourtPage({
                       return (
                         <div
                           key={`${entry.day}-${display}`}
-                          className={`flex items-center justify-between px-4 py-2 ${isToday ? "bg-emerald-50" : ""}`}
+                          className={`flex items-center justify-between px-4 py-2 ${
+                            isToday
+                              ? "bg-emerald-900/40"
+                              : isEven
+                                ? "bg-slate-900/60"
+                                : "bg-slate-900/30"
+                          }`}
                         >
                           <span
-                            className={`text-sm ${isToday ? "font-semibold text-slate-900" : "text-slate-600"}`}
+                            className={`text-sm ${
+                              isToday
+                                ? "font-semibold text-emerald-200"
+                                : "text-slate-100"
+                            }`}
                           >
                             {dayLabel}
                           </span>
                           <span
-                            className={`text-sm text-right ${isToday ? "font-semibold text-emerald-700" : "text-slate-600"}`}
+                            className={`text-sm text-right ${
+                              isToday
+                                ? "font-semibold text-emerald-200"
+                                : "text-slate-200"
+                            }`}
                           >
                             {display}
                           </span>
@@ -321,6 +483,20 @@ export default async function CourtPage({
                     {copy.line}:
                   </strong>{" "}
                   {detail.court.line_id}
+                </li>
+              )}
+              {detail.court.line_qr_url && (
+                <li className="space-y-2">
+                  <strong className="text-slate-900">{copy.lineQr}:</strong>
+                  <div className="relative h-36 w-36 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <Image
+                      src={detail.court.line_qr_url}
+                      alt="LINE QR"
+                      fill
+                      sizes="144px"
+                      className="object-contain"
+                    />
+                  </div>
                 </li>
               )}
               {detail.court.website_url && (
@@ -390,9 +566,9 @@ export default async function CourtPage({
                 return (
                   <div
                     key={group.id}
-                    className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600 shadow-sm shadow-slate-100"
+                    className="rounded-2xl border border-slate-700 bg-slate-950/40 p-4 text-sm text-slate-300 shadow-sm shadow-black/20"
                   >
-                    <div className="overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
+                    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
                       {groupLink ? (
                         <Link href={groupLink} className="block">
                           <div className="relative aspect-square w-full">
@@ -422,24 +598,24 @@ export default async function CourtPage({
                         {groupLink ? (
                           <Link
                             href={groupLink}
-                            className="text-base font-semibold text-indigo-600 underline-offset-4 hover:underline"
-                          >
-                            {group.groups?.name ?? "Community group"}
-                          </Link>
-                        ) : (
-                          <p className="text-base font-semibold text-slate-900">
-                            {group.groups?.name ?? "Community group"}
-                          </p>
-                        )}
-                        {group.groups?.description && (
-                          <p className="mt-1 text-xs text-slate-500">
-                            {group.groups.description}
-                          </p>
-                        )}
-                        <div className="mt-2 text-xs text-slate-500">
-                          {scheduleEntries.length > 0 ? (
-                            <ul className="space-y-1">
-                              {scheduleEntries.map((slot, index) => (
+                        className="text-base font-semibold text-sky-300 underline-offset-4 hover:underline"
+                      >
+                        {group.groups?.name ?? "Community group"}
+                      </Link>
+                    ) : (
+                      <p className="text-base font-semibold text-white">
+                        {group.groups?.name ?? "Community group"}
+                      </p>
+                    )}
+                    {group.groups?.description && (
+                      <p className="mt-1 text-xs text-slate-400">
+                        {group.groups.description}
+                      </p>
+                    )}
+                    <div className="mt-2 text-xs text-slate-400">
+                      {scheduleEntries.length > 0 ? (
+                        <ul className="space-y-1">
+                          {scheduleEntries.map((slot, index) => (
                                 <li
                                   key={`${slot.day}-${slot.start_time}-${index}`}
                                 >
@@ -485,6 +661,12 @@ export default async function CourtPage({
             ← {copy.backToGroupFinder}
           </Link>
         </section>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
       </main>
     </div>
   );

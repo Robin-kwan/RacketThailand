@@ -172,6 +172,7 @@ export function OpeningHoursEditor({
                       }
                       className="w-32"
                       required
+                      variant="light"
                     />
                     <span className="text-sm text-slate-500">–</span>
                     <BaseSelect
@@ -196,6 +197,7 @@ export function OpeningHoursEditor({
                       }
                       className="w-32"
                       required
+                      variant="light"
                     />
                   </div>
                   <button

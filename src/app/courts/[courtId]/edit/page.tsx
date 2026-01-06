@@ -70,9 +70,10 @@ export default async function EditCourtPage({
     latitude: string | null;
     longitude: string | null;
     google_place_id: string | null;
+    line_qr_url: string | null;
   }>("courts", {
     select:
-      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id",
+      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id,line_qr_url",
     id: `eq.${resolvedParams.courtId}`,
     limit: "1",
   });
@@ -128,6 +129,7 @@ export default async function EditCourtPage({
     latitude: court.latitude ?? "",
     longitude: court.longitude ?? "",
     google_place_id: court.google_place_id ?? null,
+    lineQrUrl: court.line_qr_url ?? null,
   };
 
   const copy = {
@@ -142,6 +144,7 @@ export default async function EditCourtPage({
     openingHours: t("admin.openingHours"),
     phone: t("admin.phone"),
     line: t("admin.line"),
+    lineQr: t("admin.lineQr"),
     website: t("admin.website"),
     placeSearch: t("admin.placeSearch"),
     placeSearchHelper: t("admin.placeSearchHelper"),

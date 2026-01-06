@@ -74,6 +74,7 @@ export default async function DashboardAddCourtPage({
     openingHours: t("admin.openingHours"),
     phone: t("admin.phone"),
     line: t("admin.line"),
+    lineQr: t("admin.lineQr"),
     website: t("admin.website"),
     placeSearch: t("admin.placeSearch"),
     placeSearchHelper: t("admin.placeSearchHelper"),

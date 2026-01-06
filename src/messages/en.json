@@ -168,6 +168,7 @@
     "openingHours": "Opening hours",
     "phone": "Phone number",
     "line": "LINE ID",
+    "lineQr": "LINE QR code (optional)",
     "website": "Website URL",
     "placeSearch": "Search Google Maps for a venue",
     "placeSearchHelper": "Start typing the court or mall name and pick the correct listing to auto-fill the form.",
@@ -193,9 +194,34 @@
       "courtOwners": {
         "title": "Assign court owners",
         "description": "Grant management access to verified profiles."
+      },
+      "feedback": {
+        "title": "Feedback inbox",
+        "description": "Review landing submissions and keep track of triage status."
       }
     },
     "open": "Open",
+    "feedbackTitle": "Feedback inbox",
+    "feedbackSubtitle": "Track landing page submissions from authenticated members and mark them once triaged.",
+    "feedbackTable": {
+      "subject": "Subject",
+      "reporter": "Reporter",
+      "message": "Message",
+      "type": "Type",
+      "status": "Status",
+      "priority": "Priority",
+      "submitted": "Submitted",
+      "actions": "Actions",
+      "markRead": "Mark read",
+      "markUnread": "Mark unread",
+      "checked": "Read",
+      "unchecked": "New",
+      "noSubject": "No subject",
+      "noMessage": "No additional details.",
+      "anonymous": "Member",
+      "empty": "No feedback has been submitted yet.",
+      "error": "Unable to update this feedback right now."
+    },
     "courtOwnersTitle": "Assign court managers",
     "courtOwnersSubtitle": "Connect an existing court with a verified profile so they can update details.",
     "courtLabel": "Select court",
@@ -212,6 +238,7 @@
     "price": "Pricing",
     "phone": "Phone",
     "line": "LINE",
+    "lineQr": "LINE QR code",
     "website": "Website",
     "hours": "Opening hours",
     "back": "Back to sport page",
@@ -286,6 +313,7 @@
       "phonePlaceholder": "e.g., 081-234-5678",
       "lineLabel": "LINE ID (optional)",
       "linePlaceholder": "e.g., @racketclub",
+      "lineQrLabel": "LINE QR code (optional)",
       "photos": "Group photos (optional, max 8)",
       "submit": "Create group",
       "submitting": "Creating",
@@ -305,7 +333,8 @@
       "sessionsEmpty": "No sessions added yet.",
       "playerAmount": "Average players",
       "phone": "Contact number",
-      "line": "LINE ID"
+      "line": "LINE ID",
+      "lineQr": "LINE QR code"
     },
     "days": {
       "sunday": "Sunday",

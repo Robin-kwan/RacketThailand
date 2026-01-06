@@ -13,6 +13,8 @@ type Option = {
   label: string;
 };
 
+type AutocompleteVariant = "light" | "dark";
+
 type BaseAutocompleteProps = {
   label: string;
   name: string;
@@ -22,6 +24,43 @@ type BaseAutocompleteProps = {
   helperText?: string;
   onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
   className?: string;
+  variant?: AutocompleteVariant;
+};
+
+const VARIANT_STYLES: Record<
+  AutocompleteVariant,
+  {
+    label: string;
+    helper: string;
+    input: string;
+    dropdown: string;
+    optionActive: string;
+    option: string;
+    toggle: string;
+  }
+> = {
+  dark: {
+    label: "text-slate-100",
+    helper: "text-slate-400",
+    input:
+      "w-full rounded-2xl border border-slate-700 bg-slate-900/60 px-4 py-3 pr-12 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-slate-500 focus:bg-slate-900",
+    dropdown:
+      "absolute z-50 mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b1324] p-1 shadow-2xl shadow-black/50",
+    optionActive: "bg-slate-800 text-white",
+    option: "text-slate-300 hover:bg-slate-800/60",
+    toggle: "text-slate-400",
+  },
+  light: {
+    label: "text-slate-700",
+    helper: "text-slate-500",
+    input:
+      "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-12 text-sm text-slate-900 placeholder-slate-500 outline-none focus:border-slate-400 focus:bg-white",
+    dropdown:
+      "absolute z-50 mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-2xl shadow-slate-200",
+    optionActive: "bg-slate-100 text-slate-900",
+    option: "text-slate-700 hover:bg-slate-100",
+    toggle: "text-slate-500",
+  },
 };
 
 export function BaseAutocomplete({
@@ -33,10 +72,12 @@ export function BaseAutocomplete({
   helperText,
   onChange,
   className = "",
+  variant = "dark",
 }: BaseAutocompleteProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const variantStyles = VARIANT_STYLES[variant] ?? VARIANT_STYLES.dark;
   const selected = options.find((option) => option.value === value);
   const displayValue = selected?.label ?? "";
 
@@ -85,7 +126,9 @@ export function BaseAutocomplete({
 
   return (
     <div className={`space-y-2 ${className}`} ref={containerRef}>
-      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      <label className={`text-sm font-semibold ${variantStyles.label}`}>
+        {label}
+      </label>
       <div className="relative">
         <input
           type="text"
@@ -106,12 +149,12 @@ export function BaseAutocomplete({
               setQuery("");
             }
           }}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          className={variantStyles.input}
         />
         <input type="hidden" name={name} value={value} />
         <button
           type="button"
-          className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-500"
+          className={`absolute inset-y-0 right-0 flex w-12 items-center justify-center ${variantStyles.toggle}`}
           onClick={() => {
             setOpen((prev) => !prev);
             setQuery(displayValue);
@@ -136,9 +179,13 @@ export function BaseAutocomplete({
           </svg>
         </button>
         {open && (
-          <div className="absolute z-50 mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-2xl shadow-slate-200/80">
+          <div className={variantStyles.dropdown}>
             {filteredOptions.length === 0 ? (
-              <p className="px-3 py-2 text-sm text-slate-500">
+              <p
+                className={`px-3 py-2 text-sm ${
+                  variant === "dark" ? "text-slate-400" : "text-slate-500"
+                }`}
+              >
                 No matches found
               </p>
             ) : (
@@ -148,8 +195,8 @@ export function BaseAutocomplete({
                   type="button"
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm ${
                     option.value === value
-                      ? "bg-slate-100 text-slate-900"
-                      : "text-slate-600 hover:bg-slate-50"
+                      ? variantStyles.optionActive
+                      : variantStyles.option
                   }`}
                   onClick={() => handleSelect(option.value)}
                 >
@@ -178,7 +225,7 @@ export function BaseAutocomplete({
         )}
       </div>
       {helperText && (
-        <p className="text-xs text-slate-500">{helperText}</p>
+        <p className={`text-xs ${variantStyles.helper}`}>{helperText}</p>
       )}
     </div>
   );

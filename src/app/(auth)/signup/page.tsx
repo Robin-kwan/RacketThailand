@@ -54,21 +54,23 @@ export default async function SignupPage({
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 text-slate-900">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.08),_transparent_55%)]" />
+    <div className="relative min-h-screen bg-[#020617] text-slate-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.15),_transparent_60%)]" />
 
       <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-col px-6 pb-20 pt-10 md:px-10">
-        <section className="w-full rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
-          <h1 className="text-3xl font-semibold">{t("auth.signupTitle")}</h1>
-          <p className="mt-3 text-sm text-slate-600">
+        <section className="w-full rounded-[32px] border border-slate-800 bg-slate-900/80 p-8 shadow-2xl shadow-black/50 backdrop-blur">
+          <h1 className="text-3xl font-semibold text-white">
+            {t("auth.signupTitle")}
+          </h1>
+          <p className="mt-3 text-sm text-slate-300">
             {t("auth.signupSubtitle")}
           </p>
           <SignupForm locale={locale} copy={formCopy} />
-          <p className="mt-4 text-sm text-slate-600">
+          <p className="mt-4 text-sm text-slate-300">
             {t("auth.switchToLogin")}{" "}
             <Link
               href={buildLocalizedPath("/login", locale)}
-              className="font-semibold text-slate-900"
+              className="font-semibold text-slate-100"
             >
               {t("header.login")}
             </Link>

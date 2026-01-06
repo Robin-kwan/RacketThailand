@@ -12,6 +12,7 @@ type CourtPayload = Partial<{
   opening_hours?: OpeningHoursEntry[] | null;
   phone?: string;
   line_id?: string;
+  lineQrUrl?: string | null;
   website_url?: string;
   latitude?: number;
   longitude?: number;
@@ -98,6 +99,9 @@ export async function PATCH(
   }
   if (payload.line_id !== undefined) {
     update.line_id = payload.line_id ?? null;
+  }
+  if (payload.lineQrUrl !== undefined) {
+    update.line_qr_url = payload.lineQrUrl ?? null;
   }
   if (payload.website_url !== undefined) {
     update.website_url = payload.website_url ?? null;

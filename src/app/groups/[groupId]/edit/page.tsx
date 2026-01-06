@@ -11,6 +11,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
+import { ensureGroupLineQrUrl } from "@/server/lineQr";
 
 type Params = { groupId: string };
 type ParamsInput = Promise<Params>;
@@ -64,9 +65,10 @@ export default async function EditGroupPage({
     player_amount: number | null;
     phone: string | null;
     line_id: string | null;
+    line_qr_url: string | null;
   }>("groups", {
     select:
-      "id,sport_id,name,description,owner_id,player_amount,phone,line_id",
+      "id,sport_id,name,description,owner_id,player_amount,phone,line_id,line_qr_url",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -74,6 +76,10 @@ export default async function EditGroupPage({
   if (!group) {
     notFound();
   }
+  const resolvedLineQrUrl = await ensureGroupLineQrUrl(
+    group.id,
+    group.line_qr_url,
+  );
 
   if (!isAdmin && group.owner_id !== user.id) {
     redirect(buildLocalizedPath(`/groups/${group.id}`, locale));
@@ -198,6 +204,7 @@ export default async function EditGroupPage({
         : "",
     phone: group.phone ?? "",
     lineId: group.line_id ?? "",
+    lineQrUrl: resolvedLineQrUrl ?? null,
   };
 
   const dayKeys = [
@@ -236,6 +243,7 @@ export default async function EditGroupPage({
     phonePlaceholder: t("groups.form.phonePlaceholder"),
     lineLabel: t("groups.form.lineLabel"),
     linePlaceholder: t("groups.form.linePlaceholder"),
+    lineQrLabel: t("groups.form.lineQrLabel"),
     photos: t("groups.form.photos"),
     submit: t("groups.edit.submit"),
     submitting: t("groups.edit.submitting"),

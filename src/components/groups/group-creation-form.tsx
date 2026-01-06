@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { MultiImageInput } from "@/components/multi-image-input";
+import { LineQrUploader } from "@/components/line-qr-uploader";
 import { showToast } from "@/components/toaster";
 import {
   GroupForm,
@@ -28,7 +29,6 @@ type GroupCreationFormProps = {
 
 const GROUP_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_GROUP_BUCKET || "group-images";
-
 export function GroupCreationForm({
   sports,
   courts,
@@ -37,6 +37,8 @@ export function GroupCreationForm({
 }: GroupCreationFormProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [images, setImages] = useState<File[]>([]);
+  const [lineQrFile, setLineQrFile] = useState<File | null>(null);
+  const [lineQrPreview, setLineQrPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
@@ -52,6 +54,14 @@ export function GroupCreationForm({
     }),
     [sports],
   );
+
+  const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
+    if (lineQrPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(lineQrPreview);
+    }
+    setLineQrFile(file);
+    setLineQrPreview(previewUrl ?? null);
+  };
 
   const handleSubmit = async (payload: {
     sportId: string;
@@ -110,9 +120,33 @@ export function GroupCreationForm({
       }
     }
 
+    if (groupId && lineQrFile) {
+      const formData = new FormData();
+      formData.append("file", lineQrFile);
+      const uploadResponse = await fetch(
+        `/api/groups/${groupId}/line-qr`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+      const uploadData = await uploadResponse.json().catch(() => ({}));
+      if (!uploadResponse.ok) {
+        showToast({
+          variant: "error",
+          message: uploadData?.error || copy.error,
+        });
+      }
+    }
+
     setSubmitting(false);
     showToast({ variant: "success", message: copy.success });
     setImages([]);
+    if (lineQrPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(lineQrPreview);
+    }
+    setLineQrFile(null);
+    setLineQrPreview(null);
     setResetKey((prev) => prev + 1);
   };
 
@@ -130,6 +164,14 @@ export function GroupCreationForm({
           limit={8}
           value={images}
           onChange={setImages}
+        />
+      }
+      lineQrSection={
+        <LineQrUploader
+          label={copy.lineQrLabel}
+          previewUrl={lineQrPreview}
+          onChange={handleLineQrChange}
+          disabled={submitting}
         />
       }
       onSubmit={handleSubmit}

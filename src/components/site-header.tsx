@@ -340,13 +340,13 @@ export function SiteHeader({
                 </button>
                 {menuOpen && (
                   <div
-                    className="absolute right-0 top-full z-50 mt-3 w-60 rounded-2xl border border-slate-200/80 bg-white/95 p-3 text-sm shadow-2xl shadow-slate-900/10 backdrop-blur"
+                    className="absolute right-0 top-full z-50 mt-3 w-60 rounded-2xl border border-slate-700 bg-slate-900/95 p-3 text-sm text-slate-100 shadow-2xl shadow-slate-900/40 backdrop-blur"
                     role="menu"
                   >
                     <div className="flex flex-col">
                       <Link
                         href={buildLocalizedPath("/profile/edit", locale)}
-                        className="flex items-center justify-between rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50"
+                        className="flex items-center justify-between rounded-xl px-3 py-2 text-slate-200 hover:bg-slate-800"
                         onClick={() => setMenuOpen(false)}
                       >
                         {labels.profile}
@@ -355,7 +355,7 @@ export function SiteHeader({
                       {isAdmin && (
                         <Link
                           href={buildLocalizedPath("/admin", locale)}
-                          className="mt-1 flex items-center justify-between rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50"
+                          className="mt-1 flex items-center justify-between rounded-xl px-3 py-2 text-slate-200 hover:bg-slate-800"
                           onClick={() => setMenuOpen(false)}
                         >
                           {labels.admin}
@@ -364,7 +364,7 @@ export function SiteHeader({
                       )}
                       <Link
                         href={buildLocalizedPath("/dashboard", locale)}
-                        className="mt-1 flex items-center justify-between rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50"
+                        className="mt-1 flex items-center justify-between rounded-xl px-3 py-2 text-slate-200 hover:bg-slate-800"
                         onClick={() => setMenuOpen(false)}
                       >
                         {labels.dashboard}
@@ -374,7 +374,7 @@ export function SiteHeader({
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="mt-1 w-full rounded-xl px-3 py-2 text-left text-slate-700 hover:bg-slate-50"
+                      className="mt-1 w-full rounded-xl px-3 py-2 text-left text-slate-200 hover:bg-slate-800"
                       role="menuitem"
                     >
                       {labels.logout}

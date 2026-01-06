@@ -7,6 +7,8 @@ type Option = {
   label: string;
 };
 
+type SelectVariant = "light" | "dark";
+
 type BaseSelectProps = {
   label: string;
   name: string;
@@ -18,6 +20,25 @@ type BaseSelectProps = {
   labelHidden?: boolean;
   className?: string;
   disabled?: boolean;
+  variant?: SelectVariant;
+};
+
+const VARIANT_STYLES: Record<
+  SelectVariant,
+  { label: string; helper: string; select: string }
+> = {
+  dark: {
+    label: "text-slate-100",
+    helper: "text-slate-400",
+    select:
+      "w-full rounded-2xl border border-slate-700 bg-slate-900/60 px-4 py-3 pr-12 text-sm text-slate-100 outline-none transition focus:border-slate-500 focus:bg-slate-900",
+  },
+  light: {
+    label: "text-slate-700",
+    helper: "text-slate-500",
+    select:
+      "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white",
+  },
 };
 
 export function BaseSelect({
@@ -31,8 +52,10 @@ export function BaseSelect({
   labelHidden = false,
   className = "",
   disabled = false,
+  variant = "dark",
 }: BaseSelectProps) {
   const selectId = useId();
+  const variantStyles = VARIANT_STYLES[variant] ?? VARIANT_STYLES.dark;
   const wrapperClasses = [
     "space-y-2",
     labelHidden ? "space-y-0" : "",
@@ -40,11 +63,14 @@ export function BaseSelect({
   ]
     .filter(Boolean)
     .join(" ");
+  const chevronColor =
+    variant === "dark" ? "text-slate-400" : "text-slate-500";
+
   return (
     <div className={wrapperClasses}>
       <label
         htmlFor={selectId}
-        className={`text-sm font-semibold text-slate-700 ${labelHidden ? "sr-only" : ""}`}
+        className={`text-sm font-semibold ${variantStyles.label} ${labelHidden ? "sr-only" : ""}`}
       >
         {label}
       </label>
@@ -56,7 +82,7 @@ export function BaseSelect({
           onChange={onChange}
           required={required}
           disabled={disabled}
-          className={`w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none transition focus:border-slate-400 focus:bg-white ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+          className={`${variantStyles.select} appearance-none ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
         >
           {options.map((option) => (
             <option key={`${name}-${option.value}`} value={option.value}>
@@ -64,7 +90,9 @@ export function BaseSelect({
             </option>
           ))}
         </select>
-        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-500">
+        <span
+          className={`pointer-events-none absolute inset-y-0 right-3 flex items-center ${chevronColor}`}
+        >
           <svg
             width="16"
             height="16"
@@ -83,9 +111,7 @@ export function BaseSelect({
         </span>
       </div>
       {helperText && (
-        <p className="text-xs text-slate-500">
-          {helperText}
-        </p>
+        <p className={`text-xs ${variantStyles.helper}`}>{helperText}</p>
       )}
     </div>
   );
