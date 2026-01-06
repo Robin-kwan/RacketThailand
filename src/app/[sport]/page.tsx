@@ -49,7 +49,9 @@ export async function generateMetadata({
   const meta = getSportMeta(resolvedParamsValue.sport);
   if (!meta) {
     return {
-      title: "Sport not found | RacketThailand",
+      title: "Page not found | RacketThailand",
+      description:
+        "This sport page does not exist. Head back to the landing page to pick a different sport.",
     };
   }
   return {
@@ -75,18 +77,13 @@ export default async function SportPage({
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#020617] px-6 text-slate-100">
         <div className="max-w-md space-y-4 text-center">
-          <h1 className="text-3xl font-semibold">
-            {t("sport.emptyTitle")}
-          </h1>
-          <p className="text-sm text-slate-600">
-            {t("sport.emptyDescription")}
-          </p>
+          <h1 className="text-3xl font-semibold">Page not found</h1>
           <div className="flex justify-center">
             <Link
               href={buildLocalizedPath("/", locale)}
               className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold uppercase text-slate-800 hover:border-slate-500"
             >
-              {t("sport.emptyCta")}
+              Back to landing
             </Link>
           </div>
         </div>

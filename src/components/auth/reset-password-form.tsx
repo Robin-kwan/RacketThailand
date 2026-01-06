@@ -105,7 +105,7 @@ export function ResetPasswordForm() {
         {updating ? "Updating…" : "Update password"}
       </button>
       <p className="text-xs text-slate-400">
-        After updating, you'll return to the login page to sign in.
+        After updating, you&rsquo;ll return to the login page to sign in.
       </p>
     </form>
   );

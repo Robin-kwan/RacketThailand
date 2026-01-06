@@ -17,8 +17,8 @@ export default function ForgotPasswordPage() {
             Forgot your password?
           </h1>
           <p className="mt-2 text-sm text-slate-400">
-            Enter your email and we'll send a reset link. This also lets Google
-            login users create a password for manual sign-in.
+            Enter your email and we&rsquo;ll send a reset link. This also lets
+            Google login users create a password for manual sign-in.
           </p>
           <div className="mt-6">
             <ForgotPasswordForm />

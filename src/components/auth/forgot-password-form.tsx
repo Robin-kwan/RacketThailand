@@ -26,7 +26,7 @@ export function ForgotPasswordForm() {
     if (resetError) {
       setError(
         resetError.message ||
-          "We couldn't send a reset email. Please try again soon.",
+          "We couldn\u2019t send a reset email. Please try again soon.",
       );
       return;
     }
@@ -60,7 +60,7 @@ export function ForgotPasswordForm() {
         {submitting ? "Sending…" : "Send reset link"}
       </button>
       <p className="text-xs text-slate-400">
-        We'll send a secure link to set a new password.
+        We&rsquo;ll send a secure link to set a new password.
       </p>
     </form>
   );
