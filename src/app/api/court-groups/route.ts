@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 type CourtGroupPayload = {
   courtId: string;
@@ -66,22 +67,19 @@ export async function POST(request: Request) {
       group?.name && court.name
         ? `${group.name} requested verification for ${court.name}`
         : "New group verification request";
+    const adminSupabase = getSupabaseAdminClient();
     try {
-      await supabase
-        .from("notifications")
-        .insert({
-          recipient_id: court.created_by,
-          type: "court-group-request",
-          message,
-          metadata: {
-            courtId: payload.courtId,
-            courtName: court.name,
-            groupId: payload.groupId,
-            groupName: group?.name ?? null,
-          },
-        })
-        .select("id")
-        .single();
+      await adminSupabase.from("notifications").insert({
+        recipient_id: court.created_by,
+        type: "court-group-request",
+        message,
+        metadata: {
+          courtId: payload.courtId,
+          courtName: court.name,
+          groupId: payload.groupId,
+          groupName: group?.name ?? null,
+        },
+      });
     } catch {
       // Swallow notification errors so they don't block the request
     }

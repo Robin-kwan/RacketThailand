@@ -126,6 +126,7 @@ export default async function CreateGroupPage({
     phonePlaceholder: t("groups.form.phonePlaceholder"),
     lineLabel: t("groups.form.lineLabel"),
     linePlaceholder: t("groups.form.linePlaceholder"),
+    lineQrLabel: t("groups.form.lineQrLabel"),
     photos: t("groups.form.photos"),
     submit: t("groups.form.submit"),
     submitting: t("groups.form.submitting"),

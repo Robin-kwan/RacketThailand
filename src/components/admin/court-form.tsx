@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { MultiImageInput } from "@/components/multi-image-input";
+import { LineQrUploader } from "@/components/line-qr-uploader";
 import { showToast } from "@/components/toaster";
 import {
   CourtFormFields,
@@ -38,6 +39,7 @@ type CourtFormProps = {
     openingHours: string;
     phone: string;
     line: string;
+    lineQr: string;
     website: string;
     placeSearch: string;
     placeSearchHelper: string;
@@ -53,6 +55,8 @@ type CourtFormProps = {
 
 const COURT_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_COURT_BUCKET || "court-images";
+const COURT_LINE_QR_BUCKET =
+  process.env.NEXT_PUBLIC_SUPABASE_COURT_LINE_QR_BUCKET || "court-line-qr";
 
 export function CourtAdminForm({ sports, copy }: CourtFormProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -72,9 +76,19 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
+  const [lineQrFile, setLineQrFile] = useState<File | null>(null);
+  const [lineQrPreview, setLineQrPreview] = useState<string | null>(null);
   const [openingHours, setOpeningHours] = useState<OpeningHoursEntry[]>(
     createAlwaysOpenSchedule(),
   );
+
+  const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
+    if (lineQrPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(lineQrPreview);
+    }
+    setLineQrFile(file);
+    setLineQrPreview(previewUrl ?? null);
+  };
 
   const handleChange = (
     event: React.ChangeEvent<
@@ -163,6 +177,30 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
       }
     }
 
+    if (courtId && lineQrFile && lineQrPreview) {
+      const ext = lineQrFile.name.split(".").pop();
+      const filePath = `${courtId}/line-qr.${ext ?? "jpg"}`;
+      const { error: uploadError } = await supabase.storage
+        .from(COURT_LINE_QR_BUCKET)
+        .upload(filePath, lineQrFile, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: lineQrFile.type,
+        });
+      if (uploadError) {
+        showToast({ variant: "error", message: uploadError.message });
+      } else {
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from(COURT_LINE_QR_BUCKET).getPublicUrl(filePath);
+        await fetch(`/api/courts/${courtId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lineQrUrl: publicUrl }),
+        });
+      }
+    }
+
     setSubmitting(false);
     showToast({ variant: "success", message: copy.success });
     setForm((prev) => ({
@@ -181,6 +219,11 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
       googlePlaceId: "",
     }));
     setImages([]);
+    if (lineQrPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(lineQrPreview);
+    }
+    setLineQrFile(null);
+    setLineQrPreview(null);
     setOpeningHours(createAlwaysOpenSchedule());
   };
 
@@ -233,19 +276,26 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
         copy={copy}
         onChange={handleChange}
         extras={
-          <MultiImageInput
-            label={copy.photos}
-            limit={8}
-            value={images}
-            onChange={setImages}
-          />
+          <div className="space-y-4">
+            <LineQrUploader
+              label={copy.lineQr}
+              previewUrl={lineQrPreview}
+              onChange={handleLineQrChange}
+            />
+            <MultiImageInput
+              label={copy.photos}
+              limit={8}
+              value={images}
+              onChange={setImages}
+            />
+          </div>
         }
       />
 
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {submitting ? `${copy.submitting}...` : copy.submit}
       </button>

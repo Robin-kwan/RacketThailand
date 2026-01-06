@@ -73,7 +73,7 @@ export default async function SportPage({
 
   if (!sport) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-slate-900">
+      <div className="flex min-h-screen items-center justify-center bg-[#020617] px-6 text-slate-100">
         <div className="max-w-md space-y-4 text-center">
           <h1 className="text-3xl font-semibold">
             {t("sport.emptyTitle")}
@@ -95,17 +95,17 @@ export default async function SportPage({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#020617] text-slate-100">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
       <section
         className={`bg-gradient-to-br ${sport.gradient} from-30% via-70% to-100% px-6 py-20 md:px-12`}
       >
         <div className="mx-auto flex max-w-5xl flex-col gap-8 text-white">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-                {sport.hero.headline[locale]}
-              </h1>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
+              {sport.hero.headline[locale]}
+            </h1>
             <p className="text-lg text-white/85 md:text-xl">
               {sport.hero.description[locale]}
             </p>
@@ -119,9 +119,9 @@ export default async function SportPage({
                 <p className="text-3xl font-semibold text-white">
                   {stat.value}
                 </p>
-            <p className="text-xs font-semibold uppercase">
-              {t(`sport.stats.${stat.key}`)}
-            </p>
+                <p className="text-xs font-semibold uppercase">
+                  {t(`sport.stats.${stat.key}`)}
+                </p>
               </div>
             ))}
           </div>
@@ -141,13 +141,13 @@ export default async function SportPage({
           </div>
         </div>
       </section>
-      <section className="bg-white px-6 py-12 text-slate-900 md:px-12">
+      <section className="bg-[#040b1d] px-6 py-12 text-slate-100 md:px-12">
         <div className="mx-auto flex max-w-5xl flex-col gap-8">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase text-slate-400">
               {t("sport.useNowTitle")}
             </p>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-300">
               {t("sport.useNowDescription")}
             </p>
           </div>
@@ -172,15 +172,15 @@ export default async function SportPage({
             ].map((feature) => (
               <article
                 key={feature.title}
-                className="rounded-3xl border border-slate-200 bg-slate-50/80 p-6 shadow-sm shadow-slate-200"
+                className="rounded-3xl border border-slate-800 bg-slate-950/40 p-6 shadow-sm shadow-black/30"
               >
-                <h2 className="text-xl font-semibold text-slate-900">
+                <h2 className="text-xl font-semibold text-white">
                   {feature.title}
                 </h2>
-                <p className="mt-2 text-sm text-slate-600">{feature.body}</p>
+                <p className="mt-2 text-sm text-slate-300">{feature.body}</p>
                 <Link
                   href={feature.href}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-900 underline-offset-4 hover:underline"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-300 underline-offset-4 hover:underline"
                 >
                   {feature.cta}
                   <svg

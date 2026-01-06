@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { BaseSelect } from "@/components/base-select";
+import { BaseTextField } from "@/components/base-text-field";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type Profile = {
@@ -242,7 +243,7 @@ export function ProfileForm({
         <label className="block text-sm font-medium text-slate-700">
           {copy.username}
         </label>
-        <input
+        <BaseTextField
           type="text"
           name="username"
           value={form.username}
@@ -250,9 +251,10 @@ export function ProfileForm({
             const sanitized = event.target.value.replace(/[^a-zA-Z0-9_]/g, "");
             setForm((prev) => ({ ...prev, username: sanitized.toLowerCase() }));
           }}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm lowercase outline-none focus:border-slate-400 focus:bg-white"
+          className="lowercase"
           maxLength={32}
           required
+          variant="dark"
         />
         <p className="text-xs text-slate-500">{copy.usernameHint}</p>
       </div>
@@ -261,13 +263,13 @@ export function ProfileForm({
         <label className="block text-sm font-medium text-slate-700">
           {copy.location}
         </label>
-        <input
+        <BaseTextField
           type="text"
           name="location"
           value={form.location}
           onChange={handleInputChange}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           maxLength={120}
+          variant="dark"
         />
       </div>
 
@@ -277,6 +279,7 @@ export function ProfileForm({
         value={form.default_sport}
         onChange={handleInputChange}
         options={defaultSportOptions}
+        variant="light"
       />
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -285,7 +288,7 @@ export function ProfileForm({
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {saving ? `${copy.saving}...` : copy.save}
       </button>

@@ -47,21 +47,21 @@ export default async function VerifyPage({
     : undefined;
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 text-slate-900">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(226,232,240,0.6),_transparent_65%)]" />
+    <div className="relative min-h-screen bg-[#020617] text-slate-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.15),_transparent_60%)]" />
 
       <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 pb-20 pt-16 text-center md:px-10">
-        <section className="rounded-[32px] border border-slate-200 bg-white/95 px-8 py-10 shadow-2xl shadow-slate-200/70 backdrop-blur">
-          <h1 className="text-3xl font-semibold text-slate-900">
+        <section className="rounded-[32px] border border-slate-800 bg-slate-900/80 px-8 py-10 shadow-2xl shadow-black/50 backdrop-blur">
+          <h1 className="text-3xl font-semibold text-white">
             {t("auth.pendingTitle")}
           </h1>
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-3 text-sm text-slate-300">
             {t("auth.pendingDescription", { email: email || t("header.brand") })}
           </p>
-          <div className="mt-6 flex flex-col gap-4 text-left">
+          <div className="mt-6 flex flex-col gap-4 text-left text-slate-200">
             <VerificationWatcher userId={userId} locale={locale} />
             {!userId && (
-              <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+              <p className="rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
                 {t("auth.pendingMissingUserId")}
               </p>
             )}
@@ -76,7 +76,7 @@ export default async function VerifyPage({
           </div>
           <Link
             href={buildLocalizedPath("/login", locale)}
-            className="mt-8 inline-flex rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 hover:border-slate-500"
+            className="mt-8 inline-flex rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-500"
           >
             {t("auth.pendingBack")}
           </Link>

@@ -55,6 +55,11 @@ export default async function AdminPanel({
       description: t("admin.panelFeatures.courtOwners.description"),
       href: "/admin/court-owners",
     },
+    {
+      title: t("admin.panelFeatures.feedback.title"),
+      description: t("admin.panelFeatures.feedback.description"),
+      href: "/admin/feedback",
+    },
   ];
 
   return (

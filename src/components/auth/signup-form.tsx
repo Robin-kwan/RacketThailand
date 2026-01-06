@@ -74,7 +74,24 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
     setSubmitting(false);
 
     if (signUpError) {
-      setError(signUpError.message);
+      const alreadyRegistered =
+        "status" in signUpError && signUpError.status === 422;
+      const message = signUpError.message?.toLowerCase() ?? "";
+      if (alreadyRegistered || message.includes("registered")) {
+        setError(
+          "An account with this email already exists. Try signing in or request a password reset.",
+        );
+      } else {
+        setError(signUpError.message);
+      }
+      return;
+    }
+
+    const identities = signUpData?.user?.identities;
+    if (Array.isArray(identities) && identities.length === 0) {
+      setError(
+        "This email is already registered. Please sign in or request a password reset.",
+      );
       return;
     }
 
@@ -181,7 +198,7 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {submitting ? `${copy.button}...` : copy.button}
       </button>

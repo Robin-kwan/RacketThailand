@@ -111,11 +111,11 @@ export default async function ProfileEditPage({
   }));
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#020617] text-slate-100">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:flex-row md:px-10">
-        <section className="flex-1 rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
-          <h1 className="text-3xl font-semibold">{copy.title}</h1>
-          <p className="mt-3 text-sm text-slate-600">{copy.subtitle}</p>
+        <section className="flex-1 rounded-[32px] border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-black/40 backdrop-blur">
+          <h1 className="text-3xl font-semibold text-white">{copy.title}</h1>
+          <p className="mt-3 text-sm text-slate-400">{copy.subtitle}</p>
           <ProfileForm
             userId={user.id}
             initialProfile={profile}
@@ -123,20 +123,20 @@ export default async function ProfileEditPage({
             copy={copy}
           />
         </section>
-        <aside className="flex flex-1 flex-col gap-4 rounded-[32px] border border-slate-200 bg-white/70 p-8 shadow-inner shadow-slate-200">
+        <aside className="flex flex-1 flex-col gap-4 rounded-[32px] border border-slate-800 bg-slate-900/40 p-8 shadow-inner shadow-black/30 backdrop-blur">
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase text-slate-500">
+            <p className="text-xs font-semibold uppercase text-slate-400">
               {t("header.brand")}
             </p>
-            <h2 className="text-2xl font-semibold text-slate-900">
+            <h2 className="text-2xl font-semibold text-white">
               {t("profile.sidebarTitle")}
             </h2>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-400">
               {t("profile.sidebarDescription")}
             </p>
           </div>
-          <div className="rounded-3xl border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-            <p>{t("profile.sidebarHint")}</p>
+          <div className="rounded-3xl border border-dashed border-slate-700/70 bg-slate-900/40 p-6 text-sm text-slate-300">
+            <p className="text-slate-300">{t("profile.sidebarHint")}</p>
           </div>
         </aside>
       </main>

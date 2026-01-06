@@ -118,7 +118,7 @@ export function CourtRequestList({
               type="button"
               onClick={() => handleDecision(request.id, "verified")}
               disabled={isPending && pendingId === request.id}
-              className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+              className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:bg-slate-500 disabled:text-white disabled:cursor-not-allowed"
             >
               {isPending && pendingId === request.id
                 ? copy.verifying
@@ -128,7 +128,7 @@ export function CourtRequestList({
               type="button"
               onClick={() => handleDecision(request.id, "rejected")}
               disabled={isPending && pendingId === request.id}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500 disabled:opacity-60"
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed"
             >
               {isPending && pendingId === request.id
                 ? copy.rejecting

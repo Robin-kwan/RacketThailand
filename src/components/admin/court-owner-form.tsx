@@ -59,6 +59,7 @@ export function CourtOwnerForm({
         value={profileId}
         onChange={(event) => setProfileId(event.target.value)}
         options={profiles}
+        variant="light"
       />
       <BaseAutocomplete
         label={copy.courtLabel}
@@ -66,14 +67,15 @@ export function CourtOwnerForm({
         value={courtId}
         onChange={(event) => setCourtId(event.target.value)}
         options={courts}
+        variant="light"
       />
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {submitting ? `${copy.submitting}...` : copy.submit}
-      </button>
+    <button
+      type="submit"
+      disabled={submitting}
+      className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+    >
+      {submitting ? `${copy.submitting}...` : copy.submit}
+    </button>
       
     </form>
   );

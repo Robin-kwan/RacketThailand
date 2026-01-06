@@ -100,7 +100,7 @@ export function FeedbackForm({ copy }: FeedbackFormProps) {
         <button
           type="submit"
           disabled={submitting || !message.trim()}
-          className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
         >
           {submitting ? `${copy.submitLabel}...` : copy.submitLabel}
         </button>

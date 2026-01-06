@@ -11,6 +11,7 @@ export type CourtRecord = {
   opening_hours: OpeningHoursEntry[] | null;
   phone: string | null;
   line_id: string | null;
+  line_qr_url?: string | null;
   website_url: string | null;
   created_at: string | null;
   updated_at?: string | null;
@@ -150,7 +151,7 @@ type CourtGroupLink = {
 export async function fetchCourtDetail(courtId: string) {
   const { data: courts } = await supabaseSelect<CourtRecord>("courts", {
     select:
-      "id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_at,updated_at,sport_id,created_by,latitude:lat,longitude:lng",
+      "id,name,address,district,province,price_note,opening_hours,phone,line_id,line_qr_url,website_url,created_at,updated_at,sport_id,created_by,latitude:lat,longitude:lng",
     id: `eq.${courtId}`,
     limit: "1",
   });

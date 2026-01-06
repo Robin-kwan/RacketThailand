@@ -1,16 +1,20 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { SPORT_META } from "@/data/sportMeta";
 import {
   buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
+import { ensureGroupLineQrUrl } from "@/server/lineQr";
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
@@ -78,6 +82,7 @@ type GroupRow = {
   player_amount: number | null;
   phone: string | null;
   line_id: string | null;
+  line_qr_url: string | null;
 };
 
 type OwnerProfile = {
@@ -106,6 +111,117 @@ type GroupSessionRow = {
   } | null;
 };
 
+type GroupMetadataRow = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  sports: { code: string; name: string | null } | null;
+  group_photos?: { image_url: string | null; is_primary: boolean | null }[] | null;
+  group_sessions?: {
+    day: string;
+    start_time: string | null;
+    end_time: string | null;
+    courts: {
+      name: string | null;
+      district: string | null;
+      province: string | null;
+    } | null;
+  }[] | null;
+};
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: ParamsInput;
+  searchParams?: SearchParamsInput;
+}): Promise<Metadata> {
+  const resolvedParams = await resolveParams(params);
+  const resolvedSearch = await resolveSearchParams(searchParams);
+  const locale = normalizeLocale(resolvedSearch?.lang);
+  const { data } = await supabaseSelect<GroupMetadataRow>("groups", {
+    select:
+      "id,name,description,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,province))",
+    id: `eq.${resolvedParams.groupId}`,
+    limit: "1",
+  });
+  const group = data?.[0];
+  if (!group) {
+    return {
+      title: "Group not found | RacketThailand",
+    };
+  }
+  const sportMeta = group.sports?.code
+    ? SPORT_META[group.sports.code]
+    : undefined;
+  const sportName =
+    sportMeta?.name?.[locale] ??
+    group.sports?.name ??
+    (locale === "th" ? "กลุ่มกีฬา" : "Sport group");
+  const location =
+    group.group_sessions
+      ?.map(
+        (session) =>
+          session.courts?.province ??
+          session.courts?.district ??
+          session.courts?.name ??
+          null,
+      )
+      .filter((value): value is string => Boolean(value && value.trim()))[0] ??
+    null;
+  const descriptionParts = [
+    group.description,
+    location ? `Location: ${location}` : null,
+    group.group_sessions?.length
+      ? `Sessions per week: ${group.group_sessions.length}`
+      : null,
+  ].filter(Boolean);
+  const description =
+    descriptionParts.join(" · ") ||
+    `${sportName} community listed on RacketThailand.`;
+  const canonicalPath = `/groups/${resolvedParams.groupId}`;
+  const canonical = buildCanonicalUrl(canonicalPath, locale);
+  const alternates = buildLocaleAlternates(canonicalPath);
+  const heroImage =
+    group.group_photos?.find((photo) => photo.is_primary)?.image_url ??
+    group.group_photos?.[0]?.image_url ??
+    sportMeta?.coverImage ??
+    undefined;
+
+  return {
+    title: `${group.name ?? sportName}${
+      location ? ` in ${location}` : ""
+    } | ${sportName} | RacketThailand`,
+    description,
+    alternates: {
+      canonical,
+      languages: alternates,
+    },
+    openGraph: {
+      title: `${group.name ?? sportName}${
+        location ? ` in ${location}` : ""
+      } | RacketThailand`,
+      description,
+      url: canonical,
+      type: "website",
+      images: heroImage
+        ? [
+            {
+              url: heroImage,
+              alt: `${group.name ?? sportName} group photo`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${group.name ?? sportName} | RacketThailand`,
+      description,
+      images: heroImage ? [heroImage] : undefined,
+    },
+  };
+}
+
 export default async function GroupDetailPage({
   params,
   searchParams,
@@ -129,7 +245,7 @@ export default async function GroupDetailPage({
 
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
     select:
-      "id,name,description,owner_id,sports(code,name),updated_at,player_amount,phone,line_id",
+      "id,name,description,owner_id,sports(code,name),updated_at,player_amount,phone,line_id,line_qr_url",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -137,6 +253,11 @@ export default async function GroupDetailPage({
   if (!group) {
     notFound();
   }
+  const resolvedLineQrUrl = await ensureGroupLineQrUrl(
+    group.id,
+    group.line_qr_url,
+  );
+  const displayGroup = { ...group, line_qr_url: resolvedLineQrUrl };
 
   const [{ data: owners }, { data: photoRows }, { data: sessionRows }] =
     await Promise.all([
@@ -211,6 +332,54 @@ export default async function GroupDetailPage({
     });
     return Array.from(map.values());
   })();
+  const canonicalPath = `/groups/${group.id}`;
+  const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
+  const primaryImage = gallery[0]?.image_url ?? null;
+  const primarySessionCourt = sessionGroups[0]?.court;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SportsClub",
+    "@id": canonicalUrl,
+    name: displayGroup.name ?? "Community group",
+    description: displayGroup.description ?? undefined,
+    url: canonicalUrl,
+    sport:
+      sportCode && SPORT_META[sportCode]
+        ? SPORT_META[sportCode]?.name?.[locale] ??
+          SPORT_META[sportCode]?.name?.en
+        : undefined,
+    image: primaryImage ?? undefined,
+    numberOfMembers: displayGroup.player_amount ?? undefined,
+    contactPoint: displayGroup.phone
+      ? [
+          {
+            "@type": "ContactPoint",
+            telephone: displayGroup.phone,
+            contactType: "customer service",
+          },
+        ]
+      : undefined,
+    organizer: owner
+      ? {
+          "@type": "Person",
+          name: owner.display_name ?? owner.username ?? undefined,
+        }
+      : undefined,
+    location: primarySessionCourt
+      ? {
+          "@type": "SportsActivityLocation",
+          name: primarySessionCourt.name ?? undefined,
+          address:
+            primarySessionCourt.district || primarySessionCourt.province
+              ? {
+                  "@type": "PostalAddress",
+                  addressLocality: primarySessionCourt.district ?? undefined,
+                  addressRegion: primarySessionCourt.province ?? undefined,
+                }
+              : undefined,
+        }
+      : undefined,
+  };
 
   const copy = {
     owner: t("groups.detail.owner"),
@@ -222,6 +391,7 @@ export default async function GroupDetailPage({
     playerAmount: t("groups.detail.playerAmount"),
     phone: t("groups.detail.phone"),
     line: t("groups.detail.line"),
+    lineQr: t("groups.detail.lineQr"),
   };
   const canEdit =
     sessionUser?.id && group.owner_id
@@ -295,23 +465,40 @@ export default async function GroupDetailPage({
                 </p>
               </div>
             )}
-            {group.line_id && (
+            {displayGroup.line_id && (
               <div>
                 <p className="text-xs font-semibold uppercase text-slate-400">
                   {copy.line}
                 </p>
                 <p className="text-base font-semibold text-white">
-                  {group.line_id}
+                  {displayGroup.line_id}
                 </p>
               </div>
             )}
-            {group.updated_at && (
+            {displayGroup.line_qr_url && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-400">
+                  {copy.lineQr}
+                </p>
+                <div className="relative mt-2 h-32 w-32 overflow-hidden rounded-2xl border border-slate-800 bg-white">
+                  <Image
+                    src={displayGroup.line_qr_url}
+                    alt="LINE QR"
+                    fill
+                    sizes="128px"
+                    className="object-contain"
+                    unoptimized
+                  />
+                </div>
+              </div>
+            )}
+            {displayGroup.updated_at && (
               <div>
                 <p className="text-xs font-semibold uppercase text-slate-400">
                   {copy.updated}
                 </p>
                 <p className="text-base font-semibold text-white">
-                  {new Date(group.updated_at).toLocaleString("en-US")}
+                  {new Date(displayGroup.updated_at).toLocaleString("en-US")}
                 </p>
               </div>
             )}
@@ -324,33 +511,41 @@ export default async function GroupDetailPage({
                   {copy.sessionsEmpty}
                 </p>
               ) : (
-                <div className="mt-3 space-y-3">
-                  {sessionGroups.map((entry, index) => (
-                    <div
-                      key={entry.court?.id ?? `session-${index}`}
-                      className="rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3"
-                    >
-                      {entry.court ? (
-                        <Link
-                          href={buildLocalizedPath(
-                            `/courts/${entry.court.id}`,
-                            locale,
-                          )}
-                          className="text-sm font-semibold text-sky-300 underline-offset-2 hover:underline"
+              <div className="mt-3 space-y-3">
+                {sessionGroups.map((entry, index) => (
+                  <div
+                    key={entry.court?.id ?? `session-${index}`}
+                    className="rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3"
+                  >
+                    {entry.court ? (
+                      <Link
+                        href={buildLocalizedPath(
+                          `/courts/${entry.court.id}`,
+                          locale,
+                        )}
+                        className="text-sm font-semibold text-sky-300 underline-offset-2 hover:underline"
+                      >
+                        {entry.court.name ?? "Linked court"}
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-semibold text-white">
+                        {t("groups.detail.court")}
+                      </p>
+                    )}
+                    <ul className="mt-2 divide-y divide-slate-800 rounded-2xl border border-slate-800 bg-slate-950/40 text-sm font-semibold text-slate-200">
+                      {entry.sessions.map((session, sessionIndex) => (
+                        <li
+                          key={`${session.id}-${session.day}-${session.start_time}`}
+                          className={`flex items-center justify-between px-3 py-2 ${
+                            sessionIndex === entry.sessions.length - 1
+                              ? "rounded-b-2xl"
+                              : ""
+                          } ${
+                            sessionIndex === 0 ? "rounded-t-2xl" : ""
+                          } ${sessionIndex % 2 === 0 ? "bg-slate-900/20" : ""}`}
                         >
-                          {entry.court.name ?? "Linked court"}
-                        </Link>
-                      ) : (
-                        <p className="text-sm font-semibold text-white">
-                          {t("groups.detail.court")}
-                        </p>
-                      )}
-                      <ul className="mt-2 space-y-1 text-sm font-semibold text-slate-200">
-                        {entry.sessions.map((session) => (
-                          <li
-                            key={`${session.id}-${session.day}-${session.start_time}`}
-                          >
-                            {getDayLabel(session.day, locale)} ·{" "}
+                          <span>{getDayLabel(session.day, locale)}</span>
+                          <span className="text-right text-slate-100">
                             {session.start_time && session.end_time
                               ? formatTimeRange(
                                   session.start_time,
@@ -358,16 +553,23 @@ export default async function GroupDetailPage({
                                   locale,
                                 )
                               : copy.scheduleAny}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
               )}
             </div>
           </div>
         </section>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
       </main>
     </div>
   );

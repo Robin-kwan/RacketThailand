@@ -72,7 +72,21 @@ export default async function RootLayout({
             <SiteHeader user={headerUser} isAdmin={isAdmin} />
           </div>
           <div className="w-full" aria-hidden="true" />
-          {children}
+          <div className="min-h-screen">{children}</div>
+          <footer className="border-t border-slate-800 bg-[#010616] text-slate-400">
+            <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-6 text-sm md:flex-row md:items-center md:justify-between md:px-10">
+              <p>
+                RacketThailand · Unified Supabase stack · ©{" "}
+                {new Date().getFullYear()}
+              </p>
+              <a
+                href="mailto:racketthailand@gmail.com"
+                className="text-emerald-300 hover:text-emerald-200"
+              >
+                Contact us: racketthailand@gmail.com
+              </a>
+            </div>
+          </footer>
         </HeaderConfigProvider>
       </body>
     </html>

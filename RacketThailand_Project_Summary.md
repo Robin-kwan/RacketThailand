@@ -262,6 +262,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `message`
   - `status` (text: `'open'`, `'in_review'`, `'resolved'`, `'dismissed'`)
   - `priority` (text: `'low'`, `'normal'`, `'high'`, `'urgent'`)
+  - `checked` (boolean, default `false` — admins toggle after reading)
   - `handled_by` (uuid → profiles.id, admin)
   - `resolution_note`
   - `created_at`
@@ -330,3 +331,4 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
 - Court finder’s “Find nearby courts” view now embeds a live Google Maps instance with a blue dot for the user location plus labeled pins for nearby courts, matching the Google Maps experience requested by stakeholders.
 - All Google Maps/Places integrations (client map plus server API routes) now read the single `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` value from `.env.local`. For Advanced Marker labels, optionally define `NEXT_PUBLIC_GOOGLE_MAP_ID` with a vector map ID—otherwise the map will gracefully fall back to classic pins.
 - Group finder now supports filtering by day and half-hour time slots plus a “Find nearby groups” option that geolocates the user, centers the court map, and surfaces the closest sessions.
+- Court and group detail pages now emit localized metadata, canonical URLs, and Schema.org structured data so search engines can index locations and clubs with richer previews.

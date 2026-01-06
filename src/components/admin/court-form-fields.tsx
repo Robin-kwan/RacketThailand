@@ -2,6 +2,8 @@
 
 import { ReactNode } from "react";
 import { BaseSelect } from "@/components/base-select";
+import { BaseTextField } from "@/components/base-text-field";
+import { BaseTextArea } from "@/components/base-text-area";
 
 type SportOption = {
   id: string;
@@ -33,6 +35,7 @@ export type CourtFormCopy = {
   openingHours: string;
   phone: string;
   line: string;
+  lineQr: string;
   website: string;
 };
 
@@ -84,6 +87,7 @@ export function CourtFormFields({
           value: sport.id,
           label: sport.label,
         }))}
+        variant="light"
       />
       {fieldConfigs.map((field) => (
         <div className="space-y-2" key={field.name}>
@@ -92,26 +96,26 @@ export function CourtFormFields({
           </label>
           {field.name === "price_note" ? (
             <>
-              <textarea
+              <BaseTextArea
                 name={field.name}
                 value={values[field.name]}
                 onChange={onChange}
                 required={field.required}
                 rows={4}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+                variant="light"
               />
               <p className="text-xs text-slate-500">
                 Supports basic HTML (e.g., &lt;strong&gt;, &lt;br/&gt;).
               </p>
             </>
           ) : (
-            <input
+            <BaseTextField
               type="text"
               name={field.name}
               value={values[field.name]}
               onChange={onChange}
               required={field.required}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+              variant="light"
             />
           )}
         </div>

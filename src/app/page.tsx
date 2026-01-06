@@ -106,9 +106,6 @@ export default async function Landing({
         </main>
       </div>
 
-      <footer className="mx-auto w-full max-w-screen-xl px-6 py-10 text-sm text-slate-400 md:px-10">
-        RacketThailand · Unified Supabase stack · © {new Date().getFullYear()}
-      </footer>
     </div>
   );
 }

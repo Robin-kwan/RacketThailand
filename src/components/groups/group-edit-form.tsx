@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { showToast } from "@/components/toaster";
 import {
@@ -10,6 +11,7 @@ import {
   Option,
 } from "@/components/groups/group-form";
 import { BaseImageCard } from "@/components/base-image-card";
+import { LineQrUploader } from "@/components/line-qr-uploader";
 
 type SportOption = Option;
 
@@ -43,6 +45,7 @@ type GroupRecord = {
   playerAmount?: string | null;
   phone?: string | null;
   line_id?: string | null;
+  lineQrUrl?: string | null;
 };
 
 type GroupEditFormProps = {
@@ -56,7 +59,6 @@ type GroupEditFormProps = {
 
 const GROUP_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_GROUP_BUCKET || "group-images";
-
 export function GroupEditForm({
   group,
   sports,
@@ -65,6 +67,7 @@ export function GroupEditForm({
   existingPhotos,
   copy,
 }: GroupEditFormProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [photos, setPhotos] = useState<EditablePhoto[]>(
     (existingPhotos ?? []).map((photo) => ({
@@ -78,6 +81,29 @@ export function GroupEditForm({
   const initialPrimaryIdRef = useRef(
     existingPhotos.find((photo) => photo.is_primary)?.id ?? null,
   );
+  const [lineQrStoredUrl, setLineQrStoredUrl] = useState<string | null>(
+    group.lineQrUrl ?? null,
+  );
+  const [lineQrPreview, setLineQrPreview] = useState<string | null>(
+    group.lineQrUrl ?? null,
+  );
+  const [lineQrFile, setLineQrFile] = useState<File | null>(null);
+  const [lineQrRemovalPending, setLineQrRemovalPending] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (lineQrPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(lineQrPreview);
+      }
+    };
+  }, [lineQrPreview]);
+
+  useEffect(() => {
+    setLineQrStoredUrl(group.lineQrUrl ?? null);
+    setLineQrPreview(group.lineQrUrl ?? null);
+    setLineQrFile(null);
+    setLineQrRemovalPending(false);
+  }, [group.id, group.lineQrUrl]);
 
   const initialValues: GroupFormValues = {
     sportId: group.sportId,
@@ -88,6 +114,11 @@ export function GroupEditForm({
     phone: group.phone ?? "",
     lineId: group.line_id ?? "",
   };
+
+  const formStateKey = useMemo(
+    () => JSON.stringify(group),
+    [group],
+  );
 
   const normalizePrimary = (list: EditablePhoto[]) => {
     if (list.length === 0) return list;
@@ -160,6 +191,51 @@ export function GroupEditForm({
     event.target.value = "";
   };
 
+  const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
+    setLineQrFile(file);
+    setLineQrPreview(previewUrl ?? null);
+    if (file) {
+      setLineQrRemovalPending(false);
+    } else if (!previewUrl) {
+      setLineQrRemovalPending(Boolean(lineQrStoredUrl));
+    }
+  };
+
+  const uploadLineQrImage = async () => {
+    if (!lineQrFile) return;
+    const formData = new FormData();
+    formData.append("file", lineQrFile);
+    const response = await fetch(`/api/groups/${group.id}/line-qr`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data?.error ?? copy.error);
+    }
+    const nextUrl =
+      typeof data?.lineQrUrl === "string" ? data.lineQrUrl : null;
+    setLineQrStoredUrl(nextUrl);
+    setLineQrPreview(nextUrl);
+    setLineQrFile(null);
+    setLineQrRemovalPending(false);
+  };
+
+  const removeLineQrImage = async () => {
+    if (!lineQrStoredUrl && !lineQrFile) return;
+    const response = await fetch(`/api/groups/${group.id}/line-qr`, {
+      method: "DELETE",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data?.error ?? copy.error);
+    }
+    setLineQrStoredUrl(null);
+    setLineQrFile(null);
+    setLineQrRemovalPending(false);
+    setLineQrPreview(null);
+  };
+
   const handleSubmit = async (payload: {
     sportId: string;
     name: string;
@@ -206,11 +282,17 @@ export function GroupEditForm({
       hasDeletions || hasNewPhotos || primaryChanged;
 
     try {
+      if (lineQrFile) {
+        await uploadLineQrImage();
+      } else if (lineQrRemovalPending && lineQrStoredUrl) {
+        await removeLineQrImage();
+      }
       if (shouldUpdatePhotos) {
         setUploading(true);
         await handlePhotoOperations(primaryChanged);
       }
       showToast({ variant: "success", message: copy.success });
+      router.refresh();
     } catch (error) {
       console.error(error);
       showToast({
@@ -335,7 +417,7 @@ export function GroupEditForm({
 
   return (
     <GroupForm
-      key={group.id}
+      key={formStateKey}
       initialValues={initialValues}
       sports={sports}
       courts={courts}
@@ -411,6 +493,14 @@ export function GroupEditForm({
             )}
           </div>
         </div>
+      }
+      lineQrSection={
+        <LineQrUploader
+          label={copy.lineQrLabel}
+          previewUrl={lineQrPreview}
+          onChange={handleLineQrChange}
+          disabled={uploading || submitting}
+        />
       }
       onSubmit={handleSubmit}
       submitting={submitting}

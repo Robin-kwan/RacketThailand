@@ -4,6 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Clock3, Trash2 } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import { BaseAutocomplete } from "@/components/base-autocomplete";
+import { BaseTextField } from "@/components/base-text-field";
+import { BaseNumberField } from "@/components/base-number-field";
+import { BaseTextArea } from "@/components/base-text-area";
 
 export type Option = {
   value: string;
@@ -70,6 +73,7 @@ export type GroupFormCopy = {
   phonePlaceholder: string;
   lineLabel: string;
   linePlaceholder: string;
+  lineQrLabel: string;
 };
 
 type SubmitPayload = {
@@ -89,6 +93,7 @@ type GroupFormProps = {
   dayOptions: Option[];
   copy: GroupFormCopy;
   photoSection?: React.ReactNode;
+  lineQrSection?: React.ReactNode;
   onSubmit: (payload: SubmitPayload) => Promise<void> | void;
   submitting: boolean;
   submitLabel: string;
@@ -202,15 +207,15 @@ function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
 
   return (
     <div className="space-y-1" ref={containerRef}>
-      <label className="text-xs font-semibold text-slate-600" htmlFor={id}>
+      <label className="text-xs font-semibold text-slate-300" htmlFor={id}>
         {label}
       </label>
-      <div className="relative rounded-2xl border border-slate-200 bg-slate-50 transition focus-within:border-slate-400 focus-within:bg-white">
-        <div className="pointer-events-none flex h-12 items-center justify-between px-4 text-sm text-slate-900">
-          <span className={formattedValue ? "text-slate-900" : "text-slate-300"}>
+      <div className="relative rounded-2xl border border-slate-700 bg-slate-900/60 transition focus-within:border-slate-500 focus-within:bg-slate-900">
+        <div className="pointer-events-none flex h-12 items-center justify-between px-4 text-sm text-slate-100">
+          <span className={formattedValue ? "text-slate-100" : "text-slate-500"}>
             {formattedValue || label}
           </span>
-          <Clock3 className="h-5 w-5 text-slate-300" aria-hidden="true" />
+          <Clock3 className="h-5 w-5 text-slate-400" aria-hidden="true" />
         </div>
         <input
           id={id}
@@ -225,7 +230,7 @@ function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
         />
         {open && (
           <div
-            className="absolute inset-x-0 top-full z-30 mt-2 rounded-3xl border border-slate-100 bg-white/95 p-2 shadow-2xl ring-1 ring-slate-100"
+            className="absolute inset-x-0 top-full z-30 mt-2 rounded-3xl border border-slate-700 bg-[#090f1f] p-2 shadow-2xl shadow-black/50"
             onKeyDown={handleOptionKeyDown}
           >
             <div className="max-h-60 overflow-y-auto pr-1">
@@ -237,8 +242,8 @@ function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
                     type="button"
                     className={`flex w-full items-center justify-between rounded-2xl px-3 py-2 text-sm transition ${
                       selected
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-slate-800 text-white"
+                        : "text-slate-300 hover:bg-slate-800/60"
                     }`}
                     onClick={() => handleSelect(option.value)}
                     role="option"
@@ -266,6 +271,7 @@ export function GroupForm({
   dayOptions,
   copy,
   photoSection,
+  lineQrSection,
   onSubmit,
   submitting,
   submitLabel,
@@ -283,7 +289,6 @@ export function GroupForm({
   const [courtSessions, setCourtSessions] = useState<CourtSessionBlock[]>(
     initialValues.sessions,
   );
-
   const sportOptions = useMemo(
     () =>
       sports.map((sport) => ({
@@ -465,7 +470,7 @@ export function GroupForm({
   };
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5 text-slate-100" onSubmit={handleSubmit}>
       <BaseSelect
         label={copy.sport}
         name="sportId"
@@ -476,95 +481,93 @@ export function GroupForm({
         required
       />
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-700">
+        <label className="text-sm font-semibold text-slate-100">
           {copy.name}
         </label>
-        <input
+        <BaseTextField
           type="text"
           name="name"
           value={form.name}
           onChange={updateForm}
           required
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-700">
+        <label className="text-sm font-semibold text-slate-100">
           {copy.description}
         </label>
-        <textarea
+        <BaseTextArea
           name="description"
           value={form.description}
           onChange={updateForm}
           rows={4}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-700">
+        <label className="text-sm font-semibold text-slate-100">
           {copy.playerAmountLabel}
         </label>
-        <p className="text-xs text-slate-500">{copy.playerAmountHelp}</p>
-        <input
-          type="number"
+        <p className="text-xs text-slate-400">{copy.playerAmountHelp}</p>
+        <BaseNumberField
           name="playerAmount"
-          min="1"
-          inputMode="numeric"
           placeholder={copy.playerAmountPlaceholder}
           value={form.playerAmount}
           onChange={updateForm}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="text-sm font-semibold text-slate-100">
             {copy.phoneLabel}
           </label>
-          <input
+          <BaseTextField
             type="tel"
             name="phone"
             value={form.phone}
             onChange={updateForm}
             placeholder={copy.phonePlaceholder}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+            className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-slate-700">
+          <label className="text-sm font-semibold text-slate-100">
             {copy.lineLabel}
           </label>
-          <input
+          <BaseTextField
             type="text"
             name="lineId"
             value={form.lineId}
             onChange={updateForm}
             placeholder={copy.linePlaceholder}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+            className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
           />
         </div>
       </div>
-      <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 p-4">
+      {lineQrSection}
+      <div className="space-y-3 rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 p-4">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-slate-700">
+          <p className="text-sm font-semibold">
             {copy.sessionsLabel}
           </p>
           <button
             type="button"
             onClick={addCourtBlock}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+            className="text-xs font-semibold text-emerald-300 hover:text-emerald-200"
           >
             {copy.sessionsAddCourt}
           </button>
         </div>
         {courtSessions.length === 0 ? (
-          <p className="text-xs text-slate-500">{copy.sessionsEmpty}</p>
+          <p className="text-xs text-slate-400">{copy.sessionsEmpty}</p>
         ) : (
           <div className="space-y-4">
             {courtSessions.map((block) => (
               <div
                 key={block.id}
-                className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4"
+                className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/40 p-4"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <BaseAutocomplete
@@ -581,14 +584,14 @@ export function GroupForm({
                     <button
                       type="button"
                       onClick={() => removeCourtBlock(block.id)}
-                      className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-600"
+                      className="flex h-12 w-12 items-center justify-center text-rose-400 transition hover:text-rose-300"
                     >
                       <Trash2 className="h-6 w-6" />
                     </button>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold uppercase text-slate-500">
+                  <p className="text-xs font-semibold uppercase text-slate-400">
                     {copy.sessionsTitle ?? copy.scheduleLabel}
                   </p>
                   {block.slots.map((slot) => {
@@ -601,7 +604,7 @@ export function GroupForm({
                       >
                         <div className="space-y-1">
                           <label
-                            className="text-xs font-semibold text-slate-600"
+                            className="text-xs font-semibold text-slate-300"
                             htmlFor={`schedule-day-${slot.id}`}
                           >
                             {copy.scheduleDay}
@@ -647,7 +650,7 @@ export function GroupForm({
                           <button
                             type="button"
                             onClick={() => removeSessionSlot(block.id, slot.id)}
-                            className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-600"
+                            className="flex h-12 w-12 items-center justify-center text-rose-400 transition hover:text-rose-300"
                             aria-label={copy.scheduleRemove}
                           >
                             <Trash2 className="h-6 w-6" />
@@ -660,7 +663,7 @@ export function GroupForm({
                 <button
                   type="button"
                   onClick={() => addSessionSlot(block.id)}
-                  className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                  className="text-xs font-semibold text-emerald-300 hover:text-emerald-200"
                 >
                   {copy.sessionsAddSlot}
                 </button>
@@ -673,7 +676,7 @@ export function GroupForm({
       <button
         type="submit"
         disabled={submitting || !hasChanges}
-        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:cursor-not-allowed disabled:border disabled:border-slate-500"
       >
         {submitting ? `${submittingLabel}...` : submitLabel}
       </button>
