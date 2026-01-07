@@ -252,40 +252,40 @@ export default async function EditGroupPage({
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-[#020617] text-slate-100">
       <HeaderSportScope sportSlug={currentSportSlug} />
       <HeaderSubLabel value={currentSportLabel} />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-      <div>
-        <Link
-          href={buildLocalizedPath(`/groups/${group.id}`, locale)}
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-        >
-          ← {t("courtPage.back")}
-        </Link>
-      </div>
-      <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
-        <p className="text-xs font-semibold uppercase text-slate-400">
-          Groups · Edit
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold text-slate-900">
-          {t("groups.edit.title")}
-        </h1>
-        <p className="mt-2 text-sm text-slate-600">
-          {t("groups.edit.subtitle")}
-        </p>
-            <div className="mt-6">
-              <GroupEditForm
-                group={formGroup}
-                sports={sportOptions}
-                courts={courtOptions}
-                dayOptions={dayOptions}
-                existingPhotos={photoRows ?? []}
-                copy={copy}
-              />
-            </div>
-      </section>
-    </main>
-    </>
+        <div>
+          <Link
+            href={buildLocalizedPath(`/groups/${group.id}`, locale)}
+            className="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-500"
+          >
+            ← {t("courtPage.back")}
+          </Link>
+        </div>
+        <section className="rounded-[32px] border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-black/40 backdrop-blur">
+          <p className="text-xs font-semibold uppercase text-slate-400">
+            Groups · Edit
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold text-white">
+            {t("groups.edit.title")}
+          </h1>
+          <p className="mt-2 text-sm text-slate-400">
+            {t("groups.edit.subtitle")}
+          </p>
+          <div className="mt-6">
+            <GroupEditForm
+              group={formGroup}
+              sports={sportOptions}
+              courts={courtOptions}
+              dayOptions={dayOptions}
+              existingPhotos={photoRows ?? []}
+              copy={copy}
+            />
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }
