@@ -110,7 +110,9 @@ export function LoginForm({
     setGoogleLoading(true);
     const redirectPath = buildLocalizedPath(redirectTo, locale);
     const baseUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      typeof window !== "undefined"
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_SITE_URL || "";
     const callbackUrl = new URL("/auth/callback", baseUrl);
     callbackUrl.searchParams.set("next", redirectPath);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
