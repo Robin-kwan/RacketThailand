@@ -6,6 +6,8 @@ import { SiteHeader } from "@/components/site-header";
 import { ToasterProvider } from "@/components/toaster-provider";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { ScrollReset } from "@/components/scroll-reset";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -84,6 +86,8 @@ export default async function RootLayout({
               </a>
             </div>
           </footer>
+          <Analytics />
+          <SpeedInsights />
         </HeaderConfigProvider>
       </body>
     </html>
