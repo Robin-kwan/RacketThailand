@@ -15,6 +15,8 @@ import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
+import { ViewTracker } from "@/components/view-tracker";
+import { incrementViewCount } from "@/lib/viewCounts";
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
@@ -243,6 +245,16 @@ export default async function GroupDetailPage({
     data: { user: sessionUser },
   } = await supabase.auth.getUser();
 
+  let viewerStatus: string | null = null;
+  if (sessionUser) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", sessionUser.id)
+      .single();
+    viewerStatus = profile?.status ?? null;
+  }
+
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
     select:
       "id,name,description,owner_id,sports(code,name),updated_at,player_amount,phone,line_id,line_qr_url",
@@ -253,6 +265,21 @@ export default async function GroupDetailPage({
   if (!group) {
     notFound();
   }
+
+  const isAdminViewer = viewerStatus === "admin";
+  const isGroupOwner =
+    sessionUser?.id && group.owner_id
+      ? sessionUser.id === group.owner_id
+      : false;
+
+  if (!isAdminViewer && !isGroupOwner) {
+    try {
+      await incrementViewCount("group", group.id);
+    } catch (error) {
+      console.error("Failed to increment group view count", error);
+    }
+  }
+
   const resolvedLineQrUrl = await ensureGroupLineQrUrl(
     group.id,
     group.line_qr_url,
@@ -393,14 +420,15 @@ export default async function GroupDetailPage({
     line: t("groups.detail.line"),
     lineQr: t("groups.detail.lineQr"),
   };
-  const canEdit =
-    sessionUser?.id && group.owner_id
-      ? sessionUser.id === group.owner_id
-      : false;
+  const canEdit = isGroupOwner;
   const sportName = group.sports?.name ?? undefined;
 
   return (
     <div className="bg-[#020617] text-slate-100">
+      <ViewTracker
+        event="group_view"
+        payload={{ groupId: group.id }}
+      />
       <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-slate-100 md:px-10">
         <HeaderSportScope sportSlug={sportCode ?? undefined} />
         <HeaderSubLabel value={sportName} />

@@ -8,6 +8,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { ScrollReset } from "@/components/scroll-reset";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SupabaseAuthListener } from "@/components/supabase-auth-listener";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -69,6 +70,7 @@ export default async function RootLayout({
       >
         <HeaderConfigProvider>
           <ScrollReset />
+          <SupabaseAuthListener />
           <ToasterProvider />
           <div className="sticky top-0 z-50 w-full">
             <SiteHeader user={headerUser} isAdmin={isAdmin} />

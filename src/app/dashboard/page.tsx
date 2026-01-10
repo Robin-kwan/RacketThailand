@@ -10,6 +10,7 @@ import {
 } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { getViewCounts } from "@/lib/viewCounts";
 
 type SearchParams = {
   lang?: string;
@@ -51,12 +52,24 @@ function getSportFallbackImage(code?: string | null) {
   return SPORT_META[code]?.coverImage ?? "/sports/badminton.svg";
 }
 
+function formatViewCountDisplay(
+  count: number | undefined,
+  locale: Locale,
+) {
+  const safeCount =
+    typeof count === "number" && Number.isFinite(count) ? count : 0;
+  const intlLocale = locale === "th" ? "th-TH" : "en-US";
+  return new Intl.NumberFormat(intlLocale).format(safeCount);
+}
+
 function CourtCard({
   court,
   locale,
+  viewCount = 0,
 }: {
   court: OwnedCourtRow;
   locale: Locale;
+  viewCount?: number;
 }) {
   const sportCode = court.sports?.code ?? null;
   const accent = getSportAccent(sportCode);
@@ -65,6 +78,8 @@ function CourtCard({
     court.court_photos?.find((photo) => photo.is_primary)?.image_url ??
     court.court_photos?.[0]?.image_url ??
     getSportFallbackImage(sportCode);
+
+  const formattedViews = formatViewCountDisplay(viewCount, locale);
 
   return (
     <Link
@@ -98,6 +113,12 @@ function CourtCard({
           {court.province || "TH"}
         </span>
       </div>
+      <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+        <span>Views</span>
+        <span className="text-slate-900">
+          {formattedViews}
+        </span>
+      </div>
     </Link>
   );
 }
@@ -105,9 +126,11 @@ function CourtCard({
 function GroupCard({
   group,
   locale,
+  viewCount = 0,
 }: {
   group: OwnedGroupRow;
   locale: Locale;
+  viewCount?: number;
 }) {
   const sportCode = group.sports?.code ?? null;
   const accent = getSportAccent(sportCode);
@@ -116,6 +139,8 @@ function GroupCard({
     group.group_photos?.find((photo) => photo.is_primary)?.image_url ??
     group.group_photos?.[0]?.image_url ??
     getSportFallbackImage(sportCode);
+
+  const formattedViews = formatViewCountDisplay(viewCount, locale);
 
   return (
     <Link
@@ -155,6 +180,12 @@ function GroupCard({
           style={{ backgroundColor: `${accent}15`, color: accent }}
         >
           {sportCode ? sportCode.toUpperCase() : "COMMUNITY"}
+        </span>
+      </div>
+      <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+        <span>Views</span>
+        <span className="text-slate-900">
+          {formattedViews}
         </span>
       </div>
     </Link>
@@ -227,23 +258,34 @@ export default async function DashboardPage({
       };
     }) ?? [];
 
-  const [{ data: ownedCourtsData }, { data: ownedGroupsData }] =
-    await Promise.all([
-      supabaseSelect<OwnedCourtRow>("courts", {
-        select: "id,name,district,province,sports!inner(code),court_photos(image_url,is_primary)",
-        created_by: `eq.${user.id}`,
-        order: "name.asc.nullslast",
-      }),
-      supabaseSelect<OwnedGroupRow>("groups", {
-        select:
-          "id,name,description,sports!inner(code),group_photos(image_url,is_primary)",
-        owner_id: `eq.${user.id}`,
-        order: "created_at.desc",
-      }),
-    ]);
+  const [
+    { data: ownedCourtsData },
+    { data: ownedGroupsData },
+    viewCounts,
+  ] = await Promise.all([
+    supabaseSelect<OwnedCourtRow>("courts", {
+      select: "id,name,district,province,sports!inner(code),court_photos(image_url,is_primary)",
+      created_by: `eq.${user.id}`,
+      order: "name.asc.nullslast",
+    }),
+    supabaseSelect<OwnedGroupRow>("groups", {
+      select:
+        "id,name,description,sports!inner(code),group_photos(image_url,is_primary)",
+      owner_id: `eq.${user.id}`,
+      order: "created_at.desc",
+    }),
+    getViewCounts().catch((error): Awaited<
+      ReturnType<typeof getViewCounts>
+    > => {
+      console.error("Failed to fetch view counts", error);
+      return { courts: {}, groups: {} };
+    }),
+  ]);
 
   const ownedCourts = ownedCourtsData ?? [];
   const ownedGroups = ownedGroupsData ?? [];
+  const courtViewCounts = viewCounts.courts ?? {};
+  const groupViewCounts = viewCounts.groups ?? {};
 
   const copy = {
     title: t("dashboard.courtRequests.title"),
@@ -293,7 +335,12 @@ export default async function DashboardPage({
           ) : (
             <div className="mt-4 grid gap-4">
               {ownedCourts.map((court) => (
-                <CourtCard key={court.id} court={court} locale={locale} />
+                <CourtCard
+                  key={court.id}
+                  court={court}
+                  locale={locale}
+                  viewCount={courtViewCounts[court.id]}
+                />
               ))}
             </div>
           )}
@@ -318,7 +365,12 @@ export default async function DashboardPage({
           ) : (
             <div className="mt-4 grid gap-4">
               {ownedGroups.map((group) => (
-                <GroupCard key={group.id} group={group} locale={locale} />
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  locale={locale}
+                  viewCount={groupViewCounts[group.id]}
+                />
               ))}
             </div>
           )}
