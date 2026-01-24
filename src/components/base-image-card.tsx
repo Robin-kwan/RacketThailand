@@ -30,7 +30,7 @@ export function BaseImageCard({
           type="button"
           disabled={disabled}
           onClick={onRemove}
-          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-slate-950/80 text-sm font-bold text-slate-200 shadow transition hover:bg-slate-800 hover:text-white disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[rgb(var(--rt-primary-soft-rgb)/0.8)] text-sm font-bold text-[var(--rt-primary-text)] transition hover:bg-[rgb(var(--rt-primary-rgb)/0.85)] hover:text-white disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
         >
           ×
         </button>

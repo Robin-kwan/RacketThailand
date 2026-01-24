@@ -49,7 +49,7 @@ export function Toaster() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`pointer-events-auto rounded-2xl border px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 ${
+          className={`pointer-events-auto rounded-2xl border px-4 py-3 text-sm font-semibold text-white ${
             toast.variant === "success"
               ? "border-emerald-500 bg-emerald-600"
               : toast.variant === "error"

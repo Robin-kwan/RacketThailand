@@ -132,7 +132,7 @@ export function NotificationsMenu({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:border-slate-500"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[rgb(var(--foreground-rgb)/0.25)] bg-white text-[var(--foreground)] transition hover:border-[rgb(var(--foreground-rgb)/0.5)]"
         aria-label={copy.title}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -155,7 +155,7 @@ export function NotificationsMenu({
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-3 w-80 rounded-3xl border border-slate-200 bg-white p-4 text-sm shadow-2xl shadow-slate-200/80">
+        <div className="absolute right-0 top-full z-50 mt-3 w-80 rounded-3xl border border-slate-200 bg-white p-4 text-sm">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-900">
               {copy.title}

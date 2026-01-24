@@ -259,6 +259,14 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
             ? [form.name, form.address].filter(Boolean).join(" · ")
             : ""
         }
+        selectedCoordinates={
+          form.latitude && form.longitude
+            ? {
+                latitude: Number(form.latitude),
+                longitude: Number(form.longitude),
+              }
+            : null
+        }
       />
       <div className="space-y-2">
         <label className="text-sm font-semibold text-slate-700">

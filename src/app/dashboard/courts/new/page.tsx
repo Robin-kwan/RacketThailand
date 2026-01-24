@@ -89,7 +89,7 @@ export default async function DashboardAddCourtPage({
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-      <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
+      <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
         <p className="text-xs font-semibold uppercase text-slate-400">
           Dashboard · Courts
         </p>

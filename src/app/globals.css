@@ -1,14 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #f1f5f9;
-  --surface: rgba(15, 23, 42, 0.92);
-  --surface-muted: rgba(15, 23, 42, 0.8);
-  --text-primary: #f8fafc;
-  --text-muted: #cbd5f5;
-  --border-color: rgba(148, 163, 184, 0.3);
-  --shadow-color: rgba(3, 7, 18, 0.7);
+  --background: #f0f4f9;
+  --foreground: #0f172a;
+  --foreground-rgb: 15 23 42;
+  --rt-primary: #0c3427;
+  --rt-primary-soft: #0a2d1f;
+  --rt-primary-border: #124534;
+  --rt-primary-text: #e3fff2;
+  --rt-primary-shadow: rgba(0, 0, 0, 0);
+  --rt-primary-rgb: 12 52 39;
+  --rt-primary-soft-rgb: 10 45 31;
+  --rt-primary-border-rgb: 18 69 52;
+  --rt-primary-text-rgb: 227 255 242;
+  --rt-disabled: #94a3b8;
+  --rt-card-radius: 32px;
 }
 
 @theme inline {
@@ -19,54 +25,12 @@
 }
 
 body {
-  background: radial-gradient(circle at 20% 20%, rgba(15, 23, 42, 0.7) 0%, var(--background) 55%, var(--background) 100%);
-  color: var(--text-primary);
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   min-height: 100vh;
   margin: 0;
-}
-
-.bg-white,
-.bg-white\/90,
-.bg-white\/80 {
-  background-color: var(--surface) !important;
-}
-
-.bg-slate-50,
-.bg-slate-50\/80,
-.bg-slate-100\/80 {
-  background-color: var(--surface-muted) !important;
-}
-
-.text-slate-900,
-.text-slate-800 {
-  color: var(--text-primary) !important;
-}
-
-.text-slate-700,
-.text-slate-600,
-.text-slate-500,
-.text-slate-400 {
-  color: var(--text-muted) !important;
-}
-
-.border-slate-200,
-.border-slate-200\/70,
-.border-slate-300,
-.border-slate-400 {
-  border-color: var(--border-color) !important;
-}
-
-.shadow-slate-200,
-.shadow-slate-200\/70,
-.shadow-slate-900\/5 {
-  box-shadow: 0 25px 60px var(--shadow-color) !important;
-}
-
-button,
-[role="button"] {
-  cursor: pointer;
 }
 
 input[type="time"]::-webkit-calendar-picker-indicator,
@@ -77,4 +41,118 @@ input[type="time"]::-webkit-inner-spin-button {
 
 input[type="time"] {
   -moz-appearance: textfield;
+}
+
+.rt-page {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.rt-card {
+  background-color: #ffffff;
+  border: none;
+  border-radius: var(--rt-card-radius);
+  color: var(--foreground);
+}
+
+.rt-card-muted {
+  background-color: rgb(var(--rt-primary-rgb));
+  color: var(--rt-primary-text);
+}
+
+.rt-card-ghost {
+  background-color: rgb(var(--rt-primary-soft-rgb) / 0.75);
+  border: 1px solid rgb(var(--rt-primary-border-rgb));
+  border-radius: var(--rt-card-radius);
+  color: var(--rt-primary-text);
+}
+
+.rt-pill {
+  background-color: rgb(var(--rt-primary-rgb));
+  border: 1px solid rgb(var(--rt-primary-border-rgb));
+  color: var(--rt-primary-text);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rt-text-muted {
+  color: rgb(var(--rt-primary-text-rgb) / 0.75);
+}
+
+.rt-text-faint {
+  color: rgb(var(--rt-primary-text-rgb) / 0.55);
+}
+
+.rt-card input,
+.rt-card textarea,
+.rt-card select {
+  color: var(--foreground);
+}
+
+.rt-card input,
+.rt-card textarea {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgb(var(--foreground-rgb) / 0.2);
+  transition: border-color 0.2s ease;
+}
+
+.rt-card .rt-text-muted {
+  color: rgb(var(--foreground-rgb) / 0.65);
+}
+
+.rt-card .rt-text-faint {
+  color: rgb(var(--foreground-rgb) / 0.45);
+}
+
+.rt-card h1,
+.rt-card h2,
+.rt-card h3,
+.rt-card h4,
+.rt-card h5,
+.rt-card h6 {
+  color: var(--foreground);
+}
+
+button,
+[role="button"],
+summary,
+[aria-haspopup="menu"],
+[aria-expanded],
+.menu-button {
+  cursor: pointer;
+}
+
+.rt-btn-primary {
+  background-color: rgb(var(--rt-primary-rgb));
+  border: 1px solid rgb(var(--rt-primary-border-rgb));
+  border-radius: 999px;
+  color: var(--rt-primary-text);
+  font-weight: 600;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.rt-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.rt-btn-primary:disabled {
+  background-color: var(--rt-disabled);
+  border-color: var(--rt-disabled);
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 1;
+  box-shadow: none;
+}
+.rt-card input:focus,
+.rt-card textarea:focus {
+  border-color: rgb(var(--rt-primary-border-rgb));
+  outline: none;
 }

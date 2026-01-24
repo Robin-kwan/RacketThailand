@@ -18,7 +18,7 @@ export function CourtMap({ name, latitude, longitude }: CourtMapProps) {
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
 
   return (
-    <section className="space-y-4 rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-xl shadow-slate-200/80">
+    <section className="space-y-4 rounded-[32px] border border-slate-200 bg-white/90 p-6">
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase text-slate-400">
           Map & Directions
@@ -28,7 +28,7 @@ export function CourtMap({ name, latitude, longitude }: CourtMapProps) {
           View this court on the map and get directions instantly.
         </p>
       </header>
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-inner shadow-slate-300/60">
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100">
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-transparent via-transparent to-white/15" />
         <iframe
           title={`${name} location`}

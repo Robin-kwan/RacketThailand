@@ -65,7 +65,7 @@ export default async function AdminPanel({
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
+        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
           <p className="text-xs font-semibold uppercase text-slate-400">
             Admin
           </p>
@@ -81,7 +81,7 @@ export default async function AdminPanel({
             <Link
               key={feature.href}
               href={buildLocalizedPath(feature.href, locale)}
-              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-md shadow-slate-200 transition hover:-translate-y-1"
+              className="rounded-3xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1"
             >
               <h2 className="text-xl font-semibold text-slate-900">
                 {feature.title}

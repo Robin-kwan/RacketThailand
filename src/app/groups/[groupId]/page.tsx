@@ -17,6 +17,8 @@ import { HeaderSportScope } from "@/components/header-sport-scope";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
 import { ViewTracker } from "@/components/view-tracker";
 import { incrementViewCount } from "@/lib/viewCounts";
+import { BaseCard } from "@/components/base-card";
+import { BaseScheduleList } from "@/components/base-schedule-list";
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
@@ -310,7 +312,6 @@ export default async function GroupDetailPage({
 
   const owner = owners?.[0] ?? null;
   const sportCode = group.sports?.code;
-  const accent = SPORT_META[sportCode ?? ""]?.accent ?? "#0f172a";
   const fallbackImage =
     SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.svg";
   const filteredPhotos =
@@ -424,66 +425,66 @@ export default async function GroupDetailPage({
   const sportName = group.sports?.name ?? undefined;
 
   return (
-    <div className="bg-[#020617] text-slate-100">
+    <div className="rt-page">
       <ViewTracker
         event="group_view"
         payload={{ groupId: group.id }}
       />
-      <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-slate-100 md:px-10">
+      <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-[var(--foreground)] md:px-10">
         <HeaderSportScope sportSlug={sportCode ?? undefined} />
         <HeaderSubLabel value={sportName} />
         <CourtGallery gallery={gallery} courtName={group.name} />
-        <section
-          className="rounded-[32px] border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-black/50 backdrop-blur"
-          style={{
-            boxShadow: `0 25px 60px ${accent}33`,
-          }}
+        <BaseCard
+          as="section"
+          className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <p className="text-xs font-semibold uppercase text-slate-400">
+          <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
             Group · {group.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="mt-3 text-4xl font-semibold text-white">
+            <h1 className="mt-3 text-4xl font-semibold text-[var(--foreground)]">
               {group.name}
             </h1>
             {canEdit && (
               <Link
                 href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
-                className="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-500"
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
               >
                 {copy.edit}
               </Link>
             )}
           </div>
           {group.description && (
-            <p className="mt-2 text-sm text-slate-300">{group.description}</p>
+            <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.75)]">
+              {group.description}
+            </p>
           )}
-          <div className="mt-6 grid gap-5 rounded-3xl border border-slate-800 bg-slate-900/50 px-6 py-5 sm:grid-cols-2">
+          <div className="mt-6 grid gap-5 rounded-3xl border border-slate-100 bg-[rgb(var(--foreground-rgb)/0.02)] px-6 py-5 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-semibold uppercase text-slate-400">
+              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                 {copy.owner}
               </p>
-              <p className="text-base font-semibold text-white">
+              <p className="text-base font-semibold text-[var(--foreground)]">
                 {owner?.display_name ?? owner?.username ?? "—"}
               </p>
             </div>
             {typeof group.player_amount === "number" &&
               Number.isFinite(group.player_amount) && (
                 <div>
-                  <p className="text-xs font-semibold uppercase text-slate-400">
+                  <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                     {copy.playerAmount}
                   </p>
-                  <p className="text-base font-semibold text-white">
+                  <p className="text-base font-semibold text-[var(--foreground)]">
                     {group.player_amount}
                   </p>
                 </div>
               )}
             {group.phone && (
               <div>
-                <p className="text-xs font-semibold uppercase text-slate-400">
+                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.phone}
                 </p>
-                <p className="text-base font-semibold text-white">
+                <p className="text-base font-semibold text-[var(--foreground)]">
                   <a
                     href={`tel:${group.phone}`}
                     className="underline decoration-dotted"
@@ -495,20 +496,20 @@ export default async function GroupDetailPage({
             )}
             {displayGroup.line_id && (
               <div>
-                <p className="text-xs font-semibold uppercase text-slate-400">
+                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.line}
                 </p>
-                <p className="text-base font-semibold text-white">
+                <p className="text-base font-semibold text-[var(--foreground)]">
                   {displayGroup.line_id}
                 </p>
               </div>
             )}
             {displayGroup.line_qr_url && (
               <div>
-                <p className="text-xs font-semibold uppercase text-slate-400">
+                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.lineQr}
                 </p>
-                <div className="relative mt-2 h-32 w-32 overflow-hidden rounded-2xl border border-slate-800 bg-white">
+                <div className="relative mt-2 h-32 w-32 overflow-hidden rounded-2xl border border-slate-200 bg-white">
                   <Image
                     src={displayGroup.line_qr_url}
                     alt="LINE QR"
@@ -522,76 +523,75 @@ export default async function GroupDetailPage({
             )}
             {displayGroup.updated_at && (
               <div>
-                <p className="text-xs font-semibold uppercase text-slate-400">
+                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.updated}
                 </p>
-                <p className="text-base font-semibold text-white">
-                  {new Date(displayGroup.updated_at).toLocaleString("en-US")}
+                <p className="text-base font-semibold text-[var(--foreground)]">
+                  {new Date(displayGroup.updated_at).toLocaleDateString(
+                    locale === "th" ? "th-TH" : "en-US",
+                    { dateStyle: "long" },
+                  )}
                 </p>
               </div>
             )}
             <div className="sm:col-span-2">
-              <p className="text-xs font-semibold uppercase text-slate-400">
+              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                 {copy.sessionsTitle}
               </p>
               {sessionGroups.length === 0 ? (
-                <p className="text-base font-semibold text-white">
+                <p className="text-base font-semibold text-[var(--foreground)]">
                   {copy.sessionsEmpty}
                 </p>
               ) : (
-              <div className="mt-3 space-y-3">
-                {sessionGroups.map((entry, index) => (
-                  <div
-                    key={entry.court?.id ?? `session-${index}`}
-                    className="rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3"
-                  >
-                    {entry.court ? (
-                      <Link
-                        href={buildLocalizedPath(
-                          `/courts/${entry.court.id}`,
-                          locale,
-                        )}
-                        className="text-sm font-semibold text-sky-300 underline-offset-2 hover:underline"
-                      >
-                        {entry.court.name ?? "Linked court"}
-                      </Link>
-                    ) : (
-                      <p className="text-sm font-semibold text-white">
-                        {t("groups.detail.court")}
-                      </p>
-                    )}
-                    <ul className="mt-2 divide-y divide-slate-800 rounded-2xl border border-slate-800 bg-slate-950/40 text-sm font-semibold text-slate-200">
-                      {entry.sessions.map((session, sessionIndex) => (
-                        <li
-                          key={`${session.id}-${session.day}-${session.start_time}`}
-                          className={`flex items-center justify-between px-3 py-2 ${
-                            sessionIndex === entry.sessions.length - 1
-                              ? "rounded-b-2xl"
-                              : ""
-                          } ${
-                            sessionIndex === 0 ? "rounded-t-2xl" : ""
-                          } ${sessionIndex % 2 === 0 ? "bg-slate-900/20" : ""}`}
+                <div className="mt-3 space-y-3">
+                  {sessionGroups.map((entry, index) => (
+                    <BaseCard
+                      key={entry.court?.id ?? `session-${index}`}
+                      className="rounded-2xl border border-slate-200 px-4 py-3"
+                    >
+                      {entry.court ? (
+                        <Link
+                          href={buildLocalizedPath(
+                            `/courts/${entry.court.id}`,
+                            locale,
+                          )}
+                          className="text-sm font-semibold text-[var(--rt-primary)] underline-offset-2 hover:underline"
                         >
-                          <span>{getDayLabel(session.day, locale)}</span>
-                          <span className="text-right text-slate-100">
-                            {session.start_time && session.end_time
-                              ? formatTimeRange(
-                                  session.start_time,
-                                  session.end_time,
-                                  locale,
-                                )
-                              : copy.scheduleAny}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+                          {entry.court.name ?? "Linked court"}
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-semibold text-[var(--foreground)]">
+                          {t("groups.detail.court")}
+                        </p>
+                      )}
+                      {entry.sessions.length > 0 ? (
+                        <BaseScheduleList
+                          entries={entry.sessions.map((session, sessionIndex) => ({
+                            id: session.id ?? `${entry.court?.id ?? "session"}-${sessionIndex}`,
+                            label: getDayLabel(session.day, locale),
+                            value:
+                              session.start_time && session.end_time
+                                ? formatTimeRange(
+                                    session.start_time,
+                                    session.end_time,
+                                    locale,
+                                  )
+                                : copy.scheduleAny,
+                          }))}
+                          className="mt-2"
+                        />
+                      ) : (
+                        <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
+                          {copy.scheduleAny}
+                        </p>
+                      )}
+                    </BaseCard>
+                  ))}
+                </div>
               )}
             </div>
           </div>
-        </section>
+        </BaseCard>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

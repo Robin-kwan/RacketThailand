@@ -230,7 +230,7 @@ function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
         />
         {open && (
           <div
-            className="absolute inset-x-0 top-full z-30 mt-2 rounded-3xl border border-slate-700 bg-[#090f1f] p-2 shadow-2xl shadow-black/50"
+            className="absolute inset-x-0 top-full z-30 mt-2 rounded-3xl border border-slate-700 bg-[var(--rt-primary-soft)] p-2"
             onKeyDown={handleOptionKeyDown}
           >
             <div className="max-h-60 overflow-y-auto pr-1">
@@ -555,7 +555,7 @@ export function GroupForm({
           <button
             type="button"
             onClick={addCourtBlock}
-            className="text-xs font-semibold text-emerald-300 hover:text-emerald-200"
+            className="text-xs font-semibold text-emerald-300 hover:text-[rgb(var(--rt-primary-text-rgb)/0.75)]"
           >
             {copy.sessionsAddCourt}
           </button>
@@ -663,7 +663,7 @@ export function GroupForm({
                 <button
                   type="button"
                   onClick={() => addSessionSlot(block.id)}
-                  className="text-xs font-semibold text-emerald-300 hover:text-emerald-200"
+                  className="text-xs font-semibold text-emerald-300 hover:text-[rgb(var(--rt-primary-text-rgb)/0.75)]"
                 >
                   {copy.sessionsAddSlot}
                 </button>

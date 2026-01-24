@@ -75,7 +75,7 @@ export default async function CourtFinderPage({
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <HeaderSubLabel value={meta.name[locale]} />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
+        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
           <h1 className="mt-3 text-3xl font-semibold text-slate-900">
             {copy.title}
           </h1>
@@ -98,7 +98,6 @@ export default async function CourtFinderPage({
         <CourtFinder
           sportCode={resolvedParams.sport}
           locale={locale}
-          accent={meta.accent}
           copy={copy}
           initialCourts={courtData.courts}
           provinces={courtData.provinces}

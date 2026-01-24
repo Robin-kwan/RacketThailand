@@ -61,16 +61,18 @@ function FeatureCarousel({
   const hasCards = cards.length > 0;
 
   return (
-    <section className="bg-[#030b1b] px-6 py-12 text-slate-100 md:px-12">
+    <section className="px-6 py-12 text-[var(--foreground)] md:px-12">
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-white">{title}</h2>
-            <p className="mt-1 text-sm text-slate-300">{subtitle}</p>
+            <h2 className="text-2xl font-semibold">{title}</h2>
+            <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+              {subtitle}
+            </p>
           </div>
           <Link
             href={ctaHref}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-300 hover:text-emerald-200"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
           >
             {ctaLabel}
             <svg
@@ -97,7 +99,7 @@ function FeatureCarousel({
                   ? buildLocalizedPath(card.href, locale)
                   : undefined;
                 const content = (
-                  <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 text-slate-900 shadow-md shadow-slate-200 transition hover:-translate-y-1">
+                  <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 text-slate-900 transition hover:-translate-y-1">
                     <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
                       <div className="relative h-36 w-full">
                         <Image
@@ -150,7 +152,9 @@ function FeatureCarousel({
             </div>
           </div>
         ) : (
-          <p className="mt-6 text-sm text-slate-400">{emptyCopy}</p>
+          <p className="mt-6 text-sm text-[rgb(var(--foreground-rgb)/0.5)]">
+            {emptyCopy}
+          </p>
         )}
       </div>
     </section>
@@ -196,13 +200,13 @@ export default async function SportPage({
 
   if (!sport) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#020617] px-6 text-slate-100">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6 text-[var(--foreground)]">
         <div className="max-w-md space-y-4 text-center">
           <h1 className="text-3xl font-semibold">Page not found</h1>
           <div className="flex justify-center">
             <Link
               href={buildLocalizedPath("/", locale)}
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold uppercase text-slate-800 hover:border-slate-500"
+              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.3)] px-6 py-3 text-sm font-semibold uppercase text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.6)]"
             >
               Back to landing
             </Link>
@@ -216,14 +220,13 @@ export default async function SportPage({
   const groupFeature = sport.features.find((feature) => feature.key === "groups");
   const carouselEmptyCopy = t("sport.carouselEmpty");
   const viewAllLabel = t("sport.viewAll");
+  const boardCta = t("community.boardCta");
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100">
+    <div className="min-h-screen text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
-      <section
-        className={`bg-gradient-to-br ${sport.gradient} from-30% via-70% to-100% px-6 py-20 md:px-12`}
-      >
+      <section className="bg-gradient-to-br from-[rgb(var(--rt-primary-rgb)/0.7)] via-[rgb(var(--rt-primary-rgb)/0.5)] to-[rgb(var(--rt-primary-rgb)/0.25)] px-6 py-20 md:px-12">
         <div className="mx-auto flex max-w-5xl flex-col gap-8 text-white">
           <div className="space-y-4">
             <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
@@ -251,7 +254,7 @@ export default async function SportPage({
           <div className="flex flex-wrap gap-4">
             <Link
               href={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-slate-900 shadow-lg shadow-slate-900/20"
+              className="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-slate-900"
             >
               {t("courtFinder.cta")}
             </Link>
@@ -260,6 +263,12 @@ export default async function SportPage({
               className="rounded-full border border-white/70 px-6 py-3 text-sm font-semibold uppercase text-white hover:border-white"
             >
               {t("sport.groupFinderCta")}
+            </Link>
+            <Link
+              href={buildLocalizedPath(`/${sport.code}/board`, locale)}
+              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold uppercase text-white/80 hover:text-white"
+            >
+              {boardCta}
             </Link>
           </div>
         </div>

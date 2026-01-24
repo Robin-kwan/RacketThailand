@@ -406,7 +406,7 @@ export function GroupFinder({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-slate-700">
             {copy.searchPlaceholder}
@@ -483,7 +483,7 @@ export function GroupFinder({
       </div>
 
       {prioritizeNearby && userLocation && mapCourts.length > 0 && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6">
           <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.mapHeading}
           </p>
@@ -533,7 +533,7 @@ export function GroupFinder({
       )}
 
       {prioritizeNearby && userLocation && mapCourts.length === 0 && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6">
           <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.nearbyListTitle}
           </p>
@@ -603,7 +603,7 @@ export function GroupFinder({
               <Link
                 key={group.id}
                 href={groupHref}
-                className="group flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-md shadow-slate-200 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400"
+                className="group flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400"
               >
                 <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
                   <div className="relative aspect-[4/3] w-full">

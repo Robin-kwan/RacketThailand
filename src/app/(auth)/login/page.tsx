@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
+import { BaseCard } from "@/components/base-card";
 import {
   buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type SearchParams = {
   lang?: string;
@@ -29,13 +28,6 @@ export default async function LoginPage({
   const resolvedParams = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedParams?.lang);
   const t = await getTranslator(locale);
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user) {
-    redirect(buildLocalizedPath("/", locale));
-  }
   const formCopy = {
     emailLabel: t("auth.emailLabel"),
     passwordLabel: t("auth.passwordLabel"),
@@ -50,28 +42,29 @@ export default async function LoginPage({
   };
 
   return (
-    <div className="relative min-h-screen bg-[#020617] text-slate-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(15,118,110,0.15),_transparent_60%)]" />
-
-      <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-col px-6 pb-20 pt-10 md:px-10">
-        <section className="w-full rounded-[32px] border border-slate-800 bg-slate-900/80 p-8 shadow-2xl shadow-black/50 backdrop-blur">
-          <h1 className="text-3xl font-semibold text-white">
+    <div className="rt-page">
+      <main className="mx-auto flex w-full max-w-3xl flex-col px-6 pb-20 pt-10 md:px-10">
+        <BaseCard
+          as="section"
+          className="w-full rounded-[32px] border border-slate-200 bg-white p-8"
+        >
+          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
             {t("auth.loginTitle")}
           </h1>
-          <p className="mt-3 text-sm text-slate-300">
+          <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             {t("auth.loginSubtitle")}
           </p>
           <LoginForm locale={locale} copy={formCopy} />
-          <p className="mt-4 text-sm text-slate-300">
+          <p className="mt-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             {t("auth.switchToSignup")}{" "}
             <Link
               href={buildLocalizedPath("/signup", locale)}
-              className="font-semibold text-slate-100"
+              className="font-semibold text-[var(--rt-primary)]"
             >
               {t("header.signup")}
             </Link>
           </p>
-        </section>
+        </BaseCard>
       </main>
     </div>
   );

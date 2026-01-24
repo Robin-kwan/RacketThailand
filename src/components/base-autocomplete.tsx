@@ -45,7 +45,7 @@ const VARIANT_STYLES: Record<
     input:
       "w-full rounded-2xl border border-slate-700 bg-slate-900/60 px-4 py-3 pr-12 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-slate-500 focus:bg-slate-900",
     dropdown:
-      "absolute z-50 mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-700 bg-[#0b1324] p-1 shadow-2xl shadow-black/50",
+      "absolute z-50 mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-700 bg-[var(--rt-primary-soft)] p-1",
     optionActive: "bg-slate-800 text-white",
     option: "text-slate-300 hover:bg-slate-800/60",
     toggle: "text-slate-400",
@@ -56,7 +56,7 @@ const VARIANT_STYLES: Record<
     input:
       "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-12 text-sm text-slate-900 placeholder-slate-500 outline-none focus:border-slate-400 focus:bg-white",
     dropdown:
-      "absolute z-50 mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-2xl shadow-slate-200",
+      "absolute z-50 mt-2 max-h-56 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1",
     optionActive: "bg-slate-100 text-slate-900",
     option: "text-slate-700 hover:bg-slate-100",
     toggle: "text-slate-500",
