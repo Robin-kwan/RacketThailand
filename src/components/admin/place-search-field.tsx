@@ -71,7 +71,7 @@ export function PlaceSearchField({
     } else if (!selectedCoordinates) {
       setMapCoordinates(null);
     }
-  }, [selectedCoordinates?.latitude, selectedCoordinates?.longitude]);
+  }, [selectedCoordinates]);
 
   useEffect(() => {
     if (blurTimeoutRef.current) {

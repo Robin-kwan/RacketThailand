@@ -43,7 +43,7 @@ export function ResetPasswordForm({ copy }: { copy: ResetCopy }) {
     return () => {
       active = false;
     };
-  }, [supabase]);
+  }, [supabase, copy.sessionMissing]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

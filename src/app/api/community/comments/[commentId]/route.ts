@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-type Params = {
-  params: { commentId: string };
+type RouteContext = {
+  params: Promise<{ commentId: string }>;
 };
 
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(request: Request, context: RouteContext) {
+  const { commentId } = await context.params;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -26,7 +27,7 @@ export async function PATCH(request: Request, { params }: Params) {
   const { data: existingComment, error: fetchError } = await supabase
     .from("community_comments")
     .select("id,author_id")
-    .eq("id", params.commentId)
+    .eq("id", commentId)
     .maybeSingle();
 
   if (fetchError || !existingComment) {
@@ -49,7 +50,7 @@ export async function PATCH(request: Request, { params }: Params) {
       body_text: body,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", params.commentId);
+    .eq("id", commentId);
 
   if (error) {
     return NextResponse.json(
