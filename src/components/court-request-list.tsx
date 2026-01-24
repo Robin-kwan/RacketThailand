@@ -77,7 +77,7 @@ export function CourtRequestList({
       {items.map((request) => (
         <article
           key={request.id}
-          className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-100"
+          className="rounded-3xl border border-slate-200 bg-white p-6"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

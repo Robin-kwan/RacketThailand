@@ -235,8 +235,9 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
     setOpeningHours(structured);
     setForm((prev) => ({
       ...prev,
-      latitude: coords.latitude,
-      longitude: coords.longitude,
+      latitude: coords.latitude != null ? String(coords.latitude) : prev.latitude,
+      longitude:
+        coords.longitude != null ? String(coords.longitude) : prev.longitude,
       name: resolution.place?.name ?? prev.name,
       address: resolution.place?.address ?? prev.address,
       district: resolution.place?.district ?? prev.district,
@@ -258,6 +259,14 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
           form.googlePlaceId
             ? [form.name, form.address].filter(Boolean).join(" · ")
             : ""
+        }
+        selectedCoordinates={
+          form.latitude && form.longitude
+            ? {
+                latitude: Number(form.latitude),
+                longitude: Number(form.longitude),
+              }
+            : null
         }
       />
       <div className="space-y-2">

@@ -35,7 +35,6 @@ type CourtFinderCopy = {
 type CourtFinderProps = {
   sportCode: string;
   locale: Locale;
-  accent: string;
   copy: CourtFinderCopy;
   initialCourts: CourtRecord[];
   provinces: string[];
@@ -81,7 +80,6 @@ const haversineDistance = (a: LocationState, b: LocationState) => {
 export function CourtFinder({
   sportCode,
   locale,
-  accent,
   copy,
   initialCourts,
   provinces,
@@ -233,7 +231,7 @@ export function CourtFinder({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-end">
           <div className="flex-1 space-y-2">
             <label className="text-sm font-semibold text-slate-700">
@@ -296,7 +294,7 @@ export function CourtFinder({
       </div>
 
       {prioritizeNearby && userLocation && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6">
           <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.mapHeading}
           </p>
@@ -369,7 +367,7 @@ export function CourtFinder({
             <Link
               key={court.id}
               href={`/courts/${court.id}${localeQuery}`}
-              className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-md shadow-slate-200 transition hover:-translate-y-1"
+              className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1"
             >
               <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
                 <div className="relative h-36 w-full">
@@ -415,10 +413,7 @@ export function CourtFinder({
                 )}
               </ul>
               <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase text-slate-500">
-                <span
-                  className="inline-flex rounded-full px-3 py-1"
-                  style={{ backgroundColor: `${accent}15`, color: accent }}
-                >
+                <span className="inline-flex rounded-full bg-[rgb(var(--rt-primary-rgb)/0.08)] px-3 py-1 text-[var(--rt-primary)]">
                   {court.province || "TH"}
                 </span>
                 {distanceKm !== null && (

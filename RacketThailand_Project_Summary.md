@@ -22,12 +22,18 @@ All subdomains share:
 - One **Auth system**
 - One **Postgres database**
 
+UI/UX principle: Prefer reusable **base components** (shared inputs, selects, buttons, cards) across all sports to keep styling and behavior consistent.
+
+Common storage buckets (public):
+- `avatars` (profile pictures)
+- `court-images`, `group-images`
+- `community-images` (community board uploads – configure via `NEXT_PUBLIC_SUPABASE_COMMUNITY_BUCKET` if the name changes)
 The sport context is determined by subdomain and mapped to a `sports` row using `code` (e.g. `'badminton'`).
 
 ## Core Goals
 
 1. Help players **find courts**, **groups**, and **matches** for racket sports in Thailand.
-2. Provide a **community board** for questions, posts, news, and reviews.
+2. Provide a **sport-specific community board** for questions, posts, news, and reviews.
 3. Provide a **scoreboard and match tracking** system.
 4. Allow **multi-sport profiles** with per-sport skill levels.
 5. Collect **feedback and reports** from users (about the platform or other users).
@@ -153,34 +159,40 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `created_at`
   - `updated_at`
 
-### 8. posts
-- Community board posts.
-- Used for:
-  - Discussions
-  - Announcements
-  - News
-  - Blog-like content
+### 8. community_posts *(revamped)*
+- Sport-specific community board posts stored/rendered as plain text.
+- Covers announcements, trading, questions, and meetup planning.
 - Columns:
-  - `id` (uuid)
-  - `sport_id` (uuid → sports.id, optional)
-  - `group_id` (uuid → groups.id, optional)
-  - `author_id` (uuid → profiles.id)
-  - `title`
-  - `content`
-  - `type` (e.g. `'discussion'`, `'blog'`, `'poll'`, `'news'`)
-  - `is_pinned` (boolean)
-  - `created_at`
+  - `id` (uuid, PK)
+  - `sport_id` (uuid → sports.id, required)
+  - `author_id` (uuid → profiles.id, nullable for imported/system posts)
+  - `title` (text)
+  - `body_text` (text; raw body content)
+  - `category` (enum/text; e.g. `'update'`, `'event'`, `'market'`, `'question'`, `'other'`)
+  - `status` (enum: `'draft'`, `'published'`, `'flagged'`, `'archived'`)
+  - `pinned` (boolean default false)
+  - `attachments` (jsonb array of Supabase Storage URLs)
+  - `created_at`, `updated_at`
 
-### 9. comments
-- Comments on posts.
+### 9. community_comments *(revamped)*
+- Threaded comments on community posts.
 - Columns:
-  - `id` (uuid)
-  - `post_id` (uuid → posts.id)
+  - `id` (uuid, PK)
+  - `post_id` (uuid → community_posts.id)
   - `author_id` (uuid → profiles.id)
-  - `content`
-  - `created_at`
+  - `body_text` (text)
+  - `parent_id` (uuid → community_comments.id, nullable for top-level)
+  - `created_at`, `updated_at`
 
-### 10. notifications *(new)*
+### 10. community_likes *(new)*
+- Single-reaction system (“Like”) per user/post.
+- Columns:
+  - `post_id` (uuid → community_posts.id)
+  - `user_id` (uuid → profiles.id)
+  - `created_at`
+- Composite primary key (`post_id`, `user_id`) prevents duplicate likes.
+
+### 11. notifications *(new)*
 - Keeps a history of system notifications (e.g., court verification requests).
 - Columns:
   - `id` (uuid, PK, default `gen_random_uuid()`)
@@ -332,3 +344,7 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
 - All Google Maps/Places integrations (client map plus server API routes) now read the single `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` value from `.env.local`. For Advanced Marker labels, optionally define `NEXT_PUBLIC_GOOGLE_MAP_ID` with a vector map ID—otherwise the map will gracefully fall back to classic pins.
 - Group finder now supports filtering by day and half-hour time slots plus a “Find nearby groups” option that geolocates the user, centers the court map, and surfaces the closest sessions.
 - Court and group detail pages now emit localized metadata, canonical URLs, and Schema.org structured data so search engines can index locations and clubs with richer previews.
+- Introduced a centralized green palette in `src/app/globals.css` with reusable helpers (`.rt-card`, `.rt-pill`, `.rt-btn-primary`, `.rt-text-muted`) so every court/group/community card pulls from the same `--rt-primary*` tokens. Updating the color now only requires editing those CSS variables.
+- Landing hero cards, dashboard court/group lists, and the admin feedback table were migrated to the new `rt-card`/`rt-btn-primary` styles—no more hard-coded blue/emerald values—and their buttons inherit the shared disabled grey state.
+- Feedback form inputs now live inside an `rt-card`, adopt the primary palette, and continue to rely on the shared base input styles (rounded corners, white background) so other forms can reuse the same component without extra tweaking.
+- Added `BaseCard` (`src/components/base-card.tsx`) so every card wrapper (landing tiles, dashboard cards, admin tables) consumes the exact same radius, border, background, and shadow tokens just by using one component instead of retyping classes.

@@ -23,6 +23,7 @@ type PlaceSearchFieldProps = {
   onResolve: (resolution: PlaceResolution) => void;
   placeholder?: string;
   initialQuery?: string;
+  selectedCoordinates?: MapCoordinates | null;
 };
 
 const SEARCH_DELAY = 300;
@@ -34,6 +35,7 @@ export function PlaceSearchField({
   placeholder = "Search for a venue, mall, or court",
   onResolve,
   initialQuery,
+  selectedCoordinates,
 }: PlaceSearchFieldProps) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -48,10 +50,28 @@ export function PlaceSearchField({
     [],
   );
   const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [mapCoordinates, setMapCoordinates] = useState<MapCoordinates | null>(
+    selectedCoordinates ?? null,
+  );
 
   useEffect(() => {
     setQuery(initialQuery ?? "");
   }, [initialQuery]);
+
+  useEffect(() => {
+    if (
+      selectedCoordinates &&
+      typeof selectedCoordinates.latitude === "number" &&
+      typeof selectedCoordinates.longitude === "number"
+    ) {
+      setMapCoordinates({
+        latitude: selectedCoordinates.latitude,
+        longitude: selectedCoordinates.longitude,
+      });
+    } else if (!selectedCoordinates) {
+      setMapCoordinates(null);
+    }
+  }, [selectedCoordinates]);
 
   useEffect(() => {
     if (blurTimeoutRef.current) {
@@ -116,6 +136,7 @@ export function PlaceSearchField({
       });
       const data = await response.json().catch(() => null);
       if (response.ok && data?.coordinates) {
+        setMapCoordinates(data.coordinates);
         onResolve({
           coordinates: data.coordinates,
           place: data.place,
@@ -173,7 +194,7 @@ export function PlaceSearchField({
           </div>
         )}
         {open && suggestions.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
+          <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             {suggestions.map((suggestion) => (
               <button
                 key={suggestion.placeId}
@@ -198,6 +219,22 @@ export function PlaceSearchField({
         )}
       </div>
       <p className="text-xs text-slate-400">{helper}</p>
+      {mapCoordinates && (
+        <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
+          <p className="text-xs font-semibold uppercase text-slate-500">
+            Location preview
+          </p>
+          <div className="overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
+            <iframe
+              title="Selected location map"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(`${mapCoordinates.latitude},${mapCoordinates.longitude}`)}&z=15&output=embed&hl=en`}
+              className="h-64 w-full border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

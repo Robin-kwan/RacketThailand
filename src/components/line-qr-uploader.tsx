@@ -59,14 +59,18 @@ export function LineQrUploader({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-semibold text-slate-100">
+      <label className="text-sm font-semibold text-[var(--foreground)]">
         {label}
       </label>
-      {helperText && <p className="text-xs text-slate-400">{helperText}</p>}
-      <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/60 p-4">
+      {helperText && (
+        <p className="text-xs text-[rgb(var(--foreground-rgb)/0.6)]">
+          {helperText}
+        </p>
+      )}
+      <div className="rounded-2xl border border-dashed border-[rgb(var(--foreground-rgb)/0.2)] bg-[rgb(var(--foreground-rgb)/0.05)] p-4">
         {preview ? (
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-            <div className="relative h-32 w-32 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
+            <div className="relative h-32 w-32 overflow-hidden rounded-2xl border border-[rgb(var(--foreground-rgb)/0.2)] bg-white">
               <Image
                 src={preview}
                 alt="LINE QR"
@@ -77,7 +81,7 @@ export function LineQrUploader({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-400">
+              <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[rgb(var(--foreground-rgb)/0.2)] bg-white px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.4)]">
                 <input
                   type="file"
                   accept="image/*"
@@ -91,14 +95,14 @@ export function LineQrUploader({
                 type="button"
                 onClick={handleRemove}
                 disabled={disabled}
-                className="text-xs font-semibold text-rose-300 hover:text-rose-200"
+                className="text-xs font-semibold text-rose-500 hover:text-rose-400"
               >
                 Remove QR code
               </button>
             </div>
           </div>
         ) : (
-          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/40 px-4 py-6 text-center text-sm font-semibold text-slate-100 hover:border-slate-500">
+          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border border-[rgb(var(--foreground-rgb)/0.2)] bg-white px-4 py-6 text-center text-sm font-semibold text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.4)]">
             <input
               type="file"
               accept="image/*"
@@ -107,7 +111,7 @@ export function LineQrUploader({
               disabled={disabled}
             />
             <span>Upload LINE QR image</span>
-            <p className="text-xs font-normal text-slate-400">
+            <p className="text-xs font-normal text-[rgb(var(--foreground-rgb)/0.6)]">
               PNG, JPG, or WebP
             </p>
           </label>

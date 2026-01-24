@@ -115,7 +115,7 @@ export function OpeningHoursEditor({
       {entries.map((entry) => (
         <div
           key={entry.day}
-          className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm"
+          className="rounded-2xl border border-slate-200 bg-white/80 p-4"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h4 className="text-base font-semibold text-slate-900">

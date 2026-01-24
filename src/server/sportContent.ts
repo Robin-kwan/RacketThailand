@@ -6,6 +6,11 @@ import type {
   SportPagePayload,
 } from "@/types/sports";
 
+type PhotoRow = {
+  image_url: string | null;
+  is_primary: boolean | null;
+};
+
 type CourtRow = {
   id: string;
   name: string | null;
@@ -17,6 +22,7 @@ type CourtRow = {
   line_id: string | null;
   website_url: string | null;
   created_at: string | null;
+  court_photos?: PhotoRow[] | null;
 };
 
 type GroupRow = {
@@ -24,6 +30,7 @@ type GroupRow = {
   name: string | null;
   description: string | null;
   created_at: string | null;
+  group_photos?: PhotoRow[] | null;
 };
 
 type PostRow = {
@@ -87,34 +94,57 @@ function compactDetails(details: Array<string | null | undefined>): string[] {
   return details.filter((item): item is string => Boolean(item && item.trim()));
 }
 
-function mapCourts(rows: CourtRow[]): SportFeatureCard[] {
+function pickPrimaryPhoto(
+  photos: PhotoRow[] | null | undefined,
+  fallback: string,
+) {
+  if (!photos || photos.length === 0) {
+    return fallback;
+  }
+  return (
+    photos.find((photo) => photo.is_primary)?.image_url ??
+    photos[0]?.image_url ??
+    fallback
+  );
+}
+
+function mapCourts(
+  rows: CourtRow[],
+  fallbackImage: string,
+): SportFeatureCard[] {
   return rows.map((court) => {
     const location = compactDetails([court.province, court.district]).join(" · ");
+    const imageUrl = pickPrimaryPhoto(court.court_photos, fallbackImage);
     return {
       title: court.name ?? "Unnamed court",
-      subtitle: location || "Location coming soon",
+      subtitle: location || "",
       details: compactDetails([
-        court.address,
-        court.price_note ? `Price: ${court.price_note}` : null,
-        court.phone ? `Phone: ${court.phone}` : null,
         court.line_id ? `Line: ${court.line_id}` : null,
-        court.website_url ? `Website: ${court.website_url}` : null,
-        court.created_at
-          ? `Updated ${formatDate(court.created_at)}`
-          : null,
       ]),
+      imageUrl,
+      location: undefined,
+      badgeLabel: undefined,
+      href: `/courts/${court.id}`,
     };
   });
 }
 
-function mapGroups(rows: GroupRow[]): SportFeatureCard[] {
-  return rows.map((group) => ({
-    title: group.name ?? "Untitled group",
-    subtitle: compactDetails([
-      group.created_at ? `Started ${formatDate(group.created_at)}` : null,
-    ]).join(" · "),
-    details: compactDetails([group.description]),
-  }));
+function mapGroups(
+  rows: GroupRow[],
+  fallbackImage: string,
+): SportFeatureCard[] {
+  return rows.map((group) => {
+    const imageUrl = pickPrimaryPhoto(group.group_photos, fallbackImage);
+    return {
+      title: group.name ?? "Untitled group",
+      subtitle: "",
+      details: compactDetails([group.description]),
+      imageUrl,
+      location: undefined,
+      badgeLabel: "COMMUNITY",
+      href: `/groups/${group.id}`,
+    };
+  });
 }
 
 function mapPosts(rows: PostRow[]): SportFeatureCard[] {
@@ -221,14 +251,14 @@ export async function buildSportPagePayload(
 
     const courtsPromise = supabaseSelect<CourtRow>("courts", {
       select:
-        "id,name,address,district,province,price_note,phone,line_id,website_url,created_at",
+        "id,name,address,district,province,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
       sport_id: `eq.${sportId}`,
       order: "created_at.desc",
       limit: "4",
     });
 
     const groupsPromise = supabaseSelect<GroupRow>("groups", {
-        select: "id,name,description,created_at",
+      select: "id,name,description,created_at,group_photos(image_url,is_primary)",
       sport_id: `eq.${sportId}`,
       order: "created_at.desc",
       limit: "4",
@@ -279,8 +309,9 @@ export async function buildSportPagePayload(
       feedbackPromise,
     ]);
 
-    const courts = mapCourts(courtsRes.data ?? []);
-    const groups = mapGroups(groupsRes.data ?? []);
+    const fallbackImage = meta.coverImage;
+    const courts = mapCourts(courtsRes.data ?? [], fallbackImage);
+    const groups = mapGroups(groupsRes.data ?? [], fallbackImage);
     const posts = mapPosts(postsRes.data ?? []);
     const matches = mapMatches(matchesRes.data ?? []);
     const profiles = mapProfiles(profilesRes.data ?? []);
@@ -288,26 +319,32 @@ export async function buildSportPagePayload(
 
     const features: SportFeatureGroup[] = [
       {
+        key: "courts",
         ...FEATURE_DESCRIPTIONS.courts,
         cards: courts,
       },
       {
+        key: "groups",
         ...FEATURE_DESCRIPTIONS.groups,
         cards: groups,
       },
       {
+        key: "community",
         ...FEATURE_DESCRIPTIONS.community,
         cards: posts,
       },
       {
+        key: "matches",
         ...FEATURE_DESCRIPTIONS.matches,
         cards: matches,
       },
       {
+        key: "profiles",
         ...FEATURE_DESCRIPTIONS.profiles,
         cards: profiles,
       },
       {
+        key: "feedback",
         ...FEATURE_DESCRIPTIONS.feedback,
         cards: feedback,
       },

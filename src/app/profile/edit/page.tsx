@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { BaseCard } from "@/components/base-card";
 import { SPORT_META } from "@/data/sportMeta";
 import {
   buildLocalizedPath,
@@ -111,34 +112,44 @@ export default async function ProfileEditPage({
   }));
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100">
+    <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:flex-row md:px-10">
-        <section className="flex-1 rounded-[32px] border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-black/40 backdrop-blur">
-          <h1 className="text-3xl font-semibold text-white">{copy.title}</h1>
-          <p className="mt-3 text-sm text-slate-400">{copy.subtitle}</p>
+        <BaseCard
+          as="section"
+          className="flex-1 rounded-[32px] border border-slate-200 bg-white p-8"
+        >
+          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+            {copy.title}
+          </h1>
+          <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+            {copy.subtitle}
+          </p>
           <ProfileForm
             userId={user.id}
             initialProfile={profile}
             sports={sports}
             copy={copy}
           />
-        </section>
-        <aside className="flex flex-1 flex-col gap-4 rounded-[32px] border border-slate-800 bg-slate-900/40 p-8 shadow-inner shadow-black/30 backdrop-blur">
+        </BaseCard>
+        <BaseCard
+          as="aside"
+          className="flex flex-1 flex-col gap-4 rounded-[32px] border border-slate-200 bg-white p-8"
+        >
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase text-slate-400">
+            <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.6)]">
               {t("header.brand")}
             </p>
-            <h2 className="text-2xl font-semibold text-white">
+            <h2 className="text-2xl font-semibold text-[var(--foreground)]">
               {t("profile.sidebarTitle")}
             </h2>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
               {t("profile.sidebarDescription")}
             </p>
           </div>
-          <div className="rounded-3xl border border-dashed border-slate-700/70 bg-slate-900/40 p-6 text-sm text-slate-300">
-            <p className="text-slate-300">{t("profile.sidebarHint")}</p>
+          <div className="rounded-3xl border border-dashed border-[rgb(var(--foreground-rgb)/0.2)] bg-[rgb(var(--foreground-rgb)/0.05)] p-6 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+            <p>{t("profile.sidebarHint")}</p>
           </div>
-        </aside>
+        </BaseCard>
       </main>
     </div>
   );

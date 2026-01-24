@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { SPORT_META } from "@/data/sportMeta";
 import { CourtRequestList } from "@/components/court-request-list";
+import { BaseCard } from "@/components/base-card";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -10,6 +11,7 @@ import {
 } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { getViewCounts } from "@/lib/viewCounts";
 
 type SearchParams = {
   lang?: string;
@@ -41,37 +43,46 @@ type OwnedGroupRow = {
   group_photos?: { image_url: string | null; is_primary: boolean | null }[];
 };
 
-function getSportAccent(code?: string | null) {
-  if (!code) return "#0f172a";
-  return SPORT_META[code]?.accent ?? "#0f172a";
-}
-
 function getSportFallbackImage(code?: string | null) {
   if (!code) return "/sports/badminton.svg";
   return SPORT_META[code]?.coverImage ?? "/sports/badminton.svg";
 }
 
+function formatViewCountDisplay(
+  count: number | undefined,
+  locale: Locale,
+) {
+  const safeCount =
+    typeof count === "number" && Number.isFinite(count) ? count : 0;
+  const intlLocale = locale === "th" ? "th-TH" : "en-US";
+  return new Intl.NumberFormat(intlLocale).format(safeCount);
+}
+
 function CourtCard({
   court,
   locale,
+  viewCount = 0,
 }: {
   court: OwnedCourtRow;
   locale: Locale;
+  viewCount?: number;
 }) {
   const sportCode = court.sports?.code ?? null;
-  const accent = getSportAccent(sportCode);
   const href = buildLocalizedPath(`/courts/${court.id}`, locale);
   const primaryPhoto =
     court.court_photos?.find((photo) => photo.is_primary)?.image_url ??
     court.court_photos?.[0]?.image_url ??
     getSportFallbackImage(sportCode);
 
+  const formattedViews = formatViewCountDisplay(viewCount, locale);
+
   return (
-    <Link
+    <BaseCard
+      as={Link}
       href={href}
-      className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-md shadow-slate-200 transition hover:-translate-y-1"
+      className="flex flex-col gap-3 px-5 py-6 transition hover:-translate-y-1"
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
+      <div className="overflow-hidden">
         <div className="relative aspect-[4/3] w-full">
           <Image
             src={primaryPhoto}
@@ -83,46 +94,51 @@ function CourtCard({
         </div>
       </div>
       <div className="space-y-1">
-        <h3 className="text-2xl font-semibold text-slate-900">
+        <h3 className="text-2xl font-semibold text-[var(--foreground)]">
           {court.name ?? "Unnamed court"}
         </h3>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm rt-text-muted">
           {[court.district, court.province].filter(Boolean).join(" · ")}
         </p>
       </div>
-      <div className="flex gap-3 text-xs font-semibold uppercase text-slate-500">
-        <span
-          className="inline-flex rounded-full px-3 py-1"
-          style={{ backgroundColor: `${accent}15`, color: accent }}
-        >
-          {court.province || "TH"}
+      <div className="flex gap-3 text-xs font-semibold uppercase rt-text-muted">
+        <span>{court.province || "TH"}</span>
+      </div>
+      <div className="flex items-center justify-between text-xs font-semibold text-[var(--foreground)]">
+        <span>Views</span>
+        <span className="text-[var(--foreground)]">
+          {formattedViews}
         </span>
       </div>
-    </Link>
+    </BaseCard>
   );
 }
 
 function GroupCard({
   group,
   locale,
+  viewCount = 0,
 }: {
   group: OwnedGroupRow;
   locale: Locale;
+  viewCount?: number;
 }) {
   const sportCode = group.sports?.code ?? null;
-  const accent = getSportAccent(sportCode);
   const href = buildLocalizedPath(`/groups/${group.id}`, locale);
   const primaryPhoto =
     group.group_photos?.find((photo) => photo.is_primary)?.image_url ??
     group.group_photos?.[0]?.image_url ??
     getSportFallbackImage(sportCode);
 
+  const formattedViews = formatViewCountDisplay(viewCount, locale);
+
   return (
-    <Link
+    <BaseCard
+      as={Link}
       href={href}
-      className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 text-sm text-slate-600 shadow-md shadow-slate-200 transition hover:-translate-y-1"
+      className="flex flex-col gap-3 px-5 py-6 text-sm transition hover:-translate-y-1"
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
+      <div className="overflow-hidden">
         <div className="relative aspect-[4/3] w-full">
           <Image
             src={primaryPhoto}
@@ -134,30 +150,31 @@ function GroupCard({
         </div>
       </div>
       <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-slate-900">
+        <h3 className="text-lg font-semibold text-[var(--foreground)]">
           {group.name ?? "Community group"}
         </h3>
-        <p className="text-xs font-semibold uppercase text-slate-500">
+        <p className="text-xs font-semibold uppercase rt-text-muted">
           {group.sports?.code
             ? SPORT_META[group.sports.code]?.name[locale] ??
               group.sports.code
             : "RacketThailand"}
         </p>
         {group.description && (
-          <p className="text-xs text-slate-600 line-clamp-2">
+          <p className="text-xs rt-text-muted line-clamp-2">
             {group.description}
           </p>
         )}
       </div>
-      <div className="flex gap-3 text-xs font-semibold uppercase text-slate-500">
-        <span
-          className="inline-flex rounded-full px-3 py-1"
-          style={{ backgroundColor: `${accent}15`, color: accent }}
-        >
-          {sportCode ? sportCode.toUpperCase() : "COMMUNITY"}
+      <div className="flex gap-3 text-xs font-semibold uppercase rt-text-muted">
+        <span>{sportCode ? sportCode.toUpperCase() : "COMMUNITY"}</span>
+      </div>
+      <div className="flex items-center justify-between text-xs font-semibold text-[var(--foreground)]">
+        <span>Views</span>
+        <span className="text-[var(--foreground)]">
+          {formattedViews}
         </span>
       </div>
-    </Link>
+    </BaseCard>
   );
 }
 
@@ -227,23 +244,34 @@ export default async function DashboardPage({
       };
     }) ?? [];
 
-  const [{ data: ownedCourtsData }, { data: ownedGroupsData }] =
-    await Promise.all([
-      supabaseSelect<OwnedCourtRow>("courts", {
-        select: "id,name,district,province,sports!inner(code),court_photos(image_url,is_primary)",
-        created_by: `eq.${user.id}`,
-        order: "name.asc.nullslast",
-      }),
-      supabaseSelect<OwnedGroupRow>("groups", {
-        select:
-          "id,name,description,sports!inner(code),group_photos(image_url,is_primary)",
-        owner_id: `eq.${user.id}`,
-        order: "created_at.desc",
-      }),
-    ]);
+  const [
+    { data: ownedCourtsData },
+    { data: ownedGroupsData },
+    viewCounts,
+  ] = await Promise.all([
+    supabaseSelect<OwnedCourtRow>("courts", {
+      select: "id,name,district,province,sports!inner(code),court_photos(image_url,is_primary)",
+      created_by: `eq.${user.id}`,
+      order: "name.asc.nullslast",
+    }),
+    supabaseSelect<OwnedGroupRow>("groups", {
+      select:
+        "id,name,description,sports!inner(code),group_photos(image_url,is_primary)",
+      owner_id: `eq.${user.id}`,
+      order: "created_at.desc",
+    }),
+    getViewCounts().catch((error): Awaited<
+      ReturnType<typeof getViewCounts>
+    > => {
+      console.error("Failed to fetch view counts", error);
+      return { courts: {}, groups: {} };
+    }),
+  ]);
 
   const ownedCourts = ownedCourtsData ?? [];
   const ownedGroups = ownedGroupsData ?? [];
+  const courtViewCounts = viewCounts.courts ?? {};
+  const groupViewCounts = viewCounts.groups ?? {};
 
   const copy = {
     title: t("dashboard.courtRequests.title"),
@@ -264,28 +292,29 @@ export default async function DashboardPage({
   };
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 md:px-10">
+    <div className="rt-page">
+      <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 md:px-10">
       <section className="grid gap-6 md:grid-cols-2">
-        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow">
+        <BaseCard as="article" className="p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-[var(--foreground)]">
               {copy.ownedCourtsTitle}
             </h2>
             {canAddCourts && (
               <Link
                 href={buildLocalizedPath("/dashboard/courts/new", locale)}
-                className="text-xs font-semibold uppercase text-slate-500 hover:text-slate-700"
+                className="text-xs font-semibold uppercase rt-text-muted hover:text-[var(--foreground)]"
               >
                 {copy.addCourtCta}
               </Link>
             )}
           </div>
           {ownedCourts.length === 0 ? (
-            <div className="mt-4 space-y-3 text-sm text-slate-600">
+            <div className="mt-4 space-y-3 text-sm rt-text-muted">
               <p>{copy.ownedCourtsEmpty}</p>
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500">
+              <div className="inline-flex items-center gap-2 px-4 py-2 text-xs text-[var(--foreground)]">
                 <span aria-hidden>ℹ️</span>
-                <span className="font-semibold text-slate-600">
+                <span className="font-semibold">
                   Add a court by contacting racketthailand@gmail.com
                 </span>
               </div>
@@ -293,47 +322,60 @@ export default async function DashboardPage({
           ) : (
             <div className="mt-4 grid gap-4">
               {ownedCourts.map((court) => (
-                <CourtCard key={court.id} court={court} locale={locale} />
+                <CourtCard
+                  key={court.id}
+                  court={court}
+                  locale={locale}
+                  viewCount={courtViewCounts[court.id]}
+                />
               ))}
             </div>
           )}
-        </article>
+        </BaseCard>
 
-        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow">
+        <BaseCard as="article" className="p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-[var(--foreground)]">
               {copy.ownedGroupsTitle}
             </h2>
             <Link
               href={buildLocalizedPath("/groups/create", locale)}
-              className="text-xs font-semibold uppercase text-slate-500 hover:text-slate-700"
+              className="text-xs font-semibold uppercase rt-text-muted hover:text-[var(--foreground)]"
             >
               {t("groups.form.submit")}
             </Link>
           </div>
           {ownedGroups.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-600">
+            <p className="mt-4 text-sm rt-text-muted">
               {copy.ownedGroupsEmpty}
             </p>
           ) : (
             <div className="mt-4 grid gap-4">
               {ownedGroups.map((group) => (
-                <GroupCard key={group.id} group={group} locale={locale} />
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  locale={locale}
+                  viewCount={groupViewCounts[group.id]}
+                />
               ))}
             </div>
           )}
-        </article>
+        </BaseCard>
       </section>
 
       {ownedCourts.length > 0 && (
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
-          <p className="text-xs font-semibold uppercase text-slate-400">
+        <BaseCard
+          as="section"
+          className="rounded-[32px] border border-[var(--rt-primary-border)] p-8"
+        >
+          <p className="text-xs font-semibold uppercase rt-text-muted tracking-[0.3em]">
             Dashboard · Courts
           </p>
-          <h2 className="mt-3 text-2xl font-semibold text-slate-900">
+          <h2 className="mt-3 text-2xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h2>
-          <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
+          <p className="mt-2 text-sm rt-text-muted">{copy.subtitle}</p>
           <div className="mt-6">
             <CourtRequestList
               requests={requestCards}
@@ -341,8 +383,9 @@ export default async function DashboardPage({
               locale={locale}
             />
           </div>
-        </section>
+        </BaseCard>
       )}
-    </main>
+      </main>
+    </div>
   );
 }

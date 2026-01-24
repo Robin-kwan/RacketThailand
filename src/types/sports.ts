@@ -7,9 +7,23 @@ export type SportFeatureCard = {
   title: string;
   subtitle: string;
   details: string[];
+  imageUrl?: string | null;
+  location?: string | null;
+  badgeLabel?: string | null;
+  badgeColor?: string | null;
+  href?: string | null;
 };
 
+export type SportFeatureKey =
+  | "courts"
+  | "groups"
+  | "community"
+  | "matches"
+  | "profiles"
+  | "feedback";
+
 export type SportFeatureGroup = {
+  key: SportFeatureKey;
   label: LocalizedString;
   table: string;
   description: LocalizedString;

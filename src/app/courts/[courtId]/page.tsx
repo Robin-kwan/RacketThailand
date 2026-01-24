@@ -11,11 +11,16 @@ import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
+import { BaseBackLink } from "@/components/base-back-link";
+import { BaseCard } from "@/components/base-card";
+import { BaseScheduleList } from "@/components/base-schedule-list";
 import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { fetchCourtDetail } from "@/server/courtFinder";
 import { CourtMap } from "@/components/court-map";
 import { ensureAllDays } from "@/lib/opening-hours";
+import { ViewTracker } from "@/components/view-tracker";
+import { incrementViewCount } from "@/lib/viewCounts";
 
 function getGroupCover(group: {
   sports?: { code: string } | null;
@@ -235,9 +240,33 @@ export default async function CourtPage({
     data: { user },
   } = await supabase.auth.getUser();
 
+  let viewerStatus: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", user.id)
+      .single();
+    viewerStatus = profile?.status ?? null;
+  }
+
   const detail = await fetchCourtDetail(resolvedParams.courtId);
   if (!detail || !detail.court) {
     notFound();
+  }
+
+  const isAdminViewer = viewerStatus === "admin";
+  const isOwnerViewer =
+    user?.id && detail.court.created_by
+      ? user.id === detail.court.created_by
+      : false;
+
+  if (!isAdminViewer && !isOwnerViewer) {
+    try {
+      await incrementViewCount("court", detail.court.id);
+    } catch (error) {
+      console.error("Failed to increment court view count", error);
+    }
   }
 
   const gallery = detail.photos.length
@@ -272,6 +301,29 @@ export default async function CourtPage({
   })
     .format(new Date())
     .toLowerCase();
+  const openingHourRows = openingHourEntries.map((entry, entryIndex) => {
+    const normalizedDay = entry.day.toLowerCase().trim();
+    const isToday =
+      normalizedDay.startsWith(todayKey.slice(0, 3)) ||
+      normalizedDay.includes(todayKey);
+    const dayLabel = getDayLabel(normalizedDay, locale);
+    const display =
+      entry.ranges?.length > 0
+        ? entry.ranges
+            .map((range) =>
+              formatRangeDisplay(range.open, range.close, locale),
+            )
+            .join(", ")
+        : locale === "th"
+          ? "ปิด"
+          : "Closed";
+    return {
+      id: `${entry.day}-${entryIndex}`,
+      label: dayLabel,
+      value: display,
+      highlighted: isToday,
+    };
+  });
 
   const copy = {
     contact: t("courtPage.contact"),
@@ -295,8 +347,7 @@ export default async function CourtPage({
     backToGroupFinder: t("courtPage.backToGroupFinder"),
   };
 
-  const canEdit =
-    user?.id && detail.court.created_by ? user.id === detail.court.created_by : false;
+  const canEdit = isOwnerViewer;
   const canonicalPath = `/courts/${detail.court.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
   const primaryImage = gallery[0]?.image_url ?? null;
@@ -341,18 +392,21 @@ export default async function CourtPage({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <ViewTracker
+        event="court_view"
+        payload={{ courtId: detail.court.id }}
+      />
       <HeaderSportScope sportSlug={detail.sport?.code ?? undefined} />
       <HeaderSubLabel value={detail.sport?.name ?? undefined} />
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 pb-20 pt-10 md:px-10">
-        <Link
+        <BaseBackLink
           href={buildLocalizedPath(
             `/${detail.sport?.code ?? ""}`,
             locale,
           )}
-          className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
         >
-          ← {copy.back}
-        </Link>
+          {copy.back}
+        </BaseBackLink>
         <header className="space-y-3 border-b border-slate-200 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -380,7 +434,10 @@ export default async function CourtPage({
         </header>
         <CourtGallery gallery={gallery} courtName={detail.court.name} />
 
-        <section className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
+        <BaseCard
+          as="section"
+          className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8 backdrop-blur"
+        >
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-slate-900">
               {copy.contact}
@@ -409,64 +466,10 @@ export default async function CourtPage({
               )}
               {hasAnyHours && (
                 <li>
-                  <strong className="text-slate-900">
-                    {copy.hours}:
-                  </strong>
-                  <div className="mt-2 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/40 text-sm">
-                    {openingHourEntries.map((entry, entryIndex) => {
-                      const normalizedDay = entry.day.toLowerCase().trim();
-                      const isToday =
-                        normalizedDay.startsWith(todayKey.slice(0, 3)) ||
-                        normalizedDay.includes(todayKey);
-                      const isEven = entryIndex % 2 === 0;
-                      const dayLabel = getDayLabel(normalizedDay, locale);
-                      const display =
-                        entry.ranges?.length > 0
-                          ? entry.ranges
-                              .map((range) =>
-                                formatRangeDisplay(
-                                  range.open,
-                                  range.close,
-                                  locale,
-                                ),
-                              )
-                              .join(", ")
-                          : locale === "th"
-                            ? "ปิด"
-                            : "Closed";
-                      return (
-                        <div
-                          key={`${entry.day}-${display}`}
-                          className={`flex items-center justify-between px-4 py-2 ${
-                            isToday
-                              ? "bg-emerald-900/40"
-                              : isEven
-                                ? "bg-slate-900/60"
-                                : "bg-slate-900/30"
-                          }`}
-                        >
-                          <span
-                            className={`text-sm ${
-                              isToday
-                                ? "font-semibold text-emerald-200"
-                                : "text-slate-100"
-                            }`}
-                          >
-                            {dayLabel}
-                          </span>
-                          <span
-                            className={`text-sm text-right ${
-                              isToday
-                                ? "font-semibold text-emerald-200"
-                                : "text-slate-200"
-                            }`}
-                          >
-                            {display}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+              <strong className="text-slate-900">
+                {copy.hours}:
+              </strong>
+                  <BaseScheduleList entries={openingHourRows} className="mt-2" />
                 </li>
               )}
               {detail.court.phone && (
@@ -523,9 +526,12 @@ export default async function CourtPage({
               longitude={numericLongitude as number}
             />
           )}
-        </section>
+        </BaseCard>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white px-6 py-8 shadow-xl shadow-slate-200">
+        <BaseCard
+          as="section"
+          className="rounded-[32px] border border-slate-200 bg-white px-6 py-8"
+        >
           <h2 className="text-xl font-semibold text-slate-900">
             {copy.groupsTitle}
           </h2>
@@ -564,11 +570,11 @@ export default async function CourtPage({
                       )
                     : [];
                 return (
-                  <div
+                  <BaseCard
                     key={group.id}
-                    className="rounded-2xl border border-slate-700 bg-slate-950/40 p-4 text-sm text-slate-300 shadow-sm shadow-black/20"
+                    className="rounded-3xl p-4 text-sm text-[var(--foreground)]"
                   >
-                    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+                    <div className="overflow-hidden rounded-xl border border-[rgb(var(--rt-primary-border-rgb)/0.4)] bg-white">
                       {groupLink ? (
                         <Link href={groupLink} className="block">
                           <div className="relative aspect-square w-full">
@@ -598,27 +604,25 @@ export default async function CourtPage({
                         {groupLink ? (
                           <Link
                             href={groupLink}
-                        className="text-base font-semibold text-sky-300 underline-offset-4 hover:underline"
-                      >
-                        {group.groups?.name ?? "Community group"}
-                      </Link>
-                    ) : (
-                      <p className="text-base font-semibold text-white">
-                        {group.groups?.name ?? "Community group"}
-                      </p>
-                    )}
-                    {group.groups?.description && (
-                      <p className="mt-1 text-xs text-slate-400">
-                        {group.groups.description}
-                      </p>
-                    )}
-                    <div className="mt-2 text-xs text-slate-400">
-                      {scheduleEntries.length > 0 ? (
-                        <ul className="space-y-1">
-                          {scheduleEntries.map((slot, index) => (
-                                <li
-                                  key={`${slot.day}-${slot.start_time}-${index}`}
-                                >
+                            className="text-base font-semibold text-[var(--foreground)] underline-offset-4 hover:underline"
+                          >
+                            {group.groups?.name ?? "Community group"}
+                          </Link>
+                        ) : (
+                          <p className="text-base font-semibold text-[var(--foreground)]">
+                            {group.groups?.name ?? "Community group"}
+                          </p>
+                        )}
+                        {group.groups?.description && (
+                          <p className="mt-1 text-xs text-[rgb(var(--foreground-rgb)/0.7)]">
+                            {group.groups.description}
+                          </p>
+                        )}
+                        <div className="mt-2 text-xs text-[rgb(var(--foreground-rgb)/0.7)]">
+                          {scheduleEntries.length > 0 ? (
+                            <ul className="space-y-1">
+                              {scheduleEntries.map((slot, index) => (
+                                <li key={`${slot.day}-${slot.start_time}-${index}`}>
                                   {getDayLabel(slot.day, locale)} ·{" "}
                                   {slot.start_time && slot.end_time
                                     ? formatTimeRange(
@@ -642,25 +646,25 @@ export default async function CourtPage({
                       </span>
                     </div>
                     {group.note && (
-                      <p className="mt-3 text-xs italic text-slate-500">
+                      <p className="mt-3 text-xs italic text-[rgb(var(--foreground-rgb)/0.7)]">
                         {copy.noteLabel}: {group.note}
                       </p>
                     )}
-                  </div>
+                  </BaseCard>
                 );
               })}
             </div>
           )}
-          <Link
+          <BaseBackLink
             href={buildLocalizedPath(
-              `/${detail.sport?.code ?? ""}/groups`,
+              `/${detail.sport?.code ?? ""}/group-finder`,
               locale,
             )}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+            className="mt-6 inline-flex w-fit"
           >
-            ← {copy.backToGroupFinder}
-          </Link>
-        </section>
+            {copy.backToGroupFinder}
+          </BaseBackLink>
+        </BaseCard>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

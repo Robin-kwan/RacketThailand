@@ -8,6 +8,8 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { ScrollReset } from "@/components/scroll-reset";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SupabaseAuthListener } from "@/components/supabase-auth-listener";
+import { cookies } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,33 +33,36 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const supabase = await createSupabaseServerClient();
+  const cookieStore = await cookies();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isRecoveryMode = cookieStore.get("rt-recovery")?.value === "1";
+  const effectiveUser = isRecoveryMode ? null : user;
   let profile: {
     status: string | null;
     display_name: string | null;
     avatar_url: string | null;
   } | null = null;
-  if (user) {
+  if (effectiveUser) {
     const { data } = await supabase
       .from("profiles")
       .select("status,display_name,avatar_url")
-      .eq("id", user.id)
+      .eq("id", effectiveUser.id)
       .single();
     profile = data ?? null;
   }
-  const isAdmin = profile?.status === "admin";
-  const headerUser = user
+  const isAdmin = !isRecoveryMode && profile?.status === "admin";
+  const headerUser = effectiveUser
     ? {
-        email: user.email ?? "",
+        email: effectiveUser.email ?? "",
         avatarUrl:
           profile?.avatar_url ??
-          (user.user_metadata?.avatar_url as string | null) ??
+          (effectiveUser.user_metadata?.avatar_url as string | null) ??
           null,
         fullName:
           profile?.display_name ??
-          (user.user_metadata?.full_name as string | null) ??
+          (effectiveUser.user_metadata?.full_name as string | null) ??
           null,
       }
     : null;
@@ -65,22 +70,23 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
       >
         <HeaderConfigProvider>
           <ScrollReset />
+          <SupabaseAuthListener />
           <ToasterProvider />
           <div className="sticky top-0 z-50 w-full">
             <SiteHeader user={headerUser} isAdmin={isAdmin} />
           </div>
           <div className="w-full" aria-hidden="true" />
-          <div className="min-h-screen">{children}</div>
-          <footer className="border-t border-slate-800 bg-[#010616] text-slate-400">
+          <main className="flex-1 bg-[#f0f4f9] text-slate-900">{children}</main>
+          <footer className="border-t border-[var(--rt-primary-border)] bg-[var(--rt-primary)] text-[rgb(var(--rt-primary-text-rgb)/0.9)]">
             <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-6 text-sm md:flex-row md:items-center md:justify-between md:px-10">
               <p>RacketThailand · © {new Date().getFullYear()}</p>
               <a
                 href="mailto:racketthailand@gmail.com"
-                className="text-emerald-300 hover:text-emerald-200"
+                className="text-[rgb(var(--rt-primary-text-rgb)/0.75)] hover:text-[rgb(var(--rt-primary-text-rgb)/0.9)]"
               >
                 Contact us: racketthailand@gmail.com
               </a>

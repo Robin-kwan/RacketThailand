@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { GroupEditForm } from "@/components/groups/group-edit-form";
+import { BaseCard } from "@/components/base-card";
+import { BaseBackLink } from "@/components/base-back-link";
 import type { Option } from "@/components/groups/group-form";
 import {
   buildLocalizedPath,
@@ -252,26 +253,28 @@ export default async function EditGroupPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100">
+    <div className="rt-page">
       <HeaderSportScope sportSlug={currentSportSlug} />
       <HeaderSubLabel value={currentSportLabel} />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
         <div>
-          <Link
-            href={buildLocalizedPath(`/groups/${group.id}`, locale)}
-            className="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-500"
-          >
-            ← {t("courtPage.back")}
-          </Link>
+        <BaseBackLink
+          href={buildLocalizedPath(`/groups/${group.id}`, locale)}
+        >
+          {t("groups.edit.back")}
+        </BaseBackLink>
         </div>
-        <section className="rounded-[32px] border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-black/40 backdrop-blur">
-          <p className="text-xs font-semibold uppercase text-slate-400">
+        <BaseCard
+          as="section"
+          className="rounded-[32px] border border-slate-200 bg-white p-8"
+        >
+          <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.6)]">
             Groups · Edit
           </p>
-          <h1 className="mt-3 text-3xl font-semibold text-white">
+          <h1 className="mt-3 text-3xl font-semibold text-[var(--foreground)]">
             {t("groups.edit.title")}
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             {t("groups.edit.subtitle")}
           </p>
           <div className="mt-6">
@@ -284,7 +287,7 @@ export default async function EditGroupPage({
               copy={copy}
             />
           </div>
-        </section>
+        </BaseCard>
       </main>
     </div>
   );

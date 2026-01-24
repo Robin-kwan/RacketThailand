@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CourtEditForm } from "@/components/admin/court-edit-form";
 import { HeaderSportScope } from "@/components/header-sport-scope";
+import { BaseBackLink } from "@/components/base-back-link";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -162,14 +162,11 @@ export default async function EditCourtPage({
       <HeaderSportScope sportSlug={currentSportSlug} />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
       <div>
-        <Link
-          href={buildLocalizedPath(`/courts/${court.id}`, locale)}
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-        >
-          ← {t("courtPage.back")}
-        </Link>
+        <BaseBackLink href={buildLocalizedPath(`/courts/${court.id}`, locale)}>
+          {t("courtPage.backToCourt")}
+        </BaseBackLink>
       </div>
-      <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 shadow-2xl shadow-slate-200/70 backdrop-blur">
+      <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
         <p className="text-xs font-semibold uppercase text-slate-400">
           Courts · Edit
         </p>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { buildSportPagePayload } from "@/server/sportContent";
 import { SUPPORTED_SPORTS, getSportMeta } from "@/data/sportMeta";
@@ -8,7 +9,9 @@ import {
   buildLocalizedPath,
   getTranslator,
   normalizeLocale,
+  type Locale,
 } from "@/lib/i18n";
+import type { SportFeatureCard } from "@/types/sports";
 
 type Params = {
   sport: string;
@@ -34,6 +37,128 @@ async function resolveSearchParams(
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
   return params;
+}
+
+type FeatureCarouselProps = {
+  title: string;
+  subtitle: string;
+  cards: SportFeatureCard[];
+  emptyCopy: string;
+  ctaHref: string;
+  ctaLabel: string;
+  locale: Locale;
+};
+
+function FeatureCarousel({
+  title,
+  subtitle,
+  cards,
+  emptyCopy,
+  ctaHref,
+  ctaLabel,
+  locale,
+}: FeatureCarouselProps) {
+  const hasCards = cards.length > 0;
+
+  return (
+    <section className="px-6 py-12 text-[var(--foreground)] md:px-12">
+      <div className="mx-auto max-w-5xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">{title}</h2>
+            <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+              {subtitle}
+            </p>
+          </div>
+          <Link
+            href={ctaHref}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
+          >
+            {ctaLabel}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="h-4 w-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </Link>
+        </div>
+        {hasCards ? (
+          <div className="-mx-6 mt-8 overflow-x-auto pb-4 md:mx-0">
+            <div className="flex snap-x snap-mandatory gap-4 px-6 md:px-0">
+              {cards.map((card, index) => {
+                const href = card.href
+                  ? buildLocalizedPath(card.href, locale)
+                  : undefined;
+                const content = (
+                  <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 text-slate-900 transition hover:-translate-y-1">
+                    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
+                      <div className="relative h-36 w-full">
+                        <Image
+                          src={card.imageUrl ?? "/sports/badminton.svg"}
+                          alt={card.title}
+                          fill
+                          sizes="(max-width:768px) 80vw, 30vw"
+                          className="object-cover"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-2xl font-semibold text-slate-900">
+                        {card.title}
+                      </h3>
+                      {card.subtitle && (
+                        <p className="text-sm text-slate-600">
+                          {card.subtitle}
+                        </p>
+                      )}
+                    </div>
+                    {card.details.length > 0 && (
+                      <ul className="space-y-2 text-sm text-slate-600">
+                        {card.details.map((detail, detailIndex) => (
+                          <li key={`${card.title}-${detailIndex}`}>
+                            {detail}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+                return href ? (
+                  <Link
+                    key={`${card.title}-${index}`}
+                    href={href}
+                    className="snap-start w-[320px] shrink-0 md:w-[360px]"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div
+                    key={`${card.title}-${index}`}
+                    className="snap-start w-[320px] shrink-0 md:w-[360px]"
+                  >
+                    {content}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-[rgb(var(--foreground-rgb)/0.5)]">
+            {emptyCopy}
+          </p>
+        )}
+      </div>
+    </section>
+  );
 }
 
 export async function generateMetadata({
@@ -75,13 +200,13 @@ export default async function SportPage({
 
   if (!sport) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#020617] px-6 text-slate-100">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6 text-[var(--foreground)]">
         <div className="max-w-md space-y-4 text-center">
           <h1 className="text-3xl font-semibold">Page not found</h1>
           <div className="flex justify-center">
             <Link
               href={buildLocalizedPath("/", locale)}
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold uppercase text-slate-800 hover:border-slate-500"
+              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.3)] px-6 py-3 text-sm font-semibold uppercase text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.6)]"
             >
               Back to landing
             </Link>
@@ -91,13 +216,17 @@ export default async function SportPage({
     );
   }
 
+  const courtFeature = sport.features.find((feature) => feature.key === "courts");
+  const groupFeature = sport.features.find((feature) => feature.key === "groups");
+  const carouselEmptyCopy = t("sport.carouselEmpty");
+  const viewAllLabel = t("sport.viewAll");
+  const boardCta = t("community.boardCta");
+
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100">
+    <div className="min-h-screen text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
-      <section
-        className={`bg-gradient-to-br ${sport.gradient} from-30% via-70% to-100% px-6 py-20 md:px-12`}
-      >
+      <section className="bg-gradient-to-br from-[rgb(var(--rt-primary-rgb)/0.7)] via-[rgb(var(--rt-primary-rgb)/0.5)] to-[rgb(var(--rt-primary-rgb)/0.25)] px-6 py-20 md:px-12">
         <div className="mx-auto flex max-w-5xl flex-col gap-8 text-white">
           <div className="space-y-4">
             <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
@@ -125,7 +254,7 @@ export default async function SportPage({
           <div className="flex flex-wrap gap-4">
             <Link
               href={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-slate-900 shadow-lg shadow-slate-900/20"
+              className="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-slate-900"
             >
               {t("courtFinder.cta")}
             </Link>
@@ -135,71 +264,41 @@ export default async function SportPage({
             >
               {t("sport.groupFinderCta")}
             </Link>
+            <Link
+              href={buildLocalizedPath(`/${sport.code}/board`, locale)}
+              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold uppercase text-white/80 hover:text-white"
+            >
+              {boardCta}
+            </Link>
           </div>
         </div>
       </section>
-      <section className="bg-[#040b1d] px-6 py-12 text-slate-100 md:px-12">
-        <div className="mx-auto flex max-w-5xl flex-col gap-8">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase text-slate-400">
-              {t("sport.useNowTitle")}
-            </p>
-            <p className="text-sm text-slate-300">
-              {t("sport.useNowDescription")}
-            </p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            {[
-              {
-                title: t("sport.useNowCourtsTitle", {
-                  sport: sport.name[locale],
-                }),
-                body: t("sport.useNowCourtsBody"),
-                href: buildLocalizedPath(`/${sport.code}/court-finder`, locale),
-                cta: t("courtFinder.cta"),
-              },
-              {
-                title: t("sport.useNowGroupsTitle", {
-                  sport: sport.name[locale],
-                }),
-                body: t("sport.useNowGroupsBody"),
-                href: buildLocalizedPath(`/${sport.code}/group-finder`, locale),
-                cta: t("sport.groupFinderCta"),
-              },
-            ].map((feature) => (
-              <article
-                key={feature.title}
-                className="rounded-3xl border border-slate-800 bg-slate-950/40 p-6 shadow-sm shadow-black/30"
-              >
-                <h2 className="text-xl font-semibold text-white">
-                  {feature.title}
-                </h2>
-                <p className="mt-2 text-sm text-slate-300">{feature.body}</p>
-                <Link
-                  href={feature.href}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-300 underline-offset-4 hover:underline"
-                >
-                  {feature.cta}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="h-4 w-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      {courtFeature && (
+        <FeatureCarousel
+          title={t("sport.latestCourtsTitle")}
+          subtitle={t("sport.latestCourtsSubtitle", {
+            sport: sport.name[locale],
+          })}
+          cards={courtFeature.cards}
+          emptyCopy={carouselEmptyCopy}
+          ctaHref={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
+          ctaLabel={viewAllLabel}
+          locale={locale}
+        />
+      )}
+      {groupFeature && (
+        <FeatureCarousel
+          title={t("sport.latestGroupsTitle")}
+          subtitle={t("sport.latestGroupsSubtitle", {
+            sport: sport.name[locale],
+          })}
+          cards={groupFeature.cards}
+          emptyCopy={carouselEmptyCopy}
+          ctaHref={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
+          ctaLabel={viewAllLabel}
+          locale={locale}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { BaseCard } from "@/components/base-card";
 
 export type AdminFeedbackRow = {
   id: string;
@@ -75,18 +76,18 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
   };
 
   const renderTable = () => (
-    <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 text-slate-100 shadow-2xl shadow-slate-900/40">
+    <BaseCard className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse text-sm text-slate-100">
-          <thead className="bg-slate-900/70 text-left text-xs font-semibold uppercase text-slate-400">
+        <table className="w-full min-w-[720px] border-collapse text-sm text-[var(--rt-primary-text)]">
+          <thead className="bg-[rgb(var(--rt-primary-rgb)/0.85)] text-left text-xs font-semibold uppercase text-[rgb(var(--rt-primary-text-rgb)/0.8)]">
             <tr>
-              <th className="px-6 py-3 border-b border-slate-800">
+              <th className="border-b border-[var(--rt-primary-border)] px-6 py-3">
                 {copy.headers.subject}
               </th>
-              <th className="px-6 py-3 border-b border-slate-800">
+              <th className="border-b border-[rgb(var(--rt-primary-border-rgb)/0.7)] px-6 py-3">
                 {copy.headers.reporter}
               </th>
-              <th className="px-6 py-3 border-b border-slate-800">
+              <th className="border-b border-[rgb(var(--rt-primary-border-rgb)/0.7)] px-6 py-3">
                 {copy.headers.submitted}
               </th>
               <th className="px-6 py-3 text-right">
@@ -97,42 +98,42 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
           <tbody>
             {items.map((row) => {
               const rowBackground = row.checked
-                ? "bg-slate-900/40"
-                : "bg-slate-900/20";
+                ? "bg-[rgb(var(--rt-primary-rgb)/0.35)]"
+                : "bg-[rgb(var(--rt-primary-rgb)/0.15)]";
               return (
                 <tr
                   key={row.id}
-                  className={`${rowBackground} border-t border-slate-800`}
+                  className={`${rowBackground} border-t border-[var(--rt-primary-border)]`}
                 >
-                  <td className="align-top px-6 py-5">
+                 <td className="align-top px-6 py-5">
                     <div className="space-y-2">
-                      <p className="text-base font-semibold text-white">
+                      <p className="text-base font-semibold text-[var(--rt-primary-text)]">
                         {row.subject?.trim() || copy.noSubject}
                       </p>
-                      <p className="text-sm text-slate-400 line-clamp-2">
+                      <p className="text-sm rt-text-muted line-clamp-2">
                         {row.message?.trim() || copy.noMessage}
                       </p>
-                      <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase text-slate-400">
+                      <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase rt-text-muted">
                         {row.type && (
-                          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-slate-200">
+                          <span className="rounded-full border border-[rgb(var(--rt-primary-text-rgb)/0.2)] bg-[rgb(var(--rt-primary-soft-rgb)/0.6)] px-2 py-0.5 text-[var(--rt-primary-text)]">
                             {copy.typeLabel}: {row.type}
                           </span>
                         )}
                         {row.status && (
-                          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-slate-200">
+                          <span className="rounded-full border border-[rgb(var(--rt-primary-text-rgb)/0.2)] bg-[rgb(var(--rt-primary-soft-rgb)/0.6)] px-2 py-0.5 text-[var(--rt-primary-text)]">
                             {copy.statusLabel}: {row.status}
                           </span>
                         )}
                         {row.priority && (
-                          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-slate-200">
+                          <span className="rounded-full border border-[rgb(var(--rt-primary-text-rgb)/0.2)] bg-[rgb(var(--rt-primary-soft-rgb)/0.6)] px-2 py-0.5 text-[var(--rt-primary-text)]">
                             {copy.priorityLabel}: {row.priority}
                           </span>
                         )}
                         <span
                           className={`rounded-full px-2 py-0.5 ${
                             row.checked
-                              ? "bg-slate-800 text-slate-300"
-                              : "bg-emerald-500/30 text-emerald-100"
+                              ? "border border-[rgb(var(--rt-primary-text-rgb)/0.3)] bg-[rgb(var(--rt-primary-soft-rgb)/0.4)] text-[var(--rt-primary-text)]"
+                              : "border border-[rgb(var(--rt-primary-text-rgb)/0.3)] bg-[rgb(var(--rt-primary-rgb)/0.35)] text-[var(--rt-primary-text)]"
                           }`}
                         >
                           {row.checked ? copy.checked : copy.unchecked}
@@ -140,15 +141,15 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="align-top px-6 py-5 text-sm text-slate-200">
-                    <p className="font-semibold text-white">
+                  <td className="align-top px-6 py-5 text-sm text-[var(--rt-primary-text)]">
+                    <p className="font-semibold text-[var(--rt-primary-text)]">
                       {row.reporterName}
                     </p>
                     {row.reporterEmail && (
-                      <p className="text-slate-400">{row.reporterEmail}</p>
+                      <p className="rt-text-muted">{row.reporterEmail}</p>
                     )}
                   </td>
-                  <td className="align-top px-6 py-5 text-sm text-slate-400">
+                  <td className="align-top px-6 py-5 text-sm rt-text-muted">
                     {formatDate(row.createdAt)}
                   </td>
                   <td className="align-top px-6 py-5 text-right">
@@ -156,11 +157,11 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
                       type="button"
                       onClick={() => toggleChecked(row.id, !row.checked)}
                       disabled={isPending && pendingId === row.id}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                      className={`rt-btn-primary px-4 py-2 text-sm ${
                         row.checked
-                          ? "border border-slate-300 text-slate-700 hover:border-slate-500"
-                          : "bg-slate-900 text-white hover:bg-slate-800"
-                      } disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed`}
+                          ? "bg-transparent text-[var(--rt-primary-text)] hover:bg-[rgb(var(--rt-primary-soft-rgb)/0.3)]"
+                          : ""
+                      }`}
                       aria-pressed={row.checked}
                     >
                       {isPending && pendingId === row.id
@@ -176,7 +177,7 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
           </tbody>
         </table>
       </div>
-    </div>
+    </BaseCard>
   );
 
   if (items.length === 0) {
@@ -187,7 +188,7 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
             {error}
           </p>
         )}
-        <p className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/60 p-6 text-sm text-slate-300">
+        <p className="rounded-2xl border border-dashed border-[rgb(var(--rt-primary-border-rgb)/0.8)] bg-[rgb(var(--rt-primary-soft-rgb)/0.6)] p-6 text-sm text-[var(--rt-primary-text)]">
           {copy.empty}
         </p>
       </div>
