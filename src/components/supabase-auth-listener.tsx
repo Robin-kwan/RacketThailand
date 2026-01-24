@@ -31,6 +31,20 @@ function buildRecoverySearch() {
   return search ? `?${search}` : "?flow=recovery";
 }
 
+function cleanAuthQueryParams() {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("code")) return;
+  const type = url.searchParams.get("type");
+  if (type === "recovery" || url.searchParams.get("flow") === "recovery") {
+    return;
+  }
+  url.searchParams.delete("code");
+  url.searchParams.delete("state");
+  url.searchParams.delete("provider");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 export function SupabaseAuthListener() {
   const router = useRouter();
 
@@ -43,7 +57,7 @@ export function SupabaseAuthListener() {
       console.log(event)
       const recovery =
         event === "PASSWORD_RECOVERY" || isRecoverySession(session);
-        if (recovery) {
+      if (recovery) {
         const hash = typeof window !== "undefined" ? window.location.hash : "";
         const search = buildRecoverySearch();
         router.replace(`/auth/reset${search}${hash}`);
@@ -52,6 +66,10 @@ export function SupabaseAuthListener() {
           message: "Reset link verified. Please set a new password.",
         });
         return;
+      }
+
+      if (event === "SIGNED_IN") {
+        cleanAuthQueryParams();
       }
 
       if (EVENTS_TO_HANDLE.has(event)) {
