@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import type { Session } from "@supabase/supabase-js";
 import { showToast } from "@/components/toaster";
 
 const EVENTS_TO_HANDLE = new Set([
@@ -12,13 +13,14 @@ const EVENTS_TO_HANDLE = new Set([
   "USER_UPDATED",
 ]);
 
-type SessionPayload = Parameters<
-  ReturnType<typeof createSupabaseBrowserClient>["auth"]["onAuthStateChange"]
->[0][1];
+type SessionWithAmr = Session & {
+  amr?: Array<{ method: string }>;
+};
 
-function isRecoverySession(session: SessionPayload) {
-  if (!session?.amr) return false;
-  return session.amr.some((entry) => entry.method === "recovery");
+function isRecoverySession(session: Session | null) {
+  const amr = (session as SessionWithAmr | null)?.amr;
+  if (!amr) return false;
+  return amr.some((entry) => entry.method === "recovery");
 }
 
 function buildRecoverySearch() {

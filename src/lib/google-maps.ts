@@ -1,6 +1,6 @@
 export type MapCoordinates = {
-  latitude: string;
-  longitude: string;
+  latitude: number | string;
+  longitude: number | string;
 };
 
 const COORD_PAIR_REGEX = /(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/;

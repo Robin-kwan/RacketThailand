@@ -538,8 +538,9 @@ export function CourtEditForm({
     setOpeningHours(structured);
     setForm((prev) => ({
       ...prev,
-      latitude: coords.latitude,
-      longitude: coords.longitude,
+      latitude: coords.latitude != null ? String(coords.latitude) : prev.latitude,
+      longitude:
+        coords.longitude != null ? String(coords.longitude) : prev.longitude,
       name: resolution.place?.name ?? prev.name,
       address: resolution.place?.address ?? prev.address,
       district: resolution.place?.district ?? prev.district,
@@ -568,8 +569,8 @@ export function CourtEditForm({
         selectedCoordinates={
           form.latitude && form.longitude
             ? {
-                latitude: Number(form.latitude),
-                longitude: Number(form.longitude),
+                latitude: form.latitude,
+                longitude: form.longitude,
               }
             : null
         }

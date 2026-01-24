@@ -24,6 +24,7 @@ export type CommunityPost = {
   status: string;
   created_at: string;
   updated_at: string;
+  sport_id?: string | null;
   author_id?: string | null;
   author?: ProfilePreview | null;
   likesCount: number;
@@ -39,6 +40,7 @@ type CommunityPostRow = {
   status: string;
   created_at: string;
   updated_at: string;
+  sport_id?: string | null;
   author_id?: string | null;
   profiles?: ProfilePreview | null;
   community_likes?: RelationshipCount;
@@ -118,6 +120,7 @@ export async function fetchCommunityPostsByAuthor(
       created_at: row.created_at,
       author: row.profiles ?? null,
       author_id: row.author_id,
+      updated_at: row.updated_at,
       likesCount: row.community_likes?.[0]?.count ?? 0,
       commentsCount: row.community_comments?.[0]?.count ?? 0,
     })) ?? [];

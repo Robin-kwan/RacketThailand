@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-type Params = {
-  params: { postId: string };
+type RouteContext = {
+  params: Promise<{ postId: string }>;
 };
 
-export async function POST(request: Request, { params }: Params) {
+export async function POST(request: Request, context: RouteContext) {
+  const { postId } = await context.params;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -14,7 +15,6 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { postId } = params;
   const payload = await request.json();
   const { body } = payload;
   if (!body || typeof body !== "string") {
