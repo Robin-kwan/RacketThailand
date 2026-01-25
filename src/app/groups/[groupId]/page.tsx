@@ -19,6 +19,7 @@ import { ViewTracker } from "@/components/view-tracker";
 import { incrementViewCount } from "@/lib/viewCounts";
 import { BaseCard } from "@/components/base-card";
 import { BaseScheduleList } from "@/components/base-schedule-list";
+import { BaseBackLink } from "@/components/base-back-link";
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
@@ -339,22 +340,52 @@ export default async function GroupDetailPage({
           },
         ];
 
+  const sessionCourtIds = Array.from(
+    new Set((sessionRows ?? []).map((session) => session.court_id).filter(Boolean)),
+  ) as string[];
+
+  let courtPhotos: { court_id: string; image_url: string | null; is_primary: boolean | null }[] = [];
+  if (sessionCourtIds.length > 0) {
+    const { data: courtPhotoRows } = await supabaseSelect<{
+      court_id: string;
+      image_url: string | null;
+      is_primary: boolean | null;
+    }>("court_photos", {
+      select: "court_id,image_url,is_primary",
+      court_id: `in.(${sessionCourtIds.join(",")})`,
+      order: "is_primary.desc",
+    });
+    courtPhotos = courtPhotoRows ?? [];
+  }
+
+  const courtPhotoMap = new Map<string, string>();
+  courtPhotos.forEach((photo) => {
+    if (!photo.image_url) return;
+    const existing = courtPhotoMap.get(photo.court_id);
+    if (!existing || photo.is_primary) {
+      courtPhotoMap.set(photo.court_id, photo.image_url);
+    }
+  });
+
   const sessionGroups = (() => {
     const map = new Map<
       string,
       {
         court: GroupSessionRow["courts"];
         sessions: GroupSessionRow[];
+        photoUrl: string | null;
       }
     >();
     (sessionRows ?? []).forEach((session) => {
-      const existing = map.get(session.court_id);
+      const key = session.court_id;
+      const existing = map.get(key);
       if (existing) {
         existing.sessions.push(session);
       } else {
-        map.set(session.court_id, {
+        map.set(key, {
           court: session.courts,
           sessions: [session],
+          photoUrl: courtPhotoMap.get(key) ?? null,
         });
       }
     });
@@ -420,9 +451,14 @@ export default async function GroupDetailPage({
     phone: t("groups.detail.phone"),
     line: t("groups.detail.line"),
     lineQr: t("groups.detail.lineQr"),
+    back: t("groups.detail.back"),
   };
   const canEdit = isGroupOwner;
   const sportName = group.sports?.name ?? undefined;
+  const backHref = buildLocalizedPath(
+    sportCode ? `/${sportCode}/group-finder` : "/",
+    locale,
+  );
 
   return (
     <div className="rt-page">
@@ -433,6 +469,7 @@ export default async function GroupDetailPage({
       <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-[var(--foreground)] md:px-10">
         <HeaderSportScope sportSlug={sportCode ?? undefined} />
         <HeaderSubLabel value={sportName} />
+        <BaseBackLink href={backHref}>{copy.back}</BaseBackLink>
         <CourtGallery gallery={gallery} courtName={group.name} />
         <BaseCard
           as="section"
@@ -442,7 +479,7 @@ export default async function GroupDetailPage({
             Group · {group.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="mt-3 text-4xl font-semibold text-[var(--foreground)]">
+            <h1 className="mt-3 text-3xl font-semibold text-[var(--foreground)]">
               {group.name}
             </h1>
             {canEdit && (
@@ -534,64 +571,86 @@ export default async function GroupDetailPage({
                 </p>
               </div>
             )}
-            <div className="sm:col-span-2">
-              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                {copy.sessionsTitle}
-              </p>
-              {sessionGroups.length === 0 ? (
-                <p className="text-base font-semibold text-[var(--foreground)]">
-                  {copy.sessionsEmpty}
-                </p>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  {sessionGroups.map((entry, index) => (
-                    <BaseCard
-                      key={entry.court?.id ?? `session-${index}`}
-                      className="rounded-2xl border border-slate-200 px-4 py-3"
-                    >
-                      {entry.court ? (
-                        <Link
-                          href={buildLocalizedPath(
-                            `/courts/${entry.court.id}`,
-                            locale,
-                          )}
-                          className="text-sm font-semibold text-[var(--rt-primary)] underline-offset-2 hover:underline"
-                        >
-                          {entry.court.name ?? "Linked court"}
-                        </Link>
-                      ) : (
-                        <p className="text-sm font-semibold text-[var(--foreground)]">
-                          {t("groups.detail.court")}
-                        </p>
-                      )}
-                      {entry.sessions.length > 0 ? (
-                        <BaseScheduleList
-                          entries={entry.sessions.map((session, sessionIndex) => ({
-                            id: session.id ?? `${entry.court?.id ?? "session"}-${sessionIndex}`,
-                            label: getDayLabel(session.day, locale),
-                            value:
-                              session.start_time && session.end_time
-                                ? formatTimeRange(
-                                    session.start_time,
-                                    session.end_time,
-                                    locale,
-                                  )
-                                : copy.scheduleAny,
-                          }))}
-                          className="mt-2"
-                        />
-                      ) : (
-                        <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
-                          {copy.scheduleAny}
-                        </p>
-                      )}
-                    </BaseCard>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         </BaseCard>
+
+        <section className="space-y-4 rounded-[32px] border border-slate-200 bg-white p-8">
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">
+            {copy.sessionsTitle}
+          </h2>
+          {sessionGroups.length === 0 ? (
+            <p className="text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+              {copy.sessionsEmpty}
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {sessionGroups.map((entry, index) => {
+                const locationLabel = [
+                  entry.court?.district,
+                  entry.court?.province,
+                ]
+                  .filter((value): value is string => Boolean(value && value.trim()))
+                  .join(" · ");
+                return (
+                  <div
+                    key={entry.court?.id ?? `session-${index}`}
+                    className="space-y-2 border-b border-slate-100 pb-5 last:border-b-0 last:pb-0"
+                  >
+                    {entry.court ? (
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Link
+                            href={buildLocalizedPath(`/courts/${entry.court.id}`, locale)}
+                            className="text-base font-semibold text-[var(--foreground)] hover:text-[var(--rt-primary)]"
+                          >
+                            {entry.court.name ?? "Linked court"}
+                          </Link>
+                          {locationLabel && (
+                            <p className="text-xs uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.5)]">
+                              {locationLabel}
+                            </p>
+                          )}
+                        </div>
+                        {entry.photoUrl && (
+                          <div className="relative mx-auto h-36 w-full max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:mx-0">
+                            <Image
+                              src={entry.photoUrl}
+                              alt={entry.court.name ?? "Court photo"}
+                              fill
+                              sizes="(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 25vw"
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-base font-semibold text-[var(--foreground)]">
+                        {t("groups.detail.court")}
+                      </p>
+                    )}
+                    {entry.sessions.length > 0 ? (
+                      <BaseScheduleList
+                        entries={entry.sessions.map((session, sessionIndex) => ({
+                          id: session.id ?? `${entry.court?.id ?? "session"}-${sessionIndex}`,
+                          label: getDayLabel(session.day, locale),
+                          value:
+                            session.start_time && session.end_time
+                              ? formatTimeRange(session.start_time, session.end_time, locale)
+                              : copy.scheduleAny,
+                        }))}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
+                        {copy.scheduleAny}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

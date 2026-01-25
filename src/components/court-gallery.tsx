@@ -53,7 +53,7 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
           </button>
         </div>
         {thumbnails.length > 0 && (
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {thumbnails.map((photo, index) => (
               <button
                 type="button"
@@ -66,12 +66,12 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
                 }
                 className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
               >
-                <div className="relative h-24 w-32 md:h-28 md:w-40">
+                <div className="relative aspect-[4/3] w-full">
                   <Image
                     src={photo.image_url}
                     alt={courtName ?? "Court photo"}
                     fill
-                    sizes="200px"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     className="object-cover"
                   />
                 </div>

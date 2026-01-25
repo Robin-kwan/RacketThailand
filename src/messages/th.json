@@ -406,7 +406,8 @@
       "playerAmount": "ผู้เล่นเฉลี่ย",
       "phone": "เบอร์ติดต่อ",
       "line": "LINE ID",
-      "lineQr": "คิวอาร์โค้ด LINE"
+      "lineQr": "คิวอาร์โค้ด LINE",
+      "back": "กลับไปหน้าค้นหากลุ่ม"
     },
     "days": {
       "sunday": "วันอาทิตย์",

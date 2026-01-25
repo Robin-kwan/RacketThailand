@@ -51,9 +51,6 @@ export default async function LoginPage({
           <h1 className="text-3xl font-semibold text-[var(--foreground)]">
             {t("auth.loginTitle")}
           </h1>
-          <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
-            {t("auth.loginSubtitle")}
-          </p>
           <LoginForm locale={locale} copy={formCopy} />
           <p className="mt-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             {t("auth.switchToSignup")}{" "}

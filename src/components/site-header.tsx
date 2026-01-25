@@ -15,6 +15,8 @@ import {
 } from "@/lib/i18n";
 import { useHeaderConfig } from "@/components/header-context";
 import { NotificationsMenu } from "@/components/notifications-menu";
+import type { NotificationCopy } from "@/components/notifications-menu";
+import { SiteHeaderMobileMenu } from "@/components/site-header-mobile-menu";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type HeaderUser = {
@@ -28,10 +30,18 @@ type SiteHeaderProps = {
   isAdmin?: boolean;
 };
 
+type HeaderLabels = typeof enMessages.header;
+
 const UI_STRINGS = {
   th: { header: thMessages.header, notifications: thMessages.notifications },
   en: { header: enMessages.header, notifications: enMessages.notifications },
-};
+} satisfies Record<
+  Locale,
+  {
+    header: HeaderLabels;
+    notifications: NotificationCopy;
+  }
+>;
 
 const LOCALE_INFO: Record<
   Locale,
@@ -229,16 +239,14 @@ export function SiteHeader({
                 </p>
               </div>
             </Link>
-            {navLinks.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setMobileNavOpen(true)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-xl text-white hover:bg-white/20 md:hidden"
-                aria-label="Open navigation menu"
-              >
-                ☰
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-xl text-white hover:bg-white/20 md:hidden"
+              aria-label="Open navigation menu"
+            >
+              ☰
+            </button>
           </div>
           {navLinks.length > 0 && (
             <nav className="hidden flex-wrap items-center gap-6 text-sm font-semibold text-white md:flex">
@@ -411,180 +419,31 @@ export function SiteHeader({
         </div>
       </div>
       </header>
-      {mobileNavOpen && (
-        <div className="fixed inset-0 z-[999] flex md:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            aria-label="Close menu overlay"
-            onClick={closeMobileNav}
-          />
-          <aside
-            ref={mobileMenuRef}
-            className="relative ml-auto flex h-full w-80 flex-col gap-6 border-l border-slate-800 bg-[var(--rt-primary-soft)] p-6 text-slate-100"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-300">
-                  {labels.brand}
-                </p>
-                <p className="text-xs font-semibold uppercase text-slate-500">
-                  {resolvedSubLabel}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeMobileNav}
-                className="rounded-full border border-slate-700 p-3 text-slate-200 hover:border-slate-500"
-                aria-label="Close menu"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="h-4 w-4"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m6 6 12 12M6 18 18 6"
-                  />
-                </svg>
-              </button>
-            </div>
-            {navLinks.length > 0 && (
-            <nav className="space-y-3">
-                {navLinks.map((link) => {
-                  const isLinkActive =
-                    pathname === link.path ||
-                    (link.path !== "/" && pathname.startsWith(`${link.path}/`));
-                  return (
-                    <Link
-                      key={link.path}
-                      href={link.href}
-                      onClick={closeMobileNav}
-                      className={`flex items-center justify-between text-base font-semibold ${
-                        isLinkActive
-                          ? "text-slate-200"
-                          : "text-white hover:text-slate-200"
-                      }`}
-                    >
-                      {link.label}
-                      {isLinkActive && <span aria-hidden>•</span>}
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
-            <div className="space-y-5">
-              {isAuthenticated ? (
-                <>
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
-                    <div className="relative h-12 w-12 overflow-hidden rounded-full bg-slate-800 text-white">
-                      {user?.avatarUrl ? (
-                        <Image
-                          src={user.avatarUrl}
-                          alt={user.fullName ?? user.email}
-                          fill
-                          sizes="48px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <span className="flex h-full items-center justify-center text-lg font-semibold">
-                          {user?.fullName?.[0]?.toUpperCase() ??
-                            user?.email?.[0]?.toUpperCase() ??
-                            "R"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-semibold text-white">
-                        {user?.fullName ?? user?.email}
-                      </p>
-                      <p className="text-xs text-slate-400">{user?.email}</p>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-200">
-                        {notificationCopy.title}
-                      </p>
-                      <NotificationsMenu
-                        locale={locale}
-                        copy={notificationCopy}
-                      />
-                    </div>
-                  </div>
-                  <Link
-                    href={buildLocalizedPath("/profile/edit", locale)}
-                    className="block rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100"
-                    onClick={closeMobileNav}
-                  >
-                    {labels.profile}
-                  </Link>
-                  <Link
-                    href={buildLocalizedPath("/dashboard", locale)}
-                    className="block rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100"
-                    onClick={closeMobileNav}
-                  >
-                    {labels.dashboard}
-                  </Link>
-                  {isAdmin && (
-                    <Link
-                      href={buildLocalizedPath("/admin", locale)}
-                      className="block rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100"
-                      onClick={closeMobileNav}
-                    >
-                      {labels.admin}
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeMobileNav();
-                      void handleLogout();
-                    }}
-                    className="w-full rounded-xl border border-slate-800 px-4 py-3 text-left text-sm font-semibold text-rose-300"
-                  >
-                    {labels.logout}
-                  </button>
-                </>
-              ) : (
-                <Link
-                  href={buildLocalizedPath("/login", locale)}
-                  className="block rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-100"
-                  onClick={closeMobileNav}
-                >
-                  {labels.login}
-                </Link>
-              )}
-            </div>
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase text-slate-500">
-                {labels.language}
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-3">
-                {(Object.keys(LOCALE_INFO) as Locale[]).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => handleLocaleSelect(option)}
-                    className={`flex items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold ${
-                      option === locale
-                        ? "border-slate-600 text-white"
-                        : "border-slate-800 text-slate-300"
-                    }`}
-                  >
-                    {LOCALE_INFO[option].label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
-        </div>
-      )}
+      <SiteHeaderMobileMenu
+        isOpen={mobileNavOpen}
+        navLinks={navLinks}
+        pathname={pathname}
+        locale={locale}
+        labels={{
+          brand: labels.brand,
+          login: labels.login,
+          profile: labels.profile,
+          dashboard: labels.dashboard,
+          admin: labels.admin,
+          logout: labels.logout,
+          language: labels.language,
+        }}
+        subLabel={resolvedSubLabel}
+        notificationCopy={notificationCopy}
+        isAuthenticated={isAuthenticated}
+        isAdmin={isAdmin}
+        user={user}
+        localeInfo={LOCALE_INFO}
+        mobileMenuRef={mobileMenuRef}
+        onClose={closeMobileNav}
+        onLocaleSelect={handleLocaleSelect}
+        onLogout={handleLogout}
+      />
     </>
   );
 }

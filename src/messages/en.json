@@ -406,7 +406,8 @@
       "playerAmount": "Average players",
       "phone": "Contact number",
       "line": "LINE ID",
-      "lineQr": "LINE QR code"
+      "lineQr": "LINE QR code",
+      "back": "Back to group finder"
     },
     "days": {
       "sunday": "Sunday",
