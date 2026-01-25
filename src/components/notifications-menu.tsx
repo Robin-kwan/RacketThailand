@@ -15,7 +15,7 @@ type NotificationRecord = {
   read_at: string | null;
 };
 
-type NotificationCopy = {
+export type NotificationCopy = {
   title: string;
   empty: string;
   markAll: string;

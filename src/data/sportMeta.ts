@@ -29,12 +29,12 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f172a",
     gradient: "from-rose-500/30 via-orange-500/20 to-amber-500/10",
     coverImage: "/sports/badminton.png",
-    heroHeadline: l("คอร์ทและกลุ่มแบดในระบบเดียว", "Badminton courts & groups in one place."),
+    heroHeadline: l("คอร์ทและก๊วนตีแบดในระบบเดียว", "Badminton courts & groups in one place."),
     heroDescription: l(
-      "สำรวจคอร์ทยืนยันแล้ว ดูกลุ่มที่เปิดรับสมาชิก และติดต่อแอดมินได้จากหน้าพอร์ทัลเดียว",
+      "สำรวจคอร์ทยืนยันแล้ว ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และติดต่อแอดมินได้จากหน้าพอร์ทัลเดียว",
       "Explore verified venues, check active groups, and contact organizers directly from the same portal.",
     ),
-    closingTitle: l("มีคอร์ทหรือกลุ่มแบดใหม่?", "Have new badminton courts or groups?"),
+    closingTitle: l("มีคอร์ทหรือก๊วนตีแบดใหม่?", "Have new badminton courts or groups?"),
     closingDetail: l(
       "ส่งรายละเอียดให้ทีมงานเพื่ออัปเดตให้ชุมชนหาเจอได้เร็วขึ้น",
       "Send us the details so the community can find them faster.",
@@ -44,8 +44,8 @@ export const SPORT_META: Record<string, SportMeta> = {
       { label: l("ดูคอร์ทแบด", "Browse courts"), href: "/badminton/court-finder" },
     ],
     landingDescription: l(
-      "ดูคอร์ทยืนยันแล้วและกลุ่มแบดทั่วไทย พร้อมช่องทางติดต่อแอดมิน",
-      "Browse verified badminton courts and weekly groups across Thailand.",
+      "ดูคอร์ทยืนยันแล้วและก๊วนตีแบดทั่วไทย หาเพื่อนตีแบดพร้อมช่องทางติดต่อแอดมิน",
+      "Browse verified badminton courts, weekly groups, and organizer contacts across Thailand.",
     ),
     landingHighlights: list(["แผนที่คอร์ท", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",

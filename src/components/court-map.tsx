@@ -18,12 +18,12 @@ export function CourtMap({ name, latitude, longitude }: CourtMapProps) {
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
 
   return (
-    <section className="space-y-4 rounded-[32px] border border-slate-200 bg-white/90 p-6">
+    <section className="space-y-4 rounded-[32px] bg-white/90 p-6">
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase text-slate-400">
           Map & Directions
         </p>
-        <h2 className="text-2xl font-semibold text-slate-900">{name}</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{name}</h2>
         <p className="text-sm text-slate-600">
           View this court on the map and get directions instantly.
         </p>

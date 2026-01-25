@@ -410,7 +410,7 @@ export default async function CourtPage({
         <header className="space-y-3 border-b border-slate-200 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-4xl font-semibold text-slate-900">
+              <h1 className="text-3xl font-semibold text-slate-900">
                 {detail.court.name ?? "Unnamed court"}
               </h1>
               <p className="text-sm text-slate-600">
@@ -439,7 +439,7 @@ export default async function CourtPage({
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8 backdrop-blur"
         >
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-slate-900">
               {copy.contact}
             </h2>
             <ul className="space-y-3 text-sm text-slate-600">
@@ -519,20 +519,21 @@ export default async function CourtPage({
               )}
             </ul>
           </div>
-          {hasMapCoordinates && (
-            <CourtMap
-              name={detail.court.name ?? "Court location"}
-              latitude={numericLatitude as number}
-              longitude={numericLongitude as number}
-            />
-          )}
         </BaseCard>
+
+        {hasMapCoordinates && (
+          <CourtMap
+            name={detail.court.name ?? "Court location"}
+            latitude={numericLatitude as number}
+            longitude={numericLongitude as number}
+          />
+        )}
 
         <BaseCard
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white px-6 py-8"
         >
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-slate-900">
             {copy.groupsTitle}
           </h2>
           {detail.groups.length === 0 ? (
