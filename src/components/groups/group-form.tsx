@@ -99,6 +99,7 @@ type GroupFormProps = {
   submitLabel: string;
   submittingLabel: string;
   sportDisabled?: boolean;
+  externalDirty?: boolean;
 };
 
 const createSlot = (): SessionSlot => ({
@@ -207,15 +208,27 @@ function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
 
   return (
     <div className="space-y-1" ref={containerRef}>
-      <label className="text-xs font-semibold text-slate-300" htmlFor={id}>
+      <label
+        className="text-xs font-semibold text-[rgb(var(--foreground-rgb)/0.65)]"
+        htmlFor={id}
+      >
         {label}
       </label>
-      <div className="relative rounded-2xl border border-slate-700 bg-slate-900/60 transition focus-within:border-slate-500 focus-within:bg-slate-900">
-        <div className="pointer-events-none flex h-12 items-center justify-between px-4 text-sm text-slate-100">
-          <span className={formattedValue ? "text-slate-100" : "text-slate-500"}>
+      <div className="relative rounded-2xl border border-slate-200 bg-white transition focus-within:border-slate-400 focus-within:bg-white">
+        <div className="pointer-events-none flex h-12 items-center justify-between px-4 text-sm text-[var(--foreground)]">
+          <span
+            className={
+              formattedValue
+                ? "text-[var(--foreground)]"
+                : "text-[rgb(var(--foreground-rgb)/0.55)]"
+            }
+          >
             {formattedValue || label}
           </span>
-          <Clock3 className="h-5 w-5 text-slate-400" aria-hidden="true" />
+          <Clock3
+            className="h-5 w-5 text-[rgb(var(--foreground-rgb)/0.5)]"
+            aria-hidden="true"
+          />
         </div>
         <input
           id={id}
@@ -230,7 +243,7 @@ function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
         />
         {open && (
           <div
-            className="absolute inset-x-0 top-full z-30 mt-2 rounded-3xl border border-slate-700 bg-[var(--rt-primary-soft)] p-2"
+            className="absolute inset-x-0 top-full z-30 mt-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-lg"
             onKeyDown={handleOptionKeyDown}
           >
             <div className="max-h-60 overflow-y-auto pr-1">
@@ -242,15 +255,15 @@ function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
                     type="button"
                     className={`flex w-full items-center justify-between rounded-2xl px-3 py-2 text-sm transition ${
                       selected
-                        ? "bg-slate-800 text-white"
-                        : "text-slate-300 hover:bg-slate-800/60"
+                        ? "bg-slate-100 text-[var(--foreground)]"
+                        : "text-[var(--foreground)] hover:bg-slate-50"
                     }`}
                     onClick={() => handleSelect(option.value)}
                     role="option"
                     aria-selected={selected}
                   >
                     <span className="font-medium">{option.label}</span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-[rgb(var(--foreground-rgb)/0.5)]">
                       {option.value}
                     </span>
                   </button>
@@ -277,6 +290,7 @@ export function GroupForm({
   submitLabel,
   submittingLabel,
   sportDisabled = false,
+  externalDirty = false,
 }: GroupFormProps) {
   const [form, setForm] = useState({
     sportId: initialValues.sportId,
@@ -454,7 +468,7 @@ export function GroupForm({
     [form, serializedSessions],
   );
 
-  const hasChanges = currentSnapshot !== initialSnapshot;
+  const hasChanges = currentSnapshot !== initialSnapshot || externalDirty;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -470,7 +484,7 @@ export function GroupForm({
   };
 
   return (
-    <form className="space-y-5 text-slate-100" onSubmit={handleSubmit}>
+    <form className="space-y-5 text-[var(--foreground)]" onSubmit={handleSubmit}>
       <BaseSelect
         label={copy.sport}
         name="sportId"
@@ -479,9 +493,10 @@ export function GroupForm({
         options={sportOptions}
         disabled={sportDisabled}
         required
+        variant="light"
       />
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-100">
+        <label className="text-sm font-semibold text-[var(--foreground)]">
           {copy.name}
         </label>
         <BaseTextField
@@ -490,11 +505,11 @@ export function GroupForm({
           value={form.name}
           onChange={updateForm}
           required
-          className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
+          variant="light"
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-100">
+        <label className="text-sm font-semibold text-[var(--foreground)]">
           {copy.description}
         </label>
         <BaseTextArea
@@ -502,25 +517,27 @@ export function GroupForm({
           value={form.description}
           onChange={updateForm}
           rows={4}
-          className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
+          variant="light"
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-slate-100">
+        <label className="text-sm font-semibold text-[var(--foreground)]">
           {copy.playerAmountLabel}
         </label>
-        <p className="text-xs text-slate-400">{copy.playerAmountHelp}</p>
+        <p className="text-xs text-[rgb(var(--foreground-rgb)/0.65)]">
+          {copy.playerAmountHelp}
+        </p>
         <BaseNumberField
           name="playerAmount"
           placeholder={copy.playerAmountPlaceholder}
           value={form.playerAmount}
           onChange={updateForm}
-          className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
+          variant="light"
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-slate-100">
+          <label className="text-sm font-semibold text-[var(--foreground)]">
             {copy.phoneLabel}
           </label>
           <BaseTextField
@@ -529,11 +546,11 @@ export function GroupForm({
             value={form.phone}
             onChange={updateForm}
             placeholder={copy.phonePlaceholder}
-            className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
+            variant="light"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-slate-100">
+          <label className="text-sm font-semibold text-[var(--foreground)]">
             {copy.lineLabel}
           </label>
           <BaseTextField
@@ -542,12 +559,12 @@ export function GroupForm({
             value={form.lineId}
             onChange={updateForm}
             placeholder={copy.linePlaceholder}
-            className="border-slate-700 bg-slate-900/60 text-slate-100 placeholder-slate-500 focus:border-slate-500 focus:bg-slate-900"
+            variant="light"
           />
         </div>
       </div>
       {lineQrSection}
-      <div className="space-y-3 rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 p-4">
+      <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 bg-[rgb(var(--foreground-rgb)/0.02)] p-4">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">
             {copy.sessionsLabel}
@@ -555,19 +572,21 @@ export function GroupForm({
           <button
             type="button"
             onClick={addCourtBlock}
-            className="text-xs font-semibold text-emerald-300 hover:text-[rgb(var(--rt-primary-text-rgb)/0.75)]"
+            className="text-xs font-semibold text-[rgb(var(--rt-primary-rgb))] hover:text-[rgb(var(--rt-primary-rgb)/0.75)]"
           >
             {copy.sessionsAddCourt}
           </button>
         </div>
         {courtSessions.length === 0 ? (
-          <p className="text-xs text-slate-400">{copy.sessionsEmpty}</p>
+          <p className="text-xs text-[rgb(var(--foreground-rgb)/0.65)]">
+            {copy.sessionsEmpty}
+          </p>
         ) : (
           <div className="space-y-4">
             {courtSessions.map((block) => (
               <div
                 key={block.id}
-                className="space-y-3 rounded-2xl border border-slate-700 bg-slate-900/40 p-4"
+                className="space-y-3 rounded-2xl border border-slate-200 bg-white/70 p-4"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <BaseAutocomplete
@@ -579,19 +598,20 @@ export function GroupForm({
                     }
                     options={courtOptions}
                     className="flex-1"
+                    variant="light"
                   />
                   <div className="flex items-end justify-end">
                     <button
                       type="button"
                       onClick={() => removeCourtBlock(block.id)}
-                      className="flex h-12 w-12 items-center justify-center text-rose-400 transition hover:text-rose-300"
+                      className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
                     >
                       <Trash2 className="h-6 w-6" />
                     </button>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">
+                  <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                     {copy.sessionsTitle ?? copy.scheduleLabel}
                   </p>
                   {block.slots.map((slot) => {
@@ -604,7 +624,7 @@ export function GroupForm({
                       >
                         <div className="space-y-1">
                           <label
-                            className="text-xs font-semibold text-slate-300"
+                            className="text-xs font-semibold text-[rgb(var(--foreground-rgb)/0.65)]"
                             htmlFor={`schedule-day-${slot.id}`}
                           >
                             {copy.scheduleDay}
@@ -623,6 +643,8 @@ export function GroupForm({
                             }
                             options={dayOptions}
                             className="space-y-0"
+                            variant="light"
+                            labelHidden
                           />
                         </div>
                         <TimePickerField
@@ -650,7 +672,7 @@ export function GroupForm({
                           <button
                             type="button"
                             onClick={() => removeSessionSlot(block.id, slot.id)}
-                            className="flex h-12 w-12 items-center justify-center text-rose-400 transition hover:text-rose-300"
+                            className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
                             aria-label={copy.scheduleRemove}
                           >
                             <Trash2 className="h-6 w-6" />
@@ -663,7 +685,7 @@ export function GroupForm({
                 <button
                   type="button"
                   onClick={() => addSessionSlot(block.id)}
-                  className="text-xs font-semibold text-emerald-300 hover:text-[rgb(var(--rt-primary-text-rgb)/0.75)]"
+                  className="text-xs font-semibold text-[rgb(var(--rt-primary-rgb))] hover:text-[rgb(var(--rt-primary-rgb)/0.75)]"
                 >
                   {copy.sessionsAddSlot}
                 </button>
@@ -676,7 +698,7 @@ export function GroupForm({
       <button
         type="submit"
         disabled={submitting || !hasChanges}
-        className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:cursor-not-allowed disabled:border disabled:border-slate-500"
+        className="rt-btn-primary w-full px-6 py-3 text-base"
       >
         {submitting ? `${submittingLabel}...` : submitLabel}
       </button>

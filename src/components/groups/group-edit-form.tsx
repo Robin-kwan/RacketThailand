@@ -415,6 +415,14 @@ export function GroupEditForm({
       nextPhotos.find((photo) => photo.is_primary)?.id ?? null;
   };
 
+  const currentPrimaryId = photos.find((photo) => photo.is_primary)?.id ?? null;
+  const photoDirty =
+    deletedPhotoIds.length > 0 ||
+    photos.some((photo) => photo.status === "new") ||
+    currentPrimaryId !== initialPrimaryIdRef.current;
+  const lineQrDirty = Boolean(lineQrFile) || lineQrRemovalPending;
+  const externalDirty = photoDirty || lineQrDirty;
+
   return (
     <GroupForm
       key={formStateKey}
@@ -507,6 +515,7 @@ export function GroupEditForm({
       submitLabel={copy.submit}
       submittingLabel={copy.submitting}
       sportDisabled
+      externalDirty={externalDirty}
     />
   );
 }

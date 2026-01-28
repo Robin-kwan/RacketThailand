@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { GroupCreationForm } from "@/components/groups/group-creation-form";
 import type { Option } from "@/components/groups/group-form";
+import { BaseBackLink } from "@/components/base-back-link";
+import { BaseCard } from "@/components/base-card";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -133,20 +134,31 @@ export default async function CreateGroupPage({
     success: t("groups.form.success"),
     error: t("groups.form.error"),
   };
+  const primarySportSlug = sportsRes.data?.[0]?.code ?? null;
+  const backHref = buildLocalizedPath(
+    primarySportSlug ? `/${primarySportSlug}/group-finder` : "/",
+    locale,
+  );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
-          <p className="text-xs font-semibold uppercase text-slate-400">
+        <BaseBackLink href={backHref}>{t("groups.detail.back")}</BaseBackLink>
+        <BaseCard
+          as="section"
+          className="rounded-[32px] border border-slate-200 bg-white p-8"
+        >
+          <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
             Community · Groups
           </p>
-          <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+          <h1 className="mt-3 text-3xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h1>
-          <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
+          <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.75)]">
+            {copy.subtitle}
+          </p>
           {sports.length === 0 ? (
-            <p className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            <p className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-[rgb(var(--foreground-rgb)/0.02)] p-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
               {t("sport.featureEmpty")}
             </p>
           ) : (
@@ -159,15 +171,7 @@ export default async function CreateGroupPage({
               />
             </div>
           )}
-        </section>
-        <section>
-          <Link
-            href={buildLocalizedPath("/", locale)}
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-          >
-            {t("landing.cardCta")}
-          </Link>
-        </section>
+        </BaseCard>
       </main>
     </div>
   );

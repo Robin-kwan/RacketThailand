@@ -638,7 +638,7 @@ export default async function GroupDetailPage({
                               ? formatTimeRange(session.start_time, session.end_time, locale)
                               : copy.scheduleAny,
                         }))}
-                        className="mt-1"
+                        className="mt-4"
                       />
                     ) : (
                       <p className="text-sm text-[rgb(var(--foreground-rgb)/0.65)]">

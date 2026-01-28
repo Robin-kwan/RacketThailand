@@ -10,7 +10,25 @@ type MultiImageInputProps = {
   removable?: boolean;
   value?: File[];
   cardHeightClass?: string;
+  variant?: "light" | "dark";
   onChange(images: File[]): void;
+};
+
+const VARIANT_CLASSNAMES = {
+  dark: {
+    label: "text-slate-100",
+    error: "text-rose-400",
+    addButton:
+      "border-slate-700 bg-slate-900/40 text-slate-300 hover:border-slate-500 hover:text-white",
+    helper: "text-slate-500",
+  },
+  light: {
+    label: "text-[var(--foreground)]",
+    error: "text-rose-500",
+    addButton:
+      "border-slate-200 bg-[rgb(var(--foreground-rgb)/0.05)] text-[rgb(var(--foreground-rgb)/0.45)] hover:border-slate-400 hover:text-[var(--foreground)]",
+    helper: "text-[rgb(var(--foreground-rgb)/0.6)]",
+  },
 };
 
 export function MultiImageInput({
@@ -21,6 +39,7 @@ export function MultiImageInput({
   removable = true,
   value,
   cardHeightClass = "h-40",
+  variant = "light",
   onChange,
 }: MultiImageInputProps) {
   const [internalFiles, setInternalFiles] = useState<File[]>([]);
@@ -92,9 +111,11 @@ export function MultiImageInput({
     updateFiles([selected, ...others]);
   };
 
+  const styles = VARIANT_CLASSNAMES[variant] ?? VARIANT_CLASSNAMES.light;
+
   return (
     <div className="space-y-3">
-      <label className="text-sm font-semibold text-slate-100">{label}</label>
+      <label className={`text-sm font-semibold ${styles.label}`}>{label}</label>
       <input
         ref={inputRef}
         type="file"
@@ -103,7 +124,7 @@ export function MultiImageInput({
         className="hidden"
         onChange={handleFileChange}
       />
-      {error && <p className="text-xs text-rose-400">{error}</p>}
+      {error && <p className={`text-xs ${styles.error}`}>{error}</p>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {previews.map((preview) => (
           <BaseImageCard
@@ -114,12 +135,17 @@ export function MultiImageInput({
               removable ? () => handleRemove(preview.id) : undefined
             }
             heightClass={cardHeightClass}
+            variant={variant}
             footer={
               removable && (
                 <button
                   type="button"
                   onClick={() => handleSetPrimary(preview.id)}
-                  className={`font-semibold ${preview.isPrimary ? "text-emerald-300" : "text-slate-200"}`}
+                  className={`font-semibold ${
+                    preview.isPrimary
+                      ? "text-[rgb(var(--rt-primary-rgb))]"
+                      : styles.helper
+                  }`}
                   disabled={preview.isPrimary}
                 >
                   {preview.isPrimary ? "Primary" : "Make primary"}
@@ -132,7 +158,7 @@ export function MultiImageInput({
           <button
             type="button"
             onClick={handleAddClick}
-            className={`flex ${cardHeightClass} items-center justify-center rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 text-3xl text-slate-300 hover:border-slate-500 hover:text-white`}
+            className={`flex ${cardHeightClass} items-center justify-center rounded-2xl border border-dashed text-3xl ${styles.addButton}`}
           >
             +
           </button>
