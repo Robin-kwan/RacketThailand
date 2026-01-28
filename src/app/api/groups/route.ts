@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { ensureCourtGroupLinks } from "@/server/groupSessions";
 import { fetchGroupsBySport } from "@/server/groupFinder";
 
@@ -131,7 +132,9 @@ export async function POST(request: Request) {
   const normalizedPhone = normalizeContact(payload.phone);
   const normalizedLine = normalizeContact(payload.lineId);
 
-  const { data: insertedGroup, error: insertGroupError } = await supabase
+  const adminSupabase = getSupabaseAdminClient();
+
+  const { data: insertedGroup, error: insertGroupError } = await adminSupabase
     .from("groups")
     .insert({
       sport_id: payload.sportId,
@@ -156,7 +159,7 @@ export async function POST(request: Request) {
   const groupId = insertedGroup.id;
 
   if (normalizedSessions.length > 0) {
-    const { error: sessionsError } = await supabase
+    const { error: sessionsError } = await adminSupabase
       .from("group_sessions")
       .insert(
         normalizedSessions.map((session) => ({
@@ -175,7 +178,7 @@ export async function POST(request: Request) {
     }
 
     await ensureCourtGroupLinks(
-      supabase,
+      adminSupabase,
       groupId,
       normalizedSessions.map((session) => session.courtId),
     );
