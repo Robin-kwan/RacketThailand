@@ -104,7 +104,7 @@ export function CourtRequestList({
             </Link>
           </div>
           {request.groups?.description && (
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 whitespace-pre-line text-sm text-slate-600">
               {request.groups.description}
             </p>
           )}

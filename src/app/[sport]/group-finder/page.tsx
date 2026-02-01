@@ -113,12 +113,6 @@ export default async function GroupFinderPage({
             >
               {t("groupFinder.backToSport")}
             </Link>
-            <Link
-              href={buildLocalizedPath("/", locale)}
-              className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:border-slate-500"
-            >
-              {copy.backLink}
-            </Link>
           </div>
         </section>
         <GroupFinder

@@ -12,6 +12,12 @@ export type SportFeatureCard = {
   badgeLabel?: string | null;
   badgeColor?: string | null;
   href?: string | null;
+  sessions?: {
+    day: string;
+    start_time: string | null;
+    end_time: string | null;
+    courts?: { id?: string | null; name?: string | null } | null;
+  }[];
 };
 
 export type SportFeatureKey =
