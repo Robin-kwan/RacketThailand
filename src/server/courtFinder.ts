@@ -183,15 +183,10 @@ export async function fetchCourtDetail(courtId: string) {
     ]);
 
   const sport = sportRows?.[0];
-  const verifiedGroups =
-    groupLinks?.filter(
-      (link) => link.verification_status === "verified",
-    ) ?? [];
-
   return {
     court,
     sport,
     photos: photos ?? [],
-    groups: verifiedGroups,
+    groups: groupLinks ?? [],
   };
 }

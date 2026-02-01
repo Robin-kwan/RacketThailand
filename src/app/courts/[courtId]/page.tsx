@@ -21,6 +21,8 @@ import { CourtMap } from "@/components/court-map";
 import { ensureAllDays } from "@/lib/opening-hours";
 import { ViewTracker } from "@/components/view-tracker";
 import { incrementViewCount } from "@/lib/viewCounts";
+import { GroupCard, type GroupCardSession } from "@/components/group-card";
+import type { Locale } from "@/lib/i18n";
 
 function getGroupCover(group: {
   sports?: { code: string } | null;
@@ -98,13 +100,6 @@ function formatRangeDisplay(
     ? formatTimeValue(close, locale)
     : close;
   return `${formattedOpen} – ${formattedClose}`;
-}
-
-function formatTimeRange(start: string, end: string, locale: string) {
-  return `${formatTimeValue(start, locale)} – ${formatTimeValue(
-    end,
-    locale,
-  )}`;
 }
 
 function toSchemaOpenTime(value: string) {
@@ -235,6 +230,12 @@ export default async function CourtPage({
   const resolvedSearch = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedSearch?.lang);
   const t = await getTranslator(locale);
+  const dayLabels = Object.fromEntries(
+    Object.entries(DAY_LABELS).map(([key, labels]) => [
+      key,
+      locale === "th" ? labels.th : labels.en,
+    ]),
+  );
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -457,7 +458,7 @@ export default async function CourtPage({
                     {copy.price}:
                   </strong>
                   <div
-                    className="prose prose-sm mt-1 max-w-none text-slate-600"
+                    className="prose prose-sm mt-1 max-w-none whitespace-pre-line text-slate-600"
                     dangerouslySetInnerHTML={{
                       __html: detail.court.price_note,
                     }}
@@ -542,18 +543,11 @@ export default async function CourtPage({
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {detail.groups.map((group) => {
                 const status = group.verification_status ?? "pending";
-                const statusLabel =
-                  status === "verified"
-                    ? copy.verified
-                    : status === "rejected"
-                      ? copy.statusRejected
-                      : copy.statusPending;
+                const statusLabel = status === "verified" ? copy.verified : null;
                 const badgeClass =
                   status === "verified"
                     ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : status === "rejected"
-                      ? "border-rose-200 bg-rose-50 text-rose-700"
-                      : "border-slate-200 bg-slate-50 text-slate-600";
+                    : "";
                 const groupLink = group.groups?.id
                   ? buildLocalizedPath(
                       `/groups/${group.groups.id}`,
@@ -570,88 +564,50 @@ export default async function CourtPage({
                         (session) => session.court_id === detail.court.id,
                       )
                     : [];
+                const sessionsForCourt: GroupCardSession[] = scheduleEntries.map(
+                  (session) => ({
+                    day: session.day,
+                    start_time: session.start_time,
+                    end_time: session.end_time,
+                    courts: null,
+                  }),
+                );
                 return (
-                  <BaseCard
+                  <GroupCard
                     key={group.id}
-                    className="rounded-3xl p-4 text-sm text-[var(--foreground)]"
-                  >
-                    <div className="overflow-hidden rounded-xl border border-[rgb(var(--rt-primary-border-rgb)/0.4)] bg-white">
-                      {groupLink ? (
-                        <Link href={groupLink} className="block">
-                          <div className="relative aspect-square w-full">
-                            <Image
-                              src={coverImage}
-                              alt={group.groups?.name ?? "Group photo"}
-                              fill
-                              sizes="280px"
-                              className="object-cover"
-                            />
-                          </div>
-                        </Link>
-                      ) : (
-                        <div className="relative aspect-square w-full">
-                          <Image
-                            src={coverImage}
-                            alt={group.groups?.name ?? "Group photo"}
-                            fill
-                            sizes="280px"
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-3 flex items-center justify-between gap-3">
-                      <div>
-                        {groupLink ? (
-                          <Link
-                            href={groupLink}
-                            className="text-base font-semibold text-[var(--foreground)] underline-offset-4 hover:underline"
-                          >
-                            {group.groups?.name ?? "Community group"}
-                          </Link>
-                        ) : (
-                          <p className="text-base font-semibold text-[var(--foreground)]">
-                            {group.groups?.name ?? "Community group"}
-                          </p>
-                        )}
-                        {group.groups?.description && (
-                          <p className="mt-1 text-xs text-[rgb(var(--foreground-rgb)/0.7)]">
-                            {group.groups.description}
-                          </p>
-                        )}
-                        <div className="mt-2 text-xs text-[rgb(var(--foreground-rgb)/0.7)]">
-                          {scheduleEntries.length > 0 ? (
-                            <ul className="space-y-1">
-                              {scheduleEntries.map((slot, index) => (
-                                <li key={`${slot.day}-${slot.start_time}-${index}`}>
-                                  {getDayLabel(slot.day, locale)} ·{" "}
-                                  {slot.start_time && slot.end_time
-                                    ? formatTimeRange(
-                                        slot.start_time,
-                                        slot.end_time,
-                                        locale,
-                                      )
-                                    : copy.groupScheduleAny}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p>{copy.groupScheduleAny}</p>
-                          )}
-                        </div>
-                      </div>
-                      <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass}`}
-                      >
-                        {statusLabel}
-                      </span>
-                    </div>
-                    {group.note && (
-                      <p className="mt-3 text-xs italic text-[rgb(var(--foreground-rgb)/0.7)]">
-                        {copy.noteLabel}: {group.note}
-                      </p>
-                    )}
-                  </BaseCard>
+                    href={groupLink}
+                    name={group.groups?.name ?? "Community group"}
+                    imageUrl={coverImage}
+                    imageAlt={group.groups?.name ?? "Group photo"}
+                    sessions={sessionsForCourt}
+                    dayLabels={dayLabels}
+                    scheduleAnytime={copy.groupScheduleAny}
+                    locale={locale as Locale}
+                    sessionLimit={3}
+                    showSessions
+                    className="p-4 text-sm text-[var(--foreground)]"
+                    titleClassName="text-base font-semibold text-[var(--foreground)]"
+                    imageAspectClass="aspect-square"
+                    description={group.groups?.description ?? null}
+                    showDescription
+                    showLocation={false}
+                    badge={
+                      statusLabel ? (
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      ) : null
+                    }
+                    footer={
+                      group.note ? (
+                        <p className="text-xs italic text-[rgb(var(--foreground-rgb)/0.7)]">
+                          {copy.noteLabel}: {group.note}
+                        </p>
+                      ) : null
+                    }
+                  />
                 );
               })}
             </div>

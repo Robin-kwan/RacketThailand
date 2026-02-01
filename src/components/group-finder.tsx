@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { GroupRecord } from "@/server/groupFinder";
 import {
@@ -12,6 +10,7 @@ import {
 import { BaseSelect } from "@/components/base-select";
 import { NearbyMap, type NearbyMapCourt } from "@/components/nearby-map";
 import { useDebounce } from "@/hooks/use-debounce";
+import { GroupCard } from "@/components/group-card";
 
 type GroupFinderCopy = {
   searchPlaceholder: string;
@@ -72,13 +71,6 @@ const parseCoordinate = (value?: number | string | null) => {
   }
   return null;
 };
-
-function formatTime(value?: string | null) {
-  if (!value) return null;
-  const [hours, minutes] = value.split(":");
-  if (!hours || !minutes) return value;
-  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-}
 
 function formatTimeFilterLabel(value: string, locale: Locale) {
   const [hours, minutes] = value.split(":").map(Number);
@@ -376,34 +368,6 @@ export function GroupFinder({
     return Array.from(courtMap.values()).slice(0, 15);
   }, [groupsWithDistance]);
 
-  const renderSessions = (group: GroupRecord) => {
-    if (!group.group_sessions || group.group_sessions.length === 0) {
-      return (
-        <p className="text-sm text-slate-500">
-          {copy.sessionsLabel}: {copy.scheduleAnytime}
-        </p>
-      );
-    }
-    return (
-      <ul className="space-y-1 text-sm text-slate-600">
-        {group.group_sessions.slice(0, 3).map((session, index) => {
-          const dayLabel = dayLabels[session.day] ?? session.day;
-          const start = formatTime(session.start_time);
-          const end = formatTime(session.end_time);
-          const timeRange =
-            start && end ? `${start} – ${end}` : copy.scheduleAnytime;
-          const courtName = session.courts?.name;
-          return (
-            <li key={`${group.id}-${session.day}-${index}`}>
-              {dayLabel} · {timeRange}
-              {courtName ? ` @ ${courtName}` : ""}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-200 bg-white p-6">
@@ -582,12 +546,6 @@ export function GroupFinder({
             {copy.emptyTitle}
           </p>
           <p className="mt-2 text-sm text-slate-500">{copy.emptyDescription}</p>
-          <Link
-            href={buildLocalizedPath("/", locale)}
-            className="mt-6 inline-flex rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-          >
-            {copy.backLink}
-          </Link>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
@@ -599,68 +557,26 @@ export function GroupFinder({
               group.group_photos?.[0]?.image_url ??
               fallbackImage;
             const groupHref = buildLocalizedPath(`/groups/${group.id}`, locale);
+            const distanceLabel =
+              distanceKm !== null
+                ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} km`
+                : null;
             return (
-              <Link
+              <GroupCard
                 key={group.id}
                 href={groupHref}
-                className="group flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400"
-              >
-                <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
-                  <div className="relative aspect-[4/3] w-full">
-                    <Image
-                      src={primaryPhoto}
-                      alt={group.name ?? "Group photo"}
-                      fill
-                      sizes="(max-width:768px) 100vw, 50vw"
-                      className="object-cover transition duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1 text-left">
-                  <p className="text-2xl font-semibold text-slate-900">
-                    {group.name ?? "Community group"}
-                  </p>
-                  {group.description && (
-                    <p className="text-sm text-slate-600 line-clamp-2">
-                      {group.description}
-                    </p>
-                  )}
-                  <div className="text-xs text-slate-500">
-                    {group.phone && (
-                      <p>
-                        {copy.phoneLabel}: {group.phone}
-                      </p>
-                    )}
-                    {group.line_id && (
-                      <p>
-                        {copy.lineLabel}: {group.line_id}
-                      </p>
-                    )}
-                  </div>
-                  {typeof group.player_amount === "number" &&
-                    Number.isFinite(group.player_amount) && (
-                      <p className="text-xs font-semibold text-slate-500">
-                        {copy.playerAmountLabel}: {group.player_amount}
-                      </p>
-                    )}
-                </div>
-                {renderSessions(group)}
-                <div className="flex items-center justify-end text-xs font-semibold uppercase text-slate-500">
-                  <div className="flex flex-col items-end gap-1 text-[11px]">
-                    {group.updated_at && (
-                      <span className="text-slate-400">
-                        {copy.lastUpdated}{" "}
-                        {new Date(group.updated_at).toLocaleDateString("en-US")}
-                      </span>
-                    )}
-                    {prioritizeNearby && distanceKm !== null && (
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
-                        {copy.distanceLabel}: {distanceKm.toFixed(1)} km
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
+                name={group.name ?? "Community group"}
+                imageUrl={primaryPhoto}
+                imageAlt={group.name ?? "Group photo"}
+                sessions={group.group_sessions ?? []}
+                dayLabels={dayLabels}
+                scheduleAnytime={copy.scheduleAnytime}
+                locale={locale}
+                showSessions
+                showDescription={false}
+                showLocation={false}
+                distanceLabel={distanceLabel}
+              />
             );
           })}
         </div>

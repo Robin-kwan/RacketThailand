@@ -1,17 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CourtRecord } from "@/server/courtFinder";
-import {
-  DEFAULT_LOCALE,
-  buildLocalizedPath,
-  type Locale,
-} from "@/lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import { BaseSelect } from "@/components/base-select";
 import { NearbyMap } from "@/components/nearby-map";
 import { useDebounce } from "@/hooks/use-debounce";
+import { CourtCard } from "@/components/court-card";
 
 type CourtFinderCopy = {
   searchPlaceholder: string;
@@ -42,9 +38,6 @@ type CourtFinderProps = {
 };
 
 const PAGE_SIZE = 12;
-
-const stripHtml = (input?: string | null) =>
-  input ? input.replace(/<[^>]+>/g, "").trim() : "";
 
 type LocationState = {
   latitude: number;
@@ -354,76 +347,44 @@ export function CourtFinder({
             {copy.emptyTitle}
           </p>
           <p className="mt-2 text-sm text-slate-500">{copy.emptyDescription}</p>
-          <Link
-            href={buildLocalizedPath("/", locale)}
-            className="mt-6 inline-flex rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-          >
-            {copy.backLink}
-          </Link>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {displayedCourts.map(({ court, distanceKm }) => (
-            <Link
-              key={court.id}
-              href={`/courts/${court.id}${localeQuery}`}
-              className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1"
-            >
-              <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
-                <div className="relative h-36 w-full">
-                  <Image
-                    src={
-                      court.court_photos?.find((p) => p.is_primary)?.image_url ??
-                      court.court_photos?.[0]?.image_url ??
-                      "/sports/badminton.svg"
-                    }
-                    alt={court.name ?? "Court image"}
-                    fill
-                    sizes="(max-width:768px) 100vw, 50vw"
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-2xl font-semibold text-slate-900">
-                  {court.name ?? "Unnamed court"}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {[court.district, court.province].filter(Boolean).join(" · ")}
-                </p>
-              </div>
-              <ul className="space-y-2 text-sm text-slate-600">
-                {[
-                  court.address,
-                  court.price_note
-                    ? `฿ ${stripHtml(court.price_note)}`
-                    : null,
-                  court.phone ? `Tel: ${court.phone}` : null,
-                  court.line_id ? `Line: ${court.line_id}` : null,
-                ]
-                  .filter(Boolean)
-                  .map((detail) => (
-                    <li key={`${court.id}-${detail}`}>{detail}</li>
-                  ))}
-                {court.created_at && (
-                  <li className="text-xs text-slate-400">
-                    {copy.lastUpdated}{" "}
-                    {new Date(court.created_at).toLocaleDateString("en-US")}
-                  </li>
-                )}
-              </ul>
-              <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase text-slate-500">
-                <span className="inline-flex rounded-full bg-[rgb(var(--rt-primary-rgb)/0.08)] px-3 py-1 text-[var(--rt-primary)]">
-                  {court.province || "TH"}
-                </span>
-                {distanceKm !== null && (
-                  <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 normal-case">
-                    {copy.distanceLabel}: {distanceKm.toFixed(1)} km
-                  </span>
-                )}
-              </div>
-            </Link>
-          ))}
+          {displayedCourts.map(({ court, distanceKm }) => {
+            const photo =
+              court.court_photos?.find((p) => p.is_primary)?.image_url ??
+              court.court_photos?.[0]?.image_url ??
+              "/sports/badminton.svg";
+            const locationText = [court.district, court.province]
+              .filter(Boolean)
+              .join(" · ");
+            const details = [
+              court.address ?? null,
+              court.price_note ? `฿ ${court.price_note}` : null,
+              court.phone ? `Tel: ${court.phone}` : null,
+              court.line_id ? `Line: ${court.line_id}` : null,
+              court.created_at
+                ? `${copy.lastUpdated} ${new Date(court.created_at).toLocaleDateString("en-US")}`
+                : null,
+            ].filter(Boolean) as string[];
+            const distanceLabel =
+              distanceKm !== null
+                ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} km`
+                : null;
+            return (
+              <CourtCard
+                key={court.id}
+                href={`/courts/${court.id}${localeQuery}`}
+                name={court.name ?? "Unnamed court"}
+                imageUrl={photo}
+                imageAlt={court.name ?? "Court image"}
+                location={locationText}
+                details={details}
+                primaryBadge={court.province || "TH"}
+                secondaryBadge={distanceLabel}
+              />
+            );
+          })}
         </div>
       )}
     </div>

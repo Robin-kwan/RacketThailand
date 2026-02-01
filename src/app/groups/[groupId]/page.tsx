@@ -492,7 +492,7 @@ export default async function GroupDetailPage({
             )}
           </div>
           {group.description && (
-            <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.75)]">
+            <p className="mt-2 whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.75)]">
               {group.description}
             </p>
           )}

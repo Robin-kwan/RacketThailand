@@ -31,6 +31,12 @@ type GroupRow = {
   description: string | null;
   created_at: string | null;
   group_photos?: PhotoRow[] | null;
+  group_sessions?: {
+    day: string;
+    start_time: string | null;
+    end_time: string | null;
+    courts?: { id: string | null; name: string | null } | null;
+  }[] | null;
 };
 
 type PostRow = {
@@ -122,8 +128,8 @@ function mapCourts(
         court.line_id ? `Line: ${court.line_id}` : null,
       ]),
       imageUrl,
-      location: undefined,
-      badgeLabel: undefined,
+      location,
+      badgeLabel: court.province ?? undefined,
       href: `/courts/${court.id}`,
     };
   });
@@ -135,6 +141,15 @@ function mapGroups(
 ): SportFeatureCard[] {
   return rows.map((group) => {
     const imageUrl = pickPrimaryPhoto(group.group_photos, fallbackImage);
+    const sessions =
+      group.group_sessions?.map((session) => ({
+        day: session.day,
+        start_time: session.start_time,
+        end_time: session.end_time,
+        courts: session.courts
+          ? { id: session.courts.id, name: session.courts.name }
+          : null,
+      })) ?? [];
     return {
       title: group.name ?? "Untitled group",
       subtitle: "",
@@ -143,6 +158,7 @@ function mapGroups(
       location: undefined,
       badgeLabel: "COMMUNITY",
       href: `/groups/${group.id}`,
+      sessions,
     };
   });
 }
@@ -258,7 +274,8 @@ export async function buildSportPagePayload(
     });
 
     const groupsPromise = supabaseSelect<GroupRow>("groups", {
-      select: "id,name,description,created_at,group_photos(image_url,is_primary)",
+      select:
+        "id,name,description,created_at,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(id,name))",
       sport_id: `eq.${sportId}`,
       order: "created_at.desc",
       limit: "4",

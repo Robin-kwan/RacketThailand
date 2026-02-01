@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { buildSportPagePayload } from "@/server/sportContent";
 import { SUPPORTED_SPORTS, getSportMeta } from "@/data/sportMeta";
@@ -11,6 +10,8 @@ import {
   normalizeLocale,
   type Locale,
 } from "@/lib/i18n";
+import { GroupCard } from "@/components/group-card";
+import { CourtCard } from "@/components/court-card";
 import type { SportFeatureCard } from "@/types/sports";
 
 type Params = {
@@ -47,6 +48,7 @@ type FeatureCarouselProps = {
   ctaHref: string;
   ctaLabel: string;
   locale: Locale;
+  type: "court" | "group";
 };
 
 function FeatureCarousel({
@@ -57,8 +59,28 @@ function FeatureCarousel({
   ctaHref,
   ctaLabel,
   locale,
+  type,
 }: FeatureCarouselProps) {
   const hasCards = cards.length > 0;
+  const dayLabels = locale === "th"
+    ? {
+        sunday: "อาทิตย์",
+        monday: "จันทร์",
+        tuesday: "อังคาร",
+        wednesday: "พุธ",
+        thursday: "พฤหัสบดี",
+        friday: "ศุกร์",
+        saturday: "เสาร์",
+      }
+    : {
+        sunday: "Sunday",
+        monday: "Monday",
+        tuesday: "Tuesday",
+        wednesday: "Wednesday",
+        thursday: "Thursday",
+        friday: "Friday",
+        saturday: "Saturday",
+      };
 
   return (
     <section className="px-6 py-12 text-[var(--foreground)] md:px-12">
@@ -98,54 +120,57 @@ function FeatureCarousel({
                 const href = card.href
                   ? buildLocalizedPath(card.href, locale)
                   : undefined;
-                const content = (
-                  <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 text-slate-900 transition hover:-translate-y-1">
-                    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
-                      <div className="relative h-36 w-full">
-                        <Image
-                          src={card.imageUrl ?? "/sports/badminton.svg"}
-                          alt={card.title}
-                          fill
-                          sizes="(max-width:768px) 80vw, 30vw"
-                          className="object-cover"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-2xl font-semibold text-slate-900">
-                        {card.title}
-                      </h3>
-                      {card.subtitle && (
-                        <p className="text-sm text-slate-600">
-                          {card.subtitle}
-                        </p>
-                      )}
-                    </div>
-                    {card.details.length > 0 && (
-                      <ul className="space-y-2 text-sm text-slate-600">
-                        {card.details.map((detail, detailIndex) => (
-                          <li key={`${card.title}-${detailIndex}`}>
-                            {detail}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-                return href ? (
-                  <Link
-                    key={`${card.title}-${index}`}
-                    href={href}
-                    className="snap-start w-[320px] shrink-0 md:w-[360px]"
-                  >
-                    {content}
-                  </Link>
-                ) : (
+                const cover = card.imageUrl ?? "/sports/badminton.svg";
+                const description =
+                  card.details.length > 0 ? card.details[0] : undefined;
+                const locationText = card.location || card.subtitle || "";
+                return (
                   <div
                     key={`${card.title}-${index}`}
                     className="snap-start w-[320px] shrink-0 md:w-[360px]"
                   >
-                    {content}
+                    {type === "group" ? (
+                      <GroupCard
+                        name={card.title}
+                        href={href}
+                        imageUrl={cover}
+                        imageAlt={card.title}
+                        dayLabels={dayLabels}
+                        scheduleAnytime={subtitle}
+                        locale={locale}
+                        sessions={card.sessions ?? []}
+                        showSessions={false}
+                        description={description}
+                        showDescription
+                        location={locationText || undefined}
+                        showLocation={Boolean(locationText)}
+                        imageAspectClass="aspect-[4/3]"
+                        footer={
+                          (card.sessions?.length ?? 0) === 0 &&
+                          card.details.length > 0 ? (
+                            <ul className="space-y-2 text-sm text-slate-600">
+                              {card.details.map((detail, detailIndex) => (
+                                <li key={`${card.title}-${detailIndex}`}>
+                                  {detail}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null
+                        }
+                      />
+                    ) : (
+                      <CourtCard
+                        name={card.title}
+                        href={href}
+                        imageUrl={cover}
+                        imageAlt={card.title}
+                        location={card.subtitle || card.location || undefined}
+                        details={card.details}
+                        primaryBadge={card.badgeLabel ?? card.location ?? null}
+                        imageAspectClass="aspect-[4/3]"
+                        showDetails={card.details.length > 0}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -284,6 +309,7 @@ export default async function SportPage({
           ctaHref={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
           ctaLabel={viewAllLabel}
           locale={locale}
+          type="court"
         />
       )}
       {groupFeature && (
@@ -297,6 +323,7 @@ export default async function SportPage({
           ctaHref={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
           ctaLabel={viewAllLabel}
           locale={locale}
+          type="group"
         />
       )}
     </div>
