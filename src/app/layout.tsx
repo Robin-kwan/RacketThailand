@@ -80,7 +80,7 @@ export default async function RootLayout({
             <SiteHeader user={headerUser} isAdmin={isAdmin} />
           </div>
           <div className="w-full" aria-hidden="true" />
-          <main className="flex-1 bg-[#f0f4f9] text-slate-900">{children}</main>
+          <main className="flex-1 text-slate-900">{children}</main>
           <footer className="border-t border-[var(--rt-primary-border)] bg-[var(--rt-primary)] text-[rgb(var(--rt-primary-text-rgb)/0.9)]">
             <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-6 text-sm md:flex-row md:items-center md:justify-between md:px-10">
               <p>RacketThailand · © {new Date().getFullYear()}</p>

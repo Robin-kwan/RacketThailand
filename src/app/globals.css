@@ -44,11 +44,12 @@ input[type="time"] {
 }
 
 .rt-page {
-  background: var(--background);
   color: var(--foreground);
 }
 
 .rt-card {
+  display: block;
+  width: 100%;
   background-color: #ffffff;
   border: none;
   border-radius: var(--rt-card-radius);

@@ -185,6 +185,7 @@ export async function PATCH(
         adminSupabase,
         resolved.groupId,
         normalizedSessions.map((session) => session.courtId),
+        user.id,
       );
     }
   }

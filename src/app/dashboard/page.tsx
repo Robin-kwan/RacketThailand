@@ -1,8 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import { SPORT_META } from "@/data/sportMeta";
 import { CourtRequestList } from "@/components/court-request-list";
 import { BaseCard } from "@/components/base-card";
+import { CourtCard as DashboardCourtCard } from "@/components/court-card";
+import { GroupCard as DashboardGroupCard } from "@/components/group-card";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -58,123 +59,12 @@ function formatViewCountDisplay(
   return new Intl.NumberFormat(intlLocale).format(safeCount);
 }
 
-function CourtCard({
-  court,
-  locale,
-  viewCount = 0,
-}: {
-  court: OwnedCourtRow;
-  locale: Locale;
-  viewCount?: number;
-}) {
-  const sportCode = court.sports?.code ?? null;
-  const href = buildLocalizedPath(`/courts/${court.id}`, locale);
-  const primaryPhoto =
-    court.court_photos?.find((photo) => photo.is_primary)?.image_url ??
-    court.court_photos?.[0]?.image_url ??
-    getSportFallbackImage(sportCode);
-
-  const formattedViews = formatViewCountDisplay(viewCount, locale);
-
+function buildViewsFooter(label: string, value: string) {
   return (
-    <BaseCard
-      as={Link}
-      href={href}
-      className="flex flex-col gap-3 px-5 py-6 transition hover:-translate-y-1"
-    >
-      <div className="overflow-hidden">
-        <div className="relative aspect-[4/3] w-full">
-          <Image
-            src={primaryPhoto}
-            alt={court.name ?? "Court image"}
-            fill
-            sizes="(max-width:768px) 100vw, 33vw"
-            className="object-cover"
-          />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <h3 className="text-2xl font-semibold text-[var(--foreground)]">
-          {court.name ?? "Unnamed court"}
-        </h3>
-        <p className="text-sm rt-text-muted">
-          {[court.district, court.province].filter(Boolean).join(" · ")}
-        </p>
-      </div>
-      <div className="flex gap-3 text-xs font-semibold uppercase rt-text-muted">
-        <span>{court.province || "TH"}</span>
-      </div>
-      <div className="flex items-center justify-between text-xs font-semibold text-[var(--foreground)]">
-        <span>Views</span>
-        <span className="text-[var(--foreground)]">
-          {formattedViews}
-        </span>
-      </div>
-    </BaseCard>
-  );
-}
-
-function GroupCard({
-  group,
-  locale,
-  viewCount = 0,
-}: {
-  group: OwnedGroupRow;
-  locale: Locale;
-  viewCount?: number;
-}) {
-  const sportCode = group.sports?.code ?? null;
-  const href = buildLocalizedPath(`/groups/${group.id}`, locale);
-  const primaryPhoto =
-    group.group_photos?.find((photo) => photo.is_primary)?.image_url ??
-    group.group_photos?.[0]?.image_url ??
-    getSportFallbackImage(sportCode);
-
-  const formattedViews = formatViewCountDisplay(viewCount, locale);
-
-  return (
-    <BaseCard
-      as={Link}
-      href={href}
-      className="flex flex-col gap-3 px-5 py-6 text-sm transition hover:-translate-y-1"
-    >
-      <div className="overflow-hidden">
-        <div className="relative aspect-[4/3] w-full">
-          <Image
-            src={primaryPhoto}
-            alt={group.name ?? "Group photo"}
-            fill
-            sizes="(max-width:768px) 100vw, 33vw"
-            className="object-cover"
-          />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-[var(--foreground)]">
-          {group.name ?? "Community group"}
-        </h3>
-        <p className="text-xs font-semibold uppercase rt-text-muted">
-          {group.sports?.code
-            ? SPORT_META[group.sports.code]?.name[locale] ??
-              group.sports.code
-            : "RacketThailand"}
-        </p>
-        {group.description && (
-          <p className="text-xs rt-text-muted line-clamp-2">
-            {group.description}
-          </p>
-        )}
-      </div>
-      <div className="flex gap-3 text-xs font-semibold uppercase rt-text-muted">
-        <span>{sportCode ? sportCode.toUpperCase() : "COMMUNITY"}</span>
-      </div>
-      <div className="flex items-center justify-between text-xs font-semibold text-[var(--foreground)]">
-        <span>Views</span>
-        <span className="text-[var(--foreground)]">
-          {formattedViews}
-        </span>
-      </div>
-    </BaseCard>
+    <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+      <span className="text-slate-500">{label}</span>
+      <span>{value}</span>
+    </div>
   );
 }
 
@@ -273,6 +163,17 @@ export default async function DashboardPage({
   const courtViewCounts = viewCounts.courts ?? {};
   const groupViewCounts = viewCounts.groups ?? {};
 
+  const dayLabels = {
+    sunday: t("groups.days.sunday"),
+    monday: t("groups.days.monday"),
+    tuesday: t("groups.days.tuesday"),
+    wednesday: t("groups.days.wednesday"),
+    thursday: t("groups.days.thursday"),
+    friday: t("groups.days.friday"),
+    saturday: t("groups.days.saturday"),
+  };
+  const scheduleAnytime = t("groups.detail.scheduleAny");
+
   const copy = {
     title: t("dashboard.courtRequests.title"),
     subtitle: t("dashboard.courtRequests.subtitle"),
@@ -289,12 +190,13 @@ export default async function DashboardPage({
     ownedCourtsEmpty: t("dashboard.ownedCourts.empty"),
     ownedGroupsTitle: t("dashboard.ownedGroups.title"),
     ownedGroupsEmpty: t("dashboard.ownedGroups.empty"),
+    viewsLabel: t("dashboard.viewsLabel"),
   };
 
   return (
     <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 md:px-10">
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <BaseCard as="article" className="p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[var(--foreground)]">
@@ -322,11 +224,23 @@ export default async function DashboardPage({
           ) : (
             <div className="mt-4 grid gap-4">
               {ownedCourts.map((court) => (
-                <CourtCard
+                <DashboardCourtCard
                   key={court.id}
-                  court={court}
-                  locale={locale}
-                  viewCount={courtViewCounts[court.id]}
+                  name={court.name ?? "Unnamed court"}
+                  href={buildLocalizedPath(`/courts/${court.id}`, locale)}
+                  imageUrl={
+                    court.court_photos?.find((photo) => photo.is_primary)?.image_url ??
+                    court.court_photos?.[0]?.image_url ??
+                    getSportFallbackImage(court.sports?.code)
+                  }
+                  imageAlt={court.name ?? "Court image"}
+                  location={[court.district, court.province].filter(Boolean).join(" · ")}
+                  showDetails={false}
+                  primaryBadge={court.province ?? undefined}
+                  footer={buildViewsFooter(
+                    copy.viewsLabel,
+                    formatViewCountDisplay(courtViewCounts[court.id], locale),
+                  )}
                 />
               ))}
             </div>
@@ -352,11 +266,33 @@ export default async function DashboardPage({
           ) : (
             <div className="mt-4 grid gap-4">
               {ownedGroups.map((group) => (
-                <GroupCard
+                <DashboardGroupCard
                   key={group.id}
-                  group={group}
+                  name={group.name ?? "Community group"}
+                  href={buildLocalizedPath(`/groups/${group.id}`, locale)}
+                  imageUrl={
+                    group.group_photos?.find((photo) => photo.is_primary)?.image_url ??
+                    group.group_photos?.[0]?.image_url ??
+                    getSportFallbackImage(group.sports?.code)
+                  }
+                  imageAlt={group.name ?? "Group photo"}
+                  description={group.description}
+                  dayLabels={dayLabels}
+                  scheduleAnytime={scheduleAnytime}
                   locale={locale}
-                  viewCount={groupViewCounts[group.id]}
+                  showSessions={false}
+                  showLocation={false}
+                  badge={
+                    group.sports?.code ? (
+                      <span className="text-xs font-semibold uppercase text-slate-500">
+                        {SPORT_META[group.sports.code]?.name[locale] ?? group.sports.code}
+                      </span>
+                    ) : null
+                  }
+                  footer={buildViewsFooter(
+                    copy.viewsLabel,
+                    formatViewCountDisplay(groupViewCounts[group.id], locale),
+                  )}
                 />
               ))}
             </div>

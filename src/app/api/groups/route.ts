@@ -181,6 +181,7 @@ export async function POST(request: Request) {
       adminSupabase,
       groupId,
       normalizedSessions.map((session) => session.courtId),
+      user.id,
     );
   }
 

@@ -199,7 +199,7 @@
   },
   "groupFinder": {
     "title": "Group finder for {sport}",
-    "subtitle": "Browse verified community groups and review their weekly sessions.",
+    "subtitle": "Browse community groups and review their weekly sessions.",
     "searchPlaceholder": "Search by group name or keyword",
     "reset": "Reset filters",
     "emptyTitle": "No groups match your filters",
@@ -347,7 +347,8 @@
     "ownedGroups": {
       "title": "Your groups",
       "empty": "You’re not listed as a group owner yet."
-    }
+    },
+    "viewsLabel": "Views"
   },
   "notifications": {
     "title": "Notifications",

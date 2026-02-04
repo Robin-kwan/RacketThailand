@@ -170,7 +170,7 @@ export function OpeningHoursEditor({
                             )
                           : TIME_OPTIONS
                       }
-                      className="w-32"
+                      className="flex-1 min-w-[6rem]"
                       required
                       variant="light"
                     />
@@ -195,7 +195,7 @@ export function OpeningHoursEditor({
                             )
                           : TIME_OPTIONS
                       }
-                      className="w-32"
+                      className="flex-1 min-w-[6rem]"
                       required
                       variant="light"
                     />
