@@ -140,7 +140,7 @@ export function GroupCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className={`group flex h-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 ${className ?? ""}`}
+      className={`group flex h-full w-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 ${className ?? ""}`}
     >
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
         <div className={`relative ${imageAspectClass} w-full`}>
@@ -163,7 +163,7 @@ export function GroupCard({
       </div>
       {showDescription && description && (
         <p
-          className="text-sm text-slate-600 line-clamp-2"
+          className="text-sm text-slate-600 line-clamp-2 break-all"
           title={description}
         >
           {description}

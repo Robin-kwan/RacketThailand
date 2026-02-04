@@ -50,10 +50,10 @@ export default async function Landing({
 
   return (
     <div className="rt-page">
-      <main className="relative mx-auto mt-10 flex w-full max-w-screen-xl flex-col items-center gap-12 px-6 pb-20 text-center text-[var(--foreground)] md:px-10">
+      <main className="relative mx-auto mt-10 flex w-full max-w-screen-xl flex-col items-center gap-6 px-6 pb-6 text-center text-[var(--foreground)] md:px-10">
         <header className="space-y-6">
           <div className="flex flex-col items-center gap-4">
-            <h1 className="text-4xl font-semibold leading-tight text-[var(--foreground)] md:text-5xl">
+            <h1 className="text-xl font-semibold leading-tight text-[var(--foreground)] md:text-3xl">
               {t("landing.heroTitle")}
             </h1>
           </div>

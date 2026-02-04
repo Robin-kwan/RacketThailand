@@ -48,6 +48,7 @@ export function CourtRequestList({
   locale,
 }: CourtRequestListProps) {
   const [items, setItems] = useState(requests);
+  console.log(items)
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
