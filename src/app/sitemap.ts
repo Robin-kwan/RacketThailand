@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { SUPPORTED_SPORTS } from "@/data/sportMeta";
 
+export const dynamic = "force-dynamic";
+
 const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
   "https://racketthailand.com";
