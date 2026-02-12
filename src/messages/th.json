@@ -347,8 +347,7 @@
     "ownedGroups": {
       "title": "กลุ่มของคุณ",
       "empty": "ยังไม่มีกลุ่มที่คุณเป็นเจ้าของ"
-    },
-    "viewsLabel": "ยอดวิว"
+    }
   },
   "notifications": {
     "title": "การแจ้งเตือน",

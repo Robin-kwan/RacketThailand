@@ -347,8 +347,7 @@
     "ownedGroups": {
       "title": "Your groups",
       "empty": "You’re not listed as a group owner yet."
-    },
-    "viewsLabel": "Views"
+    }
   },
   "notifications": {
     "title": "Notifications",

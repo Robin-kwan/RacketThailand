@@ -29,25 +29,25 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f172a",
     gradient: "from-rose-500/30 via-orange-500/20 to-amber-500/10",
     coverImage: "/sports/badminton.png",
-    heroHeadline: l("คอร์ทและก๊วนตีแบดในระบบเดียว", "Badminton courts & groups in one place."),
+    heroHeadline: l("สนามและก๊วนตีแบดในระบบเดียว", "Badminton courts & groups in one place."),
     heroDescription: l(
-      "สำรวจคอร์ทยืนยันแล้ว ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และติดต่อแอดมินได้จากหน้าพอร์ทัลเดียว",
+      "สำรวจสนามแบดที่ยืนยันแล้ว ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และติดต่อแอดมินได้จากหน้าพอร์ทัลเดียว",
       "Explore verified venues, check active groups, and contact organizers directly from the same portal.",
     ),
-    closingTitle: l("มีคอร์ทหรือก๊วนตีแบดใหม่?", "Have new badminton courts or groups?"),
+    closingTitle: l("มีสนามหรือก๊วนตีแบดใหม่?", "Have new badminton courts or groups?"),
     closingDetail: l(
       "ส่งรายละเอียดให้ทีมงานเพื่ออัปเดตให้ชุมชนหาเจอได้เร็วขึ้น",
       "Send us the details so the community can find them faster.",
     ),
     closingActions: [
       { label: l("ส่งข้อมูล", "Submit info"), href: "mailto:hello@racketthailand.com" },
-      { label: l("ดูคอร์ทแบด", "Browse courts"), href: "/badminton/court-finder" },
+      { label: l("ดูสนามแบด", "Browse courts"), href: "/badminton/court-finder" },
     ],
     landingDescription: l(
-      "ดูคอร์ทยืนยันแล้วและก๊วนตีแบดทั่วไทย หาเพื่อนตีแบดพร้อมช่องทางติดต่อแอดมิน",
+      "ดูสนามยืนยันแล้วและก๊วนตีแบดทั่วไทย หาเพื่อนตีแบดพร้อมช่องทางติดต่อแอดมิน",
       "Browse verified badminton courts, weekly groups, and organizer contacts across Thailand.",
     ),
-    landingHighlights: list(["แผนที่คอร์ท", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
+    landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",
       "Weekly groups",
       "Submit updates",
@@ -59,25 +59,25 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f172a",
     gradient: "from-orange-500/30 via-amber-500/20 to-rose-500/10",
     coverImage: "/sports/padel.png",
-    heroHeadline: l("คอร์ทและกลุ่มพาเดลในที่เดียว", "Padel courts & groups in one place."),
+    heroHeadline: l("สนามและกลุ่มพาเดลในที่เดียว", "Padel courts & groups in one place."),
     heroDescription: l(
-      "ใช้แผนที่คอร์ทและระบบค้นหากลุ่มเพื่อวางแผนดับเบิลสุดสัปดาห์ของคุณ",
+      "ใช้แผนที่สนามและระบบค้นหากลุ่มเพื่อวางแผนดับเบิลสุดสัปดาห์ของคุณ",
       "Use the live court finder and group finder to plan your next doubles session.",
     ),
-    closingTitle: l("มีคอร์ทหรือกลุ่มพาเดลใหม่?", "Have new padel courts or groups?"),
+    closingTitle: l("มีสนามหรือกลุ่มพาเดลใหม่?", "Have new padel courts or groups?"),
     closingDetail: l(
       "แจ้งทีมงานเพื่ออัปเดตข้อมูลให้ผู้เล่นทั่วไทยค้นหาได้ง่ายขึ้น",
       "Let us know so every padel player can discover them quickly.",
     ),
     closingActions: [
       { label: l("ส่งข้อมูล", "Submit info"), href: "mailto:hello@racketthailand.com" },
-      { label: l("ดูคอร์ทพาเดล", "Browse courts"), href: "/padel/court-finder" },
+      { label: l("ดูสนามพาเดล", "Browse courts"), href: "/padel/court-finder" },
     ],
     landingDescription: l(
-      "สำรวจคอร์ทและกลุ่มพาเดลที่เปิดรอคุณอยู่ในกรุงเทพฯ และต่างจังหวัด",
+      "สำรวจสนามและกลุ่มพาเดลที่เปิดรอคุณอยู่ในกรุงเทพฯ และต่างจังหวัด",
       "Explore the padel courts and community groups that are already running across Thailand.",
     ),
-    landingHighlights: list(["แผนที่คอร์ท", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
+    landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",
       "Weekly groups",
       "Submit updates",
@@ -89,25 +89,25 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f172a",
     gradient: "from-emerald-400/30 via-teal-400/20 to-cyan-500/10",
     coverImage: "/sports/pickleball.png",
-    heroHeadline: l("คอร์ทและกลุ่มพิคเคิลบอลในระบบเดียว", "Pickleball courts & groups in one place."),
+    heroHeadline: l("สนามและกลุ่มพิคเคิลบอลในระบบเดียว", "Pickleball courts & groups in one place."),
     heroDescription: l(
-      "ค้นหาคอร์ทยืนยันแล้วและกลุ่มที่เปิดรับผู้เล่นใหม่ พร้อมช่องทางติดต่อแอดมิน",
+      "ค้นหาสนามยืนยันแล้วและกลุ่มที่เปิดรับผู้เล่นใหม่ พร้อมช่องทางติดต่อแอดมิน",
       "Find verified venues and active groups with organizer contacts in seconds.",
     ),
-    closingTitle: l("มีคอร์ทหรือกลุ่มพิคเคิลบอลใหม่?", "Have new pickleball courts or groups?"),
+    closingTitle: l("มีสนามหรือกลุ่มพิคเคิลบอลใหม่?", "Have new pickleball courts or groups?"),
     closingDetail: l(
       "ส่งข้อมูลให้เราเพิ่มเข้าแผนที่เพื่อช่วยให้คนหาเจอได้ง่ายขึ้น",
       "Send them our way so we can add them to the live map.",
     ),
     closingActions: [
       { label: l("ส่งข้อมูล", "Submit info"), href: "mailto:hello@racketthailand.com" },
-      { label: l("ดูคอร์ทพิคเคิลบอล", "Browse courts"), href: "/pickleball/court-finder" },
+      { label: l("ดูสนามพิคเคิลบอล", "Browse courts"), href: "/pickleball/court-finder" },
     ],
     landingDescription: l(
-      "ดูคอร์ทและกลุ่มพิคเคิลบอลที่มีอยู่จริง พร้อมช่องทางติดต่อ",
+      "ดูสนามและกลุ่มพิคเคิลบอลที่มีอยู่จริง พร้อมช่องทางติดต่อ",
       "Browse real pickleball courts and weekly groups with contact info.",
     ),
-    landingHighlights: list(["แผนที่คอร์ท", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
+    landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",
       "Weekly groups",
       "Submit updates",
@@ -119,25 +119,25 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f172a",
     gradient: "from-indigo-500/30 via-blue-500/20 to-sky-400/10",
     coverImage: "/sports/tennis.png",
-    heroHeadline: l("คอร์ทและกลุ่มเทนนิสในระบบเดียว", "Tennis courts & groups in one place."),
+    heroHeadline: l("สนามและกลุ่มเทนนิสในระบบเดียว", "Tennis courts & groups in one place."),
     heroDescription: l(
-      "ค้นหาคอร์ทมาตรฐานและกลุ่มตีประจำ พร้อมช่องทางติดต่อแอดมินเพื่อจองหรือไปแจม",
+      "ค้นหาสนามมาตรฐานและกลุ่มตีประจำ พร้อมช่องทางติดต่อแอดมินเพื่อจองหรือไปแจม",
       "Find verified courts and weekly hitting groups with organizer contacts ready to go.",
     ),
-    closingTitle: l("มีคอร์ทหรือกลุ่มเทนนิสใหม่?", "Have new tennis courts or groups?"),
+    closingTitle: l("มีสนามหรือกลุ่มเทนนิสใหม่?", "Have new tennis courts or groups?"),
     closingDetail: l(
       "แจ้งทีมงานเพื่อช่วยอัปเดตให้ทุกคนค้นหาได้ง่ายขึ้น",
       "Let us know so we can update the portal for everyone.",
     ),
     closingActions: [
       { label: l("ส่งข้อมูล", "Submit info"), href: "mailto:hello@racketthailand.com" },
-      { label: l("ดูคอร์ทเทนนิส", "Browse courts"), href: "/tennis/court-finder" },
+      { label: l("ดูสนามเทนนิส", "Browse courts"), href: "/tennis/court-finder" },
     ],
     landingDescription: l(
-      "ดูคอร์ทเทนนิสและกลุ่มตีประจำ พร้อมช่องทางติดต่อ",
+      "ดูสนามเทนนิสและกลุ่มตีประจำ พร้อมช่องทางติดต่อ",
       "Browse tennis courts and weekly groups with organizer contacts.",
     ),
-    landingHighlights: list(["แผนที่คอร์ท", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
+    landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",
       "Weekly groups",
       "Submit updates",
@@ -149,25 +149,25 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f172a",
     gradient: "from-purple-500/30 via-fuchsia-400/20 to-pink-400/10",
     coverImage: "/sports/tabletennis.png",
-    heroHeadline: l("คอร์ทและคลับปิงปองในระบบเดียว", "Table tennis clubs & groups in one place."),
+    heroHeadline: l("สนามปิงปองและกลุ่มซ้อมในระบบเดียว", "Table tennis clubs & groups in one place."),
     heroDescription: l(
-      "ค้นหาคลับ เปิดดูตารางกลุ่มซ้อม และติดต่อผู้จัดได้ทันที",
+      "ค้นหาสนาม เปิดดูตารางกลุ่มซ้อม และติดต่อผู้จัดได้ทันที",
       "Browse verified clubs, weekly sessions, and organizer contacts in seconds.",
     ),
-    closingTitle: l("มีคลับหรือกลุ่มปิงปองใหม่?", "Have new table tennis clubs or groups?"),
+    closingTitle: l("มีสนามหรือกลุ่มปิงปองใหม่?", "Have new table tennis clubs or groups?"),
     closingDetail: l(
       "ส่งข้อมูลให้เราเพื่อช่วยให้ผู้เล่นทั่วประเทศค้นหาได้ง่ายขึ้น",
       "Send us the details so every player can discover them faster.",
     ),
     closingActions: [
       { label: l("ส่งข้อมูล", "Submit info"), href: "mailto:hello@racketthailand.com" },
-      { label: l("ดูคลับปิงปอง", "Browse clubs"), href: "/tabletennis/court-finder" },
+      { label: l("ดูสนามปิงปอง", "Browse clubs"), href: "/tabletennis/court-finder" },
     ],
     landingDescription: l(
-      "ดูคลับและกลุ่มปิงปองที่เปิดรับสมาชิก พร้อมช่องทางติดต่อแอดมิน",
+      "ดูสนามและกลุ่มปิงปองที่เปิดรับสมาชิก พร้อมช่องทางติดต่อแอดมิน",
       "Browse table tennis clubs and groups with direct contact info.",
     ),
-    landingHighlights: list(["แผนที่คลับ", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
+    landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Club finder",
       "Weekly groups",
       "Submit updates",
@@ -183,10 +183,10 @@ type FeatureDescriptor = {
 
 const FEATURE_DESCRIPTIONS: Record<string, FeatureDescriptor> = {
   courts: {
-    label: l("ระบบค้นหาคอร์ท", "Court Finder"),
+    label: l("ระบบค้นหาสนาม", "Court Finder"),
     table: "`courts` + `court_photos`",
     description: l(
-      "ข้อมูลคอร์ทแบบมีพิกัด ราคา และรูปภาพ เพื่อให้ผู้เล่นกรองตามจังหวัด/เขตได้ทันที",
+      "ข้อมูลสนามแบบมีพิกัด ราคา และรูปภาพ เพื่อให้ผู้เล่นกรองตามจังหวัด/เขตได้ทันที",
       "Unified venue data with geo, pricing, and media so sport seekers can filter by district instantly.",
     ),
   },
@@ -204,14 +204,6 @@ const FEATURE_DESCRIPTIONS: Record<string, FeatureDescriptor> = {
     description: l(
       "โพสต์คำถาม ข่าว และรีวิวที่ผูกกับกีฬา/กลุ่ม พร้อมระบบคอมเมนต์ภายใต้บัญชีเดียว",
       "Discussions, news, and reviews moderated by shared Supabase Auth sessions.",
-    ),
-  },
-  matches: {
-    label: l("แมตช์ & สกอร์บอร์ด", "Matches & Scoreboard"),
-    table: "`matches` + `match_participants` + `match_games`",
-    description: l(
-      "สร้างแมตช์ กำหนดทีม และบันทึกสกอร์รายเกม พร้อมเชื่อมโยงคอร์ท/กลุ่ม",
-      "Team assignments, score-by-score tracking, and lifecycle statuses tied to each sport.",
     ),
   },
   profiles: {

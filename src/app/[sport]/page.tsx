@@ -10,6 +10,7 @@ import {
   normalizeLocale,
   type Locale,
 } from "@/lib/i18n";
+import { getSeoKeyword } from "@/lib/seoKeywords";
 import { GroupCard } from "@/components/group-card";
 import { CourtCard } from "@/components/court-card";
 import type { SportFeatureCard } from "@/types/sports";
@@ -204,9 +205,12 @@ export async function generateMetadata({
         "This sport page does not exist. Head back to the landing page to pick a different sport.",
     };
   }
+  const keywordSnippet = getSeoKeyword(resolvedParamsValue.sport, locale, "hero");
   return {
     title: `${meta.name[locale]} | RacketThailand`,
-    description: meta.heroDescription[locale],
+    description: keywordSnippet
+      ? `${meta.heroDescription[locale]} ${keywordSnippet}`
+      : meta.heroDescription[locale],
   };
 }
 
