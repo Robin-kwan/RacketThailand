@@ -24,7 +24,6 @@ export type SportFeatureKey =
   | "courts"
   | "groups"
   | "community"
-  | "matches"
   | "profiles"
   | "feedback";
 
@@ -40,7 +39,7 @@ export type SportHero = {
   kicker: string;
   headline: LocalizedString;
   description: LocalizedString;
-  stats: { key: "courts" | "groups" | "matches"; value: string }[];
+  stats: { key: "courts" | "groups"; value: string }[];
 };
 
 export type SportClosing = {

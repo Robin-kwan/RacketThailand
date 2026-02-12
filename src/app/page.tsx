@@ -72,7 +72,8 @@ export default async function Landing({
                     src={sport.coverImage}
                     alt={`${sport.name[locale]} cover`}
                     fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 50vw"
+                    sizes="(max-width: 768px) calc(100vw - 3rem), (max-width: 980px) calc((100vw - 5rem - 1.5rem) / 2), 438px"
+                    quality={60}
                     className="object-cover"
                     priority={sport.code === "badminton"}
                   />

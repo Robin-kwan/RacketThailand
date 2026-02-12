@@ -20,7 +20,6 @@ import { fetchCourtDetail } from "@/server/courtFinder";
 import { CourtMap } from "@/components/court-map";
 import { ensureAllDays } from "@/lib/opening-hours";
 import { ViewTracker } from "@/components/view-tracker";
-import { incrementViewCount } from "@/lib/viewCounts";
 import { GroupCard, type GroupCardSession } from "@/components/group-card";
 import type { Locale } from "@/lib/i18n";
 
@@ -241,34 +240,15 @@ export default async function CourtPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  let viewerStatus: string | null = null;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("status")
-      .eq("id", user.id)
-      .single();
-    viewerStatus = profile?.status ?? null;
-  }
-
   const detail = await fetchCourtDetail(resolvedParams.courtId);
   if (!detail || !detail.court) {
     notFound();
   }
 
-  const isAdminViewer = viewerStatus === "admin";
   const isOwnerViewer =
     user?.id && detail.court.created_by
       ? user.id === detail.court.created_by
       : false;
-
-  if (!isAdminViewer && !isOwnerViewer) {
-    try {
-      await incrementViewCount("court", detail.court.id);
-    } catch (error) {
-      console.error("Failed to increment court view count", error);
-    }
-  }
 
   const gallery = detail.photos.length
     ? detail.photos

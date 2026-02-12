@@ -8,11 +8,9 @@ import {
   buildLocalizedPath,
   getTranslator,
   normalizeLocale,
-  type Locale,
 } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
-import { getViewCounts } from "@/lib/viewCounts";
 
 type SearchParams = {
   lang?: string;
@@ -47,25 +45,6 @@ type OwnedGroupRow = {
 function getSportFallbackImage(code?: string | null) {
   if (!code) return "/sports/badminton.svg";
   return SPORT_META[code]?.coverImage ?? "/sports/badminton.svg";
-}
-
-function formatViewCountDisplay(
-  count: number | undefined,
-  locale: Locale,
-) {
-  const safeCount =
-    typeof count === "number" && Number.isFinite(count) ? count : 0;
-  const intlLocale = locale === "th" ? "th-TH" : "en-US";
-  return new Intl.NumberFormat(intlLocale).format(safeCount);
-}
-
-function buildViewsFooter(label: string, value: string) {
-  return (
-    <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-      <span className="text-slate-500">{label}</span>
-      <span>{value}</span>
-    </div>
-  );
 }
 
 export default async function DashboardPage({
@@ -134,11 +113,7 @@ export default async function DashboardPage({
       };
     }) ?? [];
 
-  const [
-    { data: ownedCourtsData },
-    { data: ownedGroupsData },
-    viewCounts,
-  ] = await Promise.all([
+  const [{ data: ownedCourtsData }, { data: ownedGroupsData }] = await Promise.all([
     supabaseSelect<OwnedCourtRow>("courts", {
       select: "id,name,district,province,sports!inner(code),court_photos(image_url,is_primary)",
       created_by: `eq.${user.id}`,
@@ -150,18 +125,10 @@ export default async function DashboardPage({
       owner_id: `eq.${user.id}`,
       order: "created_at.desc",
     }),
-    getViewCounts().catch((error): Awaited<
-      ReturnType<typeof getViewCounts>
-    > => {
-      console.error("Failed to fetch view counts", error);
-      return { courts: {}, groups: {} };
-    }),
   ]);
 
   const ownedCourts = ownedCourtsData ?? [];
   const ownedGroups = ownedGroupsData ?? [];
-  const courtViewCounts = viewCounts.courts ?? {};
-  const groupViewCounts = viewCounts.groups ?? {};
 
   const dayLabels = {
     sunday: t("groups.days.sunday"),
@@ -190,7 +157,6 @@ export default async function DashboardPage({
     ownedCourtsEmpty: t("dashboard.ownedCourts.empty"),
     ownedGroupsTitle: t("dashboard.ownedGroups.title"),
     ownedGroupsEmpty: t("dashboard.ownedGroups.empty"),
-    viewsLabel: t("dashboard.viewsLabel"),
   };
 
   return (
@@ -237,10 +203,6 @@ export default async function DashboardPage({
                   location={[court.district, court.province].filter(Boolean).join(" · ")}
                   showDetails={false}
                   primaryBadge={court.province ?? undefined}
-                  footer={buildViewsFooter(
-                    copy.viewsLabel,
-                    formatViewCountDisplay(courtViewCounts[court.id], locale),
-                  )}
                 />
               ))}
             </div>
@@ -289,10 +251,6 @@ export default async function DashboardPage({
                       </span>
                     ) : null
                   }
-                  footer={buildViewsFooter(
-                    copy.viewsLabel,
-                    formatViewCountDisplay(groupViewCounts[group.id], locale),
-                  )}
                 />
               ))}
             </div>

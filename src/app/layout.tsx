@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "RacketThailand | Racket Sports Community",
   description:
-    "Discover courts, groups, matches, and community updates for every racket sport in Thailand.",
+    "Discover courts, groups, and community updates for every racket sport in Thailand.",
 };
 
 export default async function RootLayout({

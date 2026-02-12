@@ -16,7 +16,6 @@ import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
 import { ViewTracker } from "@/components/view-tracker";
-import { incrementViewCount } from "@/lib/viewCounts";
 import { BaseCard } from "@/components/base-card";
 import { BaseScheduleList } from "@/components/base-schedule-list";
 import { BaseBackLink } from "@/components/base-back-link";
@@ -248,16 +247,6 @@ export default async function GroupDetailPage({
     data: { user: sessionUser },
   } = await supabase.auth.getUser();
 
-  let viewerStatus: string | null = null;
-  if (sessionUser) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("status")
-      .eq("id", sessionUser.id)
-      .single();
-    viewerStatus = profile?.status ?? null;
-  }
-
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
     select:
       "id,name,description,owner_id,sports(code,name),updated_at,player_amount,phone,line_id,line_qr_url",
@@ -269,19 +258,10 @@ export default async function GroupDetailPage({
     notFound();
   }
 
-  const isAdminViewer = viewerStatus === "admin";
   const isGroupOwner =
     sessionUser?.id && group.owner_id
       ? sessionUser.id === group.owner_id
       : false;
-
-  if (!isAdminViewer && !isGroupOwner) {
-    try {
-      await incrementViewCount("group", group.id);
-    } catch (error) {
-      console.error("Failed to increment group view count", error);
-    }
-  }
 
   const resolvedLineQrUrl = await ensureGroupLineQrUrl(
     group.id,

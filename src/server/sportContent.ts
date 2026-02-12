@@ -47,15 +47,6 @@ type PostRow = {
   created_at: string | null;
 };
 
-type MatchRow = {
-  id: string;
-  status: string | null;
-  scheduled_at: string | null;
-  court_id: string | null;
-  group_id: string | null;
-  created_at: string | null;
-};
-
 type ProfileSportRow = {
   skill_level: string | null;
   preference: number | null;
@@ -177,21 +168,6 @@ function mapPosts(rows: PostRow[]): SportFeatureCard[] {
   }));
 }
 
-function mapMatches(rows: MatchRow[]): SportFeatureCard[] {
-  return rows.map((match) => ({
-    title: `Match ${match.id.slice(0, 8)}`,
-    subtitle: compactDetails([
-      match.status ? match.status.toUpperCase() : null,
-      match.scheduled_at ? formatDate(match.scheduled_at) : null,
-    ]).join(" · "),
-    details: compactDetails([
-      match.court_id ? `Court ID: ${match.court_id}` : null,
-      match.group_id ? `Group ID: ${match.group_id}` : null,
-      match.created_at ? `Created ${formatDate(match.created_at)}` : null,
-    ]),
-  }));
-}
-
 function mapProfiles(rows: ProfileSportRow[]): SportFeatureCard[] {
   return rows.map((profileSport) => {
     const profile = profileSport.profiles;
@@ -288,13 +264,6 @@ export async function buildSportPagePayload(
       limit: "4",
     });
 
-    const matchesPromise = supabaseSelect<MatchRow>("matches", {
-      select: "id,status,scheduled_at,court_id,group_id,created_at",
-      sport_id: `eq.${sportId}`,
-      order: "created_at.desc",
-      limit: "4",
-    });
-
     const profilesPromise = supabaseSelect<ProfileSportRow>("profile_sports", {
       select:
         "skill_level,preference,is_primary,created_at,profiles(id,username,display_name,location,default_sport)",
@@ -314,14 +283,12 @@ export async function buildSportPagePayload(
       courtsRes,
       groupsRes,
       postsRes,
-      matchesRes,
       profilesRes,
       feedbackRes,
     ] = await Promise.all([
       courtsPromise,
       groupsPromise,
       postsPromise,
-      matchesPromise,
       profilesPromise,
       feedbackPromise,
     ]);
@@ -330,7 +297,6 @@ export async function buildSportPagePayload(
     const courts = mapCourts(courtsRes.data ?? [], fallbackImage);
     const groups = mapGroups(groupsRes.data ?? [], fallbackImage);
     const posts = mapPosts(postsRes.data ?? []);
-    const matches = mapMatches(matchesRes.data ?? []);
     const profiles = mapProfiles(profilesRes.data ?? []);
     const feedback = mapFeedback(feedbackRes.data ?? []);
 
@@ -349,11 +315,6 @@ export async function buildSportPagePayload(
         key: "community",
         ...FEATURE_DESCRIPTIONS.community,
         cards: posts,
-      },
-      {
-        key: "matches",
-        ...FEATURE_DESCRIPTIONS.matches,
-        cards: matches,
       },
       {
         key: "profiles",

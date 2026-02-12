@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ReactNode, ElementType } from "react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 
@@ -50,12 +51,14 @@ function SessionList({
   scheduleAnytime,
   sessionLimit = 3,
   locale,
+  onCourtClick,
 }: {
   sessions?: GroupCardSession[] | null;
   dayLabels: Record<string, string>;
   scheduleAnytime: string;
   sessionLimit?: number;
   locale: Locale;
+  onCourtClick?: (href: string) => void;
 }) {
   if (!sessions || sessions.length === 0) {
     return (
@@ -89,12 +92,16 @@ function SessionList({
                 (courtHref ? (
                   <>
                     {" @ "}
-                    <Link
-                      href={courtHref}
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onCourtClick?.(courtHref);
+                      }}
                       className="text-blue-600 underline-offset-2 hover:underline"
                     >
                       {courtName}
-                    </Link>
+                    </button>
                   </>
                 ) : (
                   <> @ <span className="text-blue-600">{courtName}</span></>
@@ -132,6 +139,13 @@ export function GroupCard({
   badge,
   footer,
 }: GroupCardProps) {
+  const router = useRouter();
+
+  const handleCourtNavigate = (href?: string | null) => {
+    if (!href) return;
+    router.push(href);
+  };
+
   const Wrapper: ElementType = href ? Link : "div";
   const wrapperProps = href
     ? { href }
@@ -181,6 +195,7 @@ export function GroupCard({
           scheduleAnytime={scheduleAnytime}
           sessionLimit={sessionLimit}
           locale={locale}
+          onCourtClick={handleCourtNavigate}
         />
       )}
       {distanceLabel && (
