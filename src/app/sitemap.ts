@@ -41,12 +41,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE_URL}/`, lastModified: new Date() },
-    { url: `${BASE_URL}/courts`, lastModified: new Date() },
-    { url: `${BASE_URL}/groups`, lastModified: new Date() },
+    { url: `${BASE_URL}/` },
     ...SUPPORTED_SPORTS.map((code) => ({
       url: `${BASE_URL}/${code}`,
-      lastModified: new Date(),
+    })),
+    ...SUPPORTED_SPORTS.map((code) => ({
+      url: `${BASE_URL}/${code}/court-finder`,
+    })),
+    ...SUPPORTED_SPORTS.map((code) => ({
+      url: `${BASE_URL}/${code}/group-finder`,
     })),
   ];
 

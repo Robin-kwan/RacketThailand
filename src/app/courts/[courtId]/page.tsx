@@ -7,7 +7,11 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
-import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import {
+  buildCanonicalUrl,
+  buildLocaleAlternates,
+  truncateMetaDescription,
+} from "@/lib/seo";
 import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
@@ -167,9 +171,10 @@ export async function generateMetadata({
     court.price_note ? `Pricing: ${court.price_note}` : null,
     court.phone ? `Phone: ${court.phone}` : null,
   ].filter(Boolean);
-  const description =
+  const rawDescription =
     descriptionParts.join(" · ") ||
     `${sportName} venue listed on RacketThailand.`;
+  const description = truncateMetaDescription(rawDescription);
   const canonicalPath = `/courts/${resolvedParams.courtId}`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternateLanguages = buildLocaleAlternates(canonicalPath);

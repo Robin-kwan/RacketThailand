@@ -8,7 +8,11 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
-import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import {
+  buildCanonicalUrl,
+  buildLocaleAlternates,
+  truncateMetaDescription,
+} from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { CourtGallery } from "@/components/court-gallery";
@@ -180,9 +184,10 @@ export async function generateMetadata({
       ? `Sessions per week: ${group.group_sessions.length}`
       : null,
   ].filter(Boolean);
-  const description =
+  const rawDescription =
     descriptionParts.join(" · ") ||
     `${sportName} community listed on RacketThailand.`;
+  const description = truncateMetaDescription(rawDescription);
   const canonicalPath = `/groups/${resolvedParams.groupId}`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
