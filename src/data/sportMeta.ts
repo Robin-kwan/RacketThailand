@@ -26,7 +26,7 @@ export const SPORT_META: Record<string, SportMeta> = {
   badminton: {
     code: "badminton",
     name: l("แบดมินตัน", "Badminton"),
-    accent: "#0f172a",
+    accent: "#0f766e",
     gradient: "from-rose-500/30 via-orange-500/20 to-amber-500/10",
     coverImage: "/sports/badminton.png",
     heroHeadline: l("สนามและก๊วนตีแบดในระบบเดียว", "Badminton courts & groups in one place."),
@@ -56,7 +56,7 @@ export const SPORT_META: Record<string, SportMeta> = {
   padel: {
     code: "padel",
     name: l("พาเดล", "Padel"),
-    accent: "#0f172a",
+    accent: "#b45309",
     gradient: "from-orange-500/30 via-amber-500/20 to-rose-500/10",
     coverImage: "/sports/padel.png",
     heroHeadline: l("สนามและกลุ่มพาเดลในที่เดียว", "Padel courts & groups in one place."),
@@ -86,8 +86,8 @@ export const SPORT_META: Record<string, SportMeta> = {
   pickleball: {
     code: "pickleball",
     name: l("พิคเคิลบอล", "Pickleball"),
-    accent: "#0f172a",
-    gradient: "from-emerald-400/30 via-teal-400/20 to-cyan-500/10",
+    accent: "#0d9488",
+    gradient: "from-lime-400/30 via-emerald-400/20 to-yellow-300/10",
     coverImage: "/sports/pickleball.png",
     heroHeadline: l("สนามและกลุ่มพิคเคิลบอลในระบบเดียว", "Pickleball courts & groups in one place."),
     heroDescription: l(
@@ -116,8 +116,8 @@ export const SPORT_META: Record<string, SportMeta> = {
   tennis: {
     code: "tennis",
     name: l("เทนนิส", "Tennis"),
-    accent: "#0f172a",
-    gradient: "from-indigo-500/30 via-blue-500/20 to-sky-400/10",
+    accent: "#65a30d",
+    gradient: "from-emerald-500/30 via-lime-400/20 to-amber-300/10",
     coverImage: "/sports/tennis.png",
     heroHeadline: l("สนามและกลุ่มเทนนิสในระบบเดียว", "Tennis courts & groups in one place."),
     heroDescription: l(
@@ -146,7 +146,7 @@ export const SPORT_META: Record<string, SportMeta> = {
   tabletennis: {
     code: "tabletennis",
     name: l("ปิงปอง", "Table Tennis"),
-    accent: "#0f172a",
+    accent: "#be185d",
     gradient: "from-purple-500/30 via-fuchsia-400/20 to-pink-400/10",
     coverImage: "/sports/tabletennis.png",
     heroHeadline: l("สนามปิงปองและกลุ่มซ้อมในระบบเดียว", "Table tennis clubs & groups in one place."),

@@ -92,10 +92,10 @@ export default async function Landing({
 
   return (
     <div className="rt-page">
-      <main className="relative mx-auto mt-10 flex w-full max-w-screen-xl flex-col items-center gap-6 px-6 pb-6 text-center text-[var(--foreground)] md:px-10">
-        <header className="space-y-6">
+      <main className="relative mx-auto mt-12 flex w-full max-w-screen-xl flex-col items-center gap-8 px-6 pb-8 text-center text-[var(--foreground)] md:px-10">
+        <header className="space-y-4">
           <div className="flex flex-col items-center gap-4">
-            <h1 className="text-xl font-semibold leading-tight text-[var(--foreground)] md:text-3xl">
+            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-[var(--foreground)] md:text-4xl">
               {t("landing.heroTitle")}
             </h1>
           </div>
@@ -107,9 +107,9 @@ export default async function Landing({
               <Link
                 key={sport.code}
                 href={buildLocalizedPath(`/${sport.code}`, locale)}
-                className="group overflow-hidden rounded-[40px] bg-white/5 transition hover:-translate-y-1"
+                className="group overflow-hidden rounded-[24px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white transition duration-200 hover:border-[rgb(var(--rt-primary-border-rgb))]"
               >
-                <article className="relative h-48 w-full overflow-hidden rounded-[40px] md:h-60">
+                <article className="relative h-48 w-full overflow-hidden rounded-[24px] md:h-60">
                   <Image
                     src={sport.coverImage}
                     alt={`${sport.name[locale]} cover`}
@@ -119,9 +119,8 @@ export default async function Landing({
                     className="object-cover"
                     priority={sport.code === "badminton"}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
                   <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-6 pb-8">
-                    <span className="rounded-full border border-white/30 bg-white/15 px-8 py-3 text-lg font-semibold uppercase text-white backdrop-blur">
+                    <span className="rounded-full border border-[rgb(var(--foreground-rgb)/0.14)] bg-white px-8 py-3 text-base font-semibold uppercase tracking-wide text-[var(--foreground)]">
                       {sport.name[locale]}
                     </span>
                   </div>

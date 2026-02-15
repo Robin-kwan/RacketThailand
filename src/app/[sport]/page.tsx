@@ -1,6 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import {
+  ChevronRight,
+  Grid3X3,
+  Plus,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { buildSportPagePayload } from "@/server/sportContent";
 import { SUPPORTED_SPORTS, getSportMeta } from "@/data/sportMeta";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -27,6 +34,11 @@ type SearchParams = {
 
 type ParamsInput = Promise<Params>;
 type SearchParamInput = Promise<SearchParams> | undefined;
+
+const STAT_ICONS: Record<string, LucideIcon> = {
+  courts: Grid3X3,
+  groups: Users,
+};
 
 export function generateStaticParams() {
   return SUPPORTED_SPORTS.map((sport) => ({ sport }));
@@ -100,20 +112,11 @@ function FeatureCarousel({
             className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
           >
             {ctaLabel}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
+            <ChevronRight
               className="h-4 w-4"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
+              strokeWidth={1.8}
+              aria-hidden
+            />
           </Link>
         </div>
         {hasCards ? (
@@ -261,31 +264,46 @@ export default async function SportPage({
   const carouselEmptyCopy = t("sport.carouselEmpty");
   const viewAllLabel = t("sport.viewAll");
   const boardCta = t("community.boardCta");
+  const renderStatIcon = (key: string) => {
+    const Icon = STAT_ICONS[key] ?? Plus;
+    return (
+      <Icon
+        className="h-5 w-5"
+        strokeWidth={1.8}
+        aria-hidden
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
-      <section className="bg-gradient-to-br from-[rgb(var(--rt-primary-rgb)/0.7)] via-[rgb(var(--rt-primary-rgb)/0.5)] to-[rgb(var(--rt-primary-rgb)/0.25)] px-6 py-20 md:px-12">
-        <div className="mx-auto flex max-w-5xl flex-col gap-8 text-white">
+      <section className="border-y border-[rgb(var(--rt-primary-rgb)/0.25)] bg-[rgb(var(--rt-primary-rgb)/0.1)] px-6 py-20 md:px-12">
+        <div className="mx-auto flex max-w-5xl flex-col gap-8 text-[var(--foreground)]">
           <div className="space-y-4">
             <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
               {sport.hero.headline[locale]}
             </h1>
-            <p className="text-lg text-white/85 md:text-xl">
+            <p className="text-lg text-[rgb(var(--foreground-rgb)/0.78)] md:text-xl">
               {sport.hero.description[locale]}
             </p>
           </div>
-          <div className="flex flex-wrap gap-6 text-white/80">
+          <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-2 lg:max-w-none lg:grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
             {sport.hero.stats.map((stat) => (
               <div
                 key={stat.key}
-                className="min-w-[140px] rounded-2xl bg-white/10 px-5 py-4 backdrop-blur"
+                className="rounded-2xl border border-[rgb(var(--foreground-rgb)/0.14)] bg-white px-5 py-4"
               >
-                <p className="text-3xl font-semibold text-white">
-                  {stat.value}
-                </p>
-                <p className="text-xs font-semibold uppercase">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[rgb(var(--rt-primary-rgb)/0.24)] bg-[rgb(var(--rt-primary-rgb)/0.1)] text-[var(--rt-primary)]">
+                    {renderStatIcon(stat.key)}
+                  </span>
+                  <p className="text-4xl font-semibold leading-none tracking-tight text-[var(--rt-primary)]">
+                    {stat.value}
+                  </p>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-[rgb(var(--foreground-rgb)/0.78)]">
                   {t(`sport.stats.${stat.key}`)}
                 </p>
               </div>
@@ -294,19 +312,19 @@ export default async function SportPage({
           <div className="flex flex-wrap gap-4">
             <Link
               href={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
-              className="rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-slate-900"
+              className="rounded-full bg-[var(--rt-primary)] px-6 py-3 text-sm font-semibold uppercase text-[var(--rt-primary-text)]"
             >
               {t("courtFinder.cta")}
             </Link>
             <Link
               href={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
-              className="rounded-full border border-white/70 px-6 py-3 text-sm font-semibold uppercase text-white hover:border-white"
+              className="rounded-full border border-[rgb(var(--rt-primary-rgb)/0.45)] bg-white px-6 py-3 text-sm font-semibold uppercase text-[var(--rt-primary)] hover:border-[rgb(var(--rt-primary-rgb)/0.75)]"
             >
               {t("sport.groupFinderCta")}
             </Link>
             <Link
               href={buildLocalizedPath(`/${sport.code}/board`, locale)}
-              className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold uppercase text-white/80 hover:text-white"
+              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.18)] bg-white px-6 py-3 text-sm font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.75)] hover:border-[rgb(var(--foreground-rgb)/0.35)] hover:text-[var(--foreground)]"
             >
               {boardCta}
             </Link>

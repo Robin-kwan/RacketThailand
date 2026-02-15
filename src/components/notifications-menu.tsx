@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { Bell } from "lucide-react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 
 type NotificationMetadata = Record<string, string | null | undefined>;
@@ -135,19 +136,11 @@ export function NotificationsMenu({
         className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[rgb(var(--foreground-rgb)/0.25)] bg-white text-[var(--foreground)] transition hover:border-[rgb(var(--foreground-rgb)/0.5)]"
         aria-label={copy.title}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 3a6 6 0 00-6 6v2.764c0 .47-.195.922-.54 1.244L4.293 14.1c-.88.82-.264 2.311.94 2.311H18.77c1.205 0 1.82-1.49.94-2.31l-1.167-1.095a1.75 1.75 0 01-.543-1.247V9a6 6 0 00-6-6z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M9.75 19a2.25 2.25 0 004.5 0"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
+        <Bell
+          className="h-[18px] w-[18px]"
+          strokeWidth={1.8}
+          aria-hidden
+        />
         {unreadCount > 0 && (
           <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
             {unreadCount > 9 ? "9+" : unreadCount}

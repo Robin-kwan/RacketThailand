@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { X } from "lucide-react";
 
 type BaseImageCardVariant = "light" | "dark";
 
@@ -62,7 +63,11 @@ export function BaseImageCard({
           onClick={onRemove}
           className={`absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${styles.remove}`}
         >
-          ×
+          <X
+            className="h-3.5 w-3.5"
+            strokeWidth={2}
+            aria-hidden
+          />
         </button>
       )}
       {imageUrl ? (

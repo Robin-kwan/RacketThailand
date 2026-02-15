@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { ChevronDown } from "lucide-react";
 
 type Option = {
   value: string;
@@ -93,21 +94,11 @@ export function BaseSelect({
         <span
           className={`pointer-events-none absolute inset-y-0 right-2 flex items-center ${chevronColor}`}
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M4 6l4 4 4-4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <ChevronDown
+            className="h-4 w-4"
+            strokeWidth={1.8}
+            aria-hidden
+          />
         </span>
       </div>
       {helperText && (
