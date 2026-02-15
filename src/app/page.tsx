@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { LANDING_SPORTS } from "@/data/sportMeta";
 import { FeedbackForm } from "@/components/feedback-form";
 import { BaseCard } from "@/components/base-card";
@@ -8,6 +9,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type SearchParams = {
@@ -21,6 +23,46 @@ async function resolveSearchParams(
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
   return searchParams;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams?: SearchParamInput;
+}): Promise<Metadata> {
+  const resolvedParams = await resolveSearchParams(searchParams);
+  const locale = normalizeLocale(resolvedParams?.lang);
+  const canonicalPath = "/";
+  const canonical = buildCanonicalUrl(canonicalPath, locale);
+  const alternates = buildLocaleAlternates(canonicalPath);
+  const title =
+    locale === "th"
+      ? "RacketThailand | สนามและก๊วนกีฬาแร็กเก็ตในไทย"
+      : "RacketThailand | Racket Sports Community in Thailand";
+  const description =
+    locale === "th"
+      ? "รวมสนามและก๊วนกีฬาแร็กเก็ตทั่วไทย ค้นหาคอร์ต กลุ่มตีประจำ และข้อมูลติดต่อได้ในที่เดียว"
+      : "Find racket sport courts and weekly groups across Thailand with direct contact details in one place.";
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: alternates,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 export default async function Landing({

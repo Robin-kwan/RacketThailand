@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CourtFinder } from "@/components/court-finder";
 import { getSportMeta } from "@/data/sportMeta";
@@ -8,6 +9,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { fetchCourtsBySport } from "@/server/courtFinder";
 
 type Params = { sport: string };
@@ -24,6 +26,59 @@ async function resolveSearchParams(
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
   return searchParams;
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: ParamsInput;
+  searchParams?: SearchParamsInput;
+}): Promise<Metadata> {
+  const resolvedParams = await resolveParams(params);
+  const resolvedSearch = await resolveSearchParams(searchParams);
+  const locale = normalizeLocale(resolvedSearch?.lang);
+  const meta = getSportMeta(resolvedParams.sport);
+  if (!meta) {
+    return {
+      title: "Court finder | RacketThailand",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+  const canonicalPath = `/${resolvedParams.sport}/court-finder`;
+  const canonical = buildCanonicalUrl(canonicalPath, locale);
+  const alternates = buildLocaleAlternates(canonicalPath);
+  const title =
+    locale === "th"
+      ? `ค้นหาสนาม ${meta.name[locale]} | RacketThailand`
+      : `${meta.name[locale]} Court Finder | RacketThailand`;
+  const description =
+    locale === "th"
+      ? `ค้นหาสนาม ${meta.name[locale]} พร้อมตำแหน่ง แผนที่ และช่องทางติดต่อในประเทศไทย`
+      : `Browse ${meta.name[locale]} courts in Thailand with map location and contact details.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: alternates,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 export default async function CourtFinderPage({

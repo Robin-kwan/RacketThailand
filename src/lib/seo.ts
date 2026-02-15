@@ -26,3 +26,12 @@ export function buildLocaleAlternates(path: string) {
     {} as Record<Locale, string>,
   );
 }
+
+export function truncateMetaDescription(text: string, maxLength = 180) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+  const clipped = normalized.slice(0, Math.max(0, maxLength - 3)).trimEnd();
+  return `${clipped}...`;
+}

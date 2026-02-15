@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { buildSportPagePayload } from "@/server/sportContent";
 import { SUPPORTED_SPORTS, getSportMeta } from "@/data/sportMeta";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -10,6 +11,7 @@ import {
   normalizeLocale,
   type Locale,
 } from "@/lib/i18n";
+import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { getSeoKeyword } from "@/lib/seoKeywords";
 import { GroupCard } from "@/components/group-card";
 import { CourtCard } from "@/components/court-card";
@@ -203,14 +205,37 @@ export async function generateMetadata({
       title: "Page not found | RacketThailand",
       description:
         "This sport page does not exist. Head back to the landing page to pick a different sport.",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
   const keywordSnippet = getSeoKeyword(resolvedParamsValue.sport, locale, "hero");
+  const description = keywordSnippet
+    ? `${meta.heroDescription[locale]} ${keywordSnippet}`
+    : meta.heroDescription[locale];
+  const canonicalPath = `/${resolvedParamsValue.sport}`;
+  const canonical = buildCanonicalUrl(canonicalPath, locale);
+  const alternates = buildLocaleAlternates(canonicalPath);
   return {
     title: `${meta.name[locale]} | RacketThailand`,
-    description: keywordSnippet
-      ? `${meta.heroDescription[locale]} ${keywordSnippet}`
-      : meta.heroDescription[locale],
+    description,
+    alternates: {
+      canonical,
+      languages: alternates,
+    },
+    openGraph: {
+      title: `${meta.name[locale]} | RacketThailand`,
+      description,
+      url: canonical,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${meta.name[locale]} | RacketThailand`,
+      description,
+    },
   };
 }
 
@@ -228,21 +253,7 @@ export default async function SportPage({
   const sport = await buildSportPagePayload(resolvedParamsValue.sport);
 
   if (!sport) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6 text-[var(--foreground)]">
-        <div className="max-w-md space-y-4 text-center">
-          <h1 className="text-3xl font-semibold">Page not found</h1>
-          <div className="flex justify-center">
-            <Link
-              href={buildLocalizedPath("/", locale)}
-              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.3)] px-6 py-3 text-sm font-semibold uppercase text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.6)]"
-            >
-              Back to landing
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
   const courtFeature = sport.features.find((feature) => feature.key === "courts");
