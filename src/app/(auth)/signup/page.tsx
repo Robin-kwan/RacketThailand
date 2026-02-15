@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/auth/signup-form";
 import { BaseCard } from "@/components/base-card";
 import {
@@ -6,6 +7,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type SearchParams = {
   lang?: string;
@@ -27,6 +29,13 @@ export default async function SignupPage({
 }) {
   const resolvedParams = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedParams?.lang);
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user && !user.is_anonymous) {
+    redirect(buildLocalizedPath("/", locale));
+  }
   const t = await getTranslator(locale);
   const formCopy = {
     nameLabel: t("auth.nameLabel"),

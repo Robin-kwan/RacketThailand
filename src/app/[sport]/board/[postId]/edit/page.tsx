@@ -12,6 +12,8 @@ import { fetchCommunityPostDetail } from "@/server/communityBoard";
 import { COMMUNITY_CATEGORIES } from "@/data/communityCategories";
 import { CommunityPostEditForm } from "@/components/community/community-post-edit-form";
 
+export const dynamic = "force-dynamic";
+
 type Params = { sport: string; postId: string };
 type ParamsInput = Promise<Params>;
 type SearchParams = { lang?: string };
@@ -51,7 +53,10 @@ export default async function EditCommunityPostPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  const isAuthenticated = Boolean(
+    user?.id && user.email && !user.is_anonymous,
+  );
+  if (!isAuthenticated || !user) {
     redirect(buildLocalizedPath("/login", locale));
   }
   if (post.author_id !== user.id) {

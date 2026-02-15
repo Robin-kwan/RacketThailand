@@ -15,6 +15,8 @@ import { CommunityPostCard } from "@/components/community/community-post-card";
 import { CommunityPostForm } from "@/components/community/community-post-form";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
+export const dynamic = "force-dynamic";
+
 type Params = { sport: string };
 type ParamsInput = Promise<Params>;
 type SearchParams = { lang?: string; category?: string };
@@ -49,6 +51,9 @@ export default async function CommunityBoardPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isAuthenticated = Boolean(
+    user?.id && user.email && !user.is_anonymous,
+  );
 
   const [communityResult] = await Promise.all([
     fetchCommunityPosts(resolvedParams.sport),
@@ -120,7 +125,7 @@ export default async function CommunityBoardPage({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {user && (
+              {isAuthenticated && (
                 <Link
                   href={buildLocalizedPath(`/${sport.code}/board/mine`, locale)}
                   className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-slate-500"
@@ -152,7 +157,7 @@ export default async function CommunityBoardPage({
             </div>
           </div>
         </header>
-        {user ? (
+        {isAuthenticated ? (
           <BaseCard
             as="section"
             className="rounded-[32px] border border-slate-200 bg-white p-6"
