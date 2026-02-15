@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f0f4f9;
-  --foreground: #0f172a;
-  --foreground-rgb: 15 23 42;
-  --rt-primary: #0c3427;
-  --rt-primary-soft: #0a2d1f;
-  --rt-primary-border: #124534;
-  --rt-primary-text: #e3fff2;
-  --rt-primary-shadow: rgba(0, 0, 0, 0);
-  --rt-primary-rgb: 12 52 39;
-  --rt-primary-soft-rgb: 10 45 31;
-  --rt-primary-border-rgb: 18 69 52;
-  --rt-primary-text-rgb: 227 255 242;
+  --background: #ffffff;
+  --foreground: #10281e;
+  --foreground-rgb: 16 40 30;
+  --rt-primary: #0ca678;
+  --rt-primary-soft: #0a8f67;
+  --rt-primary-border: #26c58f;
+  --rt-primary-text: #f1fff8;
+  --rt-primary-shadow: rgba(12, 166, 120, 0);
+  --rt-primary-rgb: 12 166 120;
+  --rt-primary-soft-rgb: 10 143 103;
+  --rt-primary-border-rgb: 38 197 143;
+  --rt-primary-text-rgb: 241 255 248;
   --rt-disabled: #94a3b8;
-  --rt-card-radius: 32px;
+  --rt-card-radius: 28px;
 }
 
 @theme inline {
@@ -51,7 +51,7 @@ input[type="time"] {
   display: block;
   width: 100%;
   background-color: #ffffff;
-  border: none;
+  border: 1px solid rgb(var(--foreground-rgb) / 0.12);
   border-radius: var(--rt-card-radius);
   color: var(--foreground);
 }
@@ -62,7 +62,7 @@ input[type="time"] {
 }
 
 .rt-card-ghost {
-  background-color: rgb(var(--rt-primary-soft-rgb) / 0.75);
+  background-color: rgb(var(--rt-primary-soft-rgb));
   border: 1px solid rgb(var(--rt-primary-border-rgb));
   border-radius: var(--rt-card-radius);
   color: var(--rt-primary-text);
@@ -99,9 +99,9 @@ input[type="time"] {
 
 .rt-card input,
 .rt-card textarea {
-  background-color: #ffffff;
+  background-color: #fcfffb;
   border-radius: 16px;
-  border: 1px solid rgb(var(--foreground-rgb) / 0.2);
+  border: 1px solid rgb(var(--foreground-rgb) / 0.14);
   transition: border-color 0.2s ease;
 }
 
@@ -137,11 +137,11 @@ summary,
   border-radius: 999px;
   color: var(--rt-primary-text);
   font-weight: 600;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .rt-btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
+  background-color: rgb(var(--rt-primary-soft-rgb));
 }
 
 .rt-btn-primary:disabled {

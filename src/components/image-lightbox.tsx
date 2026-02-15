@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import { X } from "lucide-react";
 
 type ImageLightboxProps = {
   images: { id: string; src: string; alt?: string }[];
@@ -48,9 +49,13 @@ export function ImageLightbox({
         type="button"
         aria-label="Close"
         onClick={handleClose}
-        className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-2xl font-semibold text-slate-900 hover:bg-white"
+        className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-900 hover:bg-white"
       >
-        ×
+        <X
+          className="h-5 w-5"
+          strokeWidth={2}
+          aria-hidden
+        />
       </button>
       <div className="relative h-[70vh] w-full max-w-4xl">
         <Image

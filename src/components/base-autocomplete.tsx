@@ -7,6 +7,7 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
+import { Check, ChevronDown } from "lucide-react";
 
 type Option = {
   value: string;
@@ -161,22 +162,11 @@ export function BaseAutocomplete({
           }}
           aria-label="Toggle options"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            className={`transition ${open ? "rotate-180" : ""}`}
-            aria-hidden="true"
-          >
-            <path
-              d="M4 6l4 4 4-4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <ChevronDown
+            className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`}
+            strokeWidth={1.8}
+            aria-hidden
+          />
         </button>
         {open && (
           <div className={variantStyles.dropdown}>
@@ -202,21 +192,11 @@ export function BaseAutocomplete({
                 >
                   <span>{option.label}</span>
                   {option.value === value && (
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M3 7.5l2.5 2.5L11 4.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <Check
+                      className="h-3.5 w-3.5"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
                   )}
                 </button>
               ))

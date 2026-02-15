@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChevronDown, ExternalLink, Menu } from "lucide-react";
 import { SPORT_META } from "@/data/sportMeta";
 import enMessages from "@/messages/en.json";
 import thMessages from "@/messages/th.json";
@@ -88,19 +89,6 @@ export function SiteHeader({
   const derivedSportSlug = segments[0];
   const activeSportSlug = overrideSportSlug ?? derivedSportSlug;
   const activeSport = activeSportSlug ? SPORT_META[activeSportSlug] : undefined;
-  const accent = "#0f172a";
-  const accentGlowStyle = useMemo(
-    () => ({
-      boxShadow: `0 25px 60px ${accent}24`,
-    }),
-    [accent],
-  );
-  const accentStripeStyle = useMemo(
-    () => ({
-      backgroundImage: `linear-gradient(120deg, ${accent}, #0f172a)`,
-    }),
-    [accent],
-  );
   const navLinks = useMemo<HeaderNavLink[]>(() => {
     if (!activeSport || !activeSportSlug) return [];
     const basePath = `/${activeSportSlug}`;
@@ -203,24 +191,11 @@ export function SiteHeader({
     };
   }, []);
   const headerClass =
-    "relative w-full bg-[var(--rt-primary)] py-3 px-4 text-sm text-[var(--rt-primary-text)] transition-all duration-300 md:px-8";
+    "relative w-full border-b border-[rgb(var(--foreground-rgb)/0.1)] bg-[var(--rt-primary)] py-3 px-4 text-sm text-[var(--rt-primary-text)] transition-all duration-300 md:px-8";
 
   return (
     <>
-      <header
-        className={headerClass}
-        style={accentGlowStyle}
-      >
-      <span
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          background: `radial-gradient(circle at 15% -10%, ${accent}20, transparent 50%)`,
-        }}
-      />
-      <span
-        className="pointer-events-none absolute inset-x-0 top-0 h-1 opacity-90"
-        style={accentStripeStyle}
-      />
+      <header className={headerClass}>
       <div className="relative z-20 mx-auto flex w-full max-w-screen-xl flex-col gap-2">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex w-full items-center justify-between gap-4 md:w-auto md:gap-6">
@@ -233,7 +208,7 @@ export function SiteHeader({
                   {labels.brand}
                 </p>
                 <p className="text-[11px] font-semibold uppercase text-[rgb(var(--rt-primary-text-rgb)/0.75)]">
-                  <span style={{ color: "#cbf7d1" }}>
+                  <span style={{ color: "#e6fff8" }}>
                     {resolvedSubLabel}
                   </span>
                 </p>
@@ -242,10 +217,14 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-xl text-white hover:bg-white/20 md:hidden"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 md:hidden"
               aria-label="Open navigation menu"
             >
-              ☰
+              <Menu
+                className="h-5 w-5"
+                strokeWidth={2}
+                aria-hidden
+              />
             </button>
           </div>
           {navLinks.length > 0 && (
@@ -260,7 +239,7 @@ export function SiteHeader({
                     href={link.href}
                     aria-current={isLinkActive ? "page" : undefined}
                     className={`transition ${
-                      isLinkActive ? "text-slate-200" : "text-white hover:text-slate-200"
+                      isLinkActive ? "text-white" : "text-white/90 hover:text-white"
                     }`}
                   >
                     {link.label}
@@ -303,22 +282,11 @@ export function SiteHeader({
                     </p>
                     <p className="text-emerald-600">{user?.email}</p>
                   </div>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    className={`transition ${menuOpen ? "rotate-180" : ""}`}
+                  <ChevronDown
+                    className={`h-4 w-4 transition ${menuOpen ? "rotate-180" : ""}`}
+                    strokeWidth={1.8}
                     aria-hidden
-                  >
-                    <path
-                      d="M4 6l4 4 4-4"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  />
                 </button>
                 {menuOpen && (
                   <div
@@ -332,7 +300,11 @@ export function SiteHeader({
                         onClick={() => setMenuOpen(false)}
                       >
                         {labels.profile}
-                        <span aria-hidden>↗</span>
+                        <ExternalLink
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                          aria-hidden
+                        />
                       </Link>
                       {isAdmin && (
                         <Link
@@ -341,7 +313,11 @@ export function SiteHeader({
                           onClick={() => setMenuOpen(false)}
                         >
                           {labels.admin}
-                          <span aria-hidden>↗</span>
+                          <ExternalLink
+                            className="h-4 w-4"
+                            strokeWidth={1.8}
+                            aria-hidden
+                          />
                         </Link>
                       )}
                       <Link
@@ -350,7 +326,11 @@ export function SiteHeader({
                         onClick={() => setMenuOpen(false)}
                       >
                         {labels.dashboard}
-                        <span aria-hidden>↗</span>
+                        <ExternalLink
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                          aria-hidden
+                        />
                       </Link>
                     </div>
                     <button
@@ -368,7 +348,7 @@ export function SiteHeader({
               <div className="hidden items-center gap-2 md:flex">
                 <Link
                   href={buildLocalizedPath("/login", locale)}
-                  className="rounded-full border border-slate-200/70 bg-white px-4 py-2 font-semibold text-slate-700 hover:border-slate-400"
+                  className="rounded-full border border-emerald-100/75 bg-white px-4 py-2 font-semibold text-emerald-900 hover:border-emerald-300"
                 >
                   {labels.login}
                 </Link>

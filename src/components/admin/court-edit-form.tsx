@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LoaderCircle, Plus } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { BaseImageCard } from "@/components/base-image-card";
 import { LineQrUploader } from "@/components/line-qr-uploader";
@@ -604,25 +605,11 @@ export function CourtEditForm({
                 </p>
                 {(uploading || submitting) && (
                   <span className="flex items-center gap-1 text-xs text-slate-500">
-                    <svg
+                    <LoaderCircle
                       className="h-3 w-3 animate-spin"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-                      />
-                    </svg>
+                      strokeWidth={1.8}
+                      aria-hidden
+                    />
                     Working...
                   </span>
                 )}
@@ -650,10 +637,14 @@ export function CourtEditForm({
                         </button>
                       }
                     />
-                  ))}
+                ))}
                 {photos.length < 8 && (
                   <label className="flex h-40 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-3xl text-slate-400 hover:border-slate-500 hover:text-slate-600 focus-within:border-slate-500">
-                    <span>+</span>
+                    <Plus
+                      className="h-8 w-8"
+                      strokeWidth={1.8}
+                      aria-hidden
+                    />
                     <input
                       type="file"
                       accept="image/*"

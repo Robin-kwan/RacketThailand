@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 
 type ToastVariant = "success" | "error" | "info";
 
@@ -69,7 +70,11 @@ export function Toaster() {
               className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white transition hover:bg-white/40"
               aria-label="Dismiss notification"
             >
-              ×
+              <X
+                className="h-3.5 w-3.5"
+                strokeWidth={2}
+                aria-hidden
+              />
             </button>
           </div>
         </div>
