@@ -23,6 +23,8 @@ import { CommunityCommentForm } from "@/components/community/community-comment-f
 import { CommunityCommentItem } from "@/components/community/community-comment-item";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 type Params = { sport: string; postId: string };
 type ParamsInput = Promise<Params>;
 type SearchParams = { lang?: string };
@@ -98,8 +100,11 @@ export default async function CommunityPostPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isAuthenticated = Boolean(
+    user?.id && user.email && !user.is_anonymous,
+  );
 
-  const { data: existingLike } = user
+  const { data: existingLike } = isAuthenticated && user
     ? await supabase
         .from("community_likes")
         .select("post_id")
@@ -180,7 +185,7 @@ export default async function CommunityPostPage({
                 )}
               </span>
             )}
-            {user && post.author_id === user.id && (
+            {isAuthenticated && user && post.author_id === user.id && (
               <Link
                 href={buildLocalizedPath(
                   `/${sport}/board/${post.id}/edit`,
@@ -215,7 +220,7 @@ export default async function CommunityPostPage({
             <h2 className="text-xl font-semibold text-[var(--foreground)]">
               {copy.comments}
             </h2>
-            {!user && (
+            {!isAuthenticated && (
               <Link
                 href={buildLocalizedPath("/login", locale)}
                 className="text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
@@ -224,7 +229,7 @@ export default async function CommunityPostPage({
               </Link>
             )}
           </div>
-          {user && (
+          {isAuthenticated && (
             <CommunityCommentForm
               postId={post.id}
               placeholder={copy.commentPlaceholder}
@@ -241,7 +246,7 @@ export default async function CommunityPostPage({
                 <CommunityCommentItem
                   key={comment.id}
                   comment={comment}
-                  canEdit={comment.author_id === user?.id}
+                  canEdit={isAuthenticated && Boolean(user?.id && comment.author_id === user.id)}
                   copy={{
                     edit: copy.editComment,
                     save: copy.saveComment,

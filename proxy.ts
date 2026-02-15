@@ -10,18 +10,12 @@ const SUPPORTED_SPORTS = [
 ];
 
 const AUTH_BLOCKED_PATHS = new Set(["/login", "/signup", "/auth/forgot"]);
-const SUPABASE_SESSION_COOKIES = [
-  "sb:token",
-  "sb:refresh-token",
-  "sb-access-token",
-  "supabase-auth-token",
-];
 const RECOVERY_REDIRECT_BASE =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
   null;
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const path = normalizePathname(request.nextUrl.pathname);
   const query = request.nextUrl.searchParams;
   const recoveryType = query.get("type");
@@ -59,8 +53,15 @@ export function middleware(request: NextRequest) {
 }
 
 function hasSupabaseSession(request: NextRequest) {
-  return SUPABASE_SESSION_COOKIES.some(
-    (cookieName) => request.cookies.get(cookieName)?.value,
+  const knownLegacyCookieNames = new Set([
+    "sb:token",
+    "sb:refresh-token",
+    "sb-access-token",
+    "supabase-auth-token",
+  ]);
+  return request.cookies.getAll().some(({ name }) =>
+    knownLegacyCookieNames.has(name) ||
+    /^sb-[a-z0-9]+-auth-token(?:\.\d+)?$/i.test(name),
   );
 }
 

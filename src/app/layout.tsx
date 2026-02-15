@@ -41,12 +41,6 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const isRecoveryMode = cookieStore.get("rt-recovery")?.value === "1";
-  const hasSessionCookie = [
-    "sb:token",
-    "sb:refresh-token",
-    "sb-access-token",
-    "supabase-auth-token",
-  ].some((cookieName) => Boolean(cookieStore.get(cookieName)?.value));
 
   let profile: {
     status: string | null;
@@ -60,7 +54,7 @@ export default async function RootLayout({
   } | null = null;
   let isAdmin = false;
 
-  if (hasSessionCookie && !isRecoveryMode) {
+  if (!isRecoveryMode) {
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },

@@ -14,6 +14,8 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { fetchCommunityPostsByAuthor } from "@/server/communityBoard";
 import { CommunityPostCard } from "@/components/community/community-post-card";
 
+export const dynamic = "force-dynamic";
+
 type Params = { sport: string };
 type ParamsInput = Promise<Params>;
 type SearchParams = { lang?: string };
@@ -48,8 +50,11 @@ export default async function MyCommunityPostsPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isAuthenticated = Boolean(
+    user?.id && user.email && !user.is_anonymous,
+  );
 
-  if (!user) {
+  if (!isAuthenticated || !user) {
     redirect(buildLocalizedPath("/login", locale));
   }
 
