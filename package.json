@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "prepare": "husky",
-    "clean": "rimraf .next"
+    "clean": "rimraf .next",
+    "intake:safe-insert": "node scripts/ops/safe-intake-insert.mjs",
+    "intake:audit-encoding": "node scripts/ops/safe-intake-insert.mjs --audit-only",
+    "intake:audit-db": "node scripts/ops/full-db-integrity-audit.mjs",
+    "intake:repair-mojibake": "node scripts/ops/repair-mojibake.mjs"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.8",
