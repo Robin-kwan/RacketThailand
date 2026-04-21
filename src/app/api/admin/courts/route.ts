@@ -82,6 +82,7 @@ export async function POST(request: Request) {
       lat: payload.latitude,
       lng: payload.longitude,
       google_place_id: payload.googlePlaceId ?? null,
+      is_active: true,
       created_by: user.id,
       updated_at: new Date().toISOString(),
     })

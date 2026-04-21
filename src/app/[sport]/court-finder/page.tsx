@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CourtFinder } from "@/components/court-finder";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 import { getSportMeta } from "@/data/sportMeta";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import {
@@ -57,8 +58,8 @@ export async function generateMetadata({
       : `${meta.name[locale]} Court Finder | RacketThailand`;
   const description =
     locale === "th"
-      ? `ค้นหาสนาม ${meta.name[locale]} พร้อมตำแหน่ง แผนที่ และช่องทางติดต่อในประเทศไทย`
-      : `Browse ${meta.name[locale]} courts in Thailand with map location and contact details.`;
+      ? `ค้นหาสนาม ${meta.name[locale]} พร้อมตำแหน่ง แผนที่ และข้อมูลติดต่อทั่วประเทศไทย`
+      : `Browse ${meta.name[locale]} courts in Thailand with map location, contacts, and live community updates.`;
 
   return {
     title,
@@ -97,7 +98,6 @@ export default async function CourtFinderPage({
     notFound();
   }
 
-
   const courtData = await fetchCourtsBySport(resolvedParams.sport, {
     limit: 12,
   });
@@ -114,7 +114,6 @@ export default async function CourtFinderPage({
     emptyTitle: t("courtFinder.emptyTitle"),
     emptyDescription: t("courtFinder.emptyDescription"),
     backLink: t("courtFinder.backLink"),
-    lastUpdated: t("courtFinder.lastUpdated"),
     nearbyButton: t("courtFinder.nearbyButton"),
     nearbyFinding: t("courtFinder.nearbyFinding"),
     nearbyClear: t("courtFinder.nearbyClear"),
@@ -124,14 +123,22 @@ export default async function CourtFinderPage({
     distanceLabel: t("courtFinder.distanceLabel"),
     mapHeading: t("courtFinder.mapHeading"),
     openMaps: t("courtFinder.openMaps"),
+    addCourtCta: t("courtSubmission.submit"),
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <HeaderSubLabel value={meta.name[locale]} />
-      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
-          <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+      <main className="relative mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--rt-primary-rgb)/0.16),transparent_42%),radial-gradient(circle_at_92%_18%,rgb(var(--foreground-rgb)/0.08),transparent_44%)]"
+        />
+        <section className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)] backdrop-blur">
+          <span className="rounded-full border border-[rgb(var(--rt-primary-rgb)/0.3)] bg-[rgb(var(--rt-primary-rgb)/0.1)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--rt-primary-rgb))]">
+            {t("header.courtFinder")}
+          </span>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
             {copy.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
@@ -142,6 +149,18 @@ export default async function CourtFinderPage({
             >
               {t("courtFinder.backToSport")}
             </Link>
+            <TrackedLink
+              href={buildLocalizedPath("/courts/new", locale)}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "court_finder_header",
+                cta: "add_court",
+                sport: resolvedParams.sport,
+              }}
+              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            >
+              {t("courtSubmission.submit")}
+            </TrackedLink>
           </div>
         </section>
         <CourtFinder

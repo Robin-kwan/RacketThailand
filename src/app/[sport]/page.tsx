@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
@@ -22,6 +21,7 @@ import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { getSeoKeyword } from "@/lib/seoKeywords";
 import { GroupCard } from "@/components/group-card";
 import { CourtCard } from "@/components/court-card";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 import type { SportFeatureCard } from "@/types/sports";
 
 type Params = {
@@ -38,6 +38,38 @@ type SearchParamInput = Promise<SearchParams> | undefined;
 const STAT_ICONS: Record<string, LucideIcon> = {
   courts: Grid3X3,
   groups: Users,
+};
+
+const STAT_CARD_STYLES: Record<
+  string,
+  {
+    cardBorder: string;
+    iconWrap: string;
+    valueText: string;
+    marker: string;
+  }
+> = {
+  courts: {
+    cardBorder: "border-emerald-200",
+    iconWrap:
+      "border-emerald-200 bg-emerald-50 text-emerald-700",
+    valueText: "text-emerald-700",
+    marker: "bg-emerald-500",
+  },
+  groups: {
+    cardBorder: "border-teal-200",
+    iconWrap:
+      "border-teal-200 bg-teal-50 text-teal-700",
+    valueText: "text-teal-700",
+    marker: "bg-teal-500",
+  },
+  default: {
+    cardBorder: "border-slate-200",
+    iconWrap:
+      "border-slate-200 bg-slate-50 text-slate-700",
+    valueText: "text-slate-700",
+    marker: "bg-slate-500",
+  },
 };
 
 export function generateStaticParams() {
@@ -107,8 +139,13 @@ function FeatureCarousel({
               {subtitle}
             </p>
           </div>
-          <Link
+          <TrackedLink
             href={ctaHref}
+            eventName="sport_cta_click"
+            eventPayload={{
+              surface: "sport_feature_carousel",
+              cta: ctaHref,
+            }}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
           >
             {ctaLabel}
@@ -117,7 +154,7 @@ function FeatureCarousel({
               strokeWidth={1.8}
               aria-hidden
             />
-          </Link>
+          </TrackedLink>
         </div>
         {hasCards ? (
           <div className="-mx-6 mt-8 overflow-x-auto pb-4 md:mx-0">
@@ -215,9 +252,13 @@ export async function generateMetadata({
     };
   }
   const keywordSnippet = getSeoKeyword(resolvedParamsValue.sport, locale, "hero");
+  const discoveryLine =
+    locale === "th"
+      ? "ค้นหาคอร์ทและกลุ่มในประเทศไทยได้จากพอร์ทัลเดียว"
+      : "Find active Thailand courts and groups in one portal.";
   const description = keywordSnippet
-    ? `${meta.heroDescription[locale]} ${keywordSnippet}`
-    : meta.heroDescription[locale];
+    ? `${meta.heroDescription[locale]} ${keywordSnippet} ${discoveryLine}`
+    : `${meta.heroDescription[locale]} ${discoveryLine}`;
   const canonicalPath = `/${resolvedParamsValue.sport}`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
@@ -274,15 +315,24 @@ export default async function SportPage({
       />
     );
   };
+  const getStatStyle = (key: string) =>
+    STAT_CARD_STYLES[key] ?? STAT_CARD_STYLES.default;
 
   return (
     <div className="min-h-screen text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
-      <section className="border-y border-[rgb(var(--rt-primary-rgb)/0.25)] bg-[rgb(var(--rt-primary-rgb)/0.1)] px-6 py-20 md:px-12">
-        <div className="mx-auto flex max-w-5xl flex-col gap-8 text-[var(--foreground)]">
+      <section className="relative overflow-hidden border-y border-[rgb(var(--foreground-rgb)/0.1)] bg-white px-6 py-20 md:px-12">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--rt-primary-rgb)/0.14),transparent_34%),radial-gradient(circle_at_95%_15%,rgb(var(--foreground-rgb)/0.08),transparent_42%)]"
+        />
+        <div className="relative mx-auto flex max-w-5xl flex-col gap-8 text-[var(--foreground)]">
           <div className="space-y-4">
-            <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
+            <span className="inline-flex rounded-full border border-[rgb(var(--rt-primary-rgb)/0.32)] bg-[rgb(var(--rt-primary-rgb)/0.1)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[rgb(var(--rt-primary-rgb))]">
+              {sport.name[locale]}
+            </span>
+            <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
               {sport.hero.headline[locale]}
             </h1>
             <p className="text-lg text-[rgb(var(--foreground-rgb)/0.78)] md:text-xl">
@@ -290,44 +340,80 @@ export default async function SportPage({
             </p>
           </div>
           <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-2 lg:max-w-none lg:grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
-            {sport.hero.stats.map((stat) => (
-              <div
-                key={stat.key}
-                className="rounded-2xl border border-[rgb(var(--foreground-rgb)/0.14)] bg-white px-5 py-4"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[rgb(var(--rt-primary-rgb)/0.24)] bg-[rgb(var(--rt-primary-rgb)/0.1)] text-[var(--rt-primary)]">
-                    {renderStatIcon(stat.key)}
-                  </span>
-                  <p className="text-4xl font-semibold leading-none tracking-tight text-[var(--rt-primary)]">
-                    {stat.value}
-                  </p>
+            {sport.hero.stats.map((stat) => {
+              const styles = getStatStyle(stat.key);
+              return (
+                <div
+                  key={stat.key}
+                  className={`rounded-2xl border bg-white px-5 py-4 ${styles.cardBorder}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.55)]">
+                        {t(`sport.stats.${stat.key}`)}
+                      </p>
+                      <p className={`mt-2 text-4xl font-semibold leading-none tracking-tight ${styles.valueText}`}>
+                        {stat.value}
+                      </p>
+                    </div>
+                    <span className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border ${styles.iconWrap}`}>
+                      {renderStatIcon(stat.key)}
+                    </span>
+                  </div>
+                  <div className={`mt-4 h-1.5 w-16 rounded-full ${styles.marker}`} />
                 </div>
-                <p className="mt-3 text-sm font-semibold text-[rgb(var(--foreground-rgb)/0.78)]">
-                  {t(`sport.stats.${stat.key}`)}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="flex flex-wrap gap-4">
-            <Link
+            <TrackedLink
               href={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "sport_hero",
+                cta: "open_court_finder",
+                sport: sport.code,
+              }}
               className="rounded-full bg-[var(--rt-primary)] px-6 py-3 text-sm font-semibold uppercase text-[var(--rt-primary-text)]"
             >
               {t("courtFinder.cta")}
-            </Link>
-            <Link
+            </TrackedLink>
+            <TrackedLink
               href={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "sport_hero",
+                cta: "open_group_finder",
+                sport: sport.code,
+              }}
               className="rounded-full border border-[rgb(var(--rt-primary-rgb)/0.45)] bg-white px-6 py-3 text-sm font-semibold uppercase text-[var(--rt-primary)] hover:border-[rgb(var(--rt-primary-rgb)/0.75)]"
             >
               {t("sport.groupFinderCta")}
-            </Link>
-            <Link
+            </TrackedLink>
+            <TrackedLink
               href={buildLocalizedPath(`/${sport.code}/board`, locale)}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "sport_hero",
+                cta: "open_board",
+                sport: sport.code,
+              }}
               className="rounded-full border border-[rgb(var(--foreground-rgb)/0.18)] bg-white px-6 py-3 text-sm font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.75)] hover:border-[rgb(var(--foreground-rgb)/0.35)] hover:text-[var(--foreground)]"
             >
               {boardCta}
-            </Link>
+            </TrackedLink>
+            <TrackedLink
+              href={buildLocalizedPath("/courts/new", locale)}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "sport_hero",
+                cta: "add_court",
+                sport: sport.code,
+              }}
+              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.25)] bg-[rgb(var(--foreground-rgb)/0.04)] px-6 py-3 text-sm font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.82)] hover:border-[rgb(var(--foreground-rgb)/0.38)]"
+            >
+              {t("courtSubmission.submit")}
+            </TrackedLink>
           </div>
         </div>
       </section>

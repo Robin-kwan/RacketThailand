@@ -1,65 +1,109 @@
-# RacketThailand Monorepo Frontend
+# RacketThailand Frontend
 
-This Next.js 16 project powers both the default landing page (`racketthailand.com`) and every sport-specific experience that lives on subdomains such as `badminton.racketthailand.com` or `padel.racketthailand.com`. All sports pull from the same Supabase project and Postgres schema—the sport context comes from the requested subdomain (or slug when testing locally).
+This Next.js 16 app powers `racketthailand.com` and all sport subdomains (for example `badminton.racketthailand.com`, `padel.racketthailand.com`).
 
-## App structure
+The platform uses one Supabase project for all sports, with sport context selected by subdomain in production (or `/[sport]` path in local/dev).
 
-- `/` – Marketing/landing hub that explains the multi-sport system and links out to each sport.
-- `/[sport]` – Server-rendered tenant page fed by the `/api/sports/[code]` endpoint. Supported codes: `badminton`, `padel`, `pickleball`, `tennis`, `tabletennis`.
-- `/api/sports/[code]` – API contract (currently mocked with schema-driven data) that any client—including the `/[sport]` page—uses to request structured content for a sport.
+## App Structure
 
-The landing page remains lightweight, while every sport route displays real feature modules (courts, groups, community, matches, profiles, feedback) hydrated via the API so the frontend stays the same no matter which subdomain a user visits.
+- `/`: Public landing page.
+- `/[sport]`: Public sport portal.
+- `/[sport]/court-finder`: Public court discovery.
+- `/[sport]/group-finder`: Public group discovery.
+- `/[sport]/board`: Public community board by sport.
+- `/courts/new`: Authenticated public court submission form (publish mode follows admin policy toggle).
+- `/groups/create`: Authenticated group creation form.
+- `/admin`: Admin dashboard with court submission mode toggle.
+- `/admin/courts`: Admin court tools plus pending court request moderation queue.
+- `/api/sports/[code]`: Aggregated sport payload for reusable clients.
+- `/api/courts`:
+  - `GET`: Filtered court finder data.
+  - `POST`: Authenticated public court creation (direct publish or pending review by policy).
 
-## Getting started
+## Growth Milestone (Implemented)
 
-1. Install dependencies
-   ```bash
-   npm install
-   ```
+This release focuses on weekly content supply growth.
 
-2. Copy the example environment file and edit for your setup
-   ```bash
-   cp .env.local.example .env.local
-   ```
+- Public funnel redesign for `/`, `/[sport]`, finder pages, shared header/footer.
+- New public court submission flow (`/courts/new`) using existing court form stack.
+- Policy-based public court API (`POST /api/courts`) for authenticated users.
+- Admin toggle and moderation queue for court submissions:
+  - Toggle ON: user submissions publish immediately.
+  - Toggle OFF: user submissions are created as pending (`is_active = false`) and require admin publish/reject.
+- Stronger CTA placement across landing, sport hero, finder headers, and empty states.
+- SEO update: sport board routes included in sitemap.
+- Vercel analytics conversion events added:
+  - `landing_cta_click`
+  - `sport_cta_click`
+  - `empty_state_cta_click`
+  - `court_submit_started`
+  - `court_submit_success`
+  - `group_submit_success`
+  - `finder_filter_used`
 
-   | Variable | Description |
-   | --- | --- |
-   | `SUPABASE_URL` | Supabase project URL. |
-   | `SUPABASE_SERVICE_ROLE_KEY` | Service role key used by the server to aggregate sport data. Keep this secret (server-only). |
-   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL exposed to the browser for Auth. |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key used client-side for login/signup. |
+## Setup
 
-3. Run the dev server
-   ```bash
-   npm run dev
-   ```
+1. Install dependencies:
 
-4. Visit:
-   - `http://localhost:3000/` – Thai by default; use the language switcher in the header or append `?lang=en` to view English copy.
-   - `http://localhost:3000/badminton` (Thai) or `http://localhost:3000/badminton?lang=en` – sport experiences that mirror the production subdomains while reusing the same frontend.
+```bash
+npm install
+```
 
-## Available scripts
+2. Copy env file:
 
-| Script        | Description                                               |
-| ------------- | --------------------------------------------------------- |
-| `npm run dev` | Start Next.js in development mode.                        |
-| `npm run build` | Create an optimized production build.                   |
-| `npm run start` | Run the production server after building.               |
-| `npm run lint` | Run ESLint against the project sources.                  |
+```bash
+cp .env.local.example .env.local
+```
 
-## Subdomain & locale routing
+3. Required environment variables:
 
-In production you can map each subdomain (e.g., `badminton.racketthailand.com`) to the same deployment. Locale handling is implemented via query parameters (`?lang=en`) plus an in-app toggle—Thai remains the default if no parameter is supplied. Both the landing page and sport pages share the same Supabase-backed aggregation logic, so switching languages only affects the copy.
+| Variable | Description |
+| --- | --- |
+| `SUPABASE_URL` | Supabase project URL (server) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase URL (client) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key (client) |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps key for map/places features |
+
+4. Run dev server:
+
+```bash
+npm run dev
+```
+
+## Scripts
+
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start development server |
+| `npm run build` | Build production bundle |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
 
 ## Localization
 
-- Translations are handled by [`next-intl`](https://next-intl-docs.vercel.app/) with message files in `src/messages/{locale}.json`.
-- The helper in `src/lib/i18n.ts` normalizes the `?lang=` query, loads the correct messages, and exposes a `t('namespace.key')` translator for pages.
-- Sport-specific copy (e.g., closing CTAs, feature labels) stores localized values in `src/data/sportMeta.ts`, so adding more languages means updating a single object instead of sprinkling ternaries throughout the UI.
+- `next-intl` with messages in `src/messages/{locale}.json`.
+- Locale is controlled by `?lang=` query parameter.
+- Thai (`th`) is default.
 
-## Sport API contract
+## Notes
 
-- `GET /api/sports/:code` returns structured data for a sport (hero copy, stats, feature cards, closing CTA). The route aggregates data directly from Supabase tables (`courts`, `groups`, `posts`, `matches`, `profile_sports`, `feedback`) so web, mobile, or marketing surfaces can reuse the same contract.
-- The sport detail pages reuse that same aggregation logic directly on the server, so they render instantly from Supabase without needing an extra HTTP hop. If a table has no rows yet, the UI shows an empty state so the design still works pre-launch.
-- Add additional API endpoints (courts, groups, matches, etc.) so mobile clients can reuse the same contract.
-- Wire DNS or an edge middleware to redirect subdomains to the proper `/[sport]` route when needed.
+- Court publishing policy is controlled by `platform_settings.allow_public_court_publish`.
+- If `platform_settings` does not exist, the app falls back to direct publish mode (`true`).
+- Existing court RLS should allow authenticated inserts to `courts` (`created_by = auth.uid()` pattern).
+- Admin and dashboard court-management flows remain unchanged.
+
+### Optional SQL setup for policy toggle
+
+Run this once to persist the admin toggle state:
+
+```sql
+create table if not exists public.platform_settings (
+  key text primary key,
+  enabled boolean,
+  updated_by uuid references public.profiles(id) on delete set null,
+  updated_at timestamptz default now()
+);
+
+alter table public.platform_settings enable row level security;
+```

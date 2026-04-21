@@ -245,6 +245,7 @@ export async function buildSportPagePayload(
       select:
         "id,name,address,district,province,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
       sport_id: `eq.${sportId}`,
+      is_active: "eq.true",
       order: "created_at.desc",
       limit: "4",
     });

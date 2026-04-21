@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 type ImageLightboxProps = {
@@ -37,19 +38,24 @@ export function ImageLightbox({
     return () => window.removeEventListener("keydown", handleKey);
   }, [images.length, handleClose]);
 
-  if (!visible || images.length === 0) {
+  if (typeof document === "undefined" || !visible || images.length === 0) {
     return null;
   }
 
   const image = images[current];
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[4000] flex items-center justify-center bg-black/80 px-4"
+      onClick={handleClose}
+    >
       <button
         type="button"
         aria-label="Close"
         onClick={handleClose}
-        className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-900 hover:bg-white"
+        className="fixed right-5 top-5 z-[4100] flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-black/65 text-white shadow-lg backdrop-blur hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
       >
         <X
           className="h-5 w-5"
@@ -57,7 +63,10 @@ export function ImageLightbox({
           aria-hidden
         />
       </button>
-      <div className="relative h-[70vh] w-full max-w-4xl">
+      <div
+        className="relative h-[70vh] w-full max-w-4xl"
+        onClick={(event) => event.stopPropagation()}
+      >
         <Image
           src={image.src}
           alt={image.alt ?? "Court photo"}
@@ -66,6 +75,7 @@ export function ImageLightbox({
           className="object-contain"
         />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

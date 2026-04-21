@@ -51,6 +51,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...SUPPORTED_SPORTS.map((code) => ({
       url: `${BASE_URL}/${code}/group-finder`,
     })),
+    ...SUPPORTED_SPORTS.map((code) => ({
+      url: `${BASE_URL}/${code}/board`,
+    })),
   ];
 
   const courtRoutes: MetadataRoute.Sitemap = courts.map((court) => ({

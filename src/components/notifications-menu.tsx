@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 
@@ -44,6 +45,7 @@ export function NotificationsMenu({
   locale,
   copy,
 }: NotificationsMenuProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,13 +102,20 @@ export function NotificationsMenu({
   };
 
   const markAllRead = async () => {
-    await fetch("/api/notifications/mark-all", { method: "POST" });
+    const response = await fetch("/api/notifications/mark-all", { method: "POST" });
+    if (!response.ok) return;
     setNotifications((prev) =>
       prev.map((item) => ({
         ...item,
         read_at: new Date().toISOString(),
       })),
     );
+  };
+
+  const handleReadAllClick = async () => {
+    await markAllRead();
+    setOpen(false);
+    router.push(buildLocalizedPath("/notifications", locale));
   };
 
   const formatMessage = (notification: NotificationRecord) => {
@@ -156,7 +165,7 @@ export function NotificationsMenu({
             <button
               type="button"
               className="text-xs font-semibold uppercase text-slate-500 hover:text-slate-700"
-              onClick={markAllRead}
+              onClick={handleReadAllClick}
             >
               {copy.markAll}
             </button>

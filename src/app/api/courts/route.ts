@@ -3,6 +3,30 @@ import {
   fetchCourtsBySport,
   type CourtFilterOptions,
 } from "@/server/courtFinder";
+import { getAllowPublicCourtPublish } from "@/lib/court-submission-policy";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+import type { OpeningHoursEntry } from "@/lib/opening-hours";
+
+type CourtCreatePayload = {
+  sportId?: string;
+  name?: string;
+  address?: string;
+  district?: string;
+  province?: string;
+  price_note?: string;
+  opening_hours?: OpeningHoursEntry[] | null;
+  phone?: string;
+  line_id?: string;
+  lineQrUrl?: string | null;
+  website_url?: string;
+  latitude?: number;
+  longitude?: number;
+  googlePlaceId?: string | null;
+};
+
+function sanitizeText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -41,4 +65,97 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
+}
+
+export async function POST(request: Request) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let payload: CourtCreatePayload;
+  try {
+    payload = (await request.json()) as CourtCreatePayload;
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON payload" },
+      { status: 400 },
+    );
+  }
+
+  const sportId = sanitizeText(payload.sportId);
+  const name = sanitizeText(payload.name);
+  const address = sanitizeText(payload.address);
+  const district = sanitizeText(payload.district);
+  const province = sanitizeText(payload.province);
+  const priceNote = sanitizeText(payload.price_note);
+  const phone = sanitizeText(payload.phone);
+  const lineId = sanitizeText(payload.line_id);
+  const website = sanitizeText(payload.website_url);
+  const googlePlaceId = sanitizeText(payload.googlePlaceId);
+  const latitude =
+    typeof payload.latitude === "number" ? payload.latitude : Number.NaN;
+  const longitude =
+    typeof payload.longitude === "number" ? payload.longitude : Number.NaN;
+
+  if (
+    !sportId ||
+    !name ||
+    !address ||
+    !province ||
+    Number.isNaN(latitude) ||
+    Number.isNaN(longitude)
+  ) {
+    return NextResponse.json(
+      { error: "Missing required court fields." },
+      { status: 400 },
+    );
+  }
+
+  const openingHours = Array.isArray(payload.opening_hours)
+    ? payload.opening_hours
+    : null;
+  const allowPublicCourtPublish = await getAllowPublicCourtPublish();
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("courts")
+    .insert({
+      sport_id: sportId,
+      name,
+      address,
+      district: district || null,
+      province,
+      price_note: priceNote || null,
+      opening_hours: openingHours,
+      phone: phone || null,
+      line_id: lineId || null,
+      line_qr_url: payload.lineQrUrl ?? null,
+      website_url: website || null,
+      lat: latitude,
+      lng: longitude,
+      google_place_id: googlePlaceId || null,
+      is_active: allowPublicCourtPublish,
+      created_by: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !inserted) {
+    return NextResponse.json(
+      { error: insertError?.message ?? "Unable to create court." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    courtId: inserted.id,
+    requiresApproval: !allowPublicCourtPublish,
+  });
 }

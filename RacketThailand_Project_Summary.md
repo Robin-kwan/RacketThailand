@@ -340,6 +340,13 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
 
 ## Recent UI Enhancements
 
+- Public funnel redesign now covers landing, sport portal, court finder, and group finder with stronger CTA hierarchy and editorial-style visual treatment.
+- Added an authenticated public court submission page at `/courts/new` that writes to `courts` without introducing a new queue table, while preserving existing admin/dashboard court-management workflows.
+- Added an admin-controlled court submission policy toggle:
+  - ON: public submissions publish immediately.
+  - OFF: public submissions are stored as pending (`is_active = false`) and only become visible after admin publish from `/admin/courts`.
+- Conversion instrumentation now tracks key acquisition events: `landing_cta_click`, `sport_cta_click`, `empty_state_cta_click`, `court_submit_started`, `court_submit_success`, `group_submit_success`, and `finder_filter_used`.
+- Sitemap now includes every sport community board route (`/{sport}/board`) to improve search discoverability for active community content.
 - Court finder’s “Find nearby courts” view now embeds a live Google Maps instance with a blue dot for the user location plus labeled pins for nearby courts, matching the Google Maps experience requested by stakeholders.
 - All Google Maps/Places integrations (client map plus server API routes) now read the single `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` value from `.env.local`. For Advanced Marker labels, optionally define `NEXT_PUBLIC_GOOGLE_MAP_ID` with a vector map ID—otherwise the map will gracefully fall back to classic pins.
 - Group finder now supports filtering by day and half-hour time slots plus a “Find nearby groups” option that geolocates the user, centers the court map, and surfaces the closest sessions.
