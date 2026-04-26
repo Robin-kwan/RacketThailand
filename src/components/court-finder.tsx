@@ -106,6 +106,15 @@ export function CourtFinder({
     ],
     [availableProvinces, copy.resetFilters],
   );
+  const fallbackCourtName =
+    locale === "th" ? "ยังไม่ระบุชื่อสนาม" : "Unnamed court";
+  const fallbackCourtImageAlt =
+    locale === "th" ? "รูปสนาม" : "Court image";
+  const countSummary =
+    locale === "th"
+      ? `${count.toLocaleString("th-TH")} สนาม · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
+      : `${count.toLocaleString("en-US")} courts · ${loading ? "loading..." : "live data"}`;
+  const distanceUnit = locale === "th" ? "กม." : "km";
 
   useEffect(() => {
     let isActive = true;
@@ -279,10 +288,7 @@ export function CourtFinder({
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-          <p>
-            {count.toLocaleString("en-US")} courts ·{" "}
-            {loading ? "loading..." : "live data"}
-          </p>
+          <p>{countSummary}</p>
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -348,10 +354,10 @@ export function CourtFinder({
                     className="group block"
                   >
                     <p className="font-semibold text-slate-900 group-hover:text-slate-700">
-                      {entry.court.name ?? "Unnamed court"}
+                      {entry.court.name ?? fallbackCourtName}
                     </p>
                     <p className="text-xs text-slate-500 group-hover:text-slate-700">
-                      {entry.distanceKm?.toFixed(2)} km
+                      {entry.distanceKm?.toFixed(2)} {distanceUnit}
                     </p>
                   </Link>
                   {entry.court.latitude && entry.court.longitude && (
@@ -403,20 +409,22 @@ export function CourtFinder({
             const details = [
               court.address ?? null,
               court.price_note ? `฿ ${court.price_note}` : null,
-              court.phone ? `Tel: ${court.phone}` : null,
-              court.line_id ? `Line: ${court.line_id}` : null,
+              court.phone
+                ? `${locale === "th" ? "โทร" : "Tel"}: ${court.phone}`
+                : null,
+              court.line_id ? `LINE: ${court.line_id}` : null,
             ].filter(Boolean) as string[];
             const distanceLabel =
               distanceKm !== null
-                ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} km`
+                ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
                 : null;
             return (
               <CourtCard
                 key={court.id}
                 href={`/courts/${court.id}${localeQuery}`}
-                name={court.name ?? "Unnamed court"}
+                name={court.name ?? fallbackCourtName}
                 imageUrl={photo}
-                imageAlt={court.name ?? "Court image"}
+                imageAlt={court.name ?? fallbackCourtImageAlt}
                 location={locationText}
                 details={details}
                 primaryBadge={court.province || "TH"}

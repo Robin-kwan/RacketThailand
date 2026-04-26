@@ -41,11 +41,11 @@ export async function generateMetadata({
   const alternates = buildLocaleAlternates(canonicalPath);
   const title =
     locale === "th"
-      ? "RacketThailand | คอร์ทและกลุ่มกีฬาแร็กเกตในไทย"
+      ? "RacketThailand | สนามและกลุ่มกีฬาแร็กเกตทั่วไทย"
       : "RacketThailand | Racket Sports Community in Thailand";
   const description =
     locale === "th"
-      ? "ค้นหาคอร์ทและกลุ่มกีฬาแร็กเกตทั่วไทย พร้อมข้อมูลติดต่อและตารางเล่นในที่เดียว"
+      ? "ค้นหาสนามและกลุ่มกีฬาแร็กเกตทั่วไทย พร้อมข้อมูลติดต่อและตารางเล่นได้ในที่เดียว"
       : "Discover Thailand racket-sport courts and weekly groups with direct contacts in one place.";
 
   return {

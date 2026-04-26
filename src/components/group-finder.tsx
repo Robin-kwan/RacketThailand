@@ -177,6 +177,11 @@ export function GroupFinder({
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
+  const fallbackGroupName =
+    locale === "th" ? "กลุ่มชุมชน" : "Community group";
+  const fallbackGroupPhotoAlt =
+    locale === "th" ? "รูปกลุ่ม" : "Group photo";
+  const distanceUnit = locale === "th" ? "กม." : "km";
   useEffect(() => {
     setServerGroups(initialGroups);
   }, [initialGroups]);
@@ -267,6 +272,10 @@ export function GroupFinder({
     [serverGroups, startTime, endTime],
   );
   const count = filteredGroups.length;
+  const countSummary =
+    locale === "th"
+      ? `${count.toLocaleString("th-TH")} กลุ่ม · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
+      : `${count.toLocaleString("en-US")} groups · ${loading ? "loading..." : "live data"}`;
 
   const handleRequestNearby = () => {
     track("finder_filter_used", {
@@ -343,7 +352,7 @@ export function GroupFinder({
           bestDistance = distance;
           bestCourt = {
             id: courtId,
-            name: session.courts?.name ?? "Court",
+            name: session.courts?.name ?? (locale === "th" ? "สนาม" : "Court"),
             latitude: lat,
             longitude: lng,
             href: `/courts/${courtId}${locale === DEFAULT_LOCALE ? "" : `?lang=${locale}`}`,
@@ -450,10 +459,7 @@ export function GroupFinder({
           />
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-          <p>
-            {count.toLocaleString("en-US")} groups ·{" "}
-            {loading ? "loading..." : "live data"}
-          </p>
+          <p>{countSummary}</p>
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -508,10 +514,10 @@ export function GroupFinder({
                 >
                   <div>
                     <p className="font-semibold text-slate-900">
-                      {entry.group.name ?? "Community group"}
+                      {entry.group.name ?? fallbackGroupName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)} km
+                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)} {distanceUnit}
                     </p>
                     {typeof entry.group.player_amount === "number" &&
                       Number.isFinite(entry.group.player_amount) && (
@@ -552,10 +558,10 @@ export function GroupFinder({
                 >
                   <div>
                     <p className="font-semibold text-slate-900">
-                      {entry.group.name ?? "Community group"}
+                      {entry.group.name ?? fallbackGroupName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)} km
+                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)} {distanceUnit}
                     </p>
                     {typeof entry.group.player_amount === "number" &&
                       Number.isFinite(entry.group.player_amount) && (
@@ -612,15 +618,15 @@ export function GroupFinder({
             const groupHref = buildLocalizedPath(`/groups/${group.id}`, locale);
             const distanceLabel =
               distanceKm !== null
-                ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} km`
+                ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
                 : null;
             return (
               <GroupCard
                 key={group.id}
                 href={groupHref}
-                name={group.name ?? "Community group"}
+                name={group.name ?? fallbackGroupName}
                 imageUrl={primaryPhoto}
-                imageAlt={group.name ?? "Group photo"}
+                imageAlt={group.name ?? fallbackGroupPhotoAlt}
                 sessions={group.group_sessions ?? []}
                 dayLabels={dayLabels}
                 scheduleAnytime={copy.scheduleAnytime}

@@ -54,11 +54,11 @@ export async function generateMetadata({
   const alternates = buildLocaleAlternates(canonicalPath);
   const title =
     locale === "th"
-      ? `ค้นหากลุ่ม ${meta.name[locale]} | RacketThailand`
+      ? `ค้นหากลุ่ม${meta.name[locale]} | RacketThailand`
       : `${meta.name[locale]} Group Finder | RacketThailand`;
   const description =
     locale === "th"
-      ? `ค้นหากลุ่ม ${meta.name[locale]} ที่เปิดรับสมาชิก พร้อมวันเวลาและข้อมูลติดต่อทั่วประเทศไทย`
+      ? `ค้นหากลุ่ม${meta.name[locale]} ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย`
       : `Find active ${meta.name[locale]} groups in Thailand with schedules, contacts, and nearby map context.`;
 
   return {

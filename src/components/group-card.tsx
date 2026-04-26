@@ -69,6 +69,7 @@ function SessionList({
   }
   const visible = sessions.slice(0, sessionLimit);
   const remaining = Math.max(0, sessions.length - visible.length);
+  const courtConnector = locale === "th" ? " ที่ " : " @ ";
 
   return (
     <div className="space-y-1 text-sm text-slate-600">
@@ -91,7 +92,7 @@ function SessionList({
               {courtName &&
                 (courtHref ? (
                   <>
-                    {" @ "}
+                    {courtConnector}
                     <button
                       type="button"
                       onClick={(event) => {
@@ -104,14 +105,20 @@ function SessionList({
                     </button>
                   </>
                 ) : (
-                  <> @ <span className="text-blue-600">{courtName}</span></>
-                ))}
+                  <>
+                    {courtConnector}
+                    <span className="text-blue-600">{courtName}</span>
+                  </>
+                )
+                )}
             </li>
           );
         })}
       </ul>
       {remaining > 0 && (
-        <p className="text-xs text-slate-500">… {remaining} more</p>
+        <p className="text-xs text-slate-500">
+          {locale === "th" ? `… อีก ${remaining} รายการ` : `… ${remaining} more`}
+        </p>
       )}
     </div>
   );
@@ -150,6 +157,10 @@ export function GroupCard({
   const wrapperProps = href
     ? { href }
     : {};
+  const fallbackGroupName =
+    locale === "th" ? "กลุ่มชุมชน" : "Community group";
+  const fallbackGroupPhotoAlt =
+    locale === "th" ? "รูปกลุ่ม" : "Group photo";
 
   return (
     <Wrapper
@@ -160,7 +171,7 @@ export function GroupCard({
         <div className={`relative ${imageAspectClass} w-full`}>
           <Image
             src={imageUrl}
-            alt={imageAlt ?? name ?? "Group photo"}
+            alt={imageAlt ?? name ?? fallbackGroupPhotoAlt}
             fill
             sizes="(max-width:768px) 100vw, 50vw"
             className="object-cover transition duration-300 group-hover:scale-105"
@@ -171,7 +182,7 @@ export function GroupCard({
         <p
           className={`text-2xl font-semibold text-slate-900 ${titleClassName ?? ""}`}
         >
-          {name || "Community group"}
+          {name || fallbackGroupName}
         </p>
         {badge}
       </div>
