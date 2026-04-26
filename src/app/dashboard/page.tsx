@@ -158,6 +158,18 @@ export default async function DashboardPage({
     ownedGroupsTitle: t("dashboard.ownedGroups.title"),
     ownedGroupsEmpty: t("dashboard.ownedGroups.empty"),
   };
+  const fallbackCourtName =
+    locale === "th" ? "ยังไม่ระบุชื่อสนาม" : "Unnamed court";
+  const fallbackCourtImageAlt =
+    locale === "th" ? "รูปสนาม" : "Court image";
+  const fallbackGroupName =
+    locale === "th" ? "กลุ่มชุมชน" : "Community group";
+  const fallbackGroupImageAlt =
+    locale === "th" ? "รูปกลุ่ม" : "Group photo";
+  const addCourtHint =
+    locale === "th"
+      ? "ต้องการเพิ่มสนาม? ติดต่อ racketthailand@gmail.com"
+      : "Add a court by contacting racketthailand@gmail.com";
 
   return (
     <div className="rt-page">
@@ -183,7 +195,7 @@ export default async function DashboardPage({
               <div className="inline-flex items-center gap-2 px-4 py-2 text-xs text-[var(--foreground)]">
                 <span aria-hidden>ℹ️</span>
                 <span className="font-semibold">
-                  Add a court by contacting racketthailand@gmail.com
+                  {addCourtHint}
                 </span>
               </div>
             </div>
@@ -192,14 +204,14 @@ export default async function DashboardPage({
               {ownedCourts.map((court) => (
                 <DashboardCourtCard
                   key={court.id}
-                  name={court.name ?? "Unnamed court"}
+                  name={court.name ?? fallbackCourtName}
                   href={buildLocalizedPath(`/courts/${court.id}`, locale)}
                   imageUrl={
                     court.court_photos?.find((photo) => photo.is_primary)?.image_url ??
                     court.court_photos?.[0]?.image_url ??
                     getSportFallbackImage(court.sports?.code)
                   }
-                  imageAlt={court.name ?? "Court image"}
+                  imageAlt={court.name ?? fallbackCourtImageAlt}
                   location={[court.district, court.province].filter(Boolean).join(" · ")}
                   showDetails={false}
                   primaryBadge={court.province ?? undefined}
@@ -230,14 +242,14 @@ export default async function DashboardPage({
               {ownedGroups.map((group) => (
                 <DashboardGroupCard
                   key={group.id}
-                  name={group.name ?? "Community group"}
+                  name={group.name ?? fallbackGroupName}
                   href={buildLocalizedPath(`/groups/${group.id}`, locale)}
                   imageUrl={
                     group.group_photos?.find((photo) => photo.is_primary)?.image_url ??
                     group.group_photos?.[0]?.image_url ??
                     getSportFallbackImage(group.sports?.code)
                   }
-                  imageAlt={group.name ?? "Group photo"}
+                  imageAlt={group.name ?? fallbackGroupImageAlt}
                   description={group.description}
                   dayLabels={dayLabels}
                   scheduleAnytime={scheduleAnytime}
@@ -264,7 +276,7 @@ export default async function DashboardPage({
           className="rounded-[32px] border border-[var(--rt-primary-border)] p-8"
         >
           <p className="text-xs font-semibold uppercase rt-text-muted tracking-[0.3em]">
-            Dashboard · Courts
+            {locale === "th" ? "แดชบอร์ด · คำขอใช้สนาม" : "Dashboard · Courts"}
           </p>
           <h2 className="mt-3 text-2xl font-semibold text-[var(--foreground)]">
             {copy.title}

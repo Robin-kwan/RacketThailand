@@ -65,7 +65,7 @@ export async function generateMetadata({
       : "Notifications | RacketThailand";
   const description =
     locale === "th"
-      ? "ดูและจัดการการแจ้งเตือนทั้งหมดของคุณจาก RacketThailand ในหน้าเดียว"
+      ? "ดูและจัดการการแจ้งเตือนทั้งหมดของคุณจาก RacketThailand ได้ในหน้าเดียว"
       : "Review and manage all your RacketThailand notifications in one place.";
   return {
     title,

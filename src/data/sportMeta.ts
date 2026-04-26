@@ -29,14 +29,14 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f766e",
     gradient: "from-rose-500/30 via-orange-500/20 to-amber-500/10",
     coverImage: "/sports/badminton.png",
-    heroHeadline: l("สนามและก๊วนตีแบดในระบบเดียว", "Badminton courts & groups in one place."),
+    heroHeadline: l("สนามและก๊วนตีแบดในที่เดียว", "Badminton courts & groups in one place."),
     heroDescription: l(
-      "สำรวจสนามแบดที่ยืนยันแล้ว ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และติดต่อแอดมินได้จากหน้าพอร์ทัลเดียว",
+      "สำรวจสนามแบดที่ยืนยันแล้ว ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และติดต่อแอดมินได้ในที่เดียว",
       "Explore verified venues, check active groups, and contact organizers directly from the same portal.",
     ),
     closingTitle: l("มีสนามหรือก๊วนตีแบดใหม่?", "Have new badminton courts or groups?"),
     closingDetail: l(
-      "ส่งรายละเอียดให้ทีมงานเพื่ออัปเดตให้ชุมชนหาเจอได้เร็วขึ้น",
+      "ส่งรายละเอียดให้ทีมงาน เพื่อให้ชุมชนหาเจอได้ง่ายขึ้น",
       "Send us the details so the community can find them faster.",
     ),
     closingActions: [
@@ -44,7 +44,7 @@ export const SPORT_META: Record<string, SportMeta> = {
       { label: l("ดูสนามแบด", "Browse courts"), href: "/badminton/court-finder" },
     ],
     landingDescription: l(
-      "ดูสนามยืนยันแล้วและก๊วนตีแบดทั่วไทย หาเพื่อนตีแบดพร้อมช่องทางติดต่อแอดมิน",
+      "ดูสนามที่ยืนยันแล้วและก๊วนตีแบดทั่วไทย พร้อมช่องทางติดต่อแอดมิน",
       "Browse verified badminton courts, weekly groups, and organizer contacts across Thailand.",
     ),
     landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
@@ -61,12 +61,12 @@ export const SPORT_META: Record<string, SportMeta> = {
     coverImage: "/sports/padel.png",
     heroHeadline: l("สนามและกลุ่มพาเดลในที่เดียว", "Padel courts & groups in one place."),
     heroDescription: l(
-      "ใช้แผนที่สนามและระบบค้นหากลุ่มเพื่อวางแผนดับเบิลสุดสัปดาห์ของคุณ",
+      "ใช้แผนที่สนามและระบบค้นหากลุ่มเพื่อวางแผนแมตช์ดับเบิลครั้งต่อไปของคุณ",
       "Use the live court finder and group finder to plan your next doubles session.",
     ),
     closingTitle: l("มีสนามหรือกลุ่มพาเดลใหม่?", "Have new padel courts or groups?"),
     closingDetail: l(
-      "แจ้งทีมงานเพื่ออัปเดตข้อมูลให้ผู้เล่นทั่วไทยค้นหาได้ง่ายขึ้น",
+      "บอกทีมงานได้เลย เพื่อให้ผู้เล่นทั่วไทยหาเจอได้ง่ายขึ้น",
       "Let us know so every padel player can discover them quickly.",
     ),
     closingActions: [
@@ -89,7 +89,7 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0d9488",
     gradient: "from-lime-400/30 via-emerald-400/20 to-yellow-300/10",
     coverImage: "/sports/pickleball.png",
-    heroHeadline: l("สนามและกลุ่มพิคเคิลบอลในระบบเดียว", "Pickleball courts & groups in one place."),
+    heroHeadline: l("สนามและกลุ่มพิคเคิลบอลในที่เดียว", "Pickleball courts & groups in one place."),
     heroDescription: l(
       "ค้นหาสนามยืนยันแล้วและกลุ่มที่เปิดรับผู้เล่นใหม่ พร้อมช่องทางติดต่อแอดมิน",
       "Find verified venues and active groups with organizer contacts in seconds.",
@@ -119,14 +119,14 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#65a30d",
     gradient: "from-emerald-500/30 via-lime-400/20 to-amber-300/10",
     coverImage: "/sports/tennis.png",
-    heroHeadline: l("สนามและกลุ่มเทนนิสในระบบเดียว", "Tennis courts & groups in one place."),
+    heroHeadline: l("สนามและกลุ่มเทนนิสในที่เดียว", "Tennis courts & groups in one place."),
     heroDescription: l(
-      "ค้นหาสนามมาตรฐานและกลุ่มตีประจำ พร้อมช่องทางติดต่อแอดมินเพื่อจองหรือไปแจม",
+      "ค้นหาสนามมาตรฐานและกลุ่มตีประจำ พร้อมช่องทางติดต่อผู้ดูแลเพื่อจองหรือขอร่วมเล่น",
       "Find verified courts and weekly hitting groups with organizer contacts ready to go.",
     ),
     closingTitle: l("มีสนามหรือกลุ่มเทนนิสใหม่?", "Have new tennis courts or groups?"),
     closingDetail: l(
-      "แจ้งทีมงานเพื่อช่วยอัปเดตให้ทุกคนค้นหาได้ง่ายขึ้น",
+      "แจ้งทีมงานเพื่อช่วยอัปเดตให้ทุกคนหาเจอได้ง่ายขึ้น",
       "Let us know so we can update the portal for everyone.",
     ),
     closingActions: [
@@ -149,9 +149,9 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#be185d",
     gradient: "from-purple-500/30 via-fuchsia-400/20 to-pink-400/10",
     coverImage: "/sports/tabletennis.png",
-    heroHeadline: l("สนามปิงปองและกลุ่มซ้อมในระบบเดียว", "Table tennis clubs & groups in one place."),
+    heroHeadline: l("สนามปิงปองและกลุ่มซ้อมในที่เดียว", "Table tennis clubs & groups in one place."),
     heroDescription: l(
-      "ค้นหาสนาม เปิดดูตารางกลุ่มซ้อม และติดต่อผู้จัดได้ทันที",
+      "ค้นหาสนาม ดูตารางกลุ่มซ้อม และติดต่อผู้จัดได้ทันที",
       "Browse verified clubs, weekly sessions, and organizer contacts in seconds.",
     ),
     closingTitle: l("มีสนามหรือกลุ่มปิงปองใหม่?", "Have new table tennis clubs or groups?"),

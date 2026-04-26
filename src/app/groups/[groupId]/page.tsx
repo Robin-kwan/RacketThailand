@@ -156,7 +156,10 @@ export async function generateMetadata({
   const group = data?.[0];
   if (!group) {
     return {
-      title: "Group not found | RacketThailand",
+      title:
+        locale === "th"
+          ? "ไม่พบข้อมูลกลุ่ม | RacketThailand"
+          : "Group not found | RacketThailand",
     };
   }
   const sportMeta = group.sports?.code
@@ -165,7 +168,7 @@ export async function generateMetadata({
   const sportName =
     sportMeta?.name?.[locale] ??
     group.sports?.name ??
-    (locale === "th" ? "กลุ่มกีฬา" : "Sport group");
+    (locale === "th" ? "กลุ่มกีฬาแร็กเกต" : "Sport group");
   const location =
     group.group_sessions
       ?.map(
@@ -179,14 +182,20 @@ export async function generateMetadata({
     null;
   const descriptionParts = [
     group.description,
-    location ? `Location: ${location}` : null,
+    location
+      ? `${locale === "th" ? "สถานที่" : "Location"}: ${location}`
+      : null,
     group.group_sessions?.length
-      ? `Sessions per week: ${group.group_sessions.length}`
+      ? `${
+          locale === "th" ? "รอบเล่นต่อสัปดาห์" : "Sessions per week"
+        }: ${group.group_sessions.length}`
       : null,
   ].filter(Boolean);
   const rawDescription =
     descriptionParts.join(" · ") ||
-    `${sportName} community listed on RacketThailand.`;
+    (locale === "th"
+      ? `ดูรายละเอียด${sportName}บน RacketThailand`
+      : `${sportName} community listed on RacketThailand.`);
   const description = truncateMetaDescription(rawDescription);
   const canonicalPath = `/groups/${resolvedParams.groupId}`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
@@ -199,7 +208,11 @@ export async function generateMetadata({
 
   return {
     title: `${group.name ?? sportName}${
-      location ? ` in ${location}` : ""
+      location
+        ? locale === "th"
+          ? ` ที่ ${location}`
+          : ` in ${location}`
+        : ""
     } | ${sportName} | RacketThailand`,
     description,
     alternates: {
@@ -208,7 +221,11 @@ export async function generateMetadata({
     },
     openGraph: {
       title: `${group.name ?? sportName}${
-        location ? ` in ${location}` : ""
+        location
+          ? locale === "th"
+            ? ` ที่ ${location}`
+            : ` in ${location}`
+          : ""
       } | RacketThailand`,
       description,
       url: canonical,
@@ -217,7 +234,10 @@ export async function generateMetadata({
         ? [
             {
               url: heroImage,
-              alt: `${group.name ?? sportName} group photo`,
+              alt:
+                locale === "th"
+                  ? `รูปกลุ่ม ${group.name ?? sportName}`
+                  : `${group.name ?? sportName} group photo`,
             },
           ]
         : undefined,
@@ -384,7 +404,7 @@ export default async function GroupDetailPage({
     "@context": "https://schema.org",
     "@type": "SportsClub",
     "@id": canonicalUrl,
-    name: displayGroup.name ?? "Community group",
+    name: displayGroup.name ?? (locale === "th" ? "กลุ่มชุมชน" : "Community group"),
     description: displayGroup.description ?? undefined,
     url: canonicalUrl,
     sport:
@@ -437,6 +457,12 @@ export default async function GroupDetailPage({
     lineQr: t("groups.detail.lineQr"),
     back: t("groups.detail.back"),
   };
+  const fallbackGroupName =
+    locale === "th" ? "กลุ่มชุมชน" : "Community group";
+  const fallbackCourtName =
+    locale === "th" ? "สนามที่เชื่อมไว้" : "Linked court";
+  const fallbackCourtPhotoAlt =
+    locale === "th" ? "รูปสนาม" : "Court photo";
   const canEdit = isGroupOwner;
   const sportName = group.sports?.name ?? undefined;
   const backHref = buildLocalizedPath(
@@ -454,17 +480,17 @@ export default async function GroupDetailPage({
         <HeaderSportScope sportSlug={sportCode ?? undefined} />
         <HeaderSubLabel value={sportName} />
         <BaseBackLink href={backHref}>{copy.back}</BaseBackLink>
-        <CourtGallery gallery={gallery} courtName={group.name} />
+        <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
         <BaseCard
           as="section"
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
         >
           <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
-            Group · {group.sports?.name ?? "RacketThailand"}
+            {locale === "th" ? "กลุ่ม" : "Group"} · {group.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="mt-3 text-3xl font-semibold text-[var(--foreground)]">
-              {group.name}
+              {group.name ?? fallbackGroupName}
             </h1>
             {canEdit && (
               <Link
@@ -574,7 +600,7 @@ export default async function GroupDetailPage({
                             href={buildLocalizedPath(`/courts/${entry.court.id}`, locale)}
                             className="text-base font-semibold text-[var(--foreground)] hover:text-[var(--rt-primary)]"
                           >
-                            {entry.court.name ?? "Linked court"}
+                            {entry.court.name ?? fallbackCourtName}
                           </Link>
                           {locationLabel && (
                             <p className="text-xs uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.5)]">
@@ -586,7 +612,7 @@ export default async function GroupDetailPage({
                           <div className="relative mx-auto h-36 w-full max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:mx-0">
                             <Image
                               src={entry.photoUrl}
-                              alt={entry.court.name ?? "Court photo"}
+                              alt={entry.court.name ?? fallbackCourtPhotoAlt}
                               fill
                               sizes="(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 25vw"
                               className="object-cover"

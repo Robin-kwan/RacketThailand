@@ -54,11 +54,11 @@ export async function generateMetadata({
   const alternates = buildLocaleAlternates(canonicalPath);
   const title =
     locale === "th"
-      ? `ค้นหาสนาม ${meta.name[locale]} | RacketThailand`
+      ? `ค้นหาสนาม${meta.name[locale]} | RacketThailand`
       : `${meta.name[locale]} Court Finder | RacketThailand`;
   const description =
     locale === "th"
-      ? `ค้นหาสนาม ${meta.name[locale]} พร้อมตำแหน่ง แผนที่ และข้อมูลติดต่อทั่วประเทศไทย`
+      ? `ค้นหาสนาม${meta.name[locale]} พร้อมพิกัด แผนที่ และข้อมูลติดต่อจากทั่วประเทศไทย`
       : `Browse ${meta.name[locale]} courts in Thailand with map location, contacts, and live community updates.`;
 
   return {

@@ -156,7 +156,10 @@ export async function generateMetadata({
   const detail = await fetchCourtDetail(resolvedParams.courtId);
   if (!detail?.court || detail.court.is_active === false) {
     return {
-      title: "Court not found | RacketThailand",
+      title:
+        locale === "th"
+          ? "ไม่พบข้อมูลสนาม | RacketThailand"
+          : "Court not found | RacketThailand",
       robots: {
         index: false,
         follow: false,
@@ -170,19 +173,25 @@ export async function generateMetadata({
   const sportName =
     sportMeta?.name?.[locale] ??
     detail.sport?.name ??
-    (locale === "th" ? "สนามกีฬา" : "Racket sport");
+    (locale === "th" ? "สนามกีฬาแร็กเกต" : "Racket sport");
   const locationParts = [court.district, court.province]
     .filter((part): part is string => Boolean(part && part.trim()))
     .join(", ");
   const descriptionParts = [
     court.address,
     locationParts,
-    court.price_note ? `Pricing: ${court.price_note}` : null,
-    court.phone ? `Phone: ${court.phone}` : null,
+    court.price_note
+      ? `${locale === "th" ? "ราคา" : "Pricing"}: ${court.price_note}`
+      : null,
+    court.phone
+      ? `${locale === "th" ? "โทร" : "Phone"}: ${court.phone}`
+      : null,
   ].filter(Boolean);
   const rawDescription =
     descriptionParts.join(" · ") ||
-    `${sportName} venue listed on RacketThailand.`;
+    (locale === "th"
+      ? `ดูรายละเอียด${sportName}บน RacketThailand`
+      : `${sportName} venue listed on RacketThailand.`);
   const description = truncateMetaDescription(rawDescription);
   const canonicalPath = `/courts/${resolvedParams.courtId}`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
@@ -195,7 +204,11 @@ export async function generateMetadata({
 
   return {
     title: `${court.name ?? sportName}${
-      locationParts ? ` in ${locationParts}` : ""
+      locationParts
+        ? locale === "th"
+          ? ` ที่ ${locationParts}`
+          : ` in ${locationParts}`
+        : ""
     } | ${sportName} | RacketThailand`,
     description,
     alternates: {
@@ -204,7 +217,11 @@ export async function generateMetadata({
     },
     openGraph: {
       title: `${court.name ?? sportName}${
-        locationParts ? ` in ${locationParts}` : ""
+        locationParts
+          ? locale === "th"
+            ? ` ที่ ${locationParts}`
+            : ` in ${locationParts}`
+          : ""
       } | RacketThailand`,
       description,
       url: canonical,
@@ -213,7 +230,10 @@ export async function generateMetadata({
         ? [
             {
               url: heroImage,
-              alt: `${court.name ?? sportName} court photo`,
+              alt:
+                locale === "th"
+                  ? `รูปสนาม ${court.name ?? sportName}`
+                  : `${court.name ?? sportName} court photo`,
             },
           ]
         : undefined,
@@ -352,6 +372,12 @@ export default async function CourtPage({
     groupScheduleAny: t("groups.detail.scheduleAny"),
     backToGroupFinder: t("courtPage.backToGroupFinder"),
   };
+  const fallbackCourtName =
+    locale === "th" ? "ยังไม่ระบุชื่อสนาม" : "Unnamed court";
+  const fallbackGroupName =
+    locale === "th" ? "กลุ่มชุมชน" : "Community group";
+  const fallbackGroupPhotoAlt =
+    locale === "th" ? "รูปกลุ่ม" : "Group photo";
 
   const canEdit = isOwnerViewer;
   const canonicalPath = `/courts/${detail.court.id}`;
@@ -374,7 +400,7 @@ export default async function CourtPage({
     "@context": "https://schema.org",
     "@type": "SportsActivityLocation",
     "@id": canonicalUrl,
-    name: detail.court.name ?? "Court",
+    name: detail.court.name ?? (locale === "th" ? "สนาม" : "Court"),
     url: canonicalUrl,
     image: structuredDataImage,
     telephone: detail.court.phone ?? undefined,
@@ -422,7 +448,7 @@ export default async function CourtPage({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-3xl font-semibold text-slate-900">
-                {detail.court.name ?? "Unnamed court"}
+                {detail.court.name ?? fallbackCourtName}
               </h1>
               <p className="text-sm text-slate-600">
                 {[detail.court.district, detail.court.province]
@@ -534,7 +560,7 @@ export default async function CourtPage({
 
         {hasMapCoordinates && (
           <CourtMap
-            name={detail.court.name ?? "Court location"}
+            name={detail.court.name ?? (locale === "th" ? "ตำแหน่งสนาม" : "Court location")}
             latitude={numericLatitude as number}
             longitude={numericLongitude as number}
             placeId={detail.court.google_place_id}
@@ -587,9 +613,9 @@ export default async function CourtPage({
                   <GroupCard
                     key={group.id}
                     href={groupLink}
-                    name={group.groups?.name ?? "Community group"}
+                    name={group.groups?.name ?? fallbackGroupName}
                     imageUrl={coverImage}
-                    imageAlt={group.groups?.name ?? "Group photo"}
+                    imageAlt={group.groups?.name ?? fallbackGroupPhotoAlt}
                     sessions={sessionsForCourt}
                     dayLabels={dayLabels}
                     scheduleAnytime={copy.groupScheduleAny}

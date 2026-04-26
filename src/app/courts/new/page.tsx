@@ -38,11 +38,11 @@ export async function generateMetadata({
   const alternates = buildLocaleAlternates(canonicalPath);
   const title =
     locale === "th"
-      ? "เพิ่มคอร์ทใหม่ | RacketThailand"
+      ? "เพิ่มสนามใหม่ | RacketThailand"
       : "Add a New Court | RacketThailand";
   const description =
     locale === "th"
-      ? "เพิ่มข้อมูลคอร์ทแร็กเกตในไทยได้ทันที ช่วยให้ผู้เล่นค้นหาและใช้งานได้เร็วขึ้น"
+      ? "เพิ่มข้อมูลสนามกีฬาแร็กเกตในไทย เพื่อให้ผู้เล่นค้นหาเจอได้ง่ายขึ้น"
       : "Submit a new Thailand racket-sport court so players can discover it faster.";
 
   return {
@@ -136,7 +136,7 @@ export default async function NewCourtPage({
           className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.13)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--foreground-rgb)/0.52)]">
-            {locale === "th" ? "ชุมชน · คอร์ท" : "Community · Courts"}
+            {locale === "th" ? "ชุมชน · สนาม" : "Community · Courts"}
           </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
             {t("courtSubmission.title")}

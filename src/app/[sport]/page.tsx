@@ -254,7 +254,7 @@ export async function generateMetadata({
   const keywordSnippet = getSeoKeyword(resolvedParamsValue.sport, locale, "hero");
   const discoveryLine =
     locale === "th"
-      ? "ค้นหาคอร์ทและกลุ่มในประเทศไทยได้จากพอร์ทัลเดียว"
+      ? "ค้นหาสนามและกลุ่มทั่วไทยได้ในที่เดียว"
       : "Find active Thailand courts and groups in one portal.";
   const description = keywordSnippet
     ? `${meta.heroDescription[locale]} ${keywordSnippet} ${discoveryLine}`
