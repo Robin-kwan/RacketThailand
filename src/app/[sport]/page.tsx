@@ -163,7 +163,7 @@ function FeatureCarousel({
                 const href = card.href
                   ? buildLocalizedPath(card.href, locale)
                   : undefined;
-                const cover = card.imageUrl ?? "/sports/badminton.svg";
+                const cover = card.imageUrl ?? "/sports/badminton.png";
                 const description =
                   card.details.length > 0 ? card.details[0] : undefined;
                 const locationText = card.location || card.subtitle || "";

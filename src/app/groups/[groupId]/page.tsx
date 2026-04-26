@@ -299,7 +299,7 @@ export default async function GroupDetailPage({
   const owner = owners?.[0] ?? null;
   const sportCode = group.sports?.code;
   const fallbackImage =
-    SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.svg";
+    SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.png";
   const filteredPhotos =
     photoRows && photoRows.length > 0
       ? photoRows

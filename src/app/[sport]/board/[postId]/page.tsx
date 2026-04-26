@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { enUS, th as thLocale } from "date-fns/locale";
@@ -12,6 +12,11 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import {
+  buildCanonicalUrl,
+  buildLocaleAlternates,
+  truncateMetaDescription,
+} from "@/lib/seo";
 import { SPORT_META } from "@/data/sportMeta";
 import {
   fetchCommunityComments,
@@ -53,17 +58,46 @@ export async function generateMetadata({
   if (!meta) {
     return {
       title: "Post not found | RacketThailand",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
   const post = await fetchCommunityPostDetail(postId);
-  if (!post) {
+  if (!post || post.status !== "published") {
     return {
       title: "Post not found | RacketThailand",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
+  const canonicalPath = `/${sport}/board/${post.id}`;
+  const canonical = buildCanonicalUrl(canonicalPath, locale);
+  const alternates = buildLocaleAlternates(canonicalPath);
+  const title = `${post.title} | ${meta.name[locale]} Community`;
+  const description = truncateMetaDescription(post.body_text, 160);
+
   return {
-    title: `${post.title} | ${meta.name[locale]} Community`,
-    description: post.body_text.slice(0, 140),
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: alternates,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 

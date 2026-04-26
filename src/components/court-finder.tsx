@@ -396,7 +396,7 @@ export function CourtFinder({
             const photo =
               court.court_photos?.find((p) => p.is_primary)?.image_url ??
               court.court_photos?.[0]?.image_url ??
-              "/sports/badminton.svg";
+              "/sports/badminton.png";
             const locationText = [court.district, court.province]
               .filter(Boolean)
               .join(" · ");

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -9,6 +10,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { SPORT_META } from "@/data/sportMeta";
 import { fetchCommunityPosts } from "@/server/communityBoard";
 import { CommunityPostCard } from "@/components/community/community-post-card";
@@ -29,6 +31,61 @@ async function resolveParams(params: ParamsInput): Promise<Params> {
 async function resolveSearchParams(searchParams?: SearchParamsInput) {
   if (!searchParams) return undefined;
   return searchParams;
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: ParamsInput;
+  searchParams?: SearchParamsInput;
+}): Promise<Metadata> {
+  const resolvedParams = await resolveParams(params);
+  const resolvedSearch = await resolveSearchParams(searchParams);
+  const locale = normalizeLocale(resolvedSearch?.lang);
+  const sportMeta = SPORT_META[resolvedParams.sport];
+
+  if (!sportMeta) {
+    return {
+      title: "Community board not found | RacketThailand",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const canonicalPath = `/${resolvedParams.sport}/board`;
+  const canonical = buildCanonicalUrl(canonicalPath, locale);
+  const alternates = buildLocaleAlternates(canonicalPath);
+  const title =
+    locale === "th"
+      ? `กระดานคอมมูนิตี้ ${sportMeta.name[locale]} | RacketThailand`
+      : `${sportMeta.name[locale]} Community Board | RacketThailand`;
+  const description =
+    locale === "th"
+      ? `ติดตามข่าว นัดเล่น ถามตอบ และโพสต์จากคอมมูนิตี้ ${sportMeta.name[locale]} ในประเทศไทย`
+      : `Follow ${sportMeta.name[locale]} community posts in Thailand, including meetups, questions, news, and local updates.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: alternates,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
 }
 
 export default async function CommunityBoardPage({
