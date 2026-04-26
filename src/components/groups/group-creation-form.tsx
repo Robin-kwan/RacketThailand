@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { track } from "@vercel/analytics";
 import { MultiImageInput } from "@/components/multi-image-input";
 import { LineQrUploader } from "@/components/line-qr-uploader";
 import { showToast } from "@/components/toaster";
@@ -140,6 +141,11 @@ export function GroupCreationForm({
     }
 
     setSubmitting(false);
+    track("group_submit_success", {
+      surface: "group_create",
+      sport: payload.sportId,
+      cta: "create_group",
+    });
     showToast({ variant: "success", message: copy.success });
     setImages([]);
     if (lineQrPreview?.startsWith("blob:")) {

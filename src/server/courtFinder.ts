@@ -13,8 +13,10 @@ export type CourtRecord = {
   line_id: string | null;
   line_qr_url?: string | null;
   website_url: string | null;
+  google_place_id?: string | null;
   created_at: string | null;
   updated_at?: string | null;
+  is_active?: boolean | null;
   created_by?: string | null;
   sport_id?: string | null;
   court_photos?: { image_url: string | null; is_primary: boolean | null }[];
@@ -57,6 +59,7 @@ export async function fetchCourtFilters(
   const { data } = await supabaseSelect<{ province: string | null }>("courts", {
     select: "province",
     sport_id: `eq.${sportId}`,
+    is_active: "eq.true",
     order: "province.asc.nullslast",
   });
   return (
@@ -84,8 +87,9 @@ export async function fetchCourtsBySport(
 
   const params: Record<string, string> = {
     select:
-      "id,name,address,district,province,price_note,phone,line_id,website_url,created_at,updated_at,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
+      "id,name,address,district,province,price_note,phone,line_id,website_url,google_place_id,created_at,updated_at,is_active,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
     sport_id: `eq.${sportRow.id}`,
+    is_active: "eq.true",
     order: "created_at.desc",
   };
 
@@ -151,7 +155,7 @@ type CourtGroupLink = {
 export async function fetchCourtDetail(courtId: string) {
   const { data: courts } = await supabaseSelect<CourtRecord>("courts", {
     select:
-      "id,name,address,district,province,price_note,opening_hours,phone,line_id,line_qr_url,website_url,created_at,updated_at,sport_id,created_by,latitude:lat,longitude:lng",
+      "id,name,address,district,province,price_note,opening_hours,phone,line_id,line_qr_url,website_url,google_place_id,created_at,updated_at,is_active,sport_id,created_by,latitude:lat,longitude:lng",
     id: `eq.${courtId}`,
     limit: "1",
   });

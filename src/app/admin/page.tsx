@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CourtSubmissionPolicyToggle } from "@/components/admin/court-submission-policy-toggle";
 import {
   buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { getAllowPublicCourtPublish } from "@/lib/court-submission-policy";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type SearchParams = {
@@ -43,6 +45,7 @@ export default async function AdminPanel({
   if (profile?.status !== "admin") {
     redirect(buildLocalizedPath("/", locale));
   }
+  const allowPublicCourtPublish = await getAllowPublicCourtPublish();
 
   const features = [
     {
@@ -76,6 +79,22 @@ export default async function AdminPanel({
             {t("admin.panelSubtitle")}
           </p>
         </section>
+        <CourtSubmissionPolicyToggle
+          initialAllowPublicCourtPublish={allowPublicCourtPublish}
+          copy={{
+            title: t("admin.courtSubmissionPolicy.title"),
+            subtitle: t("admin.courtSubmissionPolicy.subtitle"),
+            current: t("admin.courtSubmissionPolicy.current"),
+            toggleLabel: t("admin.courtSubmissionPolicy.toggleLabel"),
+            directMode: t("admin.courtSubmissionPolicy.directMode"),
+            requestMode: t("admin.courtSubmissionPolicy.requestMode"),
+            save: t("admin.courtSubmissionPolicy.save"),
+            saving: t("admin.courtSubmissionPolicy.saving"),
+            saved: t("admin.courtSubmissionPolicy.saved"),
+            unsaved: t("admin.courtSubmissionPolicy.unsaved"),
+            error: t("admin.courtSubmissionPolicy.error"),
+          }}
+        />
         <section className="grid gap-6 md:grid-cols-2">
           {features.map((feature) => (
             <Link

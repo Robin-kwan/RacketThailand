@@ -83,6 +83,7 @@ export default async function DashboardAddCourtPage({
     submit: t("admin.submit"),
     submitting: t("admin.submitting"),
     success: t("admin.success"),
+    successPending: t("admin.success"),
     error: t("admin.error"),
     locationMissing: t("admin.locationMissing"),
   };

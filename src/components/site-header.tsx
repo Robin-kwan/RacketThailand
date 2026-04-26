@@ -191,7 +191,7 @@ export function SiteHeader({
     };
   }, []);
   const headerClass =
-    "relative w-full border-b border-[rgb(var(--foreground-rgb)/0.1)] bg-[var(--rt-primary)] py-3 px-4 text-sm text-[var(--rt-primary-text)] transition-all duration-300 md:px-8";
+    "relative w-full border-b border-white/20 bg-[linear-gradient(120deg,#0b8f68_0%,#08815f_48%,#066049_100%)] py-3 px-4 text-sm text-[var(--rt-primary-text)] shadow-[0_12px_40px_rgb(var(--foreground-rgb)/0.26)] transition-all duration-300 md:px-8";
 
   return (
     <>

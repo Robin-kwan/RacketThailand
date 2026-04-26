@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { track } from "@vercel/analytics";
 import type { GroupRecord } from "@/server/groupFinder";
 import {
   DEFAULT_LOCALE,
@@ -20,7 +22,6 @@ type GroupFinderCopy = {
   backLink: string;
   sessionsLabel: string;
   scheduleAnytime: string;
-  lastUpdated: string;
   dayFilterLabel: string;
   anyDayLabel: string;
   startTimeLabel: string;
@@ -39,6 +40,7 @@ type GroupFinderCopy = {
   playerAmountLabel: string;
   phoneLabel: string;
   lineLabel: string;
+  createGroupCta: string;
 };
 
 type GroupFinderProps = {
@@ -204,6 +206,11 @@ export function GroupFinder({
   }, [sportCode, debouncedSearch, dayFilter]);
 
   const handleReset = () => {
+    track("finder_filter_used", {
+      surface: "group_finder",
+      sport: sportCode,
+      cta: "reset_filters",
+    });
     setSearch("");
     setDayFilter("");
     setStartTime("");
@@ -262,6 +269,11 @@ export function GroupFinder({
   const count = filteredGroups.length;
 
   const handleRequestNearby = () => {
+    track("finder_filter_used", {
+      surface: "group_finder",
+      sport: sportCode,
+      cta: "nearby",
+    });
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setNearbyStatus(copy.nearbyUnsupported);
       return;
@@ -378,7 +390,14 @@ export function GroupFinder({
           <input
             type="text"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              track("finder_filter_used", {
+                surface: "group_finder",
+                sport: sportCode,
+                cta: "search",
+              });
+            }}
             placeholder={copy.searchPlaceholder}
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           />
@@ -388,7 +407,14 @@ export function GroupFinder({
             label={copy.dayFilterLabel}
             name="dayFilter"
             value={dayFilter}
-            onChange={(event) => setDayFilter(event.target.value)}
+            onChange={(event) => {
+              setDayFilter(event.target.value);
+              track("finder_filter_used", {
+                surface: "group_finder",
+                sport: sportCode,
+                cta: "day",
+              });
+            }}
             options={dayOptions}
             variant="light"
           />
@@ -396,7 +422,14 @@ export function GroupFinder({
             label={copy.startTimeLabel}
             name="startTime"
             value={startTime}
-            onChange={(event) => setStartTime(event.target.value)}
+            onChange={(event) => {
+              setStartTime(event.target.value);
+              track("finder_filter_used", {
+                surface: "group_finder",
+                sport: sportCode,
+                cta: "start_time",
+              });
+            }}
             options={timeOptions}
             variant="light"
           />
@@ -404,7 +437,14 @@ export function GroupFinder({
             label={copy.endTimeLabel}
             name="endTime"
             value={endTime}
-            onChange={(event) => setEndTime(event.target.value)}
+            onChange={(event) => {
+              setEndTime(event.target.value);
+              track("finder_filter_used", {
+                surface: "group_finder",
+                sport: sportCode,
+                cta: "end_time",
+              });
+            }}
             options={endTimeOptions}
             variant="light"
           />
@@ -546,6 +586,19 @@ export function GroupFinder({
             {copy.emptyTitle}
           </p>
           <p className="mt-2 text-sm text-slate-500">{copy.emptyDescription}</p>
+          <Link
+            href={buildLocalizedPath("/groups/create", locale)}
+            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            onClick={() =>
+              track("empty_state_cta_click", {
+                surface: "group_finder",
+                sport: sportCode,
+                cta: "create_group",
+              })
+            }
+          >
+            {copy.createGroupCta}
+          </Link>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">

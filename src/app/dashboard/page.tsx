@@ -43,8 +43,8 @@ type OwnedGroupRow = {
 };
 
 function getSportFallbackImage(code?: string | null) {
-  if (!code) return "/sports/badminton.svg";
-  return SPORT_META[code]?.coverImage ?? "/sports/badminton.svg";
+  if (!code) return "/sports/badminton.png";
+  return SPORT_META[code]?.coverImage ?? "/sports/badminton.png";
 }
 
 export default async function DashboardPage({

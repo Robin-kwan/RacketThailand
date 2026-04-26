@@ -8,6 +8,7 @@ import {
   normalizeLocale,
 } from "@/lib/i18n";
 import {
+  buildAbsoluteUrl,
   buildCanonicalUrl,
   buildLocaleAlternates,
   truncateMetaDescription,
@@ -38,7 +39,11 @@ function getGroupCover(group: {
     return primary;
   }
   const fallbackCode = group.sports?.code ?? "";
-  return SPORT_META[fallbackCode]?.coverImage ?? "/sports/badminton.svg";
+  return SPORT_META[fallbackCode]?.coverImage ?? "/sports/badminton.png";
+}
+
+function getCourtFallbackImage(sportCode?: string | null) {
+  return SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.png";
 }
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
@@ -149,9 +154,13 @@ export async function generateMetadata({
   const resolvedSearch = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedSearch?.lang);
   const detail = await fetchCourtDetail(resolvedParams.courtId);
-  if (!detail?.court) {
+  if (!detail?.court || detail.court.is_active === false) {
     return {
       title: "Court not found | RacketThailand",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
   const court = detail.court;
@@ -244,6 +253,13 @@ export default async function CourtPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { data: viewerProfile } = user
+    ? await supabase
+        .from("profiles")
+        .select("status")
+        .eq("id", user.id)
+        .single()
+    : { data: null };
 
   const detail = await fetchCourtDetail(resolvedParams.courtId);
   if (!detail || !detail.court) {
@@ -254,13 +270,18 @@ export default async function CourtPage({
     user?.id && detail.court.created_by
       ? user.id === detail.court.created_by
       : false;
+  const isAdminViewer = viewerProfile?.status === "admin";
+
+  if (detail.court.is_active === false && !isOwnerViewer && !isAdminViewer) {
+    notFound();
+  }
 
   const gallery = detail.photos.length
     ? detail.photos
     : [
         {
           id: "placeholder",
-          image_url: "/sports/badminton.svg",
+          image_url: getCourtFallbackImage(detail.sport?.code),
           is_primary: true,
         },
       ];
@@ -328,7 +349,6 @@ export default async function CourtPage({
     statusRejected: t("courtPage.statusRejected"),
     noteLabel: t("courtPage.note"),
     edit: t("courtPage.edit"),
-    updated: t("courtPage.updated"),
     groupScheduleAny: t("groups.detail.scheduleAny"),
     backToGroupFinder: t("courtPage.backToGroupFinder"),
   };
@@ -337,6 +357,11 @@ export default async function CourtPage({
   const canonicalPath = `/courts/${detail.court.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
   const primaryImage = gallery[0]?.image_url ?? null;
+  const structuredDataImage = primaryImage
+    ? primaryImage.startsWith("http")
+      ? primaryImage
+      : buildAbsoluteUrl(primaryImage)
+    : undefined;
   const openingHoursSpecification = openingHourEntries.flatMap((entry) =>
     entry.ranges.map((range) => ({
       "@type": "OpeningHoursSpecification",
@@ -351,7 +376,7 @@ export default async function CourtPage({
     "@id": canonicalUrl,
     name: detail.court.name ?? "Court",
     url: canonicalUrl,
-    image: primaryImage ?? undefined,
+    image: structuredDataImage,
     telephone: detail.court.phone ?? undefined,
     priceRange: detail.court.price_note ?? undefined,
     sameAs: detail.court.website_url ? [detail.court.website_url] : undefined,
@@ -512,6 +537,7 @@ export default async function CourtPage({
             name={detail.court.name ?? "Court location"}
             latitude={numericLatitude as number}
             longitude={numericLongitude as number}
+            placeId={detail.court.google_place_id}
           />
         )}
 
@@ -541,7 +567,7 @@ export default async function CourtPage({
                   : null;
                 const coverImage = group.groups
                   ? getGroupCover(group.groups)
-                  : "/sports/badminton.svg";
+                  : "/sports/badminton.png";
                 const scheduleEntries =
                   group.groups?.group_sessions &&
                   Array.isArray(group.groups.group_sessions)

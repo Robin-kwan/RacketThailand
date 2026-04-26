@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { track } from "@vercel/analytics";
 import { MultiImageInput } from "@/components/multi-image-input";
 import { LineQrUploader } from "@/components/line-qr-uploader";
 import { showToast } from "@/components/toaster";
@@ -29,6 +30,8 @@ type SportOption = {
 
 type CourtFormProps = {
   sports: SportOption[];
+  submitEndpoint?: string;
+  analyticsSurface?: string;
   copy: {
     selectSport: string;
     name: string;
@@ -48,6 +51,7 @@ type CourtFormProps = {
     submit: string;
     submitting: string;
     success: string;
+    successPending?: string;
     error: string;
     locationMissing: string;
   };
@@ -58,7 +62,12 @@ const COURT_BUCKET =
 const COURT_LINE_QR_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_COURT_LINE_QR_BUCKET || "court-line-qr";
 
-export function CourtAdminForm({ sports, copy }: CourtFormProps) {
+export function CourtAdminForm({
+  sports,
+  submitEndpoint = "/api/admin/courts",
+  analyticsSurface,
+  copy,
+}: CourtFormProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [form, setForm] = useState<CourtFormValues>({
     sportId: sports[0]?.id ?? "",
@@ -123,7 +132,14 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
       setSubmitting(false);
       return;
     }
-    const response = await fetch("/api/admin/courts", {
+    if (analyticsSurface) {
+      track("court_submit_started", {
+        surface: analyticsSurface,
+        sport: form.sportId,
+      });
+    }
+
+    const response = await fetch(submitEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -202,7 +218,21 @@ export function CourtAdminForm({ sports, copy }: CourtFormProps) {
     }
 
     setSubmitting(false);
-    showToast({ variant: "success", message: copy.success });
+    if (analyticsSurface) {
+      track("court_submit_success", {
+        surface: analyticsSurface,
+        sport: form.sportId,
+        courtId: courtId ?? null,
+      });
+    }
+    const requiresApproval = data?.requiresApproval === true;
+    showToast({
+      variant: "success",
+      message:
+        requiresApproval && copy.successPending
+          ? copy.successPending
+          : copy.success,
+    });
     setForm((prev) => ({
       ...prev,
       sportId: sports[0]?.id ?? "",

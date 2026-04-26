@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { GroupFinder } from "@/components/group-finder";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { getSportMeta } from "@/data/sportMeta";
 import {
@@ -53,12 +54,12 @@ export async function generateMetadata({
   const alternates = buildLocaleAlternates(canonicalPath);
   const title =
     locale === "th"
-      ? `ค้นหาก๊วน ${meta.name[locale]} | RacketThailand`
+      ? `ค้นหากลุ่ม ${meta.name[locale]} | RacketThailand`
       : `${meta.name[locale]} Group Finder | RacketThailand`;
   const description =
     locale === "th"
-      ? `ค้นหากลุ่ม ${meta.name[locale]} ที่เปิดรับสมาชิก พร้อมวันเวลาและข้อมูลติดต่อในประเทศไทย`
-      : `Find active ${meta.name[locale]} groups in Thailand with schedules and contact details.`;
+      ? `ค้นหากลุ่ม ${meta.name[locale]} ที่เปิดรับสมาชิก พร้อมวันเวลาและข้อมูลติดต่อทั่วประเทศไทย`
+      : `Find active ${meta.name[locale]} groups in Thailand with schedules, contacts, and nearby map context.`;
 
   return {
     title,
@@ -131,7 +132,6 @@ export default async function GroupFinderPage({
     backLink: t("groupFinder.backLink"),
     sessionsLabel: t("groupFinder.sessionsLabel"),
     scheduleAnytime: t("groupFinder.scheduleAnytime"),
-    lastUpdated: t("groupFinder.lastUpdated"),
     dayFilterLabel: t("groupFinder.dayFilterLabel"),
     anyDayLabel: t("groupFinder.anyDayLabel"),
     startTimeLabel: t("groupFinder.startTimeLabel"),
@@ -150,14 +150,22 @@ export default async function GroupFinderPage({
     playerAmountLabel: t("groups.detail.playerAmount"),
     phoneLabel: t("groups.detail.phone"),
     lineLabel: t("groups.detail.line"),
+    createGroupCta: t("header.createGroup"),
   };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <HeaderSubLabel value={meta.name[locale]} />
-      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
-          <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+      <main className="relative mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--rt-primary-rgb)/0.16),transparent_42%),radial-gradient(circle_at_92%_18%,rgb(var(--foreground-rgb)/0.08),transparent_44%)]"
+        />
+        <section className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)] backdrop-blur">
+          <span className="rounded-full border border-[rgb(var(--rt-primary-rgb)/0.3)] bg-[rgb(var(--rt-primary-rgb)/0.1)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--rt-primary-rgb))]">
+            {t("header.groupFinder")}
+          </span>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
             {copy.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
@@ -168,6 +176,18 @@ export default async function GroupFinderPage({
             >
               {t("groupFinder.backToSport")}
             </Link>
+            <TrackedLink
+              href={buildLocalizedPath("/groups/create", locale)}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "group_finder_header",
+                cta: "create_group",
+                sport: resolvedParams.sport,
+              }}
+              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            >
+              {t("header.createGroup")}
+            </TrackedLink>
           </div>
         </section>
         <GroupFinder

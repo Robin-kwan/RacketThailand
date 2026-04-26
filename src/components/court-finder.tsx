@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { track } from "@vercel/analytics";
 import type { CourtRecord } from "@/server/courtFinder";
-import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import {
+  buildLocalizedPath,
+  DEFAULT_LOCALE,
+  type Locale,
+} from "@/lib/i18n";
 import { BaseSelect } from "@/components/base-select";
 import { NearbyMap } from "@/components/nearby-map";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -16,7 +21,6 @@ type CourtFinderCopy = {
   emptyTitle: string;
   emptyDescription: string;
   backLink: string;
-  lastUpdated: string;
   nearbyButton: string;
   nearbyFinding: string;
   nearbyClear: string;
@@ -26,6 +30,7 @@ type CourtFinderCopy = {
   distanceLabel: string;
   mapHeading: string;
   openMaps: string;
+  addCourtCta: string;
 };
 
 type CourtFinderProps = {
@@ -129,11 +134,21 @@ export function CourtFinder({
   }, [sportCode, debouncedSearch, province]);
 
   const handleReset = () => {
+    track("finder_filter_used", {
+      surface: "court_finder",
+      sport: sportCode,
+      cta: "reset_filters",
+    });
     setSearch("");
     setProvince("");
   };
 
   const handleRequestNearby = () => {
+    track("finder_filter_used", {
+      surface: "court_finder",
+      sport: sportCode,
+      cta: "nearby",
+    });
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setNearbyStatus(copy.nearbyUnsupported);
       return;
@@ -233,7 +248,14 @@ export function CourtFinder({
             <input
               type="text"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                track("finder_filter_used", {
+                  surface: "court_finder",
+                  sport: sportCode,
+                  cta: "search",
+                });
+              }}
               placeholder={copy.searchPlaceholder}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             />
@@ -243,7 +265,14 @@ export function CourtFinder({
               label={copy.provinceLabel}
               name="province"
               value={province}
-              onChange={(event) => setProvince(event.target.value)}
+              onChange={(event) => {
+                setProvince(event.target.value);
+                track("finder_filter_used", {
+                  surface: "court_finder",
+                  sport: sportCode,
+                  cta: "province",
+                });
+              }}
               options={provinceOptions}
               variant="light"
             />
@@ -347,6 +376,19 @@ export function CourtFinder({
             {copy.emptyTitle}
           </p>
           <p className="mt-2 text-sm text-slate-500">{copy.emptyDescription}</p>
+          <Link
+            href={buildLocalizedPath("/courts/new", locale)}
+            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            onClick={() =>
+              track("empty_state_cta_click", {
+                surface: "court_finder",
+                sport: sportCode,
+                cta: "add_court",
+              })
+            }
+          >
+            {copy.addCourtCta}
+          </Link>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
@@ -354,7 +396,7 @@ export function CourtFinder({
             const photo =
               court.court_photos?.find((p) => p.is_primary)?.image_url ??
               court.court_photos?.[0]?.image_url ??
-              "/sports/badminton.svg";
+              "/sports/badminton.png";
             const locationText = [court.district, court.province]
               .filter(Boolean)
               .join(" · ");
@@ -363,9 +405,6 @@ export function CourtFinder({
               court.price_note ? `฿ ${court.price_note}` : null,
               court.phone ? `Tel: ${court.phone}` : null,
               court.line_id ? `Line: ${court.line_id}` : null,
-              court.created_at
-                ? `${copy.lastUpdated} ${new Date(court.created_at).toLocaleDateString("en-US")}`
-                : null,
             ].filter(Boolean) as string[];
             const distanceLabel =
               distanceKm !== null

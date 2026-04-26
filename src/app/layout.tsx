@@ -94,13 +94,13 @@ export default async function RootLayout({
             <SiteHeader user={headerUser} isAdmin={isAdmin} />
           </div>
           <div className="w-full" aria-hidden="true" />
-          <main className="flex-1 text-slate-900">{children}</main>
-          <footer className="border-t border-[var(--rt-primary-border)] bg-[var(--rt-primary)] text-[rgb(var(--rt-primary-text-rgb)/0.9)]">
-            <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-6 text-sm md:flex-row md:items-center md:justify-between md:px-10">
-              <p>RacketThailand · © {new Date().getFullYear()}</p>
+          <main className="rt-main-shell flex-1 text-slate-900">{children}</main>
+          <footer className="border-t border-emerald-100/60 bg-[linear-gradient(120deg,#066049_0%,#087657_48%,#0b8f68_100%)] text-[rgb(var(--rt-primary-text-rgb)/0.94)] shadow-[0_-14px_44px_rgb(var(--foreground-rgb)/0.14)]">
+            <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-7 text-sm md:flex-row md:items-center md:justify-between md:px-10">
+              <p>RacketThailand | © {new Date().getFullYear()}</p>
               <a
                 href="mailto:racketthailand@gmail.com"
-                className="text-[rgb(var(--rt-primary-text-rgb)/0.75)] hover:text-[rgb(var(--rt-primary-text-rgb)/0.9)]"
+                className="text-[rgb(var(--rt-primary-text-rgb)/0.8)] hover:text-[rgb(var(--rt-primary-text-rgb)/0.95)]"
               >
                 Contact us: racketthailand@gmail.com
               </a>

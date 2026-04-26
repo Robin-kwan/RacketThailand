@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { CourtAdminForm } from "@/components/admin/court-form";
+import { CourtSubmissionRequests } from "@/components/admin/court-submission-requests";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -57,27 +58,28 @@ export default async function AdminCourtsPage({
 
   const copy = {
     title: t("admin.courtTitle"),
-  subtitle: t("admin.courtSubtitle"),
-  selectSport: t("admin.selectSport"),
-  name: t("admin.courtName"),
-  address: t("admin.address"),
-  district: t("admin.district"),
-  province: t("admin.province"),
-  price: t("admin.price"),
-  openingHours: t("admin.openingHours"),
-  phone: t("admin.phone"),
-  line: t("admin.line"),
-  lineQr: t("admin.lineQr"),
-  website: t("admin.website"),
-  placeSearch: t("admin.placeSearch"),
-  placeSearchHelper: t("admin.placeSearchHelper"),
-  placeSearchNoResults: t("admin.placeSearchNoResults"),
-  photos: t("admin.photos"),
-  submit: t("admin.submit"),
-  submitting: t("admin.submitting"),
-  success: t("admin.success"),
-  error: t("admin.error"),
-  locationMissing: t("admin.locationMissing"),
+    subtitle: t("admin.courtSubtitle"),
+    selectSport: t("admin.selectSport"),
+    name: t("admin.courtName"),
+    address: t("admin.address"),
+    district: t("admin.district"),
+    province: t("admin.province"),
+    price: t("admin.price"),
+    openingHours: t("admin.openingHours"),
+    phone: t("admin.phone"),
+    line: t("admin.line"),
+    lineQr: t("admin.lineQr"),
+    website: t("admin.website"),
+    placeSearch: t("admin.placeSearch"),
+    placeSearchHelper: t("admin.placeSearchHelper"),
+    placeSearchNoResults: t("admin.placeSearchNoResults"),
+    photos: t("admin.photos"),
+    submit: t("admin.submit"),
+    submitting: t("admin.submitting"),
+    success: t("admin.success"),
+    successPending: t("admin.success"),
+    error: t("admin.error"),
+    locationMissing: t("admin.locationMissing"),
   };
 
   const sportOptions =
@@ -85,6 +87,32 @@ export default async function AdminCourtsPage({
       id: sport.id,
       label: sport.name ?? sport.code,
     })) ?? [];
+  const { data: pendingCourts } = await supabaseSelect<{
+    id: string;
+    name: string | null;
+    address: string | null;
+    district: string | null;
+    province: string | null;
+    created_at: string;
+  }>("courts", {
+    select: "id,name,address,district,province,created_at",
+    is_active: "eq.false",
+    order: "created_at.desc",
+    limit: "50",
+  });
+
+  const requestCopy = {
+    title: t("admin.courtRequests.title"),
+    subtitle: t("admin.courtRequests.subtitle"),
+    empty: t("admin.courtRequests.empty"),
+    submitted: t("admin.courtRequests.submitted"),
+    view: t("admin.courtRequests.view"),
+    publish: t("admin.courtRequests.publish"),
+    reject: t("admin.courtRequests.reject"),
+    publishing: t("admin.courtRequests.publishing"),
+    rejecting: t("admin.courtRequests.rejecting"),
+    error: t("admin.courtRequests.error"),
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -101,6 +129,11 @@ export default async function AdminCourtsPage({
             <CourtAdminForm sports={sportOptions} copy={copy} />
           </div>
         </section>
+        <CourtSubmissionRequests
+          locale={locale}
+          requests={pendingCourts ?? []}
+          copy={requestCopy}
+        />
       </main>
     </div>
   );

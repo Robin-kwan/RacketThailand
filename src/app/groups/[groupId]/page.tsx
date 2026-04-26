@@ -299,7 +299,7 @@ export default async function GroupDetailPage({
   const owner = owners?.[0] ?? null;
   const sportCode = group.sports?.code;
   const fallbackImage =
-    SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.svg";
+    SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.png";
   const filteredPhotos =
     photoRows && photoRows.length > 0
       ? photoRows
@@ -429,7 +429,6 @@ export default async function GroupDetailPage({
     owner: t("groups.detail.owner"),
     scheduleAny: t("groups.detail.scheduleAny"),
     edit: t("groups.detail.edit"),
-    updated: t("groups.detail.updated"),
     sessionsTitle: t("groups.detail.sessionsTitle"),
     sessionsEmpty: t("groups.detail.sessionsEmpty"),
     playerAmount: t("groups.detail.playerAmount"),
@@ -541,19 +540,6 @@ export default async function GroupDetailPage({
                     unoptimized
                   />
                 </div>
-              </div>
-            )}
-            {displayGroup.updated_at && (
-              <div>
-                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                  {copy.updated}
-                </p>
-                <p className="text-base font-semibold text-[var(--foreground)]">
-                  {new Date(displayGroup.updated_at).toLocaleDateString(
-                    locale === "th" ? "th-TH" : "en-US",
-                    { dateStyle: "long" },
-                  )}
-                </p>
               </div>
             )}
           </div>

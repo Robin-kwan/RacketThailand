@@ -27,7 +27,24 @@
     "feedbackMessagePlaceholder": "Describe the issue or idea so we can act on it.",
     "feedbackSubmit": "Send feedback",
     "feedbackSuccess": "Thanks! Your note is in our queue.",
-    "feedbackError": "We couldn't send that. Please try again."
+    "feedbackError": "We couldn't send that. Please try again.",
+    "perspectivesTitle": "How The Platform Works For Every Role",
+    "perspectivesSubtitle": "A quick flat-view walkthrough for court owners, group owners, and regular players.",
+    "courtOwnerTitle": "Court Owner",
+    "courtOwnerDescription": "Keep your venue profile complete so players and groups can contact you faster.",
+    "courtOwnerStep1": "Publish court location, contacts, and key details",
+    "courtOwnerStep2": "Update photos, pricing notes, and opening hours",
+    "courtOwnerStep3": "Review and confirm group verification requests",
+    "groupOwnerTitle": "Group Owner",
+    "groupOwnerDescription": "Run your group in one place and make it discoverable for the right players.",
+    "groupOwnerStep1": "Create your group profile with clear descriptions",
+    "groupOwnerStep2": "Post weekly schedules and contact channels",
+    "groupOwnerStep3": "Request court verification to increase trust",
+    "regularUserTitle": "Regular Player",
+    "regularUserDescription": "Find where to play, who to join, and what is active this week.",
+    "regularUserStep1": "Search courts by sport and location",
+    "regularUserStep2": "Browse active groups and weekly sessions",
+    "regularUserStep3": "Follow community posts and updates"
   },
   "sport": {
     "emptyTitle": "Sport data unavailable",
@@ -197,6 +214,18 @@
     "mapHeading": "Map preview",
     "openMaps": "Get directions"
   },
+  "courtSubmission": {
+    "title": "Add a new court to the directory",
+    "subtitle": "Submit a venue so players can discover and contact it across Thailand. New entries go live immediately.",
+    "subtitleRequestOnly": "Submit a court request for moderator review. Approved requests are published to the public finder.",
+    "submit": "Publish court",
+    "submitting": "Publishing",
+    "success": "Court published successfully.",
+    "successPending": "Court request submitted. A moderator will review it before publishing.",
+    "error": "Unable to publish this court right now.",
+    "back": "Back to home",
+    "submitRequest": "Submit request"
+  },
   "groupFinder": {
     "title": "Group finder for {sport}",
     "subtitle": "Browse community groups and review their weekly sessions.",
@@ -257,6 +286,34 @@
     "photos": "Court photos (optional, max 8)",
     "panelTitle": "Admin panel",
     "panelSubtitle": "Manage courts, owners, and upcoming sport data sources.",
+    "courtSubmissionPolicy": {
+      "title": "Public court submission policy",
+      "subtitle": "Control whether member-submitted courts publish immediately or require moderator approval first.",
+      "directMode": "Direct publish enabled",
+      "requestMode": "Request review only",
+      "switchToDirect": "Enable direct publish",
+      "switchToRequest": "Require moderator approval",
+      "updating": "Updating...",
+      "error": "Unable to update court submission policy right now.",
+      "current": "Current mode",
+      "toggleLabel": "Allow direct publish",
+      "save": "Save policy",
+      "saving": "Saving...",
+      "saved": "Policy saved.",
+      "unsaved": "Unsaved changes"
+    },
+    "courtRequests": {
+      "title": "Pending court requests",
+      "subtitle": "Review community-submitted court requests and choose whether to publish them.",
+      "empty": "No pending court requests right now.",
+      "submitted": "Submitted",
+      "view": "View",
+      "publish": "Publish",
+      "reject": "Reject",
+      "publishing": "Publishing...",
+      "rejecting": "Rejecting...",
+      "error": "Unable to update this request right now."
+    },
     "panelFeatures": {
       "courts": {
         "title": "Add courts",
@@ -351,12 +408,21 @@
   },
   "notifications": {
     "title": "Notifications",
+    "subtitle": "Review recent activity and manage what you've already seen.",
     "empty": "You're all caught up.",
+    "viewAll": "View all",
     "markAll": "Mark all read",
     "markRead": "Dismiss",
     "reviewCourt": "Review court",
     "genericMessage": "New activity on your courts.",
-    "courtGroupRequest": "{group} requested verification for {court}"
+    "courtGroupRequest": "{group} requested verification for {court}",
+    "loading": "Loading notifications...",
+    "loadMore": "Load more",
+    "loginPrompt": "Sign in to see your notifications.",
+    "fetchError": "Unable to load notifications right now.",
+    "retry": "Try again",
+    "statusUnread": "Unread",
+    "statusRead": "Read"
   },
   "groups": {
     "createTitle": "Create a community group",

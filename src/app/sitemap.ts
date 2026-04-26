@@ -16,12 +16,14 @@ type MinimalEntity = {
 async function fetchEntities(
   table: "courts" | "groups",
   limit = 1000,
+  filters: Record<string, string> = {},
 ) {
   try {
     const { data } = await supabaseSelect<MinimalEntity>(
       table,
       {
         select: "id,updated_at",
+        ...filters,
         order: "updated_at.desc.nullslast",
         limit: limit.toString(),
       },
@@ -36,7 +38,7 @@ async function fetchEntities(
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [courts, groups] = await Promise.all([
-    fetchEntities("courts"),
+    fetchEntities("courts", 1000, { is_active: "eq.true" }),
     fetchEntities("groups"),
   ]);
 
@@ -50,6 +52,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...SUPPORTED_SPORTS.map((code) => ({
       url: `${BASE_URL}/${code}/group-finder`,
+    })),
+    ...SUPPORTED_SPORTS.map((code) => ({
+      url: `${BASE_URL}/${code}/board`,
     })),
   ];
 
