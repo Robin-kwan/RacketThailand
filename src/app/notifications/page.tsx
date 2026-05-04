@@ -34,10 +34,21 @@ function createCopy(t: Awaited<ReturnType<typeof getTranslator>>): Notifications
     markAll: t("notifications.markAll"),
     markRead: t("notifications.markRead"),
     reviewCourt: t("notifications.reviewCourt"),
+    reviewCasualPlay: t("notifications.reviewCasualPlay"),
     genericMessage: t("notifications.genericMessage"),
     courtGroupRequest: t("notifications.courtGroupRequest", {
       group: "{group}",
       court: "{court}",
+    }),
+    casualPlayJoinRequest: t("notifications.casualPlayJoinRequest", {
+      requester: "{requester}",
+      play: "{play}",
+    }),
+    casualPlayJoinAccepted: t("notifications.casualPlayJoinAccepted", {
+      play: "{play}",
+    }),
+    casualPlayJoinRejected: t("notifications.casualPlayJoinRejected", {
+      play: "{play}",
     }),
     loading: t("notifications.loading"),
     loadMore: t("notifications.loadMore"),

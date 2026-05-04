@@ -62,7 +62,7 @@ const fieldConfigs: { name: FieldName; labelKey: keyof CourtFormCopy; required: 
   { name: "address", labelKey: "address", required: true },
   { name: "district", labelKey: "district", required: true },
   { name: "province", labelKey: "province", required: true },
-  { name: "price_note", labelKey: "price", required: true },
+  { name: "price_note", labelKey: "price", required: false },
   { name: "phone", labelKey: "phone", required: true },
   { name: "line_id", labelKey: "line", required: false },
   { name: "website_url", labelKey: "website", required: false },

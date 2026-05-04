@@ -1,13 +1,11 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { CourtOwnerForm } from "@/components/admin/court-owner-form";
+import { CourtOwnersTable } from "@/components/admin/court-owners-table";
 import {
-  buildLocalizedPath,
-  getTranslator,
-  normalizeLocale,
-} from "@/lib/i18n";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+  AdminPortalShell,
+  buildAdminPortalNav,
+} from "@/components/admin/admin-portal-shell";
+import { getTranslator, normalizeLocale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { requireAdminPageAccess } from "@/server/admin";
 
 type SearchParams = {
   lang?: string;
@@ -30,28 +28,44 @@ export default async function CourtOwnersPage({
   const resolved = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolved?.lang);
   const t = await getTranslator(locale);
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    redirect(buildLocalizedPath("/login", locale));
-  }
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("status,display_name")
-    .eq("id", user.id)
-    .single();
-  if (profile?.status !== "admin") {
-    redirect(buildLocalizedPath("/", locale));
-  }
+  await requireAdminPageAccess(locale);
+  const navItems = buildAdminPortalNav(locale, t);
+
+  const { data: sports } = await supabaseSelect<{
+    id: string;
+    code: string;
+    name: string | null;
+  }>("sports", {
+    select: "id,code,name",
+    order: "name.asc.nullslast",
+  });
 
   const { data: courts } = await supabaseSelect<{
     id: string;
-    name: string;
+    sport_id: string;
+    name: string | null;
+    address: string | null;
+    district: string | null;
     province: string | null;
+    created_by: string | null;
+    price_note: string | null;
+    phone: string | null;
+    line_id: string | null;
+    website_url: string | null;
+    latitude: string | null;
+    longitude: string | null;
+    google_place_id: string | null;
+    sports?: {
+      code: string | null;
+      name: string | null;
+    } | null;
+    manager?: {
+      display_name: string | null;
+      username: string | null;
+    } | null;
   }>("courts", {
-    select: "id,name,province",
+    select:
+      "id,sport_id,name,address,district,province,created_by,price_note,phone,line_id,website_url,latitude:lat,longitude:lng,google_place_id,sports(code,name),manager:profiles!courts_created_by_fkey(display_name,username)",
     order: "name.asc.nullslast",
   });
 
@@ -65,14 +79,6 @@ export default async function CourtOwnersPage({
     order: "display_name.asc.nullslast",
   });
 
-  const courtOptions =
-    courts?.map((court) => ({
-      value: court.id,
-      label: court.province
-        ? `${court.name} (${court.province})`
-        : court.name,
-    })) ?? [];
-
   const profileOptions =
     profiles?.map((owner) => ({
       value: owner.id,
@@ -81,50 +87,93 @@ export default async function CourtOwnersPage({
 
   const copy = {
     title: t("admin.courtOwnersTitle"),
-    subtitle: t("admin.courtOwnersSubtitle"),
-    courtLabel: t("admin.courtLabel"),
-    profileLabel: t("admin.profileLabel"),
-    submit: t("admin.assignSubmit"),
-    submitting: t("admin.submitting"),
+    sportFilter: t("admin.courtOwnersTable.sportFilter"),
+    allSports: t("admin.courtOwnersTable.allSports"),
+    courtFilter: t("admin.courtOwnersTable.courtFilter"),
+    courtPlaceholder: t("admin.courtOwnersTable.courtPlaceholder"),
+    managerFilter: t("admin.courtOwnersTable.managerFilter"),
+    managerPlaceholder: t("admin.courtOwnersTable.managerPlaceholder"),
+    locationFilter: t("admin.courtOwnersTable.locationFilter"),
+    locationPlaceholder: t("admin.courtOwnersTable.locationPlaceholder"),
+    sportColumn: t("admin.courtOwnersTable.sportColumn"),
+    courtColumn: t("admin.courtOwnersTable.courtColumn"),
+    managerColumn: t("admin.courtOwnersTable.managerColumn"),
+    locationColumn: t("admin.courtOwnersTable.locationColumn"),
+    assignColumn: t("admin.courtOwnersTable.assignColumn"),
+    actionsColumn: t("admin.courtOwnersTable.actionsColumn"),
+    resultsLabel: t("admin.courtOwnersTable.resultsLabel"),
+    unassigned: t("admin.courtOwnersTable.unassigned"),
+    save: t("admin.courtOwnersTable.save"),
+    saving: t("admin.courtOwnersTable.saving"),
+    noResults: t("admin.courtOwnersTable.noResults"),
     success: t("admin.assignSuccess"),
     error: t("admin.assignError"),
   };
-  const canAssign = courtOptions.length > 0 && profileOptions.length > 0;
+  const rows =
+    courts?.map((court) => ({
+      id: court.id,
+      sportId: court.sport_id,
+      name: court.name,
+      address: court.address,
+      district: court.district,
+      province: court.province,
+      sportCode: court.sports?.code ?? null,
+      sportName: court.sports?.name ?? null,
+      managerId: court.created_by,
+      managerName:
+        court.manager?.display_name ?? court.manager?.username ?? null,
+      price_note: court.price_note,
+      phone: court.phone,
+      line_id: court.line_id,
+      website_url: court.website_url,
+      latitude: court.latitude,
+      longitude: court.longitude,
+      googlePlaceId: court.google_place_id,
+    })) ?? [];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
-          <p className="text-xs font-semibold uppercase text-slate-400">
-            Admin · Courts
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold text-slate-900">
-            {copy.title}
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
-          <div className="mt-6">
-            {canAssign ? (
-              <CourtOwnerForm
-                courts={courtOptions}
-                profiles={profileOptions}
-                copy={copy}
-              />
-            ) : (
-              <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
-                {t("admin.courtOwnersEmpty")}
-              </p>
-            )}
-          </div>
-        </section>
-        <section className="text-sm text-slate-500">
-          <Link
-            href={buildLocalizedPath("/admin", locale)}
-            className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:border-slate-500"
-          >
-            {t("admin.backToPanel")}
-          </Link>
-        </section>
-      </main>
-    </div>
+    <AdminPortalShell
+      activePath="/admin/court-owners"
+      title={copy.title}
+      navItems={navItems}
+      copy={{
+        navigationLabel: t("admin.navigation"),
+      }}
+    >
+      <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+        <CourtOwnersTable
+          rows={rows}
+          profiles={profileOptions}
+          sports={
+            sports?.map((sport) => ({
+              id: sport.id,
+              label: sport.name ?? sport.code,
+            })) ?? []
+          }
+          copy={{
+            ...copy,
+            editButton: t("admin.courtOwnersTable.editButton"),
+            closeDialog: t("admin.courtOwnersTable.closeDialog"),
+            updateTitle: t("admin.updateTitle"),
+            selectSport: t("admin.selectSport"),
+            name: t("admin.courtName"),
+            address: t("admin.address"),
+            district: t("admin.district"),
+            province: t("admin.province"),
+            price: t("admin.price"),
+            phone: t("admin.phone"),
+            line: t("admin.line"),
+            website: t("admin.website"),
+            placeSearch: t("admin.placeSearch"),
+            placeSearchHelper: t("admin.placeSearchHelper"),
+            placeSearchNoResults: t("admin.placeSearchNoResults"),
+            updateSubmit: t("admin.updateSubmit"),
+            updateSubmitting: t("admin.updateSubmitting"),
+            updateSuccess: t("admin.updateSuccess"),
+            locationMissing: t("admin.locationMissing"),
+          }}
+        />
+      </section>
+    </AdminPortalShell>
   );
 }

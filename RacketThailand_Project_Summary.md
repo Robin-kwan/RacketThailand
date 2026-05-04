@@ -159,6 +159,34 @@ The project starts as a **web-first** product (Next.js + Supabase). A mobile app
   - `created_at`
   - `updated_at`
 
+### 7a. casual_plays *(new)*
+- One-off sessions that expire after the play day.
+- Intended for smaller/private sessions that do **not** require court-owner verification.
+- Columns:
+  - `id` (uuid)
+  - `sport_id` (uuid → sports.id on delete cascade)
+  - `court_id` (uuid → courts.id on delete set null, optional)
+  - `owner_id` (uuid → profiles.id on delete cascade)
+  - `title`
+  - `description` (optional)
+  - `venue_name` (text, optional fallback when no linked court)
+  - `location_note` (text, optional meetup / landmark note)
+  - `play_date` (date)
+  - `start_time` (time)
+  - `end_time` (time, optional)
+  - `player_amount` (integer, optional)
+  - `phone` (text, optional)
+  - `line_id` (text, optional)
+  - `created_at`
+  - `updated_at`
+- Suggested constraints:
+  - `court_id is not null or venue_name is not null`
+  - `end_time > start_time` when `end_time` is present
+  - `player_amount > 0` when present
+- App rules:
+  - Listings may only be scheduled between "today" and one month ahead in Thailand time.
+  - Public finder/detail routes exclude rows whose `play_date` is before the current Thailand date.
+
 ### 8. community_posts *(revamped)*
 - Sport-specific community board posts stored/rendered as plain text.
 - Covers announcements, trading, questions, and meetup planning.

@@ -105,6 +105,10 @@ export function SiteHeader({
         label: labels.groupFinder ?? "Group finder",
         path: `${basePath}/group-finder`,
       },
+      {
+        label: labels.casualPlayFinder ?? "Casual plays",
+        path: `${basePath}/casual-plays`,
+      },
     ];
     return definitions.map((definition) => ({
       ...definition,
@@ -117,6 +121,7 @@ export function SiteHeader({
     labels.brand,
     labels.courtFinder,
     labels.groupFinder,
+    labels.casualPlayFinder,
     locale,
   ]);
   const autoSubLabel = useMemo(

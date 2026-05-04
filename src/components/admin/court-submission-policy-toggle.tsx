@@ -4,7 +4,6 @@ import { useEffect, useState, useTransition } from "react";
 
 type CourtSubmissionPolicyCopy = {
   title: string;
-  subtitle: string;
   current: string;
   toggleLabel: string;
   directMode: string;
@@ -83,7 +82,6 @@ export function CourtSubmissionPolicyToggle({
   return (
     <div className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-[0_18px_52px_rgb(var(--foreground-rgb)/0.08)]">
       <h2 className="text-xl font-semibold text-slate-900">{copy.title}</h2>
-      <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
 
       <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">

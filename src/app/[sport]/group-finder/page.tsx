@@ -151,6 +151,7 @@ export default async function GroupFinderPage({
     phoneLabel: t("groups.detail.phone"),
     lineLabel: t("groups.detail.line"),
     createGroupCta: t("header.createGroup"),
+    casualPlaysCta: t("sport.casualPlaysCta"),
   };
 
   return (
@@ -176,6 +177,18 @@ export default async function GroupFinderPage({
             >
               {t("groupFinder.backToSport")}
             </Link>
+            <TrackedLink
+              href={buildLocalizedPath(`/${resolvedParams.sport}/casual-plays`, locale)}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "group_finder_header",
+                cta: "open_casual_plays",
+                sport: resolvedParams.sport,
+              }}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:border-slate-500"
+            >
+              {copy.casualPlaysCta}
+            </TrackedLink>
             <TrackedLink
               href={buildLocalizedPath("/groups/create", locale)}
               eventName="sport_cta_click"

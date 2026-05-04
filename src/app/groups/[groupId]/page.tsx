@@ -23,6 +23,8 @@ import { ViewTracker } from "@/components/view-tracker";
 import { BaseCard } from "@/components/base-card";
 import { BaseScheduleList } from "@/components/base-schedule-list";
 import { BaseBackLink } from "@/components/base-back-link";
+import { ContactActionValue } from "@/components/contact-action-value";
+import { ShareButton } from "@/components/share-button";
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
@@ -137,6 +139,47 @@ type GroupMetadataRow = {
   }[] | null;
 };
 
+type GroupMetadataCourt = NonNullable<
+  NonNullable<GroupMetadataRow["group_sessions"]>[number]["courts"]
+>;
+
+function getPrimaryMetadataCourt(
+  sessions: GroupMetadataRow["group_sessions"],
+) {
+  return (
+    sessions?.find((session) => session.courts?.name)?.courts ??
+    sessions?.find((session) => session.courts)?.courts ??
+    null
+  );
+}
+
+function buildCourtSeoLabel(
+  court: GroupMetadataCourt | null,
+  sportName: string,
+  locale: "th" | "en",
+) {
+  const courtName = court?.name?.trim();
+  if (!court || !courtName) return null;
+
+  const region = court.province?.trim() || court.district?.trim() || null;
+  const normalizedCourtName = courtName.toLowerCase();
+  const normalizedSportName = sportName.toLowerCase();
+  const hasCourtKeyword =
+    normalizedCourtName.includes(normalizedSportName) ||
+    normalizedCourtName.includes("court") ||
+    normalizedCourtName.includes("สนาม");
+  const sportCourtKeyword =
+    locale === "th" ? `สนาม${sportName}` : `${sportName} court`;
+
+  return [
+    hasCourtKeyword ? null : sportCourtKeyword,
+    courtName,
+    region,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export async function generateMetadata({
   params,
   searchParams,
@@ -169,6 +212,8 @@ export async function generateMetadata({
     sportMeta?.name?.[locale] ??
     group.sports?.name ??
     (locale === "th" ? "กลุ่มกีฬาแร็กเกต" : "Sport group");
+  const primaryCourt = getPrimaryMetadataCourt(group.group_sessions);
+  const courtSeoLabel = buildCourtSeoLabel(primaryCourt, sportName, locale);
   const location =
     group.group_sessions
       ?.map(
@@ -180,9 +225,18 @@ export async function generateMetadata({
       )
       .filter((value): value is string => Boolean(value && value.trim()))[0] ??
     null;
+  const titleLocation = courtSeoLabel
+    ? ` @ ${courtSeoLabel}`
+    : location
+      ? locale === "th"
+        ? ` ที่ ${location}`
+        : ` in ${location}`
+      : "";
   const descriptionParts = [
     group.description,
-    location
+    courtSeoLabel
+      ? `${locale === "th" ? "สนาม" : "Court"}: ${courtSeoLabel}`
+      : location
       ? `${locale === "th" ? "สถานที่" : "Location"}: ${location}`
       : null,
     group.group_sessions?.length
@@ -207,26 +261,14 @@ export async function generateMetadata({
     undefined;
 
   return {
-    title: `${group.name ?? sportName}${
-      location
-        ? locale === "th"
-          ? ` ที่ ${location}`
-          : ` in ${location}`
-        : ""
-    } | ${sportName} | RacketThailand`,
+    title: `${group.name ?? sportName}${titleLocation} | ${sportName} | RacketThailand`,
     description,
     alternates: {
       canonical,
       languages: alternates,
     },
     openGraph: {
-      title: `${group.name ?? sportName}${
-        location
-          ? locale === "th"
-            ? ` ที่ ${location}`
-            : ` in ${location}`
-          : ""
-      } | RacketThailand`,
+      title: `${group.name ?? sportName}${titleLocation} | RacketThailand`,
       description,
       url: canonical,
       type: "website",
@@ -244,7 +286,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${group.name ?? sportName} | RacketThailand`,
+      title: `${group.name ?? sportName}${titleLocation} | RacketThailand`,
       description,
       images: heroImage ? [heroImage] : undefined,
     },
@@ -456,6 +498,11 @@ export default async function GroupDetailPage({
     line: t("groups.detail.line"),
     lineQr: t("groups.detail.lineQr"),
     back: t("groups.detail.back"),
+    copyAction: t("contactActions.copy"),
+    copiedAction: t("contactActions.copied"),
+    callAction: t("contactActions.call"),
+    shareAction: t("contactActions.share"),
+    linkCopiedAction: t("contactActions.linkCopied"),
   };
   const fallbackGroupName =
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
@@ -465,6 +512,12 @@ export default async function GroupDetailPage({
     locale === "th" ? "รูปสนาม" : "Court photo";
   const canEdit = isGroupOwner;
   const sportName = group.sports?.name ?? undefined;
+  const shareTitle = group.name ?? fallbackGroupName;
+  const shareText =
+    group.description ??
+    (locale === "th"
+      ? `ดูรายละเอียดกลุ่ม ${shareTitle} บน RacketThailand`
+      : `View ${shareTitle} on RacketThailand`);
   const backHref = buildLocalizedPath(
     sportCode ? `/${sportCode}/group-finder` : "/",
     locale,
@@ -492,14 +545,23 @@ export default async function GroupDetailPage({
             <h1 className="mt-3 text-3xl font-semibold text-[var(--foreground)]">
               {group.name ?? fallbackGroupName}
             </h1>
-            {canEdit && (
-              <Link
-                href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-              >
-                {copy.edit}
-              </Link>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <ShareButton
+                title={shareTitle}
+                text={shareText}
+                url={canonicalUrl}
+                label={copy.shareAction}
+                copiedLabel={copy.linkCopiedAction}
+              />
+              {canEdit && (
+                <Link
+                  href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+                >
+                  {copy.edit}
+                </Link>
+              )}
+            </div>
           </div>
           {group.description && (
             <p className="mt-2 whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.75)]">
@@ -531,14 +593,13 @@ export default async function GroupDetailPage({
                 <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.phone}
                 </p>
-                <p className="text-base font-semibold text-[var(--foreground)]">
-                  <a
-                    href={`tel:${group.phone}`}
-                    className="underline decoration-dotted"
-                  >
-                    {group.phone}
-                  </a>
-                </p>
+                <ContactActionValue
+                  mode="phone"
+                  value={group.phone}
+                  copyLabel={copy.copyAction}
+                  copiedLabel={copy.copiedAction}
+                  callLabel={copy.callAction}
+                />
               </div>
             )}
             {displayGroup.line_id && (
@@ -546,9 +607,13 @@ export default async function GroupDetailPage({
                 <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.line}
                 </p>
-                <p className="text-base font-semibold text-[var(--foreground)]">
-                  {displayGroup.line_id}
-                </p>
+                <ContactActionValue
+                  mode="copy"
+                  value={displayGroup.line_id}
+                  copyLabel={copy.copyAction}
+                  copiedLabel={copy.copiedAction}
+                  callLabel={copy.callAction}
+                />
               </div>
             )}
             {displayGroup.line_qr_url && (
