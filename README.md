@@ -10,9 +10,11 @@ The platform uses one Supabase project for all sports, with sport context select
 - `/[sport]`: Public sport portal.
 - `/[sport]/court-finder`: Public court discovery.
 - `/[sport]/group-finder`: Public group discovery.
+- `/[sport]/casual-plays`: Public one-off casual play discovery.
 - `/[sport]/board`: Public community board by sport.
 - `/courts/new`: Authenticated public court submission form (publish mode follows admin policy toggle).
 - `/groups/create`: Authenticated group creation form.
+- `/casual-plays/create`: Authenticated one-off casual play creation form.
 - `/admin`: Admin dashboard with court submission mode toggle.
 - `/admin/courts`: Admin court tools plus pending court request moderation queue.
 - `/api/sports/[code]`: Aggregated sport payload for reusable clients.

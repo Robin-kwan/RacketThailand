@@ -7,7 +7,10 @@ type Params = {
 
 type UpdatePayload = {
   checked?: boolean;
+  status?: string;
 };
+
+const VALID_STATUSES = ["open", "in_review", "resolved", "dismissed"];
 
 export async function PATCH(
   request: Request,
@@ -41,16 +44,32 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  if (typeof payload.checked !== "boolean") {
+  const updateData: Record<string, unknown> = {};
+
+  if (typeof payload.checked === "boolean") {
+    updateData.checked = payload.checked;
+  }
+
+  if (payload.status !== undefined) {
+    if (!VALID_STATUSES.includes(payload.status)) {
+      return NextResponse.json(
+        { error: "Invalid status value." },
+        { status: 400 },
+      );
+    }
+    updateData.status = payload.status;
+  }
+
+  if (Object.keys(updateData).length === 0) {
     return NextResponse.json(
-      { error: "Checked state must be provided." },
+      { error: "No valid fields to update." },
       { status: 400 },
     );
   }
 
   const { error } = await supabase
     .from("feedback")
-    .update({ checked: payload.checked })
+    .update(updateData)
     .eq("id", resolvedParams.id);
 
   if (error) {

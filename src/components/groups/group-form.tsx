@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Clock3, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import { BaseAutocomplete } from "@/components/base-autocomplete";
 import { BaseTextField } from "@/components/base-text-field";
 import { BaseNumberField } from "@/components/base-number-field";
 import { BaseTextArea } from "@/components/base-text-area";
+import {
+  TimePickerField,
+  createTimeOptions,
+  type TimePickerOption,
+} from "@/components/time-picker-field";
 
 export type Option = {
   value: string;
@@ -111,171 +116,15 @@ const createSlot = (): SessionSlot => ({
   end: "",
 });
 
-type TimeOption = {
-  value: string;
-  label: string;
+const GROUP_TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
+
+const filterTimeOptions = (
+  options: TimePickerOption[],
+  predicate: (option: TimePickerOption) => boolean,
+) => {
+  const filtered = options.filter(predicate);
+  return filtered.length > 0 ? filtered : options;
 };
-
-const TIME_OPTIONS: TimeOption[] = createTimeOptions();
-
-function createTimeOptions(): TimeOption[] {
-  const options: TimeOption[] = [];
-  const stepMinutes = 30;
-  for (let hour = 0; hour < 24; hour += 1) {
-    for (let minute = 0; minute < 60; minute += stepMinutes) {
-      const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-      const displayHour = ((hour + 11) % 12) + 1;
-      const period = hour >= 12 ? "PM" : "AM";
-      const label = `${displayHour}:${String(minute).padStart(2, "0")} ${period}`;
-      options.push({ value, label });
-    }
-  }
-  return options;
-}
-
-type TimePickerFieldProps = {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-};
-
-const formatDisplayTime = (time: string) => {
-  if (!time) return "";
-  const [hours, minutes] = time.split(":");
-  if (typeof hours === "undefined" || typeof minutes === "undefined") {
-    return time;
-  }
-  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-};
-
-function TimePickerField({ id, label, value, onChange }: TimePickerFieldProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (containerRef.current?.contains(event.target as Node)) return;
-      setOpen(false);
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-    if (open) {
-      document.addEventListener("keydown", handleKeyDown);
-    }
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
-
-  const handleSelect = (time: string) => {
-    onChange(time === value ? "" : time);
-    setOpen(false);
-  };
-
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.value);
-  };
-
-  const handleInputClick = () => {
-    setOpen((prev) => !prev);
-  };
-
-  const handleInputFocus = () => {
-    setOpen(true);
-  };
-
-  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Escape") {
-      setOpen(false);
-    }
-  };
-
-  const handleOptionKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape") {
-      setOpen(false);
-    }
-  };
-
-  const displayValue = value ?? "";
-  const formattedValue = formatDisplayTime(displayValue);
-
-  return (
-    <div className="space-y-1" ref={containerRef}>
-      <label
-        className="text-xs font-semibold text-[rgb(var(--foreground-rgb)/0.65)]"
-        htmlFor={id}
-      >
-        {label}
-      </label>
-      <div className="relative rounded-2xl border border-slate-200 bg-white transition focus-within:border-slate-400 focus-within:bg-white">
-        <div className="pointer-events-none flex h-12 items-center justify-between px-4 text-sm text-[var(--foreground)]">
-          <span
-            className={
-              formattedValue
-                ? "text-[var(--foreground)]"
-                : "text-[rgb(var(--foreground-rgb)/0.55)]"
-            }
-          >
-            {formattedValue || label}
-          </span>
-          <Clock3
-            className="h-5 w-5 text-[rgb(var(--foreground-rgb)/0.5)]"
-            aria-hidden="true"
-          />
-        </div>
-        <input
-          id={id}
-          type="time"
-          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          value={displayValue}
-          onClick={handleInputClick}
-          onFocus={handleInputFocus}
-          onKeyDown={handleInputKeyDown}
-          onChange={handleInputChange}
-          aria-haspopup="listbox"
-        />
-        {open && (
-          <div
-            className="absolute inset-x-0 top-full z-30 mt-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-lg"
-            onKeyDown={handleOptionKeyDown}
-          >
-            <div className="max-h-60 overflow-y-auto pr-1">
-              {TIME_OPTIONS.map((option) => {
-                const selected = option.value === value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`flex w-full items-center justify-between rounded-2xl px-3 py-2 text-sm transition ${
-                      selected
-                        ? "bg-slate-100 text-[var(--foreground)]"
-                        : "text-[var(--foreground)] hover:bg-slate-50"
-                    }`}
-                    onClick={() => handleSelect(option.value)}
-                    role="option"
-                    aria-selected={selected}
-                  >
-                    <span className="font-medium">{option.label}</span>
-                    <span className="text-xs text-[rgb(var(--foreground-rgb)/0.5)]">
-                      {option.value}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export function GroupForm({
   initialValues,
@@ -414,9 +263,36 @@ export function GroupForm({
         block.id === blockId
           ? {
               ...block,
-              slots: block.slots.map((slot) =>
-                slot.id === slotId ? { ...slot, [field]: value } : slot,
-              ),
+              slots: block.slots.map((slot) => {
+                if (slot.id !== slotId) {
+                  return slot;
+                }
+
+                const nextSlot = {
+                  ...slot,
+                  [field]: value,
+                };
+
+                if (
+                  field === "start" &&
+                  slot.end &&
+                  value &&
+                  slot.end <= value
+                ) {
+                  nextSlot.end = "";
+                }
+
+                if (
+                  field === "end" &&
+                  slot.start &&
+                  value &&
+                  value <= slot.start
+                ) {
+                  nextSlot.end = "";
+                }
+
+                return nextSlot;
+              }),
             }
           : block,
       ),
@@ -651,6 +527,14 @@ export function GroupForm({
                           id={startInputId}
                           label={copy.scheduleStart}
                           value={slot.start}
+                          options={
+                            slot.end
+                              ? filterTimeOptions(
+                                  GROUP_TIME_OPTIONS,
+                                  (option) => option.value < slot.end,
+                                )
+                              : GROUP_TIME_OPTIONS
+                          }
                           onChange={(next) =>
                             updateSessionSlot(
                               block.id,
@@ -664,6 +548,14 @@ export function GroupForm({
                           id={endInputId}
                           label={copy.scheduleEnd}
                           value={slot.end}
+                          options={
+                            slot.start
+                              ? filterTimeOptions(
+                                  GROUP_TIME_OPTIONS,
+                                  (option) => option.value > slot.start,
+                                )
+                              : GROUP_TIME_OPTIONS
+                          }
                           onChange={(next) =>
                             updateSessionSlot(block.id, slot.id, "end", next)
                           }

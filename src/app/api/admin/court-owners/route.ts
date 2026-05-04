@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type AssignmentPayload = {
   courtId: string;
-  profileId: string;
+  profileId?: string | null;
 };
 
 async function requireAdmin() {
@@ -35,16 +35,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const payload = (await request.json()) as AssignmentPayload;
-  if (!payload.courtId || !payload.profileId) {
+  if (!payload.courtId) {
     return NextResponse.json(
-      { error: "Missing courtId or profileId" },
+      { error: "Missing courtId" },
       { status: 400 },
     );
   }
+  const profileId =
+    typeof payload.profileId === "string" && payload.profileId.trim().length > 0
+      ? payload.profileId.trim()
+      : null;
   const { error: updateError } = await supabase
     .from("courts")
     .update({
-      created_by: payload.profileId,
+      created_by: profileId,
     })
     .eq("id", payload.courtId);
 

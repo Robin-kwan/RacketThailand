@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { deleteCourtWithAssets } from "@/server/adminDeletion";
 
 type Params = {
   courtId: string;
@@ -102,15 +103,12 @@ export async function PATCH(
     );
   }
 
-  const { error: deleteError } = await supabase
-    .from("courts")
-    .delete()
-    .eq("id", resolvedParams.courtId);
+  const deleteResult = await deleteCourtWithAssets(resolvedParams.courtId);
 
-  if (deleteError) {
+  if (!deleteResult.ok) {
     return NextResponse.json(
-      { error: deleteError.message },
-      { status: 500 },
+      { error: deleteResult.error },
+      { status: deleteResult.status },
     );
   }
 

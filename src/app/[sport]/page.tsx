@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { buildSportPagePayload } from "@/server/sportContent";
+import { fetchCasualPlaysBySport } from "@/server/casualPlays";
 import { SUPPORTED_SPORTS, getSportMeta } from "@/data/sportMeta";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
@@ -21,6 +22,7 @@ import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { getSeoKeyword } from "@/lib/seoKeywords";
 import { GroupCard } from "@/components/group-card";
 import { CourtCard } from "@/components/court-card";
+import { CasualPlayCard } from "@/components/casual-play-card";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import type { SportFeatureCard } from "@/types/sports";
 
@@ -229,6 +231,102 @@ function FeatureCarousel({
   );
 }
 
+type CasualPlayPreviewSectionProps = {
+  title: string;
+  subtitle: string;
+  emptyCopy: string;
+  ctaHref: string;
+  ctaLabel: string;
+  locale: Locale;
+  sportCode: string;
+  plays: Awaited<ReturnType<typeof fetchCasualPlaysBySport>>["plays"];
+};
+
+function CasualPlayPreviewSection({
+  title,
+  subtitle,
+  emptyCopy,
+  ctaHref,
+  ctaLabel,
+  locale,
+  sportCode,
+  plays,
+}: CasualPlayPreviewSectionProps) {
+  const hasPlays = plays.length > 0;
+
+  return (
+    <section className="px-6 py-12 text-[var(--foreground)] md:px-12">
+      <div className="mx-auto max-w-5xl">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">{title}</h2>
+            <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+              {subtitle}
+            </p>
+          </div>
+          <TrackedLink
+            href={ctaHref}
+            eventName="sport_cta_click"
+            eventPayload={{
+              surface: "sport_casual_play_preview",
+              cta: "open_casual_plays",
+              sport: sportCode,
+            }}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
+          >
+            {ctaLabel}
+            <ChevronRight
+              className="h-4 w-4"
+              strokeWidth={1.8}
+              aria-hidden
+            />
+          </TrackedLink>
+        </div>
+        {hasPlays ? (
+          <div className="-mx-6 mt-8 overflow-x-auto pb-4 md:mx-0">
+            <div className="flex snap-x snap-mandatory gap-4 px-6 md:px-0">
+              {plays.map((play) => {
+                const location = play.location_note ||
+                  [play.courts?.district, play.courts?.province]
+                    .filter(Boolean)
+                    .join(", ");
+                const venueName = play.venue_name || play.courts?.name;
+
+                return (
+                  <div
+                    key={play.id}
+                    className="snap-start w-[320px] shrink-0 md:w-[360px]"
+                  >
+                    <CasualPlayCard
+                      title={play.title || ""}
+                      href={buildLocalizedPath(
+                        `/${sportCode}/casual-plays/${play.id}`,
+                        locale,
+                      )}
+                      description={play.description}
+                      venueName={venueName}
+                      location={location || null}
+                      playDate={play.play_date}
+                      startTime={play.start_time}
+                      endTime={play.end_time}
+                      playerAmount={play.player_amount}
+                      locale={locale}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-[rgb(var(--foreground-rgb)/0.5)]">
+            {emptyCopy}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export async function generateMetadata({
   params,
   searchParams,
@@ -299,6 +397,10 @@ export default async function SportPage({
   if (!sport) {
     notFound();
   }
+
+  const casualPlayResult = await fetchCasualPlaysBySport(sport.code, {
+    limit: 10,
+  });
 
   const courtFeature = sport.features.find((feature) => feature.key === "courts");
   const groupFeature = sport.features.find((feature) => feature.key === "groups");
@@ -391,6 +493,18 @@ export default async function SportPage({
               {t("sport.groupFinderCta")}
             </TrackedLink>
             <TrackedLink
+              href={buildLocalizedPath(`/${sport.code}/casual-plays`, locale)}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "sport_hero",
+                cta: "open_casual_plays",
+                sport: sport.code,
+              }}
+              className="rounded-full border border-emerald-300 bg-emerald-50 px-6 py-3 text-sm font-semibold uppercase text-emerald-800 hover:border-emerald-500"
+            >
+              {t("sport.casualPlaysCta")}
+            </TrackedLink>
+            <TrackedLink
               href={buildLocalizedPath(`/${sport.code}/board`, locale)}
               eventName="sport_cta_click"
               eventPayload={{
@@ -417,6 +531,20 @@ export default async function SportPage({
           </div>
         </div>
       </section>
+      {casualPlayResult.plays.length > 0 && (
+        <CasualPlayPreviewSection
+          title={t("sport.latestCasualPlaysTitle")}
+          subtitle={t("sport.latestCasualPlaysSubtitle", {
+            sport: sport.name[locale],
+          })}
+          emptyCopy={carouselEmptyCopy}
+          ctaHref={buildLocalizedPath(`/${sport.code}/casual-plays`, locale)}
+          ctaLabel={t("sport.casualPlaysCta")}
+          locale={locale}
+          sportCode={sport.code}
+          plays={casualPlayResult.plays}
+        />
+      )}
       {courtFeature && (
         <FeatureCarousel
           title={t("sport.latestCourtsTitle")}

@@ -35,8 +35,12 @@ export type NotificationsPageCopy = {
   markAll: string;
   markRead: string;
   reviewCourt: string;
+  reviewCasualPlay: string;
   genericMessage: string;
   courtGroupRequest: string;
+  casualPlayJoinRequest: string;
+  casualPlayJoinAccepted: string;
+  casualPlayJoinRejected: string;
   loading: string;
   loadMore: string;
   loginPrompt: string;
@@ -180,13 +184,46 @@ export function NotificationsPageContent({
           .replace("{court}", courtName);
       }
     }
+    if (notification.type === "casual-play-join-request") {
+      const requesterName = getMetaString(notification.metadata, "requesterName");
+      const playTitle = getMetaString(notification.metadata, "playTitle");
+      if (requesterName && playTitle) {
+        return copy.casualPlayJoinRequest
+          .replace("{requester}", requesterName)
+          .replace("{play}", playTitle);
+      }
+    }
+    if (notification.type === "casual-play-join-accepted") {
+      const playTitle = getMetaString(notification.metadata, "playTitle");
+      if (playTitle) {
+        return copy.casualPlayJoinAccepted.replace("{play}", playTitle);
+      }
+    }
+    if (notification.type === "casual-play-join-rejected") {
+      const playTitle = getMetaString(notification.metadata, "playTitle");
+      if (playTitle) {
+        return copy.casualPlayJoinRejected.replace("{play}", playTitle);
+      }
+    }
     return notification.message ?? copy.genericMessage;
   };
 
-  const buildCourtHref = (notification: NotificationRecord) => {
+  const buildNotificationHref = (notification: NotificationRecord) => {
+    const playId = getMetaString(notification.metadata, "playId");
+    if (playId) {
+      return {
+        href: buildLocalizedPath(`/casual-plays/${playId}`, locale),
+        label: copy.reviewCasualPlay,
+      };
+    }
     const courtId = getMetaString(notification.metadata, "courtId");
-    if (!courtId) return null;
-    return buildLocalizedPath(`/courts/${courtId}`, locale);
+    if (courtId) {
+      return {
+        href: buildLocalizedPath(`/courts/${courtId}`, locale),
+        label: copy.reviewCourt,
+      };
+    }
+    return null;
   };
 
   return (
@@ -222,7 +259,7 @@ export function NotificationsPageContent({
         ) : (
           <ul className="space-y-3">
             {notifications.map((notification) => {
-              const courtHref = buildCourtHref(notification);
+              const notificationLink = buildNotificationHref(notification);
               const isUnread = !notification.read_at;
               return (
                 <li
@@ -253,9 +290,9 @@ export function NotificationsPageContent({
                     )}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    {courtHref && (
+                    {notificationLink && (
                       <Link
-                        href={courtHref}
+                        href={notificationLink.href}
                         className="rounded-full border border-slate-300 px-3 py-1 font-semibold text-slate-700 hover:border-slate-500"
                         onClick={() => {
                           if (isUnread) {
@@ -263,7 +300,7 @@ export function NotificationsPageContent({
                           }
                         }}
                       >
-                        {copy.reviewCourt}
+                        {notificationLink.label}
                       </Link>
                     )}
                     {isUnread && (

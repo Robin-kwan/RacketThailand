@@ -15,7 +15,6 @@ type CourtSubmissionRequest = {
 
 type CourtSubmissionRequestsCopy = {
   title: string;
-  subtitle: string;
   empty: string;
   submitted: string;
   view: string;
@@ -76,7 +75,6 @@ export function CourtSubmissionRequests({
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6">
       <h2 className="text-xl font-semibold text-slate-900">{copy.title}</h2>
-      <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
       {error && (
         <p className="mt-4 rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {error}

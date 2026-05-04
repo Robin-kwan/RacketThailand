@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getThailandTodayDateString } from "@/lib/casual-play";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { SUPPORTED_SPORTS } from "@/data/sportMeta";
 
@@ -14,7 +15,7 @@ type MinimalEntity = {
 };
 
 async function fetchEntities(
-  table: "courts" | "groups",
+  table: "courts" | "groups" | "casual_plays",
   limit = 1000,
   filters: Record<string, string> = {},
 ) {
@@ -37,9 +38,11 @@ async function fetchEntities(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [courts, groups] = await Promise.all([
+  const today = getThailandTodayDateString();
+  const [courts, groups, casualPlays] = await Promise.all([
     fetchEntities("courts", 1000, { is_active: "eq.true" }),
     fetchEntities("groups"),
+    fetchEntities("casual_plays", 1000, { play_date: `gte.${today}` }),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -52,6 +55,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...SUPPORTED_SPORTS.map((code) => ({
       url: `${BASE_URL}/${code}/group-finder`,
+    })),
+    ...SUPPORTED_SPORTS.map((code) => ({
+      url: `${BASE_URL}/${code}/casual-plays`,
     })),
     ...SUPPORTED_SPORTS.map((code) => ({
       url: `${BASE_URL}/${code}/board`,
@@ -68,5 +74,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: group.updated_at ? new Date(group.updated_at) : new Date(),
   }));
 
-  return [...staticRoutes, ...courtRoutes, ...groupRoutes];
+  const casualPlayRoutes: MetadataRoute.Sitemap = casualPlays.map((play) => ({
+    url: `${BASE_URL}/casual-plays/${play.id}`,
+    lastModified: play.updated_at ? new Date(play.updated_at) : new Date(),
+  }));
+
+  return [...staticRoutes, ...courtRoutes, ...groupRoutes, ...casualPlayRoutes];
 }

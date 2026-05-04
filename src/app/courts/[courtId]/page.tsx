@@ -26,6 +26,8 @@ import { CourtMap } from "@/components/court-map";
 import { ensureAllDays } from "@/lib/opening-hours";
 import { ViewTracker } from "@/components/view-tracker";
 import { GroupCard, type GroupCardSession } from "@/components/group-card";
+import { ContactActionValue } from "@/components/contact-action-value";
+import { ShareButton } from "@/components/share-button";
 import type { Locale } from "@/lib/i18n";
 
 function getGroupCover(group: {
@@ -368,6 +370,11 @@ export default async function CourtPage({
     statusPending: t("courtPage.statusPending"),
     statusRejected: t("courtPage.statusRejected"),
     noteLabel: t("courtPage.note"),
+    copyAction: t("contactActions.copy"),
+    copiedAction: t("contactActions.copied"),
+    callAction: t("contactActions.call"),
+    shareAction: t("contactActions.share"),
+    linkCopiedAction: t("contactActions.linkCopied"),
     edit: t("courtPage.edit"),
     groupScheduleAny: t("groups.detail.scheduleAny"),
     backToGroupFinder: t("courtPage.backToGroupFinder"),
@@ -382,6 +389,14 @@ export default async function CourtPage({
   const canEdit = isOwnerViewer;
   const canonicalPath = `/courts/${detail.court.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
+  const shareTitle = detail.court.name ?? fallbackCourtName;
+  const shareText =
+    [detail.court.address, detail.court.district, detail.court.province]
+      .filter(Boolean)
+      .join(" · ") ||
+    (locale === "th"
+      ? `ดูรายละเอียดสนาม ${shareTitle} บน RacketThailand`
+      : `View ${shareTitle} on RacketThailand`);
   const primaryImage = gallery[0]?.image_url ?? null;
   const structuredDataImage = primaryImage
     ? primaryImage.startsWith("http")
@@ -456,17 +471,26 @@ export default async function CourtPage({
                   .join(" · ")}
               </p>
             </div>
-            {canEdit && (
-              <Link
-                href={buildLocalizedPath(
-                  `/courts/${resolvedParams.courtId}/edit`,
-                  locale,
-                )}
-                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-              >
-                {copy.edit}
-              </Link>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <ShareButton
+                title={shareTitle}
+                text={shareText}
+                url={canonicalUrl}
+                label={copy.shareAction}
+                copiedLabel={copy.linkCopiedAction}
+              />
+              {canEdit && (
+                <Link
+                  href={buildLocalizedPath(
+                    `/courts/${resolvedParams.courtId}/edit`,
+                    locale,
+                  )}
+                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+                >
+                  {copy.edit}
+                </Link>
+              )}
+            </div>
           </div>
         </header>
         <CourtGallery gallery={gallery} courtName={detail.court.name} />
@@ -510,19 +534,31 @@ export default async function CourtPage({
                 </li>
               )}
               {detail.court.phone && (
-                <li>
+                <li className="space-y-1">
                   <strong className="text-slate-900">
                     {copy.phone}:
-                  </strong>{" "}
-                  {detail.court.phone}
+                  </strong>
+                  <ContactActionValue
+                    mode="phone"
+                    value={detail.court.phone}
+                    copyLabel={copy.copyAction}
+                    copiedLabel={copy.copiedAction}
+                    callLabel={copy.callAction}
+                  />
                 </li>
               )}
               {detail.court.line_id && (
-                <li>
+                <li className="space-y-1">
                   <strong className="text-slate-900">
                     {copy.line}:
-                  </strong>{" "}
-                  {detail.court.line_id}
+                  </strong>
+                  <ContactActionValue
+                    mode="copy"
+                    value={detail.court.line_id}
+                    copyLabel={copy.copyAction}
+                    copiedLabel={copy.copiedAction}
+                    callLabel={copy.callAction}
+                  />
                 </li>
               )}
               {detail.court.line_qr_url && (

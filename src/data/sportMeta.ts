@@ -31,7 +31,7 @@ export const SPORT_META: Record<string, SportMeta> = {
     coverImage: "/sports/badminton.png",
     heroHeadline: l("สนามและก๊วนตีแบดในที่เดียว", "Badminton courts & groups in one place."),
     heroDescription: l(
-      "สำรวจสนามแบดที่ยืนยันแล้ว ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และติดต่อแอดมินได้ในที่เดียว",
+      "สำรวจสนามแบดที่ยืนยันแล้ว ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และช่องทางติดต่อ",
       "Explore verified venues, check active groups, and contact organizers directly from the same portal.",
     ),
     closingTitle: l("มีสนามหรือก๊วนตีแบดใหม่?", "Have new badminton courts or groups?"),
