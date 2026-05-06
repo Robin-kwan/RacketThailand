@@ -210,8 +210,6 @@ function FeatureCarousel({
                         imageUrl={cover}
                         imageAlt={card.title}
                         location={card.subtitle || card.location || undefined}
-                        details={card.details}
-                        primaryBadge={card.badgeLabel ?? card.location ?? null}
                         imageAspectClass="aspect-[4/3]"
                         showDetails={card.details.length > 0}
                       />
@@ -300,7 +298,7 @@ function CasualPlayPreviewSection({
                     <CasualPlayCard
                       title={play.title || ""}
                       href={buildLocalizedPath(
-                        `/${sportCode}/casual-plays/${play.id}`,
+                        `/casual-plays/${play.id}`,
                         locale,
                       )}
                       description={play.description}
