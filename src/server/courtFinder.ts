@@ -4,6 +4,7 @@ import type { OpeningHoursEntry } from "@/lib/opening-hours";
 export type CourtRecord = {
   id: string;
   name: string | null;
+  description: string | null;
   address: string | null;
   district: string | null;
   province: string | null;
@@ -50,7 +51,7 @@ function buildSearchClause(query: string) {
   const sanitized = query.replace(/[%*]/g, "").trim();
   if (!sanitized) return undefined;
   const term = `*${sanitized}*`;
-  return `(name.ilike.${term},district.ilike.${term},province.ilike.${term},address.ilike.${term})`;
+  return `(name.ilike.${term},description.ilike.${term},district.ilike.${term},province.ilike.${term},address.ilike.${term})`;
 }
 
 export async function fetchCourtFilters(
@@ -87,7 +88,7 @@ export async function fetchCourtsBySport(
 
   const params: Record<string, string> = {
     select:
-      "id,name,address,district,province,price_note,phone,line_id,website_url,google_place_id,created_at,updated_at,is_active,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
+      "id,name,description,address,district,province,price_note,phone,line_id,website_url,google_place_id,created_at,updated_at,is_active,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
     sport_id: `eq.${sportRow.id}`,
     is_active: "eq.true",
     order: "created_at.desc",
@@ -155,7 +156,7 @@ type CourtGroupLink = {
 export async function fetchCourtDetail(courtId: string) {
   const { data: courts } = await supabaseSelect<CourtRecord>("courts", {
     select:
-      "id,name,address,district,province,price_note,opening_hours,phone,line_id,line_qr_url,website_url,google_place_id,created_at,updated_at,is_active,sport_id,created_by,latitude:lat,longitude:lng",
+      "id,name,description,address,district,province,price_note,opening_hours,phone,line_id,line_qr_url,website_url,google_place_id,created_at,updated_at,is_active,sport_id,created_by,latitude:lat,longitude:lng",
     id: `eq.${courtId}`,
     limit: "1",
   });

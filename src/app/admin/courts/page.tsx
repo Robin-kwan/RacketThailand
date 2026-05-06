@@ -95,12 +95,13 @@ export default async function AdminCourtsPage({
       supabaseSelect<{
         id: string;
         name: string | null;
+        description: string | null;
         address: string | null;
         district: string | null;
         province: string | null;
         created_at: string;
       }>("courts", {
-        select: "id,name,address,district,province,created_at",
+        select: "id,name,description,address,district,province,created_at",
         is_active: "eq.false",
         order: "created_at.desc",
         limit: "50",
@@ -126,6 +127,7 @@ export default async function AdminCourtsPage({
   const copy = {
     selectSport: t("admin.selectSport"),
     name: t("admin.courtName"),
+    description: t("admin.description"),
     address: t("admin.address"),
     district: t("admin.district"),
     province: t("admin.province"),

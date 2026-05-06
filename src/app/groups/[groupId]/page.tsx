@@ -329,6 +329,14 @@ export default async function GroupDetailPage({
     sessionUser?.id && group.owner_id
       ? sessionUser.id === group.owner_id
       : false;
+  const { data: viewerProfile } = sessionUser
+    ? await supabase
+        .from("profiles")
+        .select("status")
+        .eq("id", sessionUser.id)
+        .single()
+    : { data: null };
+  const isAdminViewer = viewerProfile?.status === "admin";
 
   const resolvedLineQrUrl = await ensureGroupLineQrUrl(
     group.id,
@@ -510,7 +518,7 @@ export default async function GroupDetailPage({
     locale === "th" ? "สนามที่เชื่อมไว้" : "Linked court";
   const fallbackCourtPhotoAlt =
     locale === "th" ? "รูปสนาม" : "Court photo";
-  const canEdit = isGroupOwner;
+  const canEdit = Boolean(isGroupOwner || isAdminViewer);
   const sportName = group.sports?.name ?? undefined;
   const shareTitle = group.name ?? fallbackGroupName;
   const shareText =

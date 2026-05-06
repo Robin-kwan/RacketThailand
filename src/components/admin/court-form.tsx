@@ -35,6 +35,7 @@ type CourtFormProps = {
   copy: {
     selectSport: string;
     name: string;
+    description: string;
     address: string;
     district: string;
     province: string;
@@ -72,6 +73,7 @@ export function CourtAdminForm({
   const [form, setForm] = useState<CourtFormValues>({
     sportId: sports[0]?.id ?? "",
     name: "",
+    description: "",
     address: "",
     district: "",
     province: "",
@@ -237,6 +239,7 @@ export function CourtAdminForm({
       ...prev,
       sportId: sports[0]?.id ?? "",
       name: "",
+      description: "",
       address: "",
       district: "",
       province: "",

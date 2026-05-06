@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { showToast } from "@/components/toaster";
 
 type CourtSubmissionPolicyCopy = {
   title: string;
@@ -28,21 +29,7 @@ export function CourtSubmissionPolicyToggle({
     useState(initialAllowPublicCourtPublish);
   const [draftAllowPublicCourtPublish, setDraftAllowPublicCourtPublish] =
     useState(initialAllowPublicCourtPublish);
-  const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (!savedMessage) {
-      return;
-    }
-    const timeoutId = window.setTimeout(() => {
-      setSavedMessage(null);
-    }, 2600);
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [savedMessage]);
 
   useEffect(() => {
     setPersistedAllowPublicCourtPublish(initialAllowPublicCourtPublish);
@@ -57,8 +44,6 @@ export function CourtSubmissionPolicyToggle({
       return;
     }
 
-    setError(null);
-    setSavedMessage(null);
     startTransition(async () => {
       const response = await fetch("/api/admin/court-submission-policy", {
         method: "PATCH",
@@ -69,13 +54,16 @@ export function CourtSubmissionPolicyToggle({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data?.error || copy.error);
+        showToast({
+          variant: "error",
+          message: data?.error || copy.error,
+        });
         return;
       }
       const updatedValue = Boolean(data?.allowPublicCourtPublish);
       setPersistedAllowPublicCourtPublish(updatedValue);
       setDraftAllowPublicCourtPublish(updatedValue);
-      setSavedMessage(copy.saved);
+      showToast({ variant: "success", message: copy.saved });
     });
   };
 
@@ -142,18 +130,7 @@ export function CourtSubmissionPolicyToggle({
             {copy.unsaved}
           </span>
         )}
-        {savedMessage && (
-          <span className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            {savedMessage}
-          </span>
-        )}
       </div>
-
-      {error && (
-        <p className="mt-3 rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

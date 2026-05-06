@@ -180,6 +180,7 @@ export async function generateMetadata({
     .filter((part): part is string => Boolean(part && part.trim()))
     .join(", ");
   const descriptionParts = [
+    court.description,
     court.address,
     locationParts,
     court.price_note
@@ -356,6 +357,7 @@ export default async function CourtPage({
 
   const copy = {
     contact: t("courtPage.contact"),
+    description: t("courtPage.description"),
     address: t("courtPage.address"),
     price: t("courtPage.price"),
     phone: t("courtPage.phone"),
@@ -386,7 +388,7 @@ export default async function CourtPage({
   const fallbackGroupPhotoAlt =
     locale === "th" ? "รูปกลุ่ม" : "Group photo";
 
-  const canEdit = isOwnerViewer;
+  const canEdit = Boolean(isOwnerViewer || isAdminViewer);
   const canonicalPath = `/courts/${detail.court.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
   const shareTitle = detail.court.name ?? fallbackCourtName;
@@ -416,6 +418,7 @@ export default async function CourtPage({
     "@type": "SportsActivityLocation",
     "@id": canonicalUrl,
     name: detail.court.name ?? (locale === "th" ? "สนาม" : "Court"),
+    description: detail.court.description ?? undefined,
     url: canonicalUrl,
     image: structuredDataImage,
     telephone: detail.court.phone ?? undefined,
@@ -504,6 +507,16 @@ export default async function CourtPage({
               {copy.contact}
             </h2>
             <ul className="space-y-3 text-sm text-slate-600">
+              {detail.court.description && (
+                <li>
+                  <strong className="text-slate-900">
+                    {copy.description}:
+                  </strong>
+                  <p className="mt-1 whitespace-pre-line">
+                    {detail.court.description}
+                  </p>
+                </li>
+              )}
               {detail.court.address && (
                 <li>
                   <strong className="text-slate-900">
@@ -667,6 +680,7 @@ export default async function CourtPage({
                     badge={
                       statusLabel ? (
                         <span
+                          key={`${group.id}-status-badge`}
                           className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass}`}
                         >
                           {statusLabel}
@@ -675,7 +689,10 @@ export default async function CourtPage({
                     }
                     footer={
                       group.note ? (
-                        <p className="text-xs italic text-[rgb(var(--foreground-rgb)/0.7)]">
+                        <p
+                          key={`${group.id}-note-footer`}
+                          className="text-xs italic text-[rgb(var(--foreground-rgb)/0.7)]"
+                        >
                           {copy.noteLabel}: {group.note}
                         </p>
                       ) : null

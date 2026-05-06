@@ -31,6 +31,7 @@ type CourtRecord = {
   id: string;
   sportId: string;
   name: string;
+  description: string;
   address: string;
   district: string;
   province: string;
@@ -90,6 +91,7 @@ type CourtEditFormProps = {
     subtitle: string;
     selectSport: string;
     name: string;
+    description: string;
     address: string;
     district: string;
     province: string;
@@ -124,6 +126,7 @@ export function CourtEditForm({
   const [form, setForm] = useState<CourtFormValues>({
     sportId: court.sportId,
     name: court.name,
+    description: court.description,
     address: court.address,
     district: court.district,
     province: court.province,

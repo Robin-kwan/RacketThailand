@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { showToast } from "@/components/toaster";
 
 type ForgotCopy = {
   emailLabel: string;
@@ -51,8 +52,6 @@ export function ForgotPasswordForm({ copy }: ForgotPasswordFormProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const isCoolingDown = cooldownRemaining > 0;
 
@@ -83,14 +82,16 @@ export function ForgotPasswordForm({ copy }: ForgotPasswordFormProps) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isCoolingDown) {
-      setError(
-        copy.cooldown.replace("{time}", formatCooldown(cooldownRemaining)),
-      );
+      showToast({
+        variant: "error",
+        message: copy.cooldown.replace(
+          "{time}",
+          formatCooldown(cooldownRemaining),
+        ),
+      });
       return;
     }
     setSubmitting(true);
-    setMessage(null);
-    setError(null);
     const redirectTo = `${window.location.origin}/auth/reset`;
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
@@ -98,7 +99,7 @@ export function ForgotPasswordForm({ copy }: ForgotPasswordFormProps) {
     );
     setSubmitting(false);
     if (resetError) {
-      setError(copy.error);
+      showToast({ variant: "error", message: copy.error });
       return;
     }
     if (normalizedEmail) {
@@ -107,7 +108,7 @@ export function ForgotPasswordForm({ copy }: ForgotPasswordFormProps) {
     } else {
       setCooldownRemaining(0);
     }
-    setMessage(copy.success);
+    showToast({ variant: "success", message: copy.success });
   };
 
   return (
@@ -125,8 +126,6 @@ export function ForgotPasswordForm({ copy }: ForgotPasswordFormProps) {
           required
         />
       </div>
-      {error && <p className="text-sm text-rose-400">{error}</p>}
-      {message && <p className="text-sm text-emerald-400">{message}</p>}
       <button
         type="submit"
         disabled={submitting || isCoolingDown}

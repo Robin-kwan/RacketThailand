@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { CommunityComment } from "@/server/communityBoard";
+import { showToast } from "@/components/toaster";
 
 type CommunityCommentItemProps = {
   comment: CommunityComment;
@@ -26,18 +27,16 @@ export function CommunityCommentItem({
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(comment.body_text);
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
 
   const handleSave = () => {
     startTransition(async () => {
-      setError(null);
       const response = await fetch(`/api/community/comments/${comment.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body }),
       });
       if (!response.ok) {
-        setError("Unable to update comment");
+        showToast({ variant: "error", message: "Unable to update comment" });
         return;
       }
       setEditing(false);
@@ -87,7 +86,6 @@ export function CommunityCommentItem({
             rows={4}
             className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--rt-primary)]"
           />
-          {error && <p className="text-xs text-red-400">{error}</p>}
           <div className="flex gap-2 text-xs">
             <button
               type="button"

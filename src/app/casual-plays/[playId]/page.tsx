@@ -209,6 +209,15 @@ export default async function CasualPlayDetailPage({
     sessionUser?.id && play.owner_id
       ? sessionUser.id === play.owner_id
       : false;
+  const { data: viewerProfile } = sessionUser
+    ? await supabase
+        .from("profiles")
+        .select("status")
+        .eq("id", sessionUser.id)
+        .single()
+    : { data: null };
+  const isAdminViewer = viewerProfile?.status === "admin";
+  const canEdit = Boolean(isOwner || isAdminViewer);
   const allowPublicContact = play.allow_public_contact === true;
   const maxPlayers =
     typeof play.player_amount === "number" &&
@@ -444,7 +453,7 @@ export default async function CasualPlayDetailPage({
                 label={copy.shareAction}
                 copiedLabel={copy.linkCopiedAction}
               />
-              {isOwner && (
+              {canEdit && (
                 <Link
                   href={buildLocalizedPath(`/casual-plays/${play.id}/edit`, locale)}
                   className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"

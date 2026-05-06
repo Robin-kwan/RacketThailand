@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
 import { buildLocalizedPath } from "@/lib/i18n";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { showToast } from "@/components/toaster";
 
 type SignupCopy = {
   nameLabel: string;
@@ -28,7 +29,6 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -50,18 +50,19 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
     const confirm = String(formData.get("confirmPassword") ?? "");
 
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      showToast({ variant: "error", message: "Passwords do not match." });
       return;
     }
     if (!passwordPattern.test(password)) {
-      setError(
-        "Password must include lowercase, uppercase, digit, and symbol (min 8 characters).",
-      );
+      showToast({
+        variant: "error",
+        message:
+          "Password must include lowercase, uppercase, digit, and symbol (min 8 characters).",
+      });
       return;
     }
 
     setSubmitting(true);
-    setError(null);
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -78,20 +79,24 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
         "status" in signUpError && signUpError.status === 422;
       const message = signUpError.message?.toLowerCase() ?? "";
       if (alreadyRegistered || message.includes("registered")) {
-        setError(
-          "An account with this email already exists. Try signing in or request a password reset.",
-        );
+        showToast({
+          variant: "error",
+          message:
+            "An account with this email already exists. Try signing in or request a password reset.",
+        });
       } else {
-        setError(signUpError.message);
+        showToast({ variant: "error", message: signUpError.message });
       }
       return;
     }
 
     const identities = signUpData?.user?.identities;
     if (Array.isArray(identities) && identities.length === 0) {
-      setError(
-        "This email is already registered. Please sign in or request a password reset.",
-      );
+      showToast({
+        variant: "error",
+        message:
+          "This email is already registered. Please sign in or request a password reset.",
+      });
       return;
     }
 
@@ -193,7 +198,6 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
           </button>
         </div>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
       <p className="text-xs text-slate-500">{copy.passwordRequirements}</p>
       <button
         type="submit"

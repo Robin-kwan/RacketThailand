@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { showToast } from "@/components/toaster";
 
 type CommunityCommentFormProps = {
   postId: string;
@@ -16,14 +17,12 @@ export function CommunityCommentForm({
 }: CommunityCommentFormProps) {
   const router = useRouter();
   const [body, setBody] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!body.trim()) return;
     startTransition(async () => {
-      setMessage(null);
       const response = await fetch(
         `/api/community/posts/${postId}/comments`,
         {
@@ -33,11 +32,10 @@ export function CommunityCommentForm({
         },
       );
       if (!response.ok) {
-        setMessage("Unable to post comment.");
+        showToast({ variant: "error", message: "Unable to post comment." });
         return;
       }
       setBody("");
-      setMessage(null);
       router.refresh();
     });
   };
@@ -52,7 +50,6 @@ export function CommunityCommentForm({
         rows={4}
       />
       <div className="flex items-center justify-between text-sm text-slate-400">
-        {message && <p>{message}</p>}
         <button
           type="submit"
           disabled={pending || !body.trim()}

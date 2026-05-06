@@ -396,6 +396,7 @@
     "courtSubtitle": "Use this form to onboard verified venues submitted by owners or via email.",
     "selectSport": "Sport",
     "courtName": "Court / venue name",
+    "description": "Description",
     "address": "Street address",
     "district": "District",
     "province": "Province",
@@ -658,6 +659,7 @@
   },
   "courtPage": {
     "contact": "Location & Contact",
+    "description": "Description",
     "address": "Address",
     "price": "Pricing",
     "phone": "Phone",

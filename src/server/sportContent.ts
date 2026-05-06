@@ -14,6 +14,7 @@ type PhotoRow = {
 type CourtRow = {
   id: string;
   name: string | null;
+  description: string | null;
   address: string | null;
   district: string | null;
   province: string | null;
@@ -116,6 +117,7 @@ function mapCourts(
       title: court.name ?? "Unnamed court",
       subtitle: location || "",
       details: compactDetails([
+        court.description,
         court.line_id ? `Line: ${court.line_id}` : null,
       ]),
       imageUrl,
@@ -243,7 +245,7 @@ export async function buildSportPagePayload(
 
     const courtsPromise = supabaseSelect<CourtRow>("courts", {
       select:
-        "id,name,address,district,province,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
+        "id,name,description,address,district,province,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
       sport_id: `eq.${sportId}`,
       is_active: "eq.true",
       order: "created_at.desc",

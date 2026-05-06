@@ -5,6 +5,7 @@ import type { OpeningHoursEntry } from "@/lib/opening-hours";
 type CourtPayload = Partial<{
   sportId: string;
   name: string;
+  description?: string;
   address: string;
   district?: string;
   province: string;
@@ -78,6 +79,11 @@ export async function PATCH(
   }
   if (payload.name !== undefined) {
     update.name = payload.name;
+  }
+  if (payload.description !== undefined) {
+    const description =
+      typeof payload.description === "string" ? payload.description.trim() : "";
+    update.description = description || null;
   }
   if (payload.address !== undefined) {
     update.address = payload.address;

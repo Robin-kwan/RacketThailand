@@ -59,7 +59,13 @@ export default async function EditCommunityPostPage({
   if (!isAuthenticated || !user) {
     redirect(buildLocalizedPath("/login", locale));
   }
-  if (post.author_id !== user.id) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("status")
+    .eq("id", user.id)
+    .single();
+  const isAdmin = profile?.status === "admin";
+  if (!isAdmin && post.author_id !== user.id) {
     redirect(buildLocalizedPath(`/${sport}/board/${post.id}`, locale));
   }
 

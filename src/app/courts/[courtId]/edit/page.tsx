@@ -61,6 +61,7 @@ export default async function EditCourtPage({
     address: string | null;
     district: string | null;
     province: string | null;
+    description: string | null;
     price_note: string | null;
     opening_hours: OpeningHoursEntry[] | null;
     phone: string | null;
@@ -73,7 +74,7 @@ export default async function EditCourtPage({
     line_qr_url: string | null;
   }>("courts", {
     select:
-      "id,sport_id,name,address,district,province,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id,line_qr_url",
+      "id,sport_id,name,address,district,province,description,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id,line_qr_url",
     id: `eq.${resolvedParams.courtId}`,
     limit: "1",
   });
@@ -118,6 +119,7 @@ export default async function EditCourtPage({
     id: court.id,
     sportId: court.sport_id,
     name: court.name ?? "",
+    description: court.description ?? "",
     address: court.address ?? "",
     district: court.district ?? "",
     province: court.province ?? "",
@@ -137,6 +139,7 @@ export default async function EditCourtPage({
     subtitle: t("admin.updateSubtitle"),
     selectSport: t("admin.selectSport"),
     name: t("admin.courtName"),
+    description: t("admin.description"),
     address: t("admin.address"),
     district: t("admin.district"),
     province: t("admin.province"),

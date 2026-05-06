@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { BaseSelect } from "@/components/base-select";
+import { showToast } from "@/components/toaster";
 
 type CommunityPostFormProps = {
   sportCode: string;
@@ -29,13 +30,11 @@ export function CommunityPostForm({
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(categories[0]?.key ?? "event");
   const [body, setBody] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     startTransition(async () => {
-      setMessage(null);
       const response = await fetch("/api/community/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,10 +47,10 @@ export function CommunityPostForm({
         }),
       });
       if (!response.ok) {
-        setMessage(copy.error);
+        showToast({ variant: "error", message: copy.error });
         return;
       }
-      setMessage(copy.success);
+      showToast({ variant: "success", message: copy.success });
       setTitle("");
       setBody("");
       router.push(redirectTo);
@@ -98,11 +97,6 @@ export function CommunityPostForm({
           required
         />
       </div>
-      {message && (
-        <p className="text-sm text-[var(--rt-primary)]" role="status">
-          {message}
-        </p>
-      )}
       <button
         type="submit"
         disabled={pending}

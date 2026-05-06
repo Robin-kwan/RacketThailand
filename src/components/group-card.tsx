@@ -91,7 +91,7 @@ function SessionList({
               <span className="font-semibold">{dayLabel}</span> · {timeRange}
               {courtName &&
                 (courtHref ? (
-                  <>
+                  <span>
                     {courtConnector}
                     <button
                       type="button"
@@ -103,12 +103,12 @@ function SessionList({
                     >
                       {courtName}
                     </button>
-                  </>
+                  </span>
                 ) : (
-                  <>
+                  <span>
                     {courtConnector}
                     <span className="text-blue-600">{courtName}</span>
-                  </>
+                  </span>
                 )
                 )}
             </li>

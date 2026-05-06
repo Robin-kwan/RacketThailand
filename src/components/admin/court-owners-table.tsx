@@ -32,6 +32,7 @@ export type CourtOwnerTableRow = {
   sportName: string | null;
   managerId: string | null;
   managerName: string | null;
+  description: string | null;
   price_note: string | null;
   phone: string | null;
   line_id: string | null;
@@ -68,6 +69,7 @@ type CourtOwnersTableCopy = {
   updateTitle: string;
   selectSport: string;
   name: string;
+  description: string;
   address: string;
   district: string;
   province: string;
@@ -103,6 +105,7 @@ function buildFormFromRow(row: CourtOwnerTableRow): CourtFormValues {
   return {
     sportId: row.sportId,
     name: row.name ?? "",
+    description: row.description ?? "",
     address: row.address ?? "",
     district: row.district ?? "",
     province: row.province ?? "",
@@ -344,6 +347,7 @@ export function CourtOwnersTable({
         body: JSON.stringify({
           sportId: editForm.sportId,
           name: editForm.name,
+          description: editForm.description,
           address: editForm.address,
           district: editForm.district,
           province: editForm.province,
@@ -370,6 +374,7 @@ export function CourtOwnersTable({
                 sportId: editForm.sportId,
                 sportName: sportNameById.get(editForm.sportId) ?? row.sportName,
                 name: editForm.name,
+                description: editForm.description,
                 address: editForm.address,
                 district: editForm.district,
                 province: editForm.province,
@@ -608,6 +613,7 @@ export function CourtOwnersTable({
                 copy={{
                   selectSport: copy.selectSport,
                   name: copy.name,
+                  description: copy.description,
                   address: copy.address,
                   district: copy.district,
                   province: copy.province,

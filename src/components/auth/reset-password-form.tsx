@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { showToast } from "@/components/toaster";
 type ResetCopy = {
   newLabel: string;
   confirmLabel: string;
@@ -24,8 +25,6 @@ export function ResetPasswordForm({ copy }: { copy: ResetCopy }) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
 
@@ -35,7 +34,7 @@ export function ResetPasswordForm({ copy }: { copy: ResetCopy }) {
       const { data } = await supabase.auth.getSession();
       if (!active) return;
       if (!data.session) {
-        setError(copy.sessionMissing);
+        showToast({ variant: "error", message: copy.sessionMissing });
       } else {
         setSessionReady(true);
       }
@@ -48,33 +47,31 @@ export function ResetPasswordForm({ copy }: { copy: ResetCopy }) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!sessionReady) {
-      setError(copy.sessionMissing);
+      showToast({ variant: "error", message: copy.sessionMissing });
       return;
     }
     if (password !== confirmPassword) {
-      setError(copy.errorMismatch);
+      showToast({ variant: "error", message: copy.errorMismatch });
       return;
     }
     if (!COMPLEXITY_REGEX.test(password)) {
-      setError(copy.errorWeak);
+      showToast({ variant: "error", message: copy.errorWeak });
       return;
     }
-    setError(null);
-    setSuccess(null);
     setUpdating(true);
     const { error: updateError } = await supabase.auth.updateUser({
       password,
     });
     setUpdating(false);
     if (updateError) {
-      setError(updateError.message);
+      showToast({ variant: "error", message: updateError.message });
       return;
     }
     await supabase.auth.signOut();
     if (typeof document !== "undefined") {
       document.cookie = "rt-recovery=; Max-Age=0; path=/";
     }
-    setSuccess(copy.success);
+    showToast({ variant: "success", message: copy.success });
     setTimeout(() => {
       const lang = searchParams?.get("lang");
       router.replace(lang ? `/login?lang=${lang}` : "/login");
@@ -111,8 +108,6 @@ export function ResetPasswordForm({ copy }: { copy: ResetCopy }) {
           required
         />
       </div>
-      {error && <p className="text-sm text-rose-400">{error}</p>}
-      {success && <p className="text-sm text-emerald-400">{success}</p>}
       <button
         type="submit"
         disabled={updating}

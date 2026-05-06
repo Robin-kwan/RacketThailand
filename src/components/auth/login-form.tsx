@@ -8,6 +8,7 @@ import {
   setAuthStorageMode,
   type AuthStorageMode,
 } from "@/lib/supabase-browser";
+import { showToast } from "@/components/toaster";
 import type { Locale } from "@/lib/i18n";
 import { buildLocalizedPath } from "@/lib/i18n";
 
@@ -38,8 +39,6 @@ export function LoginForm({
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -58,8 +57,6 @@ export function LoginForm({
     const password = String(formData.get("password") ?? "");
 
     setSubmitting(true);
-    setError(null);
-    setSuccess(null);
 
     const mode: AuthStorageMode = rememberMe ? "local" : "session";
     setAuthStorageMode(mode);
@@ -72,7 +69,7 @@ export function LoginForm({
     setSubmitting(false);
 
     if (signInError) {
-      setError(signInError.message);
+      showToast({ variant: "error", message: signInError.message });
       return;
     }
 
@@ -98,7 +95,7 @@ export function LoginForm({
       console.error("Profile ensure failed", apiError);
     }
 
-    setSuccess("Signed in successfully.");
+    showToast({ variant: "success", message: "Signed in successfully." });
     const target = buildLocalizedPath(redirectTo, locale);
     router.replace(target);
     router.refresh();
@@ -106,8 +103,6 @@ export function LoginForm({
 
   const handleGoogleLogin = async () => {
     if (typeof window === "undefined") return;
-    setError(null);
-    setSuccess(null);
     setGoogleLoading(true);
     const redirectPath = buildLocalizedPath(redirectTo, locale);
     const baseUrl =
@@ -124,7 +119,7 @@ export function LoginForm({
     });
     if (oauthError) {
       setGoogleLoading(false);
-      setError(oauthError.message);
+      showToast({ variant: "error", message: oauthError.message });
     }
   };
 
@@ -196,8 +191,6 @@ export function LoginForm({
             {copy.forgotPassword}
           </button>
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {success && <p className="text-sm text-emerald-600">{success}</p>}
         <button
           type="submit"
           disabled={submitting}

@@ -406,14 +406,6 @@ export function CourtFinder({
             const locationText = [court.district, court.province]
               .filter(Boolean)
               .join(" · ");
-            const details = [
-              court.address ?? null,
-              court.price_note ? `฿ ${court.price_note}` : null,
-              court.phone
-                ? `${locale === "th" ? "โทร" : "Tel"}: ${court.phone}`
-                : null,
-              court.line_id ? `LINE: ${court.line_id}` : null,
-            ].filter(Boolean) as string[];
             const distanceLabel =
               distanceKm !== null
                 ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
@@ -426,7 +418,6 @@ export function CourtFinder({
                 imageUrl={photo}
                 imageAlt={court.name ?? fallbackCourtImageAlt}
                 location={locationText}
-                details={details}
                 primaryBadge={court.province || "TH"}
                 secondaryBadge={distanceLabel}
               />
