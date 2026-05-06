@@ -137,6 +137,19 @@ export default async function CommunityPostPage({
   const isAuthenticated = Boolean(
     user?.id && user.email && !user.is_anonymous,
   );
+  const { data: viewerProfile } = isAuthenticated && user
+    ? await supabase
+        .from("profiles")
+        .select("status")
+        .eq("id", user.id)
+        .single()
+    : { data: null };
+  const isAdminViewer = viewerProfile?.status === "admin";
+  const canEditPost = Boolean(
+    isAuthenticated &&
+      user?.id &&
+      (post.author_id === user.id || isAdminViewer),
+  );
 
   const { data: existingLike } = isAuthenticated && user
     ? await supabase
@@ -219,7 +232,7 @@ export default async function CommunityPostPage({
                 )}
               </span>
             )}
-            {isAuthenticated && user && post.author_id === user.id && (
+            {canEditPost && (
               <Link
                 href={buildLocalizedPath(
                   `/${sport}/board/${post.id}/edit`,
@@ -280,7 +293,13 @@ export default async function CommunityPostPage({
                 <CommunityCommentItem
                   key={comment.id}
                   comment={comment}
-                  canEdit={isAuthenticated && Boolean(user?.id && comment.author_id === user.id)}
+                  canEdit={
+                    isAuthenticated &&
+                    Boolean(
+                      user?.id &&
+                        (comment.author_id === user.id || isAdminViewer),
+                    )
+                  }
                   copy={{
                     edit: copy.editComment,
                     save: copy.saveComment,

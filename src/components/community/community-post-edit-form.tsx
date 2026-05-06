@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { BaseSelect } from "@/components/base-select";
+import { showToast } from "@/components/toaster";
 
 type CommunityPostEditFormProps = {
   postId: string;
@@ -38,13 +39,11 @@ export function CommunityPostEditForm({
   const [title, setTitle] = useState(initialValues.title);
   const [category, setCategory] = useState(initialValues.category);
   const [body, setBody] = useState(initialValues.body);
-  const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     startTransition(async () => {
-      setMessage(null);
       const response = await fetch(`/api/community/posts/${postId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -56,10 +55,10 @@ export function CommunityPostEditForm({
         }),
       });
       if (!response.ok) {
-        setMessage(copy.error);
+        showToast({ variant: "error", message: copy.error });
         return;
       }
-      setMessage(copy.success);
+      showToast({ variant: "success", message: copy.success });
       router.push(redirectTo);
       router.refresh();
     });
@@ -103,11 +102,6 @@ export function CommunityPostEditForm({
           required
         />
       </div>
-      {message && (
-        <p className="text-sm text-emerald-300" role="status">
-          {message}
-        </p>
-      )}
       <button
         type="submit"
         disabled={pending}

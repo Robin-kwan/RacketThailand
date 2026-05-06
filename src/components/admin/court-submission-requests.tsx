@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
+import { showToast } from "@/components/toaster";
 
 type CourtSubmissionRequest = {
   id: string;
   name: string | null;
+  description: string | null;
   address: string | null;
   district: string | null;
   province: string | null;
@@ -46,11 +48,9 @@ export function CourtSubmissionRequests({
   const [pendingAction, setPendingAction] = useState<"publish" | "reject" | null>(
     null,
   );
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleAction = (courtId: string, action: "publish" | "reject") => {
-    setError(null);
     setPendingId(courtId);
     setPendingAction(action);
     startTransition(async () => {
@@ -61,7 +61,10 @@ export function CourtSubmissionRequests({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data?.error || copy.error);
+        showToast({
+          variant: "error",
+          message: data?.error || copy.error,
+        });
         setPendingId(null);
         setPendingAction(null);
         return;
@@ -75,11 +78,6 @@ export function CourtSubmissionRequests({
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6">
       <h2 className="text-xl font-semibold text-slate-900">{copy.title}</h2>
-      {error && (
-        <p className="mt-4 rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
-        </p>
-      )}
       {items.length === 0 ? (
         <p className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
           {copy.empty}
@@ -101,6 +99,11 @@ export function CourtSubmissionRequests({
                     <p className="text-lg font-semibold text-slate-900">
                       {court.name?.trim() || "Unnamed court"}
                     </p>
+                    {court.description && (
+                      <p className="mt-1 max-w-2xl whitespace-pre-line text-sm text-slate-600">
+                        {court.description}
+                      </p>
+                    )}
                     {court.address && (
                       <p className="mt-1 text-sm text-slate-600">{court.address}</p>
                     )}

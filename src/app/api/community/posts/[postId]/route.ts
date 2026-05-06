@@ -14,6 +14,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("status")
+    .eq("id", user.id)
+    .single();
+  const isAdmin = profile?.status === "admin";
 
   const payload = await request.json();
   const { title, body_text, category } = payload;
@@ -37,7 +43,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  if (existingPost.author_id !== user.id) {
+  if (!isAdmin && existingPost.author_id !== user.id) {
     return NextResponse.json(
       { error: "Forbidden" },
       { status: 403 },

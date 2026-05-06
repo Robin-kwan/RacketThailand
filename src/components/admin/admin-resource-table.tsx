@@ -86,7 +86,6 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
   const [items, setItems] = useState(rows);
   const [query, setQuery] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const filteredItems = useMemo(() => {
@@ -101,7 +100,6 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
       .replace("{item}", row.title);
     if (!window.confirm(message)) return;
 
-    setError(null);
     setPendingId(row.id);
     startTransition(async () => {
       const response = await fetch(row.deleteEndpoint, {
@@ -112,7 +110,6 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
       if (!response.ok) {
         const message =
           typeof data?.error === "string" ? data.error : copy.error;
-        setError(message);
         showToast({ variant: "error", message });
         setPendingId(null);
         return;
@@ -152,12 +149,6 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
           {filteredItems.length.toLocaleString()} {copy.resultsLabel}
         </p>
       </div>
-
-      {error && (
-        <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-          {error}
-        </p>
-      )}
 
       {!hasItems ? (
         <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">

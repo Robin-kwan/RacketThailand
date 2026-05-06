@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { BaseSelect } from "@/components/base-select";
 import { BaseTextField } from "@/components/base-text-field";
+import { showToast } from "@/components/toaster";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type Profile = {
@@ -67,8 +68,6 @@ export function ProfileForm({
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const defaultSportOptions = useMemo(
     () => [
       { value: "", label: copy.defaultSportPlaceholder },
@@ -108,15 +107,11 @@ export function ProfileForm({
     }
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
-    setSuccess(null);
-    setError(null);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
-    setError(null);
-    setSuccess(null);
 
     let avatarUrl = form.avatar_url;
     if (avatarFile) {
@@ -133,7 +128,7 @@ export function ProfileForm({
         });
 
       if (uploadError) {
-        setError(uploadError.message);
+        showToast({ variant: "error", message: uploadError.message });
         setSaving(false);
         setUploading(false);
         return;
@@ -174,14 +169,17 @@ export function ProfileForm({
 
     if (!response.ok) {
       if (payload?.error === "USERNAME_TAKEN") {
-        setError(copy.usernameTaken);
+        showToast({ variant: "error", message: copy.usernameTaken });
       } else {
-        setError(payload?.error || copy.genericError);
+        showToast({
+          variant: "error",
+          message: payload?.error || copy.genericError,
+        });
       }
       return;
     }
 
-    setSuccess(copy.success);
+    showToast({ variant: "success", message: copy.success });
   };
 
   const avatarInitial =
@@ -281,9 +279,6 @@ export function ProfileForm({
         options={defaultSportOptions}
         variant="light"
       />
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {success && <p className="text-sm text-emerald-600">{success}</p>}
 
       <button
         type="submit"

@@ -407,6 +407,7 @@ export function CourtFinder({
               .filter(Boolean)
               .join(" · ");
             const details = [
+              court.description ?? null,
               court.address ?? null,
               court.price_note ? `฿ ${court.price_note}` : null,
               court.phone

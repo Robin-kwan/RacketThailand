@@ -13,6 +13,7 @@ type SportOption = {
 export type CourtFormValues = {
   sportId: string;
   name: string;
+  description: string;
   address: string;
   district: string;
   province: string;
@@ -28,6 +29,7 @@ export type CourtFormValues = {
 export type CourtFormCopy = {
   selectSport: string;
   name: string;
+  description: string;
   address: string;
   district: string;
   province: string;
@@ -49,6 +51,7 @@ type CourtFormFieldsProps = {
 
 type FieldName =
   | "name"
+  | "description"
   | "address"
   | "district"
   | "province"
@@ -59,6 +62,7 @@ type FieldName =
 
 const fieldConfigs: { name: FieldName; labelKey: keyof CourtFormCopy; required: boolean }[] = [
   { name: "name", labelKey: "name", required: true },
+  { name: "description", labelKey: "description", required: false },
   { name: "address", labelKey: "address", required: true },
   { name: "district", labelKey: "district", required: true },
   { name: "province", labelKey: "province", required: true },
@@ -94,7 +98,7 @@ export function CourtFormFields({
           <label className="text-sm font-semibold text-slate-700">
             {copy[field.labelKey]}
           </label>
-          {field.name === "price_note" ? (
+          {field.name === "description" || field.name === "price_note" ? (
             <>
               <BaseTextArea
                 name={field.name}
@@ -104,9 +108,11 @@ export function CourtFormFields({
                 rows={4}
                 variant="light"
               />
-              <p className="text-xs text-slate-500">
-                Supports basic HTML (e.g., &lt;strong&gt;, &lt;br/&gt;).
-              </p>
+              {field.name === "price_note" && (
+                <p className="text-xs text-slate-500">
+                  Supports basic HTML (e.g., &lt;strong&gt;, &lt;br/&gt;).
+                </p>
+              )}
             </>
           ) : (
             <BaseTextField

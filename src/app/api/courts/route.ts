@@ -10,6 +10,7 @@ import type { OpeningHoursEntry } from "@/lib/opening-hours";
 type CourtCreatePayload = {
   sportId?: string;
   name?: string;
+  description?: string;
   address?: string;
   district?: string;
   province?: string;
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
 
   const sportId = sanitizeText(payload.sportId);
   const name = sanitizeText(payload.name);
+  const description = sanitizeText(payload.description);
   const address = sanitizeText(payload.address);
   const district = sanitizeText(payload.district);
   const province = sanitizeText(payload.province);
@@ -127,6 +129,7 @@ export async function POST(request: Request) {
     .insert({
       sport_id: sportId,
       name,
+      description: description || null,
       address,
       district: district || null,
       province,

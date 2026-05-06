@@ -67,6 +67,7 @@ export default async function DashboardAddCourtPage({
     subtitle: t("admin.courtSubtitle"),
     selectSport: t("admin.selectSport"),
     name: t("admin.courtName"),
+    description: t("admin.description"),
     address: t("admin.address"),
     district: t("admin.district"),
     province: t("admin.province"),

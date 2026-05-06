@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { showToast } from "@/components/toaster";
 
 export type AdminFeedbackRow = {
   id: string;
@@ -71,7 +72,6 @@ function getStatusSelectClass(status: string | null): string {
 export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
   const [items, setItems] = useState(rows);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [sortType, setSortType] = useState<SortType>("date-desc");
 
@@ -93,7 +93,6 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
 
   const updateStatus = (rowId: string, newStatus: string) => {
     setPendingId(rowId);
-    setError(null);
     startTransition(async () => {
       const response = await fetch(`/api/feedback/${rowId}`, {
         method: "PATCH",
@@ -101,7 +100,7 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
         body: JSON.stringify({ status: newStatus }),
       });
       if (!response.ok) {
-        setError(copy.error);
+        showToast({ variant: "error", message: copy.error });
         setPendingId(null);
         return;
       }
@@ -116,7 +115,6 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
 
   const toggleChecked = (rowId: string, nextState: boolean) => {
     setPendingId(rowId);
-    setError(null);
     startTransition(async () => {
       const response = await fetch(`/api/feedback/${rowId}`, {
         method: "PATCH",
@@ -124,7 +122,7 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
         body: JSON.stringify({ checked: nextState }),
       });
       if (!response.ok) {
-        setError(copy.error);
+        showToast({ variant: "error", message: copy.error });
         setPendingId(null);
         return;
       }
@@ -140,11 +138,6 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
   if (items.length === 0) {
     return (
       <div className="space-y-3">
-        {error && (
-          <p className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error}
-          </p>
-        )}
         <div className="rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
           <p className="text-sm text-slate-600">
             {copy.empty}
@@ -156,12 +149,6 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
 
   return (
     <div className="space-y-4">
-      {error && (
-        <p className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </p>
-      )}
-      
       <div className="flex items-center gap-2">
         <span className="text-xs font-semibold text-slate-700">
           {copy.sortBy}

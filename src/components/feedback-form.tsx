@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { showToast } from "@/components/toaster";
 
 type FeedbackFormCopy = {
   title: string;
@@ -22,15 +23,11 @@ export function FeedbackForm({ copy }: FeedbackFormProps) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting) return;
     setSubmitting(true);
-    setError(null);
-    setSuccess(null);
     try {
       const response = await fetch("/api/feedback", {
         method: "POST",
@@ -46,15 +43,17 @@ export function FeedbackForm({ copy }: FeedbackFormProps) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || copy.errorMessage);
       }
-      setSuccess(copy.successMessage);
+      showToast({ variant: "success", message: copy.successMessage });
       setSubject("");
       setMessage("");
     } catch (feedbackError) {
-      setError(
-        feedbackError instanceof Error
-          ? feedbackError.message
-          : copy.errorMessage,
-      );
+      showToast({
+        variant: "error",
+        message:
+          feedbackError instanceof Error
+            ? feedbackError.message
+            : copy.errorMessage,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -99,8 +98,6 @@ export function FeedbackForm({ copy }: FeedbackFormProps) {
             required
           />
         </div>
-        {error && <p className="text-sm text-red-300">{error}</p>}
-        {success && <p className="text-sm text-[rgb(var(--rt-primary-text-rgb)/0.75)]">{success}</p>}
         <button
           type="submit"
           disabled={submitting || !message.trim()}
