@@ -172,6 +172,7 @@ export default async function CreateGroupPage({
                 courts={courts}
                 copy={copy}
                 dayOptions={dayOptions}
+                locale={locale}
               />
             </div>
           )}

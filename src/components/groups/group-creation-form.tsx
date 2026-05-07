@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { track } from "@vercel/analytics";
 import { MultiImageInput } from "@/components/multi-image-input";
 import { LineQrUploader } from "@/components/line-qr-uploader";
 import { showToast } from "@/components/toaster";
+import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import {
   GroupForm,
   GroupFormCopy,
@@ -26,6 +28,7 @@ type GroupCreationFormProps = {
   courts: Record<string, Option[]>;
   copy: GroupCreationCopy;
   dayOptions: Option[];
+  locale: Locale;
 };
 
 const GROUP_BUCKET =
@@ -35,7 +38,9 @@ export function GroupCreationForm({
   courts,
   copy,
   dayOptions,
+  locale,
 }: GroupCreationFormProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [images, setImages] = useState<File[]>([]);
   const [lineQrFile, setLineQrFile] = useState<File | null>(null);
@@ -147,6 +152,12 @@ export function GroupCreationForm({
       cta: "create_group",
     });
     showToast({ variant: "success", message: copy.success });
+    if (groupId) {
+      window.setTimeout(() => {
+        router.push(buildLocalizedPath(`/groups/${groupId}`, locale));
+      }, 900);
+      return;
+    }
     setImages([]);
     if (lineQrPreview?.startsWith("blob:")) {
       URL.revokeObjectURL(lineQrPreview);

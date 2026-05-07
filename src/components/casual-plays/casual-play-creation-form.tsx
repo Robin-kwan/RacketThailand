@@ -100,8 +100,10 @@ export function CasualPlayCreationForm({
       cta: "create_casual_play",
     });
     showToast({ variant: "success", message: copy.success });
-    router.push(buildLocalizedPath(`/casual-plays/${data.playId}`, locale));
-    router.refresh();
+    window.setTimeout(() => {
+      router.push(buildLocalizedPath(`/casual-plays/${data.playId}`, locale));
+      router.refresh();
+    }, 900);
   };
 
   return (

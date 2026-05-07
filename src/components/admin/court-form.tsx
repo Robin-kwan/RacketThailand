@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { track } from "@vercel/analytics";
 import { MultiImageInput } from "@/components/multi-image-input";
@@ -22,6 +23,7 @@ import {
   ensureAllDays,
   type OpeningHoursEntry,
 } from "@/lib/opening-hours";
+import { buildLocalizedPath, normalizeLocale } from "@/lib/i18n";
 
 type SportOption = {
   id: string;
@@ -73,6 +75,7 @@ export function CourtAdminForm({
   analyticsSurface,
   copy,
 }: CourtFormProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const initialSportId =
     defaultSportId && sports.some((sport) => sport.id === defaultSportId)
@@ -243,6 +246,18 @@ export function CourtAdminForm({
           ? copy.successPending
           : copy.success,
     });
+    if (courtId) {
+      const locale =
+        typeof window === "undefined"
+          ? "th"
+          : normalizeLocale(
+              new URLSearchParams(window.location.search).get("lang"),
+            );
+      window.setTimeout(() => {
+        router.push(buildLocalizedPath(`/courts/${courtId}`, locale));
+      }, 900);
+      return;
+    }
     setForm((prev) => ({
       ...prev,
       sportId: sports[0]?.id ?? "",
