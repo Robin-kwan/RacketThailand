@@ -28,15 +28,15 @@ const VARIANT_CLASSNAMES: Record<
   dark: {
     container: "border-slate-700 bg-slate-900/60",
     remove:
-      "bg-[rgb(var(--rt-primary-soft-rgb)/0.8)] text-[var(--rt-primary-text)] hover:bg-[rgb(var(--rt-primary-rgb)/0.85)] hover:text-white",
-    footer: "bg-black/60 text-white",
+      "border border-white/80 bg-black/55 text-white shadow-sm hover:border-white hover:bg-black/75",
+    footer: "bg-black/75 text-white",
     placeholder: "text-slate-400",
   },
   light: {
     container: "border-slate-200 bg-white shadow-sm",
     remove:
-      "bg-white/90 text-[var(--foreground)] border border-slate-200 hover:border-slate-400 hover:text-[var(--foreground)]",
-    footer: "bg-[rgb(var(--foreground-rgb)/0.08)] text-[var(--foreground)]",
+      "border border-white/80 bg-black/55 text-white shadow-sm hover:border-white hover:bg-black/75",
+    footer: "bg-black/75 text-white",
     placeholder: "text-[rgb(var(--foreground-rgb)/0.55)]",
   },
 };

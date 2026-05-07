@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { CourtAdminForm } from "@/components/admin/court-form";
 import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
+import { SPORT_META } from "@/data/sportMeta";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -15,6 +16,7 @@ import { supabaseSelect } from "@/lib/supabaseRest";
 
 type SearchParams = {
   lang?: string;
+  sport?: string;
 };
 
 type SearchParamsInput = Promise<SearchParams> | undefined;
@@ -96,8 +98,17 @@ export default async function NewCourtPage({
   const sportOptions =
     sports?.map((sport) => ({
       id: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
+  const requestedSport = resolved?.sport?.trim().toLowerCase();
+  const defaultSportId =
+    requestedSport && sports
+      ? sports.find(
+          (sport) =>
+            sport.code.toLowerCase() === requestedSport ||
+            sport.id.toLowerCase() === requestedSport,
+        )?.id
+      : undefined;
 
   const copy = {
     selectSport: t("admin.selectSport"),
@@ -116,6 +127,8 @@ export default async function NewCourtPage({
     placeSearchHelper: t("admin.placeSearchHelper"),
     placeSearchNoResults: t("admin.placeSearchNoResults"),
     photos: t("admin.photos"),
+    primaryPhoto: t("admin.primaryPhoto"),
+    makePrimaryPhoto: t("admin.makePrimaryPhoto"),
     submit: allowPublicCourtPublish
       ? t("courtSubmission.submit")
       : t("courtSubmission.submitRequest"),
@@ -150,6 +163,7 @@ export default async function NewCourtPage({
           <div className="mt-8">
             <CourtAdminForm
               sports={sportOptions}
+              defaultSportId={defaultSportId}
               submitEndpoint="/api/courts"
               analyticsSurface="public_court_form"
               copy={copy}

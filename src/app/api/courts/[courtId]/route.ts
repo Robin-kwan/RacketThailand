@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { deleteCourtWithAssets } from "@/server/adminDeletion";
 
 type CourtPayload = Partial<{
   sportId: string;
@@ -141,6 +142,30 @@ export async function PATCH(
     return NextResponse.json(
       { error: updateError.message },
       { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(
+  _request: Request,
+  options: { params: Promise<RouteParams> },
+) {
+  const resolved = await resolveParams(options.params);
+  const { user, error } = await requireCourtAccess(resolved.courtId);
+  if (error === "UNAUTHORIZED") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (error === "FORBIDDEN" || !user) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const result = await deleteCourtWithAssets(resolved.courtId);
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.status },
     );
   }
 

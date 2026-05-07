@@ -388,6 +388,12 @@
       "submitting": "Saving",
       "success": "Casual play updated.",
       "error": "Unable to update the casual play.",
+      "deleteSubmit": "Delete casual play",
+      "deleting": "Deleting",
+      "deleteSuccess": "Casual play deleted.",
+      "deleteError": "Unable to delete this casual play right now.",
+      "deleteConfirm": "Delete this casual play? It will be removed from the listing.",
+      "deleteCancel": "Cancel",
       "back": "Back to casual play"
     }
   },
@@ -421,7 +427,15 @@
     "updateSubmit": "Save changes",
     "updateSubmitting": "Updating",
     "updateSuccess": "Court updated successfully.",
+    "deleteSubmit": "Delete court",
+    "deleting": "Deleting",
+    "deleteSuccess": "Court deleted.",
+    "deleteError": "Unable to delete this court right now.",
+    "deleteConfirm": "Delete this court? Court photos and LINE QR images will also be removed.",
+    "deleteCancel": "Cancel",
     "photos": "Court photos (optional, max 8)",
+    "primaryPhoto": "Primary",
+    "makePrimaryPhoto": "Make primary",
     "panelTitle": "Admin panel",
     "panelSubtitle": "Manage courts, owners, and upcoming sport data sources.",
     "portalLabel": "Admin portal",
@@ -535,6 +549,7 @@
         "edit": "Edit",
         "delete": "Delete",
         "deleting": "Deleting",
+        "cancel": "Cancel",
         "noDetails": "No details"
       },
       "common": {
@@ -799,6 +814,12 @@
       "submitting": "Saving",
       "success": "Group updated successfully.",
       "error": "Unable to update the group. Try again.",
+      "deleteSubmit": "Delete group",
+      "deleting": "Deleting",
+      "deleteSuccess": "Group deleted.",
+      "deleteError": "Unable to delete this group right now.",
+      "deleteConfirm": "Delete this group? Group photos and LINE QR images will also be removed.",
+      "deleteCancel": "Cancel",
       "back": "Back to group page"
     }
   }

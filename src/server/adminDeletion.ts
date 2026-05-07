@@ -224,6 +224,15 @@ export async function deleteCasualPlay(playId: string): Promise<DeleteResult> {
     return { ok: false, status: 404, error: "Casual play not found." };
   }
 
+  const { error: joinRequestsError } = await supabase
+    .from("casual_play_join_requests")
+    .delete()
+    .eq("play_id", playId);
+
+  if (joinRequestsError) {
+    return { ok: false, status: 500, error: joinRequestsError.message };
+  }
+
   const { error: deleteError } = await supabase
     .from("casual_plays")
     .delete()

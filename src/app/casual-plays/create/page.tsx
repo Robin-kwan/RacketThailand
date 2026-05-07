@@ -3,6 +3,7 @@ import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import { CasualPlayCreationForm } from "@/components/casual-plays/casual-play-creation-form";
 import type { Option } from "@/components/groups/group-form";
+import { SPORT_META } from "@/data/sportMeta";
 import {
   getMaxCasualPlayDateString,
   getThailandTodayDateString,
@@ -61,11 +62,14 @@ export default async function CreateCasualPlayPage({
   const sports =
     sportsRes.data?.map((sport) => ({
       value: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
 
   const sportLabelMap = new Map(
-    sportsRes.data?.map((sport) => [sport.id, sport.name ?? sport.code]) ?? [],
+    sportsRes.data?.map((sport) => [
+      sport.id,
+      SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
+    ]) ?? [],
   );
 
   const courts = courtsRes.data?.reduce<Record<string, Option[]>>(

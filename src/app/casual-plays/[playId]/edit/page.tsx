@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import { CasualPlayEditForm } from "@/components/casual-plays/casual-play-edit-form";
+import { EntityDeleteButton } from "@/components/entity-delete-button";
 import type { Option } from "@/components/groups/group-form";
 import {
   getMaxCasualPlayDateString,
@@ -13,6 +14,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
@@ -122,11 +124,14 @@ export default async function EditCasualPlayPage({
   const sports =
     sportsRes.data?.map((sport) => ({
       value: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
 
   const sportLabelMap = new Map(
-    sportsRes.data?.map((sport) => [sport.id, sport.name ?? sport.code]) ?? [],
+    sportsRes.data?.map((sport) => [
+      sport.id,
+      SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
+    ]) ?? [],
   );
 
   const courts = courtsRes.data?.reduce<Record<string, Option[]>>(
@@ -175,6 +180,7 @@ export default async function EditCasualPlayPage({
     lineId: play.line_id ?? "",
     allowPublicContact: play.allow_public_contact === true,
   };
+  const currentSportSlug = play.sports?.code ?? undefined;
 
   const copy = {
     title: t("casualPlays.edit.title"),
@@ -210,14 +216,40 @@ export default async function EditCasualPlayPage({
     submitting: t("casualPlays.edit.submitting"),
     success: t("casualPlays.edit.success"),
     error: t("casualPlays.edit.error"),
+    deleteSubmit: t("casualPlays.edit.deleteSubmit"),
+    deleting: t("casualPlays.edit.deleting"),
+    deleteSuccess: t("casualPlays.edit.deleteSuccess"),
+    deleteError: t("casualPlays.edit.deleteError"),
+    deleteConfirm: t("casualPlays.edit.deleteConfirm"),
+    deleteCancel: t("casualPlays.edit.deleteCancel"),
   };
+  const deleteRedirectHref = buildLocalizedPath(
+    currentSportSlug ? `/${currentSportSlug}/casual-plays` : "/",
+    locale,
+  );
 
   return (
     <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <BaseBackLink href={buildLocalizedPath(`/casual-plays/${play.id}`, locale)}>
-          {t("casualPlays.edit.back")}
-        </BaseBackLink>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <BaseBackLink
+            href={buildLocalizedPath(`/casual-plays/${play.id}`, locale)}
+          >
+            {t("casualPlays.edit.back")}
+          </BaseBackLink>
+          <EntityDeleteButton
+            endpoint={`/api/casual-plays/${play.id}`}
+            redirectHref={deleteRedirectHref}
+            copy={{
+              submit: copy.deleteSubmit,
+              deleting: copy.deleting,
+              success: copy.deleteSuccess,
+              error: copy.deleteError,
+              confirm: copy.deleteConfirm,
+              cancel: copy.deleteCancel,
+            }}
+          />
+        </div>
         <BaseCard
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white p-8"

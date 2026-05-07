@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { track } from "@vercel/analytics";
 import { MultiImageInput } from "@/components/multi-image-input";
@@ -22,6 +23,7 @@ import {
   ensureAllDays,
   type OpeningHoursEntry,
 } from "@/lib/opening-hours";
+import { buildLocalizedPath, normalizeLocale } from "@/lib/i18n";
 
 type SportOption = {
   id: string;
@@ -30,6 +32,7 @@ type SportOption = {
 
 type CourtFormProps = {
   sports: SportOption[];
+  defaultSportId?: string;
   submitEndpoint?: string;
   analyticsSurface?: string;
   copy: {
@@ -49,6 +52,8 @@ type CourtFormProps = {
     placeSearchHelper: string;
     placeSearchNoResults: string;
     photos: string;
+    primaryPhoto: string;
+    makePrimaryPhoto: string;
     submit: string;
     submitting: string;
     success: string;
@@ -65,13 +70,19 @@ const COURT_LINE_QR_BUCKET =
 
 export function CourtAdminForm({
   sports,
+  defaultSportId,
   submitEndpoint = "/api/admin/courts",
   analyticsSurface,
   copy,
 }: CourtFormProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const initialSportId =
+    defaultSportId && sports.some((sport) => sport.id === defaultSportId)
+      ? defaultSportId
+      : sports[0]?.id ?? "";
   const [form, setForm] = useState<CourtFormValues>({
-    sportId: sports[0]?.id ?? "",
+    sportId: initialSportId,
     name: "",
     description: "",
     address: "",
@@ -235,6 +246,18 @@ export function CourtAdminForm({
           ? copy.successPending
           : copy.success,
     });
+    if (courtId) {
+      const locale =
+        typeof window === "undefined"
+          ? "th"
+          : normalizeLocale(
+              new URLSearchParams(window.location.search).get("lang"),
+            );
+      window.setTimeout(() => {
+        router.push(buildLocalizedPath(`/courts/${courtId}`, locale));
+      }, 900);
+      return;
+    }
     setForm((prev) => ({
       ...prev,
       sportId: sports[0]?.id ?? "",
@@ -328,6 +351,8 @@ export function CourtAdminForm({
               label={copy.photos}
               limit={8}
               value={images}
+              primaryLabel={copy.primaryPhoto}
+              makePrimaryLabel={copy.makePrimaryPhoto}
               onChange={setImages}
             />
           </div>

@@ -109,6 +109,8 @@ type CourtEditFormProps = {
     success: string;
     error: string;
     photos: string;
+    primaryPhoto: string;
+    makePrimaryPhoto: string;
     locationMissing: string;
   };
 };
@@ -636,7 +638,9 @@ export function CourtEditForm({
                           className={`font-semibold ${photo.is_primary ? "text-emerald-300" : "text-slate-200"}`}
                           disabled={photo.is_primary || uploading || submitting}
                         >
-                          {photo.is_primary ? "Primary" : "Make primary"}
+                          {photo.is_primary
+                            ? copy.primaryPhoto
+                            : copy.makePrimaryPhoto}
                         </button>
                       }
                     />
@@ -667,7 +671,7 @@ export function CourtEditForm({
       <button
         type="submit"
         disabled={submitting || !hasPendingChanges}
-      className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {submitting ? `${copy.submitting}...` : copy.submit}
       </button>

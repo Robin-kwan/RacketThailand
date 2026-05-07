@@ -472,7 +472,7 @@ export function GroupEditForm({
                     </button>
                   }
                 />
-            ))}
+              ))}
             {photos.length < 8 && (
               <label className="flex h-40 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-3xl text-slate-400 hover:border-slate-500 hover:text-slate-600 focus-within:border-slate-500">
                 <Plus

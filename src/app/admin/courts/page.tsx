@@ -8,6 +8,7 @@ import {
 } from "@/components/admin/admin-resource-table";
 import { CourtAdminForm } from "@/components/admin/court-form";
 import { CourtSubmissionRequests } from "@/components/admin/court-submission-requests";
+import { SPORT_META } from "@/data/sportMeta";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -141,6 +142,8 @@ export default async function AdminCourtsPage({
     placeSearchHelper: t("admin.placeSearchHelper"),
     placeSearchNoResults: t("admin.placeSearchNoResults"),
     photos: t("admin.photos"),
+    primaryPhoto: t("admin.primaryPhoto"),
+    makePrimaryPhoto: t("admin.makePrimaryPhoto"),
     submit: t("admin.submit"),
     submitting: t("admin.submitting"),
     success: t("admin.success"),
@@ -152,7 +155,7 @@ export default async function AdminCourtsPage({
   const sportOptions =
     sports?.map((sport) => ({
       id: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
 
   const profileNameById = new Map(
@@ -257,6 +260,7 @@ export default async function AdminCourtsPage({
             edit: t("admin.management.table.edit"),
             delete: t("admin.management.table.delete"),
             deleting: t("admin.management.table.deleting"),
+            cancel: t("admin.management.table.cancel"),
             confirmDelete: t("admin.management.courts.confirmDelete"),
             deleted: t("admin.management.courts.deleted"),
             empty: t("admin.management.courts.empty"),

@@ -5,6 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, LoaderCircle, Pencil, Search, Trash2 } from "lucide-react";
 import { showToast } from "@/components/toaster";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 export type AdminResourceDetail = {
   label: string;
@@ -38,6 +39,7 @@ export type AdminResourceTableCopy = {
   edit: string;
   delete: string;
   deleting: string;
+  cancel: string;
   confirmDelete: string;
   deleted: string;
   empty: string;
@@ -86,6 +88,9 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
   const [items, setItems] = useState(rows);
   const [query, setQuery] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminResourceRow | null>(
+    null,
+  );
   const [isPending, startTransition] = useTransition();
 
   const filteredItems = useMemo(() => {
@@ -95,11 +100,6 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
   }, [items, query]);
 
   const handleDelete = (row: AdminResourceRow) => {
-    const message = copy.confirmDelete
-      .replace("%ITEM%", row.title)
-      .replace("{item}", row.title);
-    if (!window.confirm(message)) return;
-
     setPendingId(row.id);
     startTransition(async () => {
       const response = await fetch(row.deleteEndpoint, {
@@ -112,12 +112,14 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
           typeof data?.error === "string" ? data.error : copy.error;
         showToast({ variant: "error", message });
         setPendingId(null);
+        setDeleteTarget(null);
         return;
       }
 
       setItems((previous) => previous.filter((item) => item.id !== row.id));
       showToast({ variant: "success", message: copy.deleted });
       setPendingId(null);
+      setDeleteTarget(null);
       router.refresh();
     });
   };
@@ -271,7 +273,7 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
                             </Link>
                             <button
                               type="button"
-                              onClick={() => handleDelete(row)}
+                              onClick={() => setDeleteTarget(row)}
                               disabled={isDeleting}
                               className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
                             >
@@ -301,6 +303,26 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
           </div>
         </div>
       )}
+      <ConfirmationDialog
+        open={Boolean(deleteTarget)}
+        title={copy.delete}
+        message={
+          deleteTarget
+            ? copy.confirmDelete
+                .replace("%ITEM%", deleteTarget.title)
+                .replace("{item}", deleteTarget.title)
+            : ""
+        }
+        confirmLabel={copy.delete}
+        cancelLabel={copy.cancel}
+        loading={Boolean(deleteTarget && pendingId === deleteTarget.id)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            handleDelete(deleteTarget);
+          }
+        }}
+        onClose={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

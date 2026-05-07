@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { CourtEditForm } from "@/components/admin/court-edit-form";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { BaseBackLink } from "@/components/base-back-link";
+import { EntityDeleteButton } from "@/components/entity-delete-button";
+import { SPORT_META } from "@/data/sportMeta";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -112,7 +114,7 @@ export default async function EditCourtPage({
   const sportOptions =
     sports?.map((sport) => ({
       id: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
 
   const formCourt = {
@@ -157,36 +159,60 @@ export default async function EditCourtPage({
     success: t("admin.updateSuccess"),
     error: t("admin.error"),
     photos: t("admin.photos"),
+    primaryPhoto: t("admin.primaryPhoto"),
+    makePrimaryPhoto: t("admin.makePrimaryPhoto"),
     locationMissing: t("admin.locationMissing"),
+    deleteSubmit: t("admin.deleteSubmit"),
+    deleting: t("admin.deleting"),
+    deleteSuccess: t("admin.deleteSuccess"),
+    deleteError: t("admin.deleteError"),
+    deleteConfirm: t("admin.deleteConfirm"),
+    deleteCancel: t("admin.deleteCancel"),
   };
+  const deleteRedirectHref = buildLocalizedPath(
+    currentSportSlug ? `/${currentSportSlug}/court-finder` : "/",
+    locale,
+  );
 
   return (
     <>
       <HeaderSportScope sportSlug={currentSportSlug} />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-      <div>
-        <BaseBackLink href={buildLocalizedPath(`/courts/${court.id}`, locale)}>
-          {t("courtPage.backToCourt")}
-        </BaseBackLink>
-      </div>
-      <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
-        <p className="text-xs font-semibold uppercase text-slate-400">
-          Courts · Edit
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold text-slate-900">
-          {copy.title}
-        </h1>
-        <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
-        <div className="mt-6">
-          <CourtEditForm
-            court={formCourt}
-            sports={sportOptions}
-            copy={copy}
-            existingPhotos={photoRows ?? []}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <BaseBackLink href={buildLocalizedPath(`/courts/${court.id}`, locale)}>
+            {t("courtPage.backToCourt")}
+          </BaseBackLink>
+          <EntityDeleteButton
+            endpoint={`/api/courts/${court.id}`}
+            redirectHref={deleteRedirectHref}
+            copy={{
+              submit: copy.deleteSubmit,
+              deleting: copy.deleting,
+              success: copy.deleteSuccess,
+              error: copy.deleteError,
+              confirm: copy.deleteConfirm,
+              cancel: copy.deleteCancel,
+            }}
           />
         </div>
-      </section>
-    </main>
+        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
+          <p className="text-xs font-semibold uppercase text-slate-400">
+            Courts · Edit
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+            {copy.title}
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
+          <div className="mt-6">
+            <CourtEditForm
+              court={formCourt}
+              sports={sportOptions}
+              copy={copy}
+              existingPhotos={photoRows ?? []}
+            />
+          </div>
+        </section>
+      </main>
     </>
   );
 }

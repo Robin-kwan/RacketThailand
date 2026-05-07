@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ensureCourtGroupLinks } from "@/server/groupSessions";
 import { requireGroupAccess } from "@/server/groupAccess";
+import { deleteGroupWithAssets } from "@/server/adminDeletion";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 type RouteParams = { groupId: string };
@@ -188,6 +189,30 @@ export async function PATCH(
         user.id,
       );
     }
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(
+  _request: Request,
+  options: { params: RouteParamsInput },
+) {
+  const resolved = await resolveParams(options.params);
+  const { user, error } = await requireGroupAccess(resolved.groupId);
+  if (error === "UNAUTHORIZED") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (error === "FORBIDDEN" || !user) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const result = await deleteGroupWithAssets(resolved.groupId);
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.status },
+    );
   }
 
   return NextResponse.json({ ok: true });

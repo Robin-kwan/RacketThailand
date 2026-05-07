@@ -225,6 +225,7 @@ export default async function AdminGroupsPage({
             edit: t("admin.management.table.edit"),
             delete: t("admin.management.table.delete"),
             deleting: t("admin.management.table.deleting"),
+            cancel: t("admin.management.table.cancel"),
             confirmDelete: t("admin.management.groups.confirmDelete"),
             deleted: t("admin.management.groups.deleted"),
             empty: t("admin.management.groups.empty"),
