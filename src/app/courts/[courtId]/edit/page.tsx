@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { CourtEditForm } from "@/components/admin/court-edit-form";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { BaseBackLink } from "@/components/base-back-link";
+import { SPORT_META } from "@/data/sportMeta";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -112,7 +113,7 @@ export default async function EditCourtPage({
   const sportOptions =
     sports?.map((sport) => ({
       id: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
 
   const formCourt = {

@@ -150,7 +150,10 @@ export default async function CourtFinderPage({
               {t("courtFinder.backToSport")}
             </Link>
             <TrackedLink
-              href={buildLocalizedPath("/courts/new", locale)}
+              href={buildLocalizedPath(
+                `/courts/new?sport=${encodeURIComponent(resolvedParams.sport)}`,
+                locale,
+              )}
               eventName="sport_cta_click"
               eventPayload={{
                 surface: "court_finder_header",

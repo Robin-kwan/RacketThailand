@@ -13,6 +13,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
@@ -122,11 +123,14 @@ export default async function EditCasualPlayPage({
   const sports =
     sportsRes.data?.map((sport) => ({
       value: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
 
   const sportLabelMap = new Map(
-    sportsRes.data?.map((sport) => [sport.id, sport.name ?? sport.code]) ?? [],
+    sportsRes.data?.map((sport) => [
+      sport.id,
+      SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
+    ]) ?? [],
   );
 
   const courts = courtsRes.data?.reduce<Record<string, Option[]>>(

@@ -515,7 +515,10 @@ export default async function SportPage({
               {boardCta}
             </TrackedLink>
             <TrackedLink
-              href={buildLocalizedPath("/courts/new", locale)}
+              href={buildLocalizedPath(
+                `/courts/new?sport=${encodeURIComponent(sport.code)}`,
+                locale,
+              )}
               eventName="sport_cta_click"
               eventPayload={{
                 surface: "sport_hero",

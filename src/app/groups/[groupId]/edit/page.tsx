@@ -12,6 +12,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
+import { SPORT_META } from "@/data/sportMeta";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
 
 type Params = { groupId: string };
@@ -130,7 +131,7 @@ export default async function EditGroupPage({
   const sportOptions =
     sports?.map((sport) => ({
       value: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
 
   const courtOptions =

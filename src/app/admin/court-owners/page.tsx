@@ -3,6 +3,7 @@ import {
   AdminPortalShell,
   buildAdminPortalNav,
 } from "@/components/admin/admin-portal-shell";
+import { SPORT_META } from "@/data/sportMeta";
 import { getTranslator, normalizeLocale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
@@ -149,7 +150,10 @@ export default async function CourtOwnersPage({
           sports={
             sports?.map((sport) => ({
               id: sport.id,
-              label: sport.name ?? sport.code,
+              label:
+                SPORT_META[sport.code]?.name[locale] ??
+                sport.name ??
+                sport.code,
             })) ?? []
           }
           copy={{

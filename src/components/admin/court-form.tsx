@@ -30,6 +30,7 @@ type SportOption = {
 
 type CourtFormProps = {
   sports: SportOption[];
+  defaultSportId?: string;
   submitEndpoint?: string;
   analyticsSurface?: string;
   copy: {
@@ -67,13 +68,18 @@ const COURT_LINE_QR_BUCKET =
 
 export function CourtAdminForm({
   sports,
+  defaultSportId,
   submitEndpoint = "/api/admin/courts",
   analyticsSurface,
   copy,
 }: CourtFormProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const initialSportId =
+    defaultSportId && sports.some((sport) => sport.id === defaultSportId)
+      ? defaultSportId
+      : sports[0]?.id ?? "";
   const [form, setForm] = useState<CourtFormValues>({
-    sportId: sports[0]?.id ?? "",
+    sportId: initialSportId,
     name: "",
     description: "",
     address: "",

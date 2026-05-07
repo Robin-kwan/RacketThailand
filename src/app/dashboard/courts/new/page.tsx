@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { CourtAdminForm } from "@/components/admin/court-form";
+import { SPORT_META } from "@/data/sportMeta";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -10,6 +11,7 @@ import { supabaseSelect } from "@/lib/supabaseRest";
 
 type SearchParams = {
   lang?: string;
+  sport?: string;
 };
 
 type SearchParamsInput = Promise<SearchParams> | undefined;
@@ -59,8 +61,17 @@ export default async function DashboardAddCourtPage({
   const sportOptions =
     sports?.map((sport) => ({
       id: sport.id,
-      label: sport.name ?? sport.code,
+      label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
+  const requestedSport = resolved?.sport?.trim().toLowerCase();
+  const defaultSportId =
+    requestedSport && sports
+      ? sports.find(
+          (sport) =>
+            sport.code.toLowerCase() === requestedSport ||
+            sport.id.toLowerCase() === requestedSport,
+        )?.id
+      : undefined;
 
   const copy = {
     title: t("admin.courtTitle"),
@@ -102,7 +113,11 @@ export default async function DashboardAddCourtPage({
         </h1>
         <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
         <div className="mt-6">
-          <CourtAdminForm sports={sportOptions} copy={copy} />
+          <CourtAdminForm
+            sports={sportOptions}
+            defaultSportId={defaultSportId}
+            copy={copy}
+          />
         </div>
       </section>
     </main>
