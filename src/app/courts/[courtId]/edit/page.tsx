@@ -157,6 +157,8 @@ export default async function EditCourtPage({
     success: t("admin.updateSuccess"),
     error: t("admin.error"),
     photos: t("admin.photos"),
+    primaryPhoto: t("admin.primaryPhoto"),
+    makePrimaryPhoto: t("admin.makePrimaryPhoto"),
     locationMissing: t("admin.locationMissing"),
   };
 

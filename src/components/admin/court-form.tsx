@@ -49,6 +49,8 @@ type CourtFormProps = {
     placeSearchHelper: string;
     placeSearchNoResults: string;
     photos: string;
+    primaryPhoto: string;
+    makePrimaryPhoto: string;
     submit: string;
     submitting: string;
     success: string;
@@ -328,6 +330,8 @@ export function CourtAdminForm({
               label={copy.photos}
               limit={8}
               value={images}
+              primaryLabel={copy.primaryPhoto}
+              makePrimaryLabel={copy.makePrimaryPhoto}
               onChange={setImages}
             />
           </div>

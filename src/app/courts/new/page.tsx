@@ -116,6 +116,8 @@ export default async function NewCourtPage({
     placeSearchHelper: t("admin.placeSearchHelper"),
     placeSearchNoResults: t("admin.placeSearchNoResults"),
     photos: t("admin.photos"),
+    primaryPhoto: t("admin.primaryPhoto"),
+    makePrimaryPhoto: t("admin.makePrimaryPhoto"),
     submit: allowPublicCourtPublish
       ? t("courtSubmission.submit")
       : t("courtSubmission.submitRequest"),

@@ -11,6 +11,8 @@ type MultiImageInputProps = {
   value?: File[];
   cardHeightClass?: string;
   variant?: "light" | "dark";
+  primaryLabel?: string;
+  makePrimaryLabel?: string;
   onChange(images: File[]): void;
 };
 
@@ -40,6 +42,8 @@ export function MultiImageInput({
   value,
   cardHeightClass = "h-40",
   variant = "light",
+  primaryLabel = "Primary",
+  makePrimaryLabel = "Make primary",
   onChange,
 }: MultiImageInputProps) {
   const [internalFiles, setInternalFiles] = useState<File[]>([]);
@@ -143,12 +147,12 @@ export function MultiImageInput({
                   onClick={() => handleSetPrimary(preview.id)}
                   className={`font-semibold ${
                     preview.isPrimary
-                      ? "text-[rgb(var(--rt-primary-rgb))]"
-                      : styles.helper
+                      ? "text-emerald-300"
+                      : "text-slate-100"
                   }`}
                   disabled={preview.isPrimary}
                 >
-                  {preview.isPrimary ? "Primary" : "Make primary"}
+                  {preview.isPrimary ? primaryLabel : makePrimaryLabel}
                 </button>
               )
             }

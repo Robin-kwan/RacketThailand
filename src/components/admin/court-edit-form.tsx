@@ -109,6 +109,8 @@ type CourtEditFormProps = {
     success: string;
     error: string;
     photos: string;
+    primaryPhoto: string;
+    makePrimaryPhoto: string;
     locationMissing: string;
   };
 };
@@ -636,7 +638,9 @@ export function CourtEditForm({
                           className={`font-semibold ${photo.is_primary ? "text-emerald-300" : "text-slate-200"}`}
                           disabled={photo.is_primary || uploading || submitting}
                         >
-                          {photo.is_primary ? "Primary" : "Make primary"}
+                          {photo.is_primary
+                            ? copy.primaryPhoto
+                            : copy.makePrimaryPhoto}
                         </button>
                       }
                     />

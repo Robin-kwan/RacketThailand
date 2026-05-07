@@ -422,6 +422,8 @@
     "updateSubmitting": "Updating",
     "updateSuccess": "Court updated successfully.",
     "photos": "Court photos (optional, max 8)",
+    "primaryPhoto": "Primary",
+    "makePrimaryPhoto": "Make primary",
     "panelTitle": "Admin panel",
     "panelSubtitle": "Manage courts, owners, and upcoming sport data sources.",
     "portalLabel": "Admin portal",

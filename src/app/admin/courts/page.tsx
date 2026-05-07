@@ -141,6 +141,8 @@ export default async function AdminCourtsPage({
     placeSearchHelper: t("admin.placeSearchHelper"),
     placeSearchNoResults: t("admin.placeSearchNoResults"),
     photos: t("admin.photos"),
+    primaryPhoto: t("admin.primaryPhoto"),
+    makePrimaryPhoto: t("admin.makePrimaryPhoto"),
     submit: t("admin.submit"),
     submitting: t("admin.submitting"),
     success: t("admin.success"),
