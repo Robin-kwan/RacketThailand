@@ -260,6 +260,7 @@ export default async function AdminCourtsPage({
             edit: t("admin.management.table.edit"),
             delete: t("admin.management.table.delete"),
             deleting: t("admin.management.table.deleting"),
+            cancel: t("admin.management.table.cancel"),
             confirmDelete: t("admin.management.courts.confirmDelete"),
             deleted: t("admin.management.courts.deleted"),
             empty: t("admin.management.courts.empty"),

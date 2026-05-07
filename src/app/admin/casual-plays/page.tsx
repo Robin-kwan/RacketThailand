@@ -208,6 +208,7 @@ export default async function AdminCasualPlaysPage({
             edit: t("admin.management.table.edit"),
             delete: t("admin.management.table.delete"),
             deleting: t("admin.management.table.deleting"),
+            cancel: t("admin.management.table.cancel"),
             confirmDelete: t("admin.management.casualPlays.confirmDelete"),
             deleted: t("admin.management.casualPlays.deleted"),
             empty: t("admin.management.casualPlays.empty"),

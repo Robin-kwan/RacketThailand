@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { GroupEditForm } from "@/components/groups/group-edit-form";
 import { BaseCard } from "@/components/base-card";
 import { BaseBackLink } from "@/components/base-back-link";
+import { EntityDeleteButton } from "@/components/entity-delete-button";
 import type { Option } from "@/components/groups/group-form";
 import {
   buildLocalizedPath,
@@ -251,19 +252,41 @@ export default async function EditGroupPage({
     submitting: t("groups.edit.submitting"),
     success: t("groups.edit.success"),
     error: t("groups.edit.error"),
+    deleteSubmit: t("groups.edit.deleteSubmit"),
+    deleting: t("groups.edit.deleting"),
+    deleteSuccess: t("groups.edit.deleteSuccess"),
+    deleteError: t("groups.edit.deleteError"),
+    deleteConfirm: t("groups.edit.deleteConfirm"),
+    deleteCancel: t("groups.edit.deleteCancel"),
   };
+  const deleteRedirectHref = buildLocalizedPath(
+    currentSportSlug ? `/${currentSportSlug}/group-finder` : "/",
+    locale,
+  );
 
   return (
     <div className="rt-page">
       <HeaderSportScope sportSlug={currentSportSlug} />
       <HeaderSubLabel value={currentSportLabel} />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <div>
-        <BaseBackLink
-          href={buildLocalizedPath(`/groups/${group.id}`, locale)}
-        >
-          {t("groups.edit.back")}
-        </BaseBackLink>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <BaseBackLink
+            href={buildLocalizedPath(`/groups/${group.id}`, locale)}
+          >
+            {t("groups.edit.back")}
+          </BaseBackLink>
+          <EntityDeleteButton
+            endpoint={`/api/groups/${group.id}`}
+            redirectHref={deleteRedirectHref}
+            copy={{
+              submit: copy.deleteSubmit,
+              deleting: copy.deleting,
+              success: copy.deleteSuccess,
+              error: copy.deleteError,
+              confirm: copy.deleteConfirm,
+              cancel: copy.deleteCancel,
+            }}
+          />
         </div>
         <BaseCard
           as="section"

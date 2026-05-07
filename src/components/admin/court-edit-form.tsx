@@ -671,7 +671,7 @@ export function CourtEditForm({
       <button
         type="submit"
         disabled={submitting || !hasPendingChanges}
-      className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {submitting ? `${copy.submitting}...` : copy.submit}
       </button>

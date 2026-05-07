@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isCasualPlayExpired } from "@/lib/casual-play";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { requireCasualPlayAccess } from "@/server/casualPlayAccess";
+import { deleteCasualPlay } from "@/server/adminDeletion";
 import {
   type CasualPlayPayloadInput,
   validateCasualPlayPayload,
@@ -101,6 +102,31 @@ export async function PATCH(
     return NextResponse.json(
       { error: updateError.message },
       { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(
+  _request: Request,
+  options: { params: RouteParamsInput },
+) {
+  const resolved = await resolveParams(options.params);
+  const { error } = await requireCasualPlayAccess(resolved.playId);
+
+  if (error === "UNAUTHORIZED") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (error === "FORBIDDEN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const result = await deleteCasualPlay(resolved.playId);
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.status },
     );
   }
 
