@@ -575,7 +575,7 @@ export default async function CasualPlayDetailPage({
                         {copy.line}
                       </p>
                       <ContactActionValue
-                        mode="copy"
+                        mode="line"
                         value={play.line_id}
                         copyLabel={copy.copyAction}
                         copiedLabel={copy.copiedAction}

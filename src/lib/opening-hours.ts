@@ -28,7 +28,7 @@ export function createEmptySchedule(): OpeningHoursEntry[] {
 export function createAlwaysOpenSchedule(): OpeningHoursEntry[] {
   return WEEK_DAYS.map((day) => ({
     day,
-    ranges: [{ open: "00:00", close: "23:59" }],
+    ranges: [{ open: "00:00", close: "00:00" }],
   }));
 }
 
@@ -113,7 +113,8 @@ function dayIndexToName(index?: number): string {
 
 function formatGoogleTime(time?: string): string {
   if (!time || time.length < 4) return time ?? "";
-  return `${time.slice(0, 2)}:${time.slice(2)}`;
+  const normalizedTime = time === "2359" ? "0000" : time;
+  return `${normalizedTime.slice(0, 2)}:${normalizedTime.slice(2)}`;
 }
 
 export function googlePeriodsToStructured(

@@ -616,7 +616,7 @@ export default async function GroupDetailPage({
                   {copy.line}
                 </p>
                 <ContactActionValue
-                  mode="copy"
+                  mode="line"
                   value={displayGroup.line_id}
                   copyLabel={copy.copyAction}
                   copiedLabel={copy.copiedAction}
