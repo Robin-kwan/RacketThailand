@@ -16,6 +16,7 @@ type GroupPayload = {
   name: string;
   description?: string;
   sessions?: SessionPayload[];
+  playFormat?: string | null;
   playerAmount?: number | string;
   phone?: string | null;
   lineId?: string | null;
@@ -107,6 +108,10 @@ function normalizeContact(value?: string | null) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function normalizePlayFormat(value?: string | null) {
+  return value === "single" || value === "double" ? value : "double";
+}
+
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -129,6 +134,7 @@ export async function POST(request: Request) {
   const normalizedPlayerAmount = normalizePlayerAmount(
     payload.playerAmount,
   );
+  const normalizedPlayFormat = normalizePlayFormat(payload.playFormat);
   const normalizedPhone = normalizeContact(payload.phone);
   const normalizedLine = normalizeContact(payload.lineId);
 
@@ -142,6 +148,7 @@ export async function POST(request: Request) {
       description: payload.description?.trim() || null,
       owner_id: user.id,
       updated_at: new Date().toISOString(),
+      play_format: normalizedPlayFormat,
       player_amount: normalizedPlayerAmount,
       phone: normalizedPhone,
       line_id: normalizedLine,

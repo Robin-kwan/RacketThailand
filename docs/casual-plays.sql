@@ -10,6 +10,7 @@ create table if not exists public.casual_plays (
   play_date date not null,
   start_time time not null,
   end_time time,
+  play_format text not null default 'double',
   player_amount integer,
   phone text,
   line_id text,
@@ -21,7 +22,9 @@ create table if not exists public.casual_plays (
   constraint casual_plays_venue_check
     check (court_id is not null or venue_name is not null),
   constraint casual_plays_time_order_check
-    check (end_time is null or end_time > start_time)
+    check (end_time is null or end_time > start_time),
+  constraint casual_plays_play_format_check
+    check (play_format in ('single', 'double'))
 );
 
 alter table public.casual_plays
@@ -29,7 +32,13 @@ alter table public.casual_plays
   alter column end_time drop not null,
   add column if not exists venue_name text,
   add column if not exists location_note text,
+  add column if not exists play_format text not null default 'double',
   add column if not exists allow_public_contact boolean not null default false;
+
+alter table public.casual_plays
+  drop constraint if exists casual_plays_play_format_check,
+  add constraint casual_plays_play_format_check
+    check (play_format in ('single', 'double'));
 
 alter table public.casual_plays
   drop constraint if exists casual_plays_time_order_check,

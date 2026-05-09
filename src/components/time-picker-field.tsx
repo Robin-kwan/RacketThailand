@@ -30,10 +30,10 @@ export function createTimeOptions({
     }
   }
 
-  if (includeEndOfDay && !options.some((option) => option.value === "23:59")) {
+  if (includeEndOfDay && !options.some((option) => option.value === "00:00")) {
     options.push({
-      value: "23:59",
-      label: "23:59",
+      value: "00:00",
+      label: "00:00",
     });
   }
 

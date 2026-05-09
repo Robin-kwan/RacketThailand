@@ -119,9 +119,9 @@ function toSchemaOpenTime(value: string) {
   return value;
 }
 
-function toSchemaCloseTime(value: string | null, openValue: string) {
+function toSchemaCloseTime(value: string | null) {
   if (!value || value === "Open") {
-    return openValue === "Open" ? "23:59" : "23:59";
+    return "00:00";
   }
   return value;
 }
@@ -410,7 +410,7 @@ export default async function CourtPage({
       "@type": "OpeningHoursSpecification",
       dayOfWeek: SCHEMA_DAY_MAP[entry.day] ?? "https://schema.org/DayOfWeek",
       opens: toSchemaOpenTime(range.open),
-      closes: toSchemaCloseTime(range.close, range.open),
+      closes: toSchemaCloseTime(range.close),
     })),
   );
   const structuredData = {
@@ -566,7 +566,7 @@ export default async function CourtPage({
                     {copy.line}:
                   </strong>
                   <ContactActionValue
-                    mode="copy"
+                    mode="line"
                     value={detail.court.line_id}
                     copyLabel={copy.copyAction}
                     copiedLabel={copy.copiedAction}

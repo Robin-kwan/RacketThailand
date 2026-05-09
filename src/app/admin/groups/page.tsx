@@ -11,6 +11,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { getPlayFormatLabel } from "@/lib/play-format";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
 
@@ -34,6 +35,7 @@ type GroupManagementRow = {
   name: string | null;
   description: string | null;
   owner_id: string | null;
+  play_format: "single" | "double" | null;
   player_amount: number | null;
   phone: string | null;
   line_id: string | null;
@@ -91,7 +93,7 @@ export default async function AdminGroupsPage({
   const [groupsRes, profilesRes] = await Promise.all([
     supabaseSelect<GroupManagementRow>("groups", {
       select:
-        "id,name,description,owner_id,player_amount,phone,line_id,updated_at,sports(code,name),group_photos(id),group_sessions(day,start_time,end_time,courts(name,province))",
+        "id,name,description,owner_id,play_format,player_amount,phone,line_id,updated_at,sports(code,name),group_photos(id),group_sessions(day,start_time,end_time,courts(name,province))",
       order: "updated_at.desc.nullslast",
       limit: "100",
     }),
@@ -155,6 +157,10 @@ export default async function AdminGroupsPage({
             value: sessions.length.toLocaleString(
               locale === "th" ? "th-TH" : "en-US",
             ),
+          },
+          {
+            label: t("groups.detail.playFormat"),
+            value: getPlayFormatLabel(group.play_format, locale),
           },
           {
             label: t("admin.management.common.players"),

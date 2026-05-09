@@ -12,6 +12,10 @@ import {
   createTimeOptions,
   type TimePickerOption,
 } from "@/components/time-picker-field";
+import {
+  DEFAULT_PLAY_FORMAT,
+  type PlayFormat,
+} from "@/lib/play-format";
 
 export type Option = {
   value: string;
@@ -50,6 +54,7 @@ export type GroupFormValues = {
   name: string;
   description: string;
   sessions: CourtSessionBlock[];
+  playFormat?: PlayFormat | null;
   playerAmount?: string | null;
   phone?: string | null;
   lineId?: string | null;
@@ -71,6 +76,9 @@ export type GroupFormCopy = {
   scheduleStart: string;
   scheduleEnd: string;
   scheduleRemove: string;
+  playFormatLabel: string;
+  playFormatSingle: string;
+  playFormatDouble: string;
   playerAmountLabel: string;
   playerAmountPlaceholder: string;
   playerAmountHelp: string;
@@ -86,6 +94,7 @@ type SubmitPayload = {
   name: string;
   description: string;
   sessions: { courtId: string; day: string; start: string; end: string }[];
+  playFormat: PlayFormat;
   playerAmount?: string;
   phone?: string;
   lineId?: string;
@@ -145,6 +154,7 @@ export function GroupForm({
     sportId: initialValues.sportId,
     name: initialValues.name,
     description: initialValues.description,
+    playFormat: initialValues.playFormat ?? DEFAULT_PLAY_FORMAT,
     playerAmount: initialValues.playerAmount ?? "",
     phone: initialValues.phone ?? "",
     lineId: initialValues.lineId ?? "",
@@ -322,6 +332,7 @@ export function GroupForm({
         sportId: initialValues.sportId,
         name: initialValues.name,
         description: initialValues.description,
+        playFormat: initialValues.playFormat ?? DEFAULT_PLAY_FORMAT,
         playerAmount: initialValues.playerAmount ?? "",
         phone: initialValues.phone ?? "",
         lineId: initialValues.lineId ?? "",
@@ -336,6 +347,7 @@ export function GroupForm({
         sportId: form.sportId,
         name: form.name,
         description: form.description,
+        playFormat: form.playFormat,
         playerAmount: form.playerAmount,
         phone: form.phone,
         lineId: form.lineId,
@@ -352,6 +364,7 @@ export function GroupForm({
       sportId: form.sportId,
       name: form.name,
       description: form.description,
+      playFormat: form.playFormat,
       playerAmount: form.playerAmount,
       phone: form.phone,
       lineId: form.lineId,
@@ -396,6 +409,18 @@ export function GroupForm({
           variant="light"
         />
       </div>
+      <BaseSelect
+        label={copy.playFormatLabel}
+        name="playFormat"
+        value={form.playFormat}
+        onChange={updateForm}
+        options={[
+          { value: "double", label: copy.playFormatDouble },
+          { value: "single", label: copy.playFormatSingle },
+        ]}
+        required
+        variant="light"
+      />
       <div className="space-y-2">
         <label className="text-sm font-semibold text-[var(--foreground)]">
           {copy.playerAmountLabel}

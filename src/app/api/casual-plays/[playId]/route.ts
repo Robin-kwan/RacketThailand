@@ -90,6 +90,7 @@ export async function PATCH(
       play_date: normalized.playDate,
       start_time: normalized.startTime,
       end_time: normalized.endTime,
+      play_format: normalized.playFormat,
       player_amount: normalized.playerAmount,
       phone: normalized.phone,
       line_id: normalized.lineId,

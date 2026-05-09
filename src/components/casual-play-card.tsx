@@ -8,6 +8,11 @@ import {
   formatCasualPlayTimeRange,
 } from "@/lib/casual-play";
 import type { Locale } from "@/lib/i18n";
+import {
+  getPlayFormatLabel,
+  normalizePlayFormat,
+  type PlayFormat,
+} from "@/lib/play-format";
 
 type CasualPlayCardProps = {
   title: string;
@@ -19,6 +24,7 @@ type CasualPlayCardProps = {
   startTime?: string | null;
   endTime?: string | null;
   playerAmount?: number | null;
+  playFormat?: PlayFormat | null;
   acceptedCount?: number | null;
   locale: Locale;
   distanceLabel?: string | null;
@@ -34,6 +40,7 @@ export function CasualPlayCard({
   startTime,
   endTime,
   playerAmount,
+  playFormat,
   acceptedCount,
   locale,
   distanceLabel = null,
@@ -41,10 +48,16 @@ export function CasualPlayCard({
   const Wrapper: ElementType = href ? Link : "div";
   const wrapperProps = href ? { href } : {};
   const fallbackTitle =
-    locale === "th" ? "เซสชันเล่นชั่วคราว" : "Casual play";
+    locale === "th" ? "หาเพื่อนตี" : "Casual play";
   const fallbackVenue = locale === "th" ? "ยังไม่ระบุสถานที่" : "Venue not set";
   const dateLabel = formatCasualPlayDate(playDate, locale, "compact");
   const timeLabel = formatCasualPlayTimeRange(startTime, endTime, locale);
+  const normalizedPlayFormat = normalizePlayFormat(playFormat);
+  const playFormatLabel = getPlayFormatLabel(playFormat, locale);
+  const playFormatBadgeClass =
+    normalizedPlayFormat === "single"
+      ? "border-blue-200 bg-blue-50 text-blue-700"
+      : "border-emerald-200 bg-emerald-50 text-emerald-700";
   const maxPlayers =
     typeof playerAmount === "number" &&
     Number.isFinite(playerAmount) &&
@@ -78,6 +91,11 @@ export function CasualPlayCard({
         <div className="flex shrink-0 flex-col items-end gap-2">
           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
             {dateLabel}
+          </span>
+          <span
+            className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${playFormatBadgeClass}`}
+          >
+            {playFormatLabel}
           </span>
           {isFull && (
             <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-700">

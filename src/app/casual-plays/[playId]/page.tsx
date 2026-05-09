@@ -34,6 +34,7 @@ import {
 } from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { getPlayFormatLabel } from "@/lib/play-format";
 
 type Params = {
   playId: string;
@@ -55,6 +56,7 @@ type CasualPlayRow = {
   play_date: string;
   start_time: string | null;
   end_time: string | null;
+  play_format: "single" | "double" | null;
   player_amount: number | null;
   phone: string | null;
   line_id: string | null;
@@ -115,7 +117,7 @@ export async function generateMetadata({
   const locale = normalizeLocale(resolvedSearch?.lang);
   const { data } = await supabaseSelect<CasualPlayRow>("casual_plays", {
     select:
-      "id,title,description,play_date,start_time,end_time,venue_name,location_note,sports(code,name),courts(name,district,province)",
+      "id,title,description,play_date,start_time,end_time,play_format,venue_name,location_note,sports(code,name),courts(name,district,province)",
     id: `eq.${resolvedParams.playId}`,
     limit: "1",
   });
@@ -125,7 +127,7 @@ export async function generateMetadata({
     return {
       title:
         locale === "th"
-          ? "ไม่พบข้อมูลเซสชัน | RacketThailand"
+          ? "ไม่พบข้อมูลหาเพื่อนตี | RacketThailand"
           : "Casual play not found | RacketThailand",
     };
   }
@@ -195,7 +197,7 @@ export default async function CasualPlayDetailPage({
 
   const { data: plays } = await supabaseSelect<CasualPlayRow>("casual_plays", {
     select:
-      "id,title,description,owner_id,updated_at,play_date,start_time,end_time,player_amount,phone,line_id,allow_public_contact,court_id,venue_name,location_note,sports(code,name),courts(id,name,district,province)",
+      "id,title,description,owner_id,updated_at,play_date,start_time,end_time,play_format,player_amount,phone,line_id,allow_public_contact,court_id,venue_name,location_note,sports(code,name),courts(id,name,district,province)",
     id: `eq.${resolvedParams.playId}`,
     limit: "1",
   });
@@ -274,6 +276,7 @@ export default async function CasualPlayDetailPage({
             .length
         : (acceptedJoinRequestsResult.data?.length ?? 0);
   const isFull = maxPlayers !== null && acceptedCount >= maxPlayers;
+  const playFormatLabel = getPlayFormatLabel(play.play_format, locale);
   const requesterIds = Array.from(
     new Set(ownerJoinRequests.map((request) => request.requester_id)),
   );
@@ -312,7 +315,7 @@ export default async function CasualPlayDetailPage({
   const canonicalPath = `/casual-plays/${play.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
   const fallbackTitle =
-    locale === "th" ? "เซสชันเล่นชั่วคราว" : "Casual play";
+    locale === "th" ? "หาเพื่อนตี" : "Casual play";
   const shareTitle = play.title ?? fallbackTitle;
   const shareText = [
     formatCasualPlayDate(play.play_date, locale),
@@ -327,7 +330,7 @@ export default async function CasualPlayDetailPage({
     "@context": "https://schema.org",
     "@type": "SportsEvent",
     "@id": canonicalUrl,
-    name: play.title ?? (locale === "th" ? "เซสชันเล่นชั่วคราว" : "Casual play"),
+    name: play.title ?? (locale === "th" ? "หาเพื่อนตี" : "Casual play"),
     description: play.description ?? undefined,
     startDate: `${play.play_date}T${startTimeValue}:00+07:00`,
     endDate: play.end_time
@@ -366,6 +369,7 @@ export default async function CasualPlayDetailPage({
     time: t("casualPlays.detail.time"),
     venue: t("casualPlays.detail.venue"),
     locationNote: t("casualPlays.detail.locationNote"),
+    playFormat: t("casualPlays.detail.playFormat"),
     playerAmount: t("casualPlays.detail.playerAmount"),
     full: t("casualPlays.detail.full"),
     phone: t("casualPlays.detail.phone"),
@@ -438,7 +442,7 @@ export default async function CasualPlayDetailPage({
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
         >
           <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
-            {locale === "th" ? "เซสชันเล่นชั่วคราว" : "Casual play"} ·{" "}
+            {locale === "th" ? "หาเพื่อนตี" : "Casual play"} ·{" "}
             {play.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -527,6 +531,14 @@ export default async function CasualPlayDetailPage({
                 </p>
               </div>
             )}
+            <div>
+              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                {copy.playFormat}
+              </p>
+              <p className="text-base font-semibold text-[var(--foreground)]">
+                {playFormatLabel}
+              </p>
+            </div>
             {maxPlayers !== null && (
               <div>
                 <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
@@ -575,7 +587,7 @@ export default async function CasualPlayDetailPage({
                         {copy.line}
                       </p>
                       <ContactActionValue
-                        mode="copy"
+                        mode="line"
                         value={play.line_id}
                         copyLabel={copy.copyAction}
                         copiedLabel={copy.copiedAction}

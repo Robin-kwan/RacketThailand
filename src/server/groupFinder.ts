@@ -25,6 +25,7 @@ export type GroupRecord = {
   name: string | null;
   description: string | null;
   updated_at: string | null;
+  play_format?: "single" | "double" | null;
   player_amount?: number | null;
   phone?: string | null;
   line_id?: string | null;
@@ -67,7 +68,7 @@ export async function fetchGroupsBySport(
 
   const params: Record<string, string> = {
     select:
-      `id,name,description,updated_at,player_amount,phone,line_id,group_photos(image_url,is_primary),${sessionRelation}(day,start_time,end_time,court_id,courts(id,name,province,latitude:lat,longitude:lng,district))`,
+      `id,name,description,updated_at,play_format,player_amount,phone,line_id,group_photos(image_url,is_primary),${sessionRelation}(day,start_time,end_time,court_id,courts(id,name,province,latitude:lat,longitude:lng,district))`,
     sport_id: `eq.${sportRow.id}`,
     order: "updated_at.desc.nullslast",
   };

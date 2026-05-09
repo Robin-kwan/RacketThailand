@@ -5,7 +5,7 @@ import { Check, Copy, PhoneCall } from "lucide-react";
 import { showToast } from "@/components/toaster";
 
 type ContactActionValueProps = {
-  mode: "phone" | "copy";
+  mode: "phone" | "line" | "copy";
   value: string;
   copyLabel: string;
   copiedLabel: string;
@@ -15,6 +15,17 @@ type ContactActionValueProps = {
 function normalizePhoneHref(value: string) {
   const normalized = value.replace(/[^\d+]/g, "");
   return `tel:${normalized || value}`;
+}
+
+function normalizeLineHref(value: string) {
+  const normalized = value.trim();
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+  if (normalized.startsWith("@")) {
+    return `https://line.me/R/ti/p/${encodeURIComponent(normalized)}`;
+  }
+  return `https://line.me/ti/p/~${encodeURIComponent(normalized)}`;
 }
 
 export function ContactActionValue({
@@ -27,6 +38,7 @@ export function ContactActionValue({
   const [copied, setCopied] = useState(false);
   const copiedTimeoutRef = useRef<number | null>(null);
   const phoneHref = useMemo(() => normalizePhoneHref(value), [value]);
+  const lineHref = useMemo(() => normalizeLineHref(value), [value]);
 
   useEffect(() => {
     return () => {
@@ -80,9 +92,20 @@ export function ContactActionValue({
 
   return (
     <div className="mt-1 flex flex-wrap items-center gap-3">
-      <p className="text-base font-semibold text-[var(--foreground)]">
-        {value}
-      </p>
+      {mode === "line" ? (
+        <a
+          href={lineHref}
+          target="_blank"
+          rel="noreferrer"
+          className="text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4"
+        >
+          {value}
+        </a>
+      ) : (
+        <p className="text-base font-semibold text-[var(--foreground)]">
+          {value}
+        </p>
+      )}
       <button
         type="button"
         onClick={handleCopy}

@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import {
   ensureAllDays,
-  createEmptySchedule,
+  createAlwaysOpenSchedule,
   type OpeningHoursEntry,
   type OpeningHoursRange,
 } from "@/lib/opening-hours";
@@ -32,16 +32,25 @@ const HALF_HOUR_OPTIONS = Array.from({ length: 48 }, (_, index) => {
   return `${hours}:${minutes}`;
 });
 
-const TIME_OPTIONS = [...HALF_HOUR_OPTIONS, "23:59"].map((time) => ({
+const TIME_OPTIONS = HALF_HOUR_OPTIONS.map((time) => ({
+  value: time,
+  label: time,
+}));
+
+const CLOSE_TIME_OPTIONS = [
+  ...HALF_HOUR_OPTIONS.filter((time) => time !== "00:00"),
+  "00:00",
+].map((time) => ({
   value: time,
   label: time,
 }));
 
 const filterOptionsWithFallback = (
   predicate: (option: { value: string; label: string }) => boolean,
+  options = TIME_OPTIONS,
 ) => {
-  const filtered = TIME_OPTIONS.filter(predicate);
-  return filtered.length > 0 ? filtered : TIME_OPTIONS;
+  const filtered = options.filter(predicate);
+  return filtered.length > 0 ? filtered : options;
 };
 
 const normalizeRangeOrder = (
@@ -49,6 +58,7 @@ const normalizeRangeOrder = (
   changedField: "open" | "close",
 ): OpeningHoursRange => {
   if (!range.close) return range;
+  if (range.close === "00:00") return range;
   if (range.open <= range.close) return range;
   if (changedField === "open") {
     return { ...range, close: range.open };
@@ -61,7 +71,7 @@ export function OpeningHoursEditor({
   onChange,
 }: OpeningHoursEditorProps) {
   const entries =
-    ensureAllDays(value && value.length > 0 ? value : createEmptySchedule());
+    ensureAllDays(value && value.length > 0 ? value : createAlwaysOpenSchedule());
 
   const updateDay = (day: string, ranges: OpeningHoursEntry["ranges"]) => {
     const next = entries.map((entry) =>
@@ -107,7 +117,7 @@ export function OpeningHoursEditor({
   };
 
   const set24Hours = (day: string) => {
-    updateDay(day, [{ open: "00:00", close: "23:59" }]);
+    updateDay(day, [{ open: "00:00", close: "00:00" }]);
   };
 
   return (
@@ -165,9 +175,12 @@ export function OpeningHoursEditor({
                       }
                       options={
                         range.close
-                          ? filterOptionsWithFallback(
-                              (option) => option.value < (range.close as string),
-                            )
+                          ? range.close === "00:00"
+                            ? TIME_OPTIONS
+                            : filterOptionsWithFallback(
+                                (option) =>
+                                  option.value < (range.close as string),
+                              )
                           : TIME_OPTIONS
                       }
                       className="flex-1 min-w-[6rem]"
@@ -191,9 +204,12 @@ export function OpeningHoursEditor({
                       options={
                         range.open
                           ? filterOptionsWithFallback(
-                              (option) => option.value > range.open,
+                              (option) =>
+                                option.value > range.open ||
+                                option.value === "00:00",
+                              CLOSE_TIME_OPTIONS,
                             )
-                          : TIME_OPTIONS
+                          : CLOSE_TIME_OPTIONS
                       }
                       className="flex-1 min-w-[6rem]"
                       required

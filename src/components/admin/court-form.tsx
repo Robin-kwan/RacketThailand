@@ -288,7 +288,11 @@ export function CourtAdminForm({
     const structured = ensureAllDays(
       resolution.place?.openingHoursStructured ?? null,
     );
-    setOpeningHours(structured);
+    setOpeningHours(
+      structured.some((entry) => entry.ranges.length > 0)
+        ? structured
+        : createAlwaysOpenSchedule(),
+    );
     setForm((prev) => ({
       ...prev,
       latitude: coords.latitude != null ? String(coords.latitude) : prev.latitude,

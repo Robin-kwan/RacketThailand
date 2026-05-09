@@ -8,6 +8,7 @@ import { MultiImageInput } from "@/components/multi-image-input";
 import { LineQrUploader } from "@/components/line-qr-uploader";
 import { showToast } from "@/components/toaster";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
+import { type PlayFormat } from "@/lib/play-format";
 import {
   GroupForm,
   GroupFormCopy,
@@ -54,6 +55,7 @@ export function GroupCreationForm({
       name: "",
       description: "",
       sessions: [],
+      playFormat: "double",
       playerAmount: "",
       phone: "",
       lineId: "",
@@ -73,6 +75,7 @@ export function GroupCreationForm({
     sportId: string;
     name: string;
     description: string;
+    playFormat: PlayFormat;
     playerAmount?: string;
     phone?: string;
     lineId?: string;

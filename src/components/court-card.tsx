@@ -41,7 +41,7 @@ export function CourtCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className={`group flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 ${className ?? ""}`}
+      className={`group flex h-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 ${className ?? ""}`}
     >
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
         <div className={`relative ${imageAspectClass} w-full`}>
@@ -78,22 +78,24 @@ export function CourtCard({
         </ul>
       )}
 
-      {(primaryBadge || secondaryBadge) && (
-        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase text-slate-500">
-          {primaryBadge && (
-            <span className="inline-flex rounded-full bg-[rgb(var(--rt-primary-rgb)/0.08)] px-3 py-1 text-[var(--rt-primary)]">
-              {primaryBadge}
-            </span>
-          )}
-          {secondaryBadge && (
-            <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 normal-case">
-              {secondaryBadge}
-            </span>
-          )}
-        </div>
-      )}
+      <div className="mt-auto flex flex-col gap-3">
+        {(primaryBadge || secondaryBadge) && (
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase text-slate-500">
+            {primaryBadge && (
+              <span className="inline-flex rounded-full bg-[rgb(var(--rt-primary-rgb)/0.08)] px-3 py-1 text-[var(--rt-primary)]">
+                {primaryBadge}
+              </span>
+            )}
+            {secondaryBadge && (
+              <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 normal-case">
+                {secondaryBadge}
+              </span>
+            )}
+          </div>
+        )}
 
-      {footer}
+        {footer}
+      </div>
     </Wrapper>
   );
 }

@@ -19,6 +19,7 @@ import {
 } from "@/components/admin/opening-hours-editor";
 import {
   ensureAllDays,
+  createAlwaysOpenSchedule,
   type OpeningHoursEntry,
 } from "@/lib/opening-hours";
 
@@ -151,7 +152,9 @@ export function CourtEditForm({
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [openingHours, setOpeningHours] = useState<OpeningHoursEntry[]>(
-    ensureAllDays(court.opening_hours),
+    court.opening_hours && court.opening_hours.length > 0
+      ? ensureAllDays(court.opening_hours)
+      : createAlwaysOpenSchedule(),
   );
   const initialHoursRef = useRef(
     JSON.stringify(
@@ -541,7 +544,11 @@ export function CourtEditForm({
     const structured = ensureAllDays(
       resolution.place?.openingHoursStructured ?? null,
     );
-    setOpeningHours(structured);
+    setOpeningHours(
+      structured.some((entry) => entry.ranges.length > 0)
+        ? structured
+        : createAlwaysOpenSchedule(),
+    );
     setForm((prev) => ({
       ...prev,
       latitude: coords.latitude != null ? String(coords.latitude) : prev.latitude,
