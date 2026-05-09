@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode, ElementType } from "react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
-import { getPlayFormatLabel, type PlayFormat } from "@/lib/play-format";
+import {
+  getPlayFormatLabel,
+  normalizePlayFormat,
+  type PlayFormat,
+} from "@/lib/play-format";
 
 type SessionCourt = { id?: string | null; name?: string | null } | null;
 
@@ -164,7 +168,19 @@ export function GroupCard({
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackGroupPhotoAlt =
     locale === "th" ? "รูปกลุ่ม" : "Group photo";
+  const normalizedPlayFormat = normalizePlayFormat(playFormat);
   const playFormatLabel = getPlayFormatLabel(playFormat, locale);
+  const playFormatBadgeClass =
+    normalizedPlayFormat === "single"
+      ? "border-blue-200 bg-blue-50 text-blue-700"
+      : "border-emerald-200 bg-emerald-50 text-emerald-700";
+  const playFormatBadge = (
+    <span
+      className={`inline-flex shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold ${playFormatBadgeClass}`}
+    >
+      {playFormatLabel}
+    </span>
+  );
 
   return (
     <Wrapper
@@ -188,7 +204,10 @@ export function GroupCard({
         >
           {name || fallbackGroupName}
         </p>
-        {badge}
+        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+          {playFormatBadge}
+          {badge}
+        </div>
       </div>
       {showDescription && description && (
         <p
@@ -203,9 +222,6 @@ export function GroupCard({
           {location}
         </p>
       )}
-      <p className="text-xs font-semibold uppercase text-violet-700">
-        {playFormatLabel}
-      </p>
       {showSessions && (
         <SessionList
           sessions={sessions}

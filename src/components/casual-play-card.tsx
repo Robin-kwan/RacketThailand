@@ -8,7 +8,11 @@ import {
   formatCasualPlayTimeRange,
 } from "@/lib/casual-play";
 import type { Locale } from "@/lib/i18n";
-import { getPlayFormatLabel, type PlayFormat } from "@/lib/play-format";
+import {
+  getPlayFormatLabel,
+  normalizePlayFormat,
+  type PlayFormat,
+} from "@/lib/play-format";
 
 type CasualPlayCardProps = {
   title: string;
@@ -48,7 +52,12 @@ export function CasualPlayCard({
   const fallbackVenue = locale === "th" ? "ยังไม่ระบุสถานที่" : "Venue not set";
   const dateLabel = formatCasualPlayDate(playDate, locale, "compact");
   const timeLabel = formatCasualPlayTimeRange(startTime, endTime, locale);
+  const normalizedPlayFormat = normalizePlayFormat(playFormat);
   const playFormatLabel = getPlayFormatLabel(playFormat, locale);
+  const playFormatBadgeClass =
+    normalizedPlayFormat === "single"
+      ? "border-blue-200 bg-blue-50 text-blue-700"
+      : "border-emerald-200 bg-emerald-50 text-emerald-700";
   const maxPlayers =
     typeof playerAmount === "number" &&
     Number.isFinite(playerAmount) &&
@@ -83,6 +92,11 @@ export function CasualPlayCard({
           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
             {dateLabel}
           </span>
+          <span
+            className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${playFormatBadgeClass}`}
+          >
+            {playFormatLabel}
+          </span>
           {isFull && (
             <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-700">
               {locale === "th" ? "เต็ม" : "Full"}
@@ -101,12 +115,6 @@ export function CasualPlayCard({
           <Clock3 className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
           <span className="truncate font-semibold text-slate-800">
             {timeLabel || (locale === "th" ? "ยังไม่ระบุเวลา" : "Time not set")}
-          </span>
-        </div>
-        <div className="flex min-w-0 items-center gap-2">
-          <UsersRound className="h-4 w-4 shrink-0 text-violet-600" aria-hidden />
-          <span className="truncate font-semibold text-slate-800">
-            {playFormatLabel}
           </span>
         </div>
         {playerLabel && (
