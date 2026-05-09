@@ -172,7 +172,7 @@ function FeatureCarousel({
                 return (
                   <div
                     key={`${card.title}-${index}`}
-                    className="snap-start w-[320px] shrink-0 md:w-[360px]"
+                    className="snap-start w-[320px] shrink-0 self-stretch md:w-[360px]"
                   >
                     {type === "group" ? (
                       <GroupCard
