@@ -13,6 +13,10 @@ import {
   type TimePickerOption,
 } from "@/components/time-picker-field";
 import type { Locale } from "@/lib/i18n";
+import {
+  DEFAULT_PLAY_FORMAT,
+  type PlayFormat,
+} from "@/lib/play-format";
 
 export type CasualPlayFormValues = {
   sportId: string;
@@ -24,6 +28,7 @@ export type CasualPlayFormValues = {
   playDate: string;
   startTime: string;
   endTime: string;
+  playFormat?: PlayFormat | null;
   playerAmount?: string | null;
   phone?: string | null;
   lineId?: string | null;
@@ -47,6 +52,9 @@ export type CasualPlayFormCopy = {
   endTime: string;
   endTimeHelp: string;
   clearTime: string;
+  playFormatLabel: string;
+  playFormatSingle: string;
+  playFormatDouble: string;
   playerAmountLabel: string;
   playerAmountPlaceholder: string;
   playerAmountHelp: string;
@@ -70,6 +78,7 @@ type SubmitPayload = {
   playDate: string;
   startTime: string;
   endTime?: string;
+  playFormat: PlayFormat;
   playerAmount?: string;
   phone?: string;
   lineId?: string;
@@ -127,6 +136,7 @@ export function CasualPlayForm({
     playDate: initialValues.playDate,
     startTime: initialValues.startTime,
     endTime: initialValues.endTime,
+    playFormat: initialValues.playFormat ?? DEFAULT_PLAY_FORMAT,
     playerAmount: initialValues.playerAmount ?? "",
     phone: initialValues.phone ?? "",
     lineId: initialValues.lineId ?? "",
@@ -216,7 +226,15 @@ export function CasualPlayForm({
   };
 
   const initialSnapshot = useMemo(
-    () => JSON.stringify(initialValues),
+    () =>
+      JSON.stringify({
+        ...initialValues,
+        playFormat: initialValues.playFormat ?? DEFAULT_PLAY_FORMAT,
+        playerAmount: initialValues.playerAmount ?? "",
+        phone: initialValues.phone ?? "",
+        lineId: initialValues.lineId ?? "",
+        allowPublicContact: initialValues.allowPublicContact === true,
+      }),
     [initialValues],
   );
   const currentSnapshot = useMemo(
@@ -239,6 +257,7 @@ export function CasualPlayForm({
       playDate: form.playDate,
       startTime: form.startTime,
       endTime: form.endTime,
+      playFormat: form.playFormat,
       playerAmount: form.playerAmount,
       phone: form.phone,
       lineId: form.lineId,
@@ -388,6 +407,18 @@ export function CasualPlayForm({
           </p>
         </div>
       </div>
+      <BaseSelect
+        label={copy.playFormatLabel}
+        name="playFormat"
+        value={form.playFormat}
+        onChange={updateField}
+        options={[
+          { value: "double", label: copy.playFormatDouble },
+          { value: "single", label: copy.playFormatSingle },
+        ]}
+        required
+        variant="light"
+      />
       <div className="space-y-2">
         <label className="text-sm font-semibold text-[var(--foreground)]">
           {copy.playerAmountLabel}

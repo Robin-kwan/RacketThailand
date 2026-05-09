@@ -13,6 +13,7 @@ import {
   type CasualPlayFormValues,
 } from "@/components/casual-plays/casual-play-form";
 import type { Option } from "@/components/groups/group-form";
+import { type PlayFormat } from "@/lib/play-format";
 
 type CasualPlayEditCopy = CasualPlayFormCopy & {
   submit: string;
@@ -57,6 +58,7 @@ export function CasualPlayEditForm({
     playDate: string;
     startTime: string;
     endTime?: string;
+    playFormat: PlayFormat;
     playerAmount?: string;
     phone?: string;
     lineId?: string;

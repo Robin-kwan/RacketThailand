@@ -408,6 +408,7 @@ export function CasualPlayFinder({
                 playDate={play.play_date}
                 startTime={play.start_time}
                 endTime={play.end_time}
+                playFormat={play.play_format ?? null}
                 playerAmount={play.player_amount ?? null}
                 acceptedCount={play.accepted_count ?? null}
                 locale={locale}

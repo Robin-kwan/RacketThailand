@@ -25,6 +25,7 @@ import { BaseScheduleList } from "@/components/base-schedule-list";
 import { BaseBackLink } from "@/components/base-back-link";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
+import { getPlayFormatLabel } from "@/lib/play-format";
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
@@ -89,6 +90,7 @@ type GroupRow = {
   sports: { code: string; name: string | null } | null;
   owner_id: string | null;
   updated_at: string | null;
+  play_format: "single" | "double" | null;
   player_amount: number | null;
   phone: string | null;
   line_id: string | null;
@@ -126,6 +128,7 @@ type GroupMetadataRow = {
   name: string | null;
   description: string | null;
   sports: { code: string; name: string | null } | null;
+  play_format?: "single" | "double" | null;
   group_photos?: { image_url: string | null; is_primary: boolean | null }[] | null;
   group_sessions?: {
     day: string;
@@ -192,7 +195,7 @@ export async function generateMetadata({
   const locale = normalizeLocale(resolvedSearch?.lang);
   const { data } = await supabaseSelect<GroupMetadataRow>("groups", {
     select:
-      "id,name,description,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,province))",
+      "id,name,description,play_format,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,province))",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -316,7 +319,7 @@ export default async function GroupDetailPage({
 
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
     select:
-      "id,name,description,owner_id,sports(code,name),updated_at,player_amount,phone,line_id,line_qr_url",
+      "id,name,description,owner_id,sports(code,name),updated_at,play_format,player_amount,phone,line_id,line_qr_url",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -501,6 +504,7 @@ export default async function GroupDetailPage({
     edit: t("groups.detail.edit"),
     sessionsTitle: t("groups.detail.sessionsTitle"),
     sessionsEmpty: t("groups.detail.sessionsEmpty"),
+    playFormat: t("groups.detail.playFormat"),
     playerAmount: t("groups.detail.playerAmount"),
     phone: t("groups.detail.phone"),
     line: t("groups.detail.line"),
@@ -520,6 +524,7 @@ export default async function GroupDetailPage({
     locale === "th" ? "รูปสนาม" : "Court photo";
   const canEdit = Boolean(isGroupOwner || isAdminViewer);
   const sportName = group.sports?.name ?? undefined;
+  const playFormatLabel = getPlayFormatLabel(group.play_format, locale);
   const shareTitle = group.name ?? fallbackGroupName;
   const shareText =
     group.description ??
@@ -583,6 +588,14 @@ export default async function GroupDetailPage({
               </p>
               <p className="text-base font-semibold text-[var(--foreground)]">
                 {owner?.display_name ?? owner?.username ?? "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                {copy.playFormat}
+              </p>
+              <p className="text-base font-semibold text-[var(--foreground)]">
+                {playFormatLabel}
               </p>
             </div>
             {typeof group.player_amount === "number" &&

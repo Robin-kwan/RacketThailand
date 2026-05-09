@@ -10,6 +10,7 @@ export type CasualPlayRecord = {
   start_time: string | null;
   end_time: string | null;
   updated_at: string | null;
+  play_format?: "single" | "double" | null;
   player_amount?: number | null;
   accepted_count?: number | null;
   phone?: string | null;
@@ -103,7 +104,7 @@ export async function fetchCasualPlaysBySport(
 
   const params: Record<string, string> = {
     select:
-      "id,title,description,play_date,start_time,end_time,updated_at,player_amount,phone,line_id,court_id,venue_name,location_note,courts(id,name,province,district,latitude:lat,longitude:lng)",
+      "id,title,description,play_date,start_time,end_time,updated_at,play_format,player_amount,phone,line_id,court_id,venue_name,location_note,courts(id,name,province,district,latitude:lat,longitude:lng)",
     sport_id: `eq.${sportRow.id}`,
     play_date: filters.playDate ? `eq.${filters.playDate}` : `gte.${today}`,
     order: "play_date.asc,start_time.asc,updated_at.desc.nullslast",

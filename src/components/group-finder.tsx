@@ -628,6 +628,7 @@ export function GroupFinder({
                 imageUrl={primaryPhoto}
                 imageAlt={group.name ?? fallbackGroupPhotoAlt}
                 sessions={group.group_sessions ?? []}
+                playFormat={group.play_format ?? null}
                 dayLabels={dayLabels}
                 scheduleAnytime={copy.scheduleAnytime}
                 locale={locale}

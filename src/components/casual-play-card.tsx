@@ -8,6 +8,7 @@ import {
   formatCasualPlayTimeRange,
 } from "@/lib/casual-play";
 import type { Locale } from "@/lib/i18n";
+import { getPlayFormatLabel, type PlayFormat } from "@/lib/play-format";
 
 type CasualPlayCardProps = {
   title: string;
@@ -19,6 +20,7 @@ type CasualPlayCardProps = {
   startTime?: string | null;
   endTime?: string | null;
   playerAmount?: number | null;
+  playFormat?: PlayFormat | null;
   acceptedCount?: number | null;
   locale: Locale;
   distanceLabel?: string | null;
@@ -34,6 +36,7 @@ export function CasualPlayCard({
   startTime,
   endTime,
   playerAmount,
+  playFormat,
   acceptedCount,
   locale,
   distanceLabel = null,
@@ -45,6 +48,7 @@ export function CasualPlayCard({
   const fallbackVenue = locale === "th" ? "ยังไม่ระบุสถานที่" : "Venue not set";
   const dateLabel = formatCasualPlayDate(playDate, locale, "compact");
   const timeLabel = formatCasualPlayTimeRange(startTime, endTime, locale);
+  const playFormatLabel = getPlayFormatLabel(playFormat, locale);
   const maxPlayers =
     typeof playerAmount === "number" &&
     Number.isFinite(playerAmount) &&
@@ -97,6 +101,12 @@ export function CasualPlayCard({
           <Clock3 className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
           <span className="truncate font-semibold text-slate-800">
             {timeLabel || (locale === "th" ? "ยังไม่ระบุเวลา" : "Time not set")}
+          </span>
+        </div>
+        <div className="flex min-w-0 items-center gap-2">
+          <UsersRound className="h-4 w-4 shrink-0 text-violet-600" aria-hidden />
+          <span className="truncate font-semibold text-slate-800">
+            {playFormatLabel}
           </span>
         </div>
         {playerLabel && (

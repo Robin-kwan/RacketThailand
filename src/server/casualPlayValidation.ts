@@ -18,6 +18,7 @@ export type CasualPlayPayloadInput = {
   playDate?: string;
   startTime?: string;
   endTime?: string | null;
+  playFormat?: string | null;
   playerAmount?: number | string | null;
   phone?: string | null;
   lineId?: string | null;
@@ -34,6 +35,7 @@ export type NormalizedCasualPlayPayload = {
   playDate: string;
   startTime: string;
   endTime: string | null;
+  playFormat: "single" | "double";
   playerAmount: number | null;
   phone: string | null;
   lineId: string | null;
@@ -80,6 +82,10 @@ function normalizePlayerAmount(value?: number | string | null) {
   return null;
 }
 
+function normalizePlayFormat(value?: string | null) {
+  return value === "single" || value === "double" ? value : "double";
+}
+
 export function validateCasualPlayPayload(
   payload: CasualPlayPayloadInput,
   now = new Date(),
@@ -94,6 +100,7 @@ export function validateCasualPlayPayload(
   const playDate = normalizeRequiredText(payload.playDate);
   const startTime = normalizeTime(payload.startTime);
   const endTime = normalizeOptionalTime(payload.endTime);
+  const playFormat = normalizePlayFormat(payload.playFormat);
   const phone = normalizeOptionalText(payload.phone);
   const lineId = normalizeOptionalText(payload.lineId);
   const allowPublicContact = payload.allowPublicContact === true;
@@ -161,6 +168,7 @@ export function validateCasualPlayPayload(
       playDate,
       startTime,
       endTime,
+      playFormat,
       playerAmount: normalizePlayerAmount(payload.playerAmount),
       phone,
       lineId,

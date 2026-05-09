@@ -13,6 +13,7 @@ import {
 } from "@/components/groups/group-form";
 import { BaseImageCard } from "@/components/base-image-card";
 import { LineQrUploader } from "@/components/line-qr-uploader";
+import { type PlayFormat } from "@/lib/play-format";
 
 type SportOption = Option;
 
@@ -43,6 +44,7 @@ type GroupRecord = {
   name: string;
   description: string;
   sessions: GroupFormValues["sessions"];
+  playFormat?: PlayFormat | null;
   playerAmount?: string | null;
   phone?: string | null;
   line_id?: string | null;
@@ -111,6 +113,7 @@ export function GroupEditForm({
     name: group.name,
     description: group.description,
     sessions: group.sessions,
+    playFormat: group.playFormat ?? "double",
     playerAmount: group.playerAmount ?? "",
     phone: group.phone ?? "",
     lineId: group.line_id ?? "",
@@ -241,6 +244,7 @@ export function GroupEditForm({
     sportId: string;
     name: string;
     description: string;
+    playFormat: PlayFormat;
     playerAmount?: string;
     phone?: string;
     lineId?: string;
@@ -262,6 +266,7 @@ export function GroupEditForm({
         sportId: payload.sportId,
         name: payload.name,
         description: payload.description,
+        playFormat: payload.playFormat,
         sessions: payload.sessions,
         playerAmount: payload.playerAmount,
         phone: payload.phone,

@@ -16,6 +16,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { getPlayFormatLabel } from "@/lib/play-format";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
 
@@ -32,6 +33,7 @@ type CasualPlayManagementRow = {
   play_date: string;
   start_time: string | null;
   end_time: string | null;
+  play_format: "single" | "double" | null;
   player_amount: number | null;
   phone: string | null;
   line_id: string | null;
@@ -87,7 +89,7 @@ export default async function AdminCasualPlaysPage({
   const [playsRes, profilesRes] = await Promise.all([
     supabaseSelect<CasualPlayManagementRow>("casual_plays", {
       select:
-        "id,title,description,owner_id,play_date,start_time,end_time,player_amount,phone,line_id,venue_name,location_note,sports(code,name),courts(name,district,province)",
+        "id,title,description,owner_id,play_date,start_time,end_time,play_format,player_amount,phone,line_id,venue_name,location_note,sports(code,name),courts(name,district,province)",
       play_date: `gte.${today}`,
       order: "play_date.asc,start_time.asc",
       limit: "100",
@@ -146,6 +148,10 @@ export default async function AdminCasualPlaysPage({
           {
             label: t("admin.management.common.time"),
             value: formattedTime,
+          },
+          {
+            label: t("casualPlays.detail.playFormat"),
+            value: getPlayFormatLabel(play.play_format, locale),
           },
           {
             label: t("admin.management.common.players"),

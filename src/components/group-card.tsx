@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode, ElementType } from "react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
+import { getPlayFormatLabel, type PlayFormat } from "@/lib/play-format";
 
 type SessionCourt = { id?: string | null; name?: string | null } | null;
 
@@ -23,6 +24,7 @@ type GroupCardProps = {
   description?: string | null;
   location?: string | null;
   sessions?: GroupCardSession[] | null;
+  playFormat?: PlayFormat | null;
   dayLabels: Record<string, string>;
   scheduleAnytime: string;
   locale: Locale;
@@ -132,6 +134,7 @@ export function GroupCard({
   description,
   location,
   sessions,
+  playFormat,
   dayLabels,
   scheduleAnytime,
   locale,
@@ -161,6 +164,7 @@ export function GroupCard({
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackGroupPhotoAlt =
     locale === "th" ? "รูปกลุ่ม" : "Group photo";
+  const playFormatLabel = getPlayFormatLabel(playFormat, locale);
 
   return (
     <Wrapper
@@ -199,6 +203,9 @@ export function GroupCard({
           {location}
         </p>
       )}
+      <p className="text-xs font-semibold uppercase text-violet-700">
+        {playFormatLabel}
+      </p>
       {showSessions && (
         <SessionList
           sessions={sessions}

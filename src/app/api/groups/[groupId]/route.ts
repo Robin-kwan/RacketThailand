@@ -25,6 +25,7 @@ type PatchGroupPayload = {
   name?: string;
   description?: string;
   sessions?: SessionPayload[];
+  playFormat?: string | null;
   playerAmount?: number | string | null;
   phone?: string | null;
   lineId?: string | null;
@@ -70,6 +71,10 @@ function normalizeContact(value?: string | null) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function normalizePlayFormat(value?: string | null) {
+  return value === "single" || value === "double" ? value : "double";
+}
+
 export async function PATCH(
   request: Request,
   options: { params: RouteParamsInput },
@@ -104,6 +109,9 @@ export async function PATCH(
     update.description = payload.description.trim()
       ? payload.description.trim()
       : null;
+  }
+  if (payload.playFormat !== undefined) {
+    update.play_format = normalizePlayFormat(payload.playFormat);
   }
   if (payload.playerAmount !== undefined) {
     update.player_amount = normalizePlayerAmount(payload.playerAmount);

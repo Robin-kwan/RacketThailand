@@ -32,6 +32,7 @@ type CasualPlayEditRow = {
   play_date: string;
   start_time: string | null;
   end_time: string | null;
+  play_format: "single" | "double" | null;
   player_amount: number | null;
   phone: string | null;
   line_id: string | null;
@@ -83,7 +84,7 @@ export default async function EditCasualPlayPage({
     "casual_plays",
     {
       select:
-        "id,sport_id,title,description,owner_id,play_date,start_time,end_time,player_amount,phone,line_id,allow_public_contact,court_id,venue_name,location_note,sports(code)",
+        "id,sport_id,title,description,owner_id,play_date,start_time,end_time,play_format,player_amount,phone,line_id,allow_public_contact,court_id,venue_name,location_note,sports(code)",
       id: `eq.${resolvedParams.playId}`,
       limit: "1",
     },
@@ -172,6 +173,7 @@ export default async function EditCasualPlayPage({
     playDate: play.play_date,
     startTime: play.start_time?.slice(0, 5) ?? "",
     endTime: play.end_time?.slice(0, 5) ?? "",
+    playFormat: play.play_format ?? "double",
     playerAmount:
       typeof play.player_amount === "number"
         ? String(play.player_amount)
@@ -201,6 +203,9 @@ export default async function EditCasualPlayPage({
     endTime: t("casualPlays.form.endTime"),
     endTimeHelp: t("casualPlays.form.endTimeHelp"),
     clearTime: t("casualPlays.form.clearTime"),
+    playFormatLabel: t("casualPlays.form.playFormatLabel"),
+    playFormatSingle: t("casualPlays.form.playFormatSingle"),
+    playFormatDouble: t("casualPlays.form.playFormatDouble"),
     playerAmountLabel: t("casualPlays.form.playerAmountLabel"),
     playerAmountPlaceholder: t("casualPlays.form.playerAmountPlaceholder"),
     playerAmountHelp: t("casualPlays.form.playerAmountHelp"),
@@ -285,6 +290,9 @@ export default async function EditCasualPlayPage({
                 endTime: copy.endTime,
                 endTimeHelp: copy.endTimeHelp,
                 clearTime: copy.clearTime,
+                playFormatLabel: copy.playFormatLabel,
+                playFormatSingle: copy.playFormatSingle,
+                playFormatDouble: copy.playFormatDouble,
                 playerAmountLabel: copy.playerAmountLabel,
                 playerAmountPlaceholder: copy.playerAmountPlaceholder,
                 playerAmountHelp: copy.playerAmountHelp,
