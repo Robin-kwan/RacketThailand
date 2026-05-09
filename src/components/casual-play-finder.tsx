@@ -85,7 +85,7 @@ export function CasualPlayFinder({
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
   const debouncedSearch = useDebounce(search);
   const fallbackTitle =
-    locale === "th" ? "เซสชันเล่นชั่วคราว" : "Casual play";
+    locale === "th" ? "หาเพื่อนตี" : "Casual play";
   const distanceUnit = locale === "th" ? "กม." : "km";
 
   useEffect(() => {
@@ -237,7 +237,7 @@ export function CasualPlayFinder({
   const count = displayedPlays.length;
   const countSummary =
     locale === "th"
-      ? `${count.toLocaleString("th-TH")} เซสชัน · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
+      ? `${count.toLocaleString("th-TH")} โพสต์ · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
       : `${count.toLocaleString("en-US")} plays · ${loading ? "loading..." : "live data"}`;
 
   return (

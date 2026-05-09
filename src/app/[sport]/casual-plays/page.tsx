@@ -56,11 +56,11 @@ export async function generateMetadata({
   const alternates = buildLocaleAlternates(canonicalPath);
   const title =
     locale === "th"
-      ? `เซสชันเล่น${meta.name[locale]}ชั่วคราว | RacketThailand`
+      ? `หาเพื่อนตี${meta.name[locale]} | RacketThailand`
       : `${meta.name[locale]} Casual Plays | RacketThailand`;
   const description =
     locale === "th"
-      ? `ค้นหาเซสชันเล่น${meta.name[locale]}แบบครั้งเดียว พร้อมวัน เวลา สนาม และข้อมูลติดต่อ`
+      ? `ค้นหาโพสต์หาเพื่อนตี${meta.name[locale]} พร้อมวัน เวลา สนาม และข้อมูลติดต่อ`
       : `Find one-off ${meta.name[locale]} sessions with date, court, and organizer contact details.`;
 
   return {

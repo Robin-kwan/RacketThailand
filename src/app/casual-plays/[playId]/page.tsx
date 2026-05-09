@@ -125,7 +125,7 @@ export async function generateMetadata({
     return {
       title:
         locale === "th"
-          ? "ไม่พบข้อมูลเซสชัน | RacketThailand"
+          ? "ไม่พบข้อมูลหาเพื่อนตี | RacketThailand"
           : "Casual play not found | RacketThailand",
     };
   }
@@ -312,7 +312,7 @@ export default async function CasualPlayDetailPage({
   const canonicalPath = `/casual-plays/${play.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
   const fallbackTitle =
-    locale === "th" ? "เซสชันเล่นชั่วคราว" : "Casual play";
+    locale === "th" ? "หาเพื่อนตี" : "Casual play";
   const shareTitle = play.title ?? fallbackTitle;
   const shareText = [
     formatCasualPlayDate(play.play_date, locale),
@@ -327,7 +327,7 @@ export default async function CasualPlayDetailPage({
     "@context": "https://schema.org",
     "@type": "SportsEvent",
     "@id": canonicalUrl,
-    name: play.title ?? (locale === "th" ? "เซสชันเล่นชั่วคราว" : "Casual play"),
+    name: play.title ?? (locale === "th" ? "หาเพื่อนตี" : "Casual play"),
     description: play.description ?? undefined,
     startDate: `${play.play_date}T${startTimeValue}:00+07:00`,
     endDate: play.end_time
@@ -438,7 +438,7 @@ export default async function CasualPlayDetailPage({
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
         >
           <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
-            {locale === "th" ? "เซสชันเล่นชั่วคราว" : "Casual play"} ·{" "}
+            {locale === "th" ? "หาเพื่อนตี" : "Casual play"} ·{" "}
             {play.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
