@@ -190,7 +190,10 @@ export default async function GroupFinderPage({
               {copy.casualPlaysCta}
             </TrackedLink>
             <TrackedLink
-              href={buildLocalizedPath("/groups/create", locale)}
+              href={buildLocalizedPath(
+                `/groups/create?sport=${encodeURIComponent(resolvedParams.sport)}`,
+                locale,
+              )}
               eventName="sport_cta_click"
               eventPayload={{
                 surface: "group_finder_header",

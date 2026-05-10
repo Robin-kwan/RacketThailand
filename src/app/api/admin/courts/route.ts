@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import {
+  buildDuplicateCourtMessage,
+  findCourtByGooglePlaceId,
+} from "@/server/courtDuplicate";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { normalizeSportIds, syncCourtSports } from "@/server/courtSports";
 
 type CourtPayload = {
   sportId: string;
+  sportIds?: string[];
   name: string;
   description?: string;
   address: string;
@@ -52,8 +59,10 @@ export async function POST(request: Request) {
   }
 
   const payload = (await request.json()) as CourtPayload;
+  const sportIds = normalizeSportIds(payload.sportId, payload.sportIds);
+  const sportId = sportIds[0] ?? "";
   if (
-    !payload.sportId ||
+    !sportId ||
     !payload.name ||
     typeof payload.latitude !== "number" ||
     typeof payload.longitude !== "number" ||
@@ -65,11 +74,17 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  const duplicateCourt = await findCourtByGooglePlaceId(payload.googlePlaceId);
+  if (duplicateCourt) {
+    return NextResponse.json(
+      { error: buildDuplicateCourtMessage(duplicateCourt) },
+      { status: 409 },
+    );
+  }
 
   const { data: inserted, error: insertError } = await supabase
     .from("courts")
     .insert({
-      sport_id: payload.sportId,
       name: payload.name,
       description: payload.description?.trim() || null,
       address: payload.address,
@@ -94,6 +109,18 @@ export async function POST(request: Request) {
   if (insertError) {
     return NextResponse.json(
       { error: insertError.message },
+      { status: 500 },
+    );
+  }
+
+  const { error: sportSyncError } = await syncCourtSports(
+    getSupabaseAdminClient(),
+    inserted.id,
+    sportIds,
+  );
+  if (sportSyncError) {
+    return NextResponse.json(
+      { error: sportSyncError.message },
       { status: 500 },
     );
   }

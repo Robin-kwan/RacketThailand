@@ -16,6 +16,7 @@ import {
 } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
+import { fetchSportIdsByCourtIds } from "@/server/courtSports";
 
 type SearchParams = {
   lang?: string;
@@ -24,7 +25,6 @@ type SearchParamsInput = Promise<SearchParams> | undefined;
 
 type CourtManagementRow = {
   id: string;
-  sport_id: string | null;
   name: string | null;
   address: string | null;
   district: string | null;
@@ -35,10 +35,6 @@ type CourtManagementRow = {
   website_url: string | null;
   is_active: boolean | null;
   updated_at: string | null;
-  sports?: {
-    code: string | null;
-    name: string | null;
-  } | null;
   court_photos?: { id: string }[] | null;
 };
 
@@ -109,7 +105,7 @@ export default async function AdminCourtsPage({
       }),
       supabaseSelect<CourtManagementRow>("courts", {
         select:
-          "id,sport_id,name,address,district,province,created_by,phone,line_id,website_url,is_active,updated_at,sports(code,name),court_photos(id)",
+          "id,name,address,district,province,created_by,phone,line_id,website_url,is_active,updated_at,court_photos(id)",
         order: "updated_at.desc.nullslast",
         limit: "100",
       }),
@@ -124,6 +120,9 @@ export default async function AdminCourtsPage({
   const pendingCourts = pendingCourtsRes.data;
   const courts = courtsRes.data;
   const profiles = profilesRes.data;
+  const courtSportIdsByCourtId = await fetchSportIdsByCourtIds(
+    courts?.map((court) => court.id) ?? [],
+  );
 
   const copy = {
     selectSport: t("admin.selectSport"),
@@ -141,6 +140,8 @@ export default async function AdminCourtsPage({
     placeSearch: t("admin.placeSearch"),
     placeSearchHelper: t("admin.placeSearchHelper"),
     placeSearchNoResults: t("admin.placeSearchNoResults"),
+    placeAlreadyRegistered: t("admin.placeAlreadyRegistered"),
+    placeExistingCourtLinkFallback: t("admin.placeExistingCourtLinkFallback"),
     photos: t("admin.photos"),
     primaryPhoto: t("admin.primaryPhoto"),
     makePrimaryPhoto: t("admin.makePrimaryPhoto"),
@@ -164,6 +165,7 @@ export default async function AdminCourtsPage({
       profile.display_name ?? profile.username ?? profile.id.slice(0, 6),
     ]) ?? [],
   );
+  const sportById = new Map(sports?.map((sport) => [sport.id, sport]) ?? []);
 
   const tableRows: AdminResourceRow[] =
     courts?.map((court) => {
@@ -172,11 +174,14 @@ export default async function AdminCourtsPage({
         t("admin.management.common.notSet");
       const contact = buildContact(court);
       const photoCount = court.court_photos?.length ?? 0;
+      const primarySport = sportById.get(
+        courtSportIdsByCourtId.get(court.id)?.[0] ?? "",
+      );
       return {
         id: court.id,
         title: court.name?.trim() || t("admin.sections.courtFallback"),
         subtitle: court.address ?? location,
-        meta: [court.sports?.name ?? court.sports?.code ?? "Sport"],
+        meta: [primarySport?.name ?? primarySport?.code ?? "Sport"],
         details: [
           {
             label: t("admin.management.common.location"),

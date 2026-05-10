@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { track } from "@vercel/analytics";
 import { MultiImageInput } from "@/components/multi-image-input";
 import { LineQrUploader } from "@/components/line-qr-uploader";
@@ -13,6 +12,7 @@ import {
 } from "@/components/admin/court-form-fields";
 import {
   PlaceSearchField,
+  type ExistingCourt,
   type PlaceResolution,
 } from "@/components/admin/place-search-field";
 import {
@@ -51,6 +51,8 @@ type CourtFormProps = {
     placeSearch: string;
     placeSearchHelper: string;
     placeSearchNoResults: string;
+    placeAlreadyRegistered?: string;
+    placeExistingCourtLinkFallback?: string;
     photos: string;
     primaryPhoto: string;
     makePrimaryPhoto: string;
@@ -63,11 +65,6 @@ type CourtFormProps = {
   };
 };
 
-const COURT_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_COURT_BUCKET || "court-images";
-const COURT_LINE_QR_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_COURT_LINE_QR_BUCKET || "court-line-qr";
-
 export function CourtAdminForm({
   sports,
   defaultSportId,
@@ -76,13 +73,13 @@ export function CourtAdminForm({
   copy,
 }: CourtFormProps) {
   const router = useRouter();
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const initialSportId =
     defaultSportId && sports.some((sport) => sport.id === defaultSportId)
       ? defaultSportId
       : sports[0]?.id ?? "";
   const [form, setForm] = useState<CourtFormValues>({
     sportId: initialSportId,
+    sportIds: initialSportId ? [initialSportId] : [],
     name: "",
     description: "",
     address: "",
@@ -97,6 +94,9 @@ export function CourtAdminForm({
     googlePlaceId: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [duplicateCourt, setDuplicateCourt] = useState<ExistingCourt | null>(
+    null,
+  );
   const [images, setImages] = useState<File[]>([]);
   const [lineQrFile, setLineQrFile] = useState<File | null>(null);
   const [lineQrPreview, setLineQrPreview] = useState<string | null>(null);
@@ -121,6 +121,14 @@ export function CourtAdminForm({
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSportIdsChange = (sportIds: string[]) => {
+    setForm((prev) => ({
+      ...prev,
+      sportIds,
+      sportId: sportIds[0] ?? "",
+    }));
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
@@ -129,6 +137,17 @@ export function CourtAdminForm({
       showToast({
         variant: "error",
         message: copy.locationMissing,
+      });
+      setSubmitting(false);
+      return;
+    }
+    if (duplicateCourt) {
+      showToast({
+        variant: "error",
+        message: `${
+          copy.placeAlreadyRegistered ??
+          "This place is already registered as"
+        } ${duplicateCourt.name ?? copy.placeExistingCourtLinkFallback ?? "existing court"}.`,
       });
       setSubmitting(false);
       return;
@@ -148,7 +167,7 @@ export function CourtAdminForm({
     if (analyticsSurface) {
       track("court_submit_started", {
         surface: analyticsSurface,
-        sport: form.sportId,
+        sport: form.sportIds.join(",") || form.sportId,
       });
     }
 
@@ -178,54 +197,36 @@ export function CourtAdminForm({
     if (courtId && images.length > 0) {
       for (let index = 0; index < images.length; index += 1) {
         const file = images[index];
-        const ext = file.name.split(".").pop();
-        const filePath = `${courtId}/${Date.now()}-${index}.${ext ?? "jpg"}`;
-        const { error: uploadError } = await supabase.storage
-          .from(COURT_BUCKET)
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: true,
-            contentType: file.type,
+        const photoForm = new FormData();
+        photoForm.set("file", file);
+        photoForm.set("isPrimary", String(index === 0));
+        const uploadResponse = await fetch(`/api/courts/${courtId}/photos`, {
+          method: "POST",
+          body: photoForm,
+        });
+        const uploadData = await uploadResponse.json().catch(() => ({}));
+        if (!uploadResponse.ok) {
+          showToast({
+            variant: "error",
+            message: uploadData?.error ?? "Failed to upload court photo.",
           });
-        if (uploadError) {
-          showToast({ variant: "error", message: uploadError.message });
           continue;
         }
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from(COURT_BUCKET).getPublicUrl(filePath);
-        await fetch("/api/admin/court-photos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            courtId,
-            imageUrl: publicUrl,
-            isPrimary: index === 0,
-          }),
-        });
       }
     }
 
     if (courtId && lineQrFile && lineQrPreview) {
-      const ext = lineQrFile.name.split(".").pop();
-      const filePath = `${courtId}/line-qr.${ext ?? "jpg"}`;
-      const { error: uploadError } = await supabase.storage
-        .from(COURT_LINE_QR_BUCKET)
-        .upload(filePath, lineQrFile, {
-          cacheControl: "3600",
-          upsert: true,
-          contentType: lineQrFile.type,
-        });
-      if (uploadError) {
-        showToast({ variant: "error", message: uploadError.message });
-      } else {
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from(COURT_LINE_QR_BUCKET).getPublicUrl(filePath);
-        await fetch(`/api/courts/${courtId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lineQrUrl: publicUrl }),
+      const qrForm = new FormData();
+      qrForm.set("file", lineQrFile);
+      const qrResponse = await fetch(`/api/courts/${courtId}/line-qr`, {
+        method: "POST",
+        body: qrForm,
+      });
+      const qrData = await qrResponse.json().catch(() => ({}));
+      if (!qrResponse.ok) {
+        showToast({
+          variant: "error",
+          message: qrData?.error ?? "Failed to upload LINE QR image.",
         });
       }
     }
@@ -234,7 +235,7 @@ export function CourtAdminForm({
     if (analyticsSurface) {
       track("court_submit_success", {
         surface: analyticsSurface,
-        sport: form.sportId,
+        sport: form.sportIds.join(",") || form.sportId,
         courtId: courtId ?? null,
       });
     }
@@ -261,6 +262,7 @@ export function CourtAdminForm({
     setForm((prev) => ({
       ...prev,
       sportId: sports[0]?.id ?? "",
+      sportIds: sports[0]?.id ? [sports[0].id] : [],
       name: "",
       description: "",
       address: "",
@@ -275,6 +277,7 @@ export function CourtAdminForm({
       googlePlaceId: "",
     }));
     setImages([]);
+    setDuplicateCourt(null);
     if (lineQrPreview?.startsWith("blob:")) {
       URL.revokeObjectURL(lineQrPreview);
     }
@@ -314,7 +317,10 @@ export function CourtAdminForm({
         label={copy.placeSearch}
         helper={copy.placeSearchHelper}
         noResults={copy.placeSearchNoResults}
+        duplicateLabel={copy.placeAlreadyRegistered}
+        duplicateLinkLabel={copy.placeExistingCourtLinkFallback}
         onResolve={handlePlaceResolution}
+        onDuplicateCourtChange={setDuplicateCourt}
         initialQuery={
           form.googlePlaceId
             ? [form.name, form.address].filter(Boolean).join(" · ")
@@ -344,6 +350,7 @@ export function CourtAdminForm({
         sports={sports}
         copy={copy}
         onChange={handleChange}
+        onSportIdsChange={handleSportIdsChange}
         extras={
           <div className="space-y-4">
             <LineQrUploader

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 const COURT_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_COURT_BUCKET || "court-images";
@@ -84,7 +85,7 @@ export async function DELETE(
 
   const path = extractStoragePath(photo?.image_url ?? null);
   if (path) {
-    await supabase.storage.from(COURT_BUCKET).remove([path]);
+    await getSupabaseAdminClient().storage.from(COURT_BUCKET).remove([path]);
   }
 
   return NextResponse.json({ ok: true });

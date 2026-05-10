@@ -166,7 +166,10 @@ export default async function CasualPlayFinderPage({
               {copy.groupFinderCta}
             </TrackedLink>
             <TrackedLink
-              href={buildLocalizedPath("/casual-plays/create", locale)}
+              href={buildLocalizedPath(
+                `/casual-plays/create?sport=${encodeURIComponent(resolvedParams.sport)}`,
+                locale,
+              )}
               eventName="sport_cta_click"
               eventPayload={{
                 surface: "casual_play_header",

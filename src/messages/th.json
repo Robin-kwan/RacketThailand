@@ -421,6 +421,8 @@
     "placeSearch": "ค้นหาสถานที่ใน Google Maps",
     "placeSearchHelper": "พิมพ์ชื่อสนามหรือสถานที่ แล้วเลือกผลลัพธ์ที่ถูกต้องเพื่อให้ระบบกรอกข้อมูลให้อัตโนมัติ",
     "placeSearchNoResults": "ยังไม่พบผลลัพธ์ ลองสะกดอีกแบบ",
+    "placeAlreadyRegistered": "สถานที่นี้มีอยู่ในระบบแล้วในชื่อ",
+    "placeExistingCourtLinkFallback": "สนามที่มีอยู่แล้ว",
     "locationMissing": "ต้องระบุตำแหน่ง กรุณาใช้ช่องค้นหา Google Maps เพื่อดึงข้อมูล",
     "submit": "เพิ่มสนาม",
     "submitting": "กำลังบันทึก",

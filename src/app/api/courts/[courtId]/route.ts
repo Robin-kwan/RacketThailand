@@ -2,9 +2,16 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
 import { deleteCourtWithAssets } from "@/server/adminDeletion";
+import {
+  buildDuplicateCourtMessage,
+  findCourtByGooglePlaceId,
+} from "@/server/courtDuplicate";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { normalizeSportIds, syncCourtSports } from "@/server/courtSports";
 
 type CourtPayload = Partial<{
   sportId: string;
+  sportIds: string[];
   name: string;
   description?: string;
   address: string;
@@ -75,8 +82,18 @@ export async function PATCH(
 
   const payload = (await request.json()) as CourtPayload;
   const update: Record<string, unknown> = {};
-  if (payload.sportId !== undefined) {
-    update.sport_id = payload.sportId;
+  const hasSportUpdate =
+    payload.sportId !== undefined || payload.sportIds !== undefined;
+  const sportIds = hasSportUpdate
+    ? normalizeSportIds(payload.sportId, payload.sportIds)
+    : null;
+  if (hasSportUpdate) {
+    if (!sportIds || sportIds.length === 0) {
+      return NextResponse.json(
+        { error: "Missing required court fields." },
+        { status: 400 },
+      );
+    }
   }
   if (payload.name !== undefined) {
     update.name = payload.name;
@@ -120,29 +137,55 @@ export async function PATCH(
     update.lng = payload.longitude;
   }
   if (payload.googlePlaceId !== undefined) {
+    const duplicateCourt = await findCourtByGooglePlaceId(
+      payload.googlePlaceId,
+      resolved.courtId,
+    );
+    if (duplicateCourt) {
+      return NextResponse.json(
+        { error: buildDuplicateCourtMessage(duplicateCourt) },
+        { status: 409 },
+      );
+    }
     update.google_place_id = payload.googlePlaceId ?? null;
   }
 
-  if (Object.keys(update).length === 0) {
+  if (Object.keys(update).length === 0 && !sportIds) {
     return NextResponse.json(
       { error: "No fields to update." },
       { status: 400 },
     );
   }
 
-  const { error: updateError } = await supabase
-    .from("courts")
-    .update({
-      ...update,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", resolved.courtId);
+  if (Object.keys(update).length > 0) {
+    const { error: updateError } = await supabase
+      .from("courts")
+      .update({
+        ...update,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", resolved.courtId);
 
-  if (updateError) {
-    return NextResponse.json(
-      { error: updateError.message },
-      { status: 500 },
+    if (updateError) {
+      return NextResponse.json(
+        { error: updateError.message },
+        { status: 500 },
+      );
+    }
+  }
+
+  if (sportIds) {
+    const { error: sportSyncError } = await syncCourtSports(
+      getSupabaseAdminClient(),
+      resolved.courtId,
+      sportIds,
     );
+    if (sportSyncError) {
+      return NextResponse.json(
+        { error: sportSyncError.message },
+        { status: 500 },
+      );
+    }
   }
 
   return NextResponse.json({ ok: true });

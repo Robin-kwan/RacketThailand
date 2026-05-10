@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LoaderCircle, Plus } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { BaseImageCard } from "@/components/base-image-card";
 import { LineQrUploader } from "@/components/line-qr-uploader";
 import {
@@ -12,6 +11,7 @@ import {
 import { showToast } from "@/components/toaster";
 import {
   PlaceSearchField,
+  type ExistingCourt,
   type PlaceResolution,
 } from "@/components/admin/place-search-field";
 import {
@@ -31,6 +31,7 @@ type SportOption = {
 type CourtRecord = {
   id: string;
   sportId: string;
+  sportIds?: string[];
   name: string;
   description: string;
   address: string;
@@ -105,6 +106,8 @@ type CourtEditFormProps = {
     placeSearch: string;
     placeSearchHelper: string;
     placeSearchNoResults: string;
+    placeAlreadyRegistered?: string;
+    placeExistingCourtLinkFallback?: string;
     submit: string;
     submitting: string;
     success: string;
@@ -116,18 +119,21 @@ type CourtEditFormProps = {
   };
 };
 
-const COURT_BUCKET =
-  process.env.NEXT_PUBLIC_SUPABASE_COURT_BUCKET || "court-images";
-
 export function CourtEditForm({
   court,
   sports,
   existingPhotos,
   copy,
 }: CourtEditFormProps) {
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const initialSportIds =
+    court.sportIds && court.sportIds.length > 0
+      ? court.sportIds
+      : court.sportId
+        ? [court.sportId]
+        : [];
   const [form, setForm] = useState<CourtFormValues>({
-    sportId: court.sportId,
+    sportId: initialSportIds[0] ?? "",
+    sportIds: initialSportIds,
     name: court.name,
     description: court.description,
     address: court.address,
@@ -150,6 +156,9 @@ export function CourtEditForm({
   );
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [duplicateCourt, setDuplicateCourt] = useState<ExistingCourt | null>(
+    null,
+  );
   const [uploading, setUploading] = useState(false);
   const [openingHours, setOpeningHours] = useState<OpeningHoursEntry[]>(
     court.opening_hours && court.opening_hours.length > 0
@@ -207,12 +216,27 @@ export function CourtEditForm({
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSportIdsChange = (sportIds: string[]) => {
+    setForm((prev) => ({
+      ...prev,
+      sportIds,
+      sportId: sportIds[0] ?? "",
+    }));
+  };
+
   const computeFormChanges = (): Partial<CourtFormValues> => {
     const initial = initialFormRef.current;
     const diff: Partial<CourtFormValues> = {};
     (Object.keys(form) as (keyof CourtFormValues)[]).forEach((key) => {
-      if (form[key] !== initial[key]) {
-        diff[key] = form[key];
+      const current = form[key];
+      const previous = initial[key];
+      const changed =
+        Array.isArray(current) || Array.isArray(previous)
+          ? JSON.stringify(current) !== JSON.stringify(previous)
+          : current !== previous;
+      if (changed) {
+        (diff as Record<keyof CourtFormValues, string | string[]>)[key] =
+          form[key];
       }
     });
     return diff;
@@ -248,6 +272,17 @@ export function CourtEditForm({
     }
     if (!form.latitude || !form.longitude) {
       showToast({ variant: "error", message: copy.locationMissing });
+      setSubmitting(false);
+      return;
+    }
+    if (duplicateCourt) {
+      showToast({
+        variant: "error",
+        message: `${
+          copy.placeAlreadyRegistered ??
+          "This place is already registered as"
+        } ${duplicateCourt.name ?? copy.placeExistingCourtLinkFallback ?? "existing court"}.`,
+      });
       setSubmitting(false);
       return;
     }
@@ -332,31 +367,12 @@ export function CourtEditForm({
     for (const photo of newPhotos) {
       if (!photo.file) continue;
       const file = photo.file;
-      const ext = file.name.split(".").pop();
-      const filePath = `${court.id}/${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2)}.${ext ?? "jpg"}`;
-      const { error: uploadError } = await supabase.storage
-        .from(COURT_BUCKET)
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: true,
-          contentType: file.type,
-        });
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(COURT_BUCKET).getPublicUrl(filePath);
-      const uploadResponse = await fetch("/api/admin/court-photos", {
+      const photoForm = new FormData();
+      photoForm.set("file", file);
+      photoForm.set("isPrimary", "false");
+      const uploadResponse = await fetch(`/api/courts/${court.id}/photos`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courtId: court.id,
-          imageUrl: publicUrl,
-          isPrimary: false,
-        }),
+        body: photoForm,
       });
       const uploadData = await uploadResponse.json().catch(() => null);
       if (!uploadResponse.ok || !uploadData?.photo) {
@@ -364,7 +380,7 @@ export function CourtEditForm({
       }
       uploadedMap.set(photo.id, {
         id: uploadData.photo.id,
-        image_url: publicUrl,
+        image_url: uploadData.photo.image_url,
         is_primary: uploadData.photo.is_primary,
       });
       if (photo.image_url) {
@@ -429,25 +445,11 @@ export function CourtEditForm({
 
   const handleLineQrUpdate = async () => {
     if (lineQrFile && lineQrPreview) {
-      const ext = lineQrFile.name.split(".").pop();
-      const filePath = `${court.id}/line-qr.${ext ?? "jpg"}`;
-      const { error: uploadError } = await supabase.storage
-        .from(COURT_BUCKET)
-        .upload(filePath, lineQrFile, {
-          cacheControl: "3600",
-          upsert: true,
-          contentType: lineQrFile.type,
-        });
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(COURT_BUCKET).getPublicUrl(filePath);
-      const response = await fetch(`/api/courts/${court.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lineQrUrl: publicUrl }),
+      const qrForm = new FormData();
+      qrForm.set("file", lineQrFile);
+      const response = await fetch(`/api/courts/${court.id}/line-qr`, {
+        method: "POST",
+        body: qrForm,
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -456,16 +458,14 @@ export function CourtEditForm({
       if (lineQrPreview?.startsWith("blob:")) {
         URL.revokeObjectURL(lineQrPreview);
       }
-      setLineQrPreview(publicUrl);
+      setLineQrPreview(data?.lineQrUrl ?? null);
       setLineQrFile(null);
       setLineQrRemovalPending(false);
       return;
     }
     if (lineQrRemovalPending) {
-      const response = await fetch(`/api/courts/${court.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lineQrUrl: null }),
+      const response = await fetch(`/api/courts/${court.id}/line-qr`, {
+        method: "DELETE",
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -573,7 +573,11 @@ export function CourtEditForm({
         label={copy.placeSearch}
         helper={copy.placeSearchHelper}
         noResults={copy.placeSearchNoResults}
+        duplicateLabel={copy.placeAlreadyRegistered}
+        duplicateLinkLabel={copy.placeExistingCourtLinkFallback}
         onResolve={handlePlaceResolution}
+        onDuplicateCourtChange={setDuplicateCourt}
+        currentCourtId={court.id}
         initialQuery={
           form.googlePlaceId
             ? [form.name, form.address].filter(Boolean).join(" · ")
@@ -602,6 +606,7 @@ export function CourtEditForm({
         copy={copy}
         sports={sports}
         onChange={handleChange}
+        onSportIdsChange={handleSportIdsChange}
         extras={
           <div className="space-y-4">
             <LineQrUploader

@@ -8,9 +8,15 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
 import { ensureUserProfile } from "@/server/profile";
+import {
+  buildDuplicateCourtMessage,
+  findCourtByGooglePlaceId,
+} from "@/server/courtDuplicate";
+import { normalizeSportIds, syncCourtSports } from "@/server/courtSports";
 
 type CourtCreatePayload = {
   sportId?: string;
+  sportIds?: string[];
   name?: string;
   description?: string;
   address?: string;
@@ -91,7 +97,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const sportId = sanitizeText(payload.sportId);
+  const sportIds = normalizeSportIds(payload.sportId, payload.sportIds);
+  const sportId = sportIds[0] ?? "";
   const name = sanitizeText(payload.name);
   const description = sanitizeText(payload.description);
   const address = sanitizeText(payload.address);
@@ -125,10 +132,8 @@ export async function POST(request: Request) {
     ? payload.opening_hours
     : null;
   const allowPublicCourtPublish = await getAllowPublicCourtPublish();
-  const { error: profileError } = await ensureUserProfile(
-    getSupabaseAdminClient(),
-    user,
-  );
+  const adminClient = getSupabaseAdminClient();
+  const { error: profileError } = await ensureUserProfile(adminClient, user);
 
   if (profileError) {
     return NextResponse.json(
@@ -136,11 +141,17 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+  const duplicateCourt = await findCourtByGooglePlaceId(googlePlaceId);
+  if (duplicateCourt) {
+    return NextResponse.json(
+      { error: buildDuplicateCourtMessage(duplicateCourt) },
+      { status: 409 },
+    );
+  }
 
   const { data: inserted, error: insertError } = await supabase
     .from("courts")
     .insert({
-      sport_id: sportId,
       name,
       description: description || null,
       address,
@@ -165,6 +176,18 @@ export async function POST(request: Request) {
   if (insertError || !inserted) {
     return NextResponse.json(
       { error: insertError?.message ?? "Unable to create court." },
+      { status: 500 },
+    );
+  }
+
+  const { error: sportSyncError } = await syncCourtSports(
+    adminClient,
+    inserted.id,
+    sportIds,
+  );
+  if (sportSyncError) {
+    return NextResponse.json(
+      { error: sportSyncError.message },
       { status: 500 },
     );
   }

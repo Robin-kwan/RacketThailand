@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
 import type { CourtRecord } from "@/server/courtFinder";
 import {
@@ -89,11 +89,15 @@ export function CourtFinder({
   const [courts, setCourts] = useState(initialCourts);
   const [availableProvinces, setAvailableProvinces] = useState(provinces);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
   const [count, setCount] = useState(total);
+  const [hasMore, setHasMore] = useState(initialCourts.length < total);
   const [userLocation, setUserLocation] = useState<LocationState | null>(null);
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const localeQuery =
     locale === DEFAULT_LOCALE ? "" : `?lang=${locale}`;
   const provinceOptions = useMemo(
@@ -115,6 +119,8 @@ export function CourtFinder({
       ? `${count.toLocaleString("th-TH")} สนาม · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
       : `${count.toLocaleString("en-US")} courts · ${loading ? "loading..." : "live data"}`;
   const distanceUnit = locale === "th" ? "กม." : "km";
+  const loadingMoreLabel =
+    locale === "th" ? "กำลังโหลดสนามเพิ่มเติม..." : "Loading more courts...";
 
   useEffect(() => {
     let isActive = true;
@@ -123,6 +129,7 @@ export function CourtFinder({
       const params = new URLSearchParams({
         sport: sportCode,
         limit: PAGE_SIZE.toString(),
+        page: "1",
       });
       if (debouncedSearch) params.set("q", debouncedSearch);
       if (province) params.set("province", province);
@@ -131,8 +138,12 @@ export function CourtFinder({
       });
       const data = await response.json();
       if (!isActive) return;
-      setCourts(data.courts ?? []);
-      setCount(data.count ?? 0);
+      const nextCourts = data.courts ?? [];
+      const nextCount = data.count ?? 0;
+      setCourts(nextCourts);
+      setCount(nextCount);
+      setPage(1);
+      setHasMore(nextCourts.length < nextCount);
       setAvailableProvinces(data.provinces ?? []);
       setLoading(false);
     };
@@ -141,6 +152,67 @@ export function CourtFinder({
       isActive = false;
     };
   }, [sportCode, debouncedSearch, province]);
+
+  const loadMoreCourts = useCallback(async () => {
+    if (loading || loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({
+        sport: sportCode,
+        limit: PAGE_SIZE.toString(),
+        page: nextPage.toString(),
+      });
+      if (debouncedSearch) params.set("q", debouncedSearch);
+      if (province) params.set("province", province);
+      const response = await fetch(`/api/courts?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return;
+      }
+      const nextCourts = (data.courts ?? []) as CourtRecord[];
+      const nextCount = data.count ?? count;
+      setCount(nextCount);
+      setPage(nextPage);
+      setCourts((previous) => {
+        const merged = new Map(previous.map((court) => [court.id, court]));
+        nextCourts.forEach((court) => merged.set(court.id, court));
+        const values = Array.from(merged.values());
+        setHasMore(values.length < nextCount);
+        return values;
+      });
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [
+    count,
+    debouncedSearch,
+    hasMore,
+    loading,
+    loadingMore,
+    page,
+    province,
+    sportCode,
+  ]);
+
+  useEffect(() => {
+    const target = sentinelRef.current;
+    if (!target || !hasMore) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+        if (firstEntry?.isIntersecting) {
+          void loadMoreCourts();
+        }
+      },
+      { rootMargin: "500px 0px" },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMore, loadMoreCourts]);
 
   const handleReset = () => {
     track("finder_filter_used", {
@@ -408,33 +480,43 @@ export function CourtFinder({
           </Link>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          {displayedCourts.map(({ court, distanceKm }) => {
-            const photo =
-              court.court_photos?.find((p) => p.is_primary)?.image_url ??
-              court.court_photos?.[0]?.image_url ??
-              `/sports/${sportCode}.png`;
-            const locationText = [court.district, court.province]
-              .filter(Boolean)
-              .join(" · ");
-            const distanceLabel =
-              distanceKm !== null
-                ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
-                : null;
-            return (
-              <CourtCard
-                key={court.id}
-                href={`/courts/${court.id}${localeQuery}`}
-                name={court.name ?? fallbackCourtName}
-                imageUrl={photo}
-                imageAlt={court.name ?? fallbackCourtImageAlt}
-                location={locationText}
-                primaryBadge={court.province || "TH"}
-                secondaryBadge={distanceLabel}
-              />
-            );
-          })}
-        </div>
+        <>
+          <div className="grid gap-6 md:grid-cols-2">
+            {displayedCourts.map(({ court, distanceKm }) => {
+              const photo =
+                court.court_photos?.find((p) => p.is_primary)?.image_url ??
+                court.court_photos?.[0]?.image_url ??
+                `/sports/${sportCode}.png`;
+              const locationText = [court.district, court.province]
+                .filter(Boolean)
+                .join(" · ");
+              const distanceLabel =
+                distanceKm !== null
+                  ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
+                  : null;
+              return (
+                <CourtCard
+                  key={court.id}
+                  href={`/courts/${court.id}${localeQuery}`}
+                  name={court.name ?? fallbackCourtName}
+                  imageUrl={photo}
+                  imageAlt={court.name ?? fallbackCourtImageAlt}
+                  location={locationText}
+                  primaryBadge={court.province || "TH"}
+                  secondaryBadge={distanceLabel}
+                />
+              );
+            })}
+          </div>
+          {hasMore && (
+            <div
+              ref={sentinelRef}
+              className="flex min-h-16 items-center justify-center text-sm text-slate-500"
+            >
+              {loadingMore ? loadingMoreLabel : ""}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

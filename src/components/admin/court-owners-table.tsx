@@ -7,6 +7,7 @@ import {
 } from "@/components/admin/court-form-fields";
 import {
   PlaceSearchField,
+  type ExistingCourt,
   type PlaceResolution,
 } from "@/components/admin/place-search-field";
 import { showToast } from "@/components/toaster";
@@ -24,6 +25,7 @@ export type CourtOwnerSportOption = {
 export type CourtOwnerTableRow = {
   id: string;
   sportId: string;
+  sportIds?: string[];
   name: string | null;
   address: string | null;
   district: string | null;
@@ -80,6 +82,8 @@ type CourtOwnersTableCopy = {
   placeSearch: string;
   placeSearchHelper: string;
   placeSearchNoResults: string;
+  placeAlreadyRegistered?: string;
+  placeExistingCourtLinkFallback?: string;
   updateSubmit: string;
   updateSubmitting: string;
   updateSuccess: string;
@@ -102,8 +106,15 @@ function buildLocation(row: CourtOwnerTableRow) {
 }
 
 function buildFormFromRow(row: CourtOwnerTableRow): CourtFormValues {
+  const sportIds =
+    row.sportIds && row.sportIds.length > 0
+      ? row.sportIds
+      : row.sportId
+        ? [row.sportId]
+        : [];
   return {
-    sportId: row.sportId,
+    sportId: sportIds[0] ?? "",
+    sportIds,
     name: row.name ?? "",
     description: row.description ?? "",
     address: row.address ?? "",
@@ -137,6 +148,9 @@ export function CourtOwnersTable({
   );
   const [editingCourtId, setEditingCourtId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<CourtFormValues | null>(null);
+  const [duplicateCourt, setDuplicateCourt] = useState<ExistingCourt | null>(
+    null,
+  );
   const [editingPending, setEditingPending] = useState(false);
 
   const profileNameById = useMemo(
@@ -181,6 +195,7 @@ export function CourtOwnersTable({
       if (event.key === "Escape" && !editingPending) {
         setEditingCourtId(null);
         setEditForm(null);
+        setDuplicateCourt(null);
       }
     };
 
@@ -284,12 +299,14 @@ export function CourtOwnersTable({
   const handleOpenEdit = (row: CourtOwnerTableRow) => {
     setEditingCourtId(row.id);
     setEditForm(buildFormFromRow(row));
+    setDuplicateCourt(null);
   };
 
   const handleCloseEdit = () => {
     if (editingPending) return;
     setEditingCourtId(null);
     setEditForm(null);
+    setDuplicateCourt(null);
   };
 
   const handleEditChange = (
@@ -300,6 +317,18 @@ export function CourtOwnersTable({
     const { name, value } = event.target;
     setEditForm((previous) =>
       previous ? { ...previous, [name]: value } : previous,
+    );
+  };
+
+  const handleSportIdsChange = (sportIds: string[]) => {
+    setEditForm((previous) =>
+      previous
+        ? {
+            ...previous,
+            sportIds,
+            sportId: sportIds[0] ?? "",
+          }
+        : previous,
     );
   };
 
@@ -331,6 +360,17 @@ export function CourtOwnersTable({
     event.preventDefault();
     if (!editingRow || !editForm || editingPending) return;
 
+    if (duplicateCourt) {
+      showToast({
+        variant: "error",
+        message: `${
+          copy.placeAlreadyRegistered ??
+          "This place is already registered as"
+        } ${duplicateCourt.name ?? copy.placeExistingCourtLinkFallback ?? "existing court"}.`,
+      });
+      return;
+    }
+
     if (!editForm.latitude || !editForm.longitude) {
       showToast({
         variant: "error",
@@ -346,6 +386,7 @@ export function CourtOwnersTable({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sportId: editForm.sportId,
+          sportIds: editForm.sportIds,
           name: editForm.name,
           description: editForm.description,
           address: editForm.address,
@@ -372,6 +413,7 @@ export function CourtOwnersTable({
             ? {
                 ...row,
                 sportId: editForm.sportId,
+                sportIds: editForm.sportIds,
                 sportName: sportNameById.get(editForm.sportId) ?? row.sportName,
                 name: editForm.name,
                 description: editForm.description,
@@ -395,6 +437,7 @@ export function CourtOwnersTable({
       });
       setEditingCourtId(null);
       setEditForm(null);
+      setDuplicateCourt(null);
     } catch (error) {
       showToast({
         variant: "error",
@@ -591,7 +634,11 @@ export function CourtOwnersTable({
                 label={copy.placeSearch}
                 helper={copy.placeSearchHelper}
                 noResults={copy.placeSearchNoResults}
+                duplicateLabel={copy.placeAlreadyRegistered}
+                duplicateLinkLabel={copy.placeExistingCourtLinkFallback}
                 onResolve={handlePlaceResolution}
+                onDuplicateCourtChange={setDuplicateCourt}
+                currentCourtId={editingRow.id}
                 initialQuery={
                   editForm.googlePlaceId
                     ? [editForm.name, editForm.address].filter(Boolean).join(" · ")
@@ -625,6 +672,7 @@ export function CourtOwnersTable({
                   website: copy.website,
                 }}
                 onChange={handleEditChange}
+                onSportIdsChange={handleSportIdsChange}
               />
 
               <div className="flex justify-end gap-2">
