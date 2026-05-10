@@ -4,8 +4,10 @@ import {
   type CourtFilterOptions,
 } from "@/server/courtFinder";
 import { getAllowPublicCourtPublish } from "@/lib/court-submission-policy";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { ensureUserProfile } from "@/server/profile";
 
 type CourtCreatePayload = {
   sportId?: string;
@@ -123,6 +125,17 @@ export async function POST(request: Request) {
     ? payload.opening_hours
     : null;
   const allowPublicCourtPublish = await getAllowPublicCourtPublish();
+  const { error: profileError } = await ensureUserProfile(
+    getSupabaseAdminClient(),
+    user,
+  );
+
+  if (profileError) {
+    return NextResponse.json(
+      { error: profileError.message },
+      { status: 500 },
+    );
+  }
 
   const { data: inserted, error: insertError } = await supabase
     .from("courts")

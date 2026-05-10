@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { ensureCourtGroupLinks } from "@/server/groupSessions";
 import { fetchGroupsBySport } from "@/server/groupFinder";
+import { ensureUserProfile } from "@/server/profile";
 
 type SessionPayload = {
   courtId: string;
@@ -139,6 +140,14 @@ export async function POST(request: Request) {
   const normalizedLine = normalizeContact(payload.lineId);
 
   const adminSupabase = getSupabaseAdminClient();
+  const { error: profileError } = await ensureUserProfile(adminSupabase, user);
+
+  if (profileError) {
+    return NextResponse.json(
+      { error: profileError.message },
+      { status: 500 },
+    );
+  }
 
   const { data: insertedGroup, error: insertGroupError } = await adminSupabase
     .from("groups")

@@ -6,6 +6,7 @@ import {
   type CasualPlayPayloadInput,
   validateCasualPlayPayload,
 } from "@/server/casualPlayValidation";
+import { ensureUserProfile } from "@/server/profile";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -85,6 +86,14 @@ export async function POST(request: Request) {
 
   const normalized = validation.value;
   const adminSupabase = getSupabaseAdminClient();
+  const { error: profileError } = await ensureUserProfile(adminSupabase, user);
+
+  if (profileError) {
+    return NextResponse.json(
+      { error: profileError.message },
+      { status: 500 },
+    );
+  }
 
   if (normalized.courtId) {
     const { data: court, error: courtError } = await adminSupabase

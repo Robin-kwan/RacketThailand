@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 type SupabaseUser = {
   id: string;
   email?: string | null;
@@ -25,5 +27,38 @@ export function buildProfileDefaults(user: SupabaseUser) {
     default_sport: null,
     avatar_url: avatarUrl,
     status: "member",
+  };
+}
+
+export async function ensureUserProfile(
+  supabase: SupabaseClient,
+  user: SupabaseUser,
+) {
+  const { data: existingProfile, error: selectError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (selectError && selectError.code !== "PGRST116") {
+    return {
+      created: false,
+      error: selectError,
+    };
+  }
+
+  if (existingProfile) {
+    return {
+      created: false,
+      error: null,
+    };
+  }
+
+  const defaults = buildProfileDefaults(user);
+  const { error: insertError } = await supabase.from("profiles").insert(defaults);
+
+  return {
+    created: !insertError,
+    error: insertError,
   };
 }
