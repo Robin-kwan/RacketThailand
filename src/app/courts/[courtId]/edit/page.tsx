@@ -12,6 +12,7 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { fetchSportIdsByCourtId } from "@/server/courtSports";
 
 type Params = { courtId: string };
 type ParamsInput = Promise<Params>;
@@ -58,7 +59,6 @@ export default async function EditCourtPage({
 
   const { data: courtRows } = await supabaseSelect<{
     id: string;
-    sport_id: string;
     name: string | null;
     address: string | null;
     district: string | null;
@@ -76,7 +76,7 @@ export default async function EditCourtPage({
     line_qr_url: string | null;
   }>("courts", {
     select:
-      "id,sport_id,name,address,district,province,description,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id,line_qr_url",
+      "id,name,address,district,province,description,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id,line_qr_url",
     id: `eq.${resolvedParams.courtId}`,
     limit: "1",
   });
@@ -98,18 +98,22 @@ export default async function EditCourtPage({
     order: "name.asc.nullslast",
   });
 
-  const { data: photoRows } = await supabaseSelect<{
-    id: string;
-    image_url: string;
-    is_primary: boolean | null;
-  }>("court_photos", {
-    select: "id,image_url,is_primary",
-    court_id: `eq.${court.id}`,
-    order: "is_primary.desc,created_at.asc",
-  });
+  const [{ data: photoRows }, courtSportIds] = await Promise.all([
+    supabaseSelect<{
+      id: string;
+      image_url: string;
+      is_primary: boolean | null;
+    }>("court_photos", {
+      select: "id,image_url,is_primary",
+      court_id: `eq.${court.id}`,
+      order: "is_primary.desc,created_at.asc",
+    }),
+    fetchSportIdsByCourtId(court.id),
+  ]);
 
+  const primarySportId = courtSportIds[0] ?? "";
   const currentSportSlug =
-    sports?.find((sport) => sport.id === court.sport_id)?.code ?? undefined;
+    sports?.find((sport) => sport.id === primarySportId)?.code ?? undefined;
 
   const sportOptions =
     sports?.map((sport) => ({
@@ -119,7 +123,8 @@ export default async function EditCourtPage({
 
   const formCourt = {
     id: court.id,
-    sportId: court.sport_id,
+    sportId: primarySportId,
+    sportIds: courtSportIds,
     name: court.name ?? "",
     description: court.description ?? "",
     address: court.address ?? "",
@@ -154,6 +159,8 @@ export default async function EditCourtPage({
     placeSearch: t("admin.placeSearch"),
     placeSearchHelper: t("admin.placeSearchHelper"),
     placeSearchNoResults: t("admin.placeSearchNoResults"),
+    placeAlreadyRegistered: t("admin.placeAlreadyRegistered"),
+    placeExistingCourtLinkFallback: t("admin.placeExistingCourtLinkFallback"),
     submit: t("admin.updateSubmit"),
     submitting: t("admin.updateSubmitting"),
     success: t("admin.updateSuccess"),

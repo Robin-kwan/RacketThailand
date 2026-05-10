@@ -6,6 +6,8 @@ import {
   type CasualPlayPayloadInput,
   validateCasualPlayPayload,
 } from "@/server/casualPlayValidation";
+import { ensureUserProfile } from "@/server/profile";
+import { fetchSportIdsByCourtId } from "@/server/courtSports";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -85,15 +87,31 @@ export async function POST(request: Request) {
 
   const normalized = validation.value;
   const adminSupabase = getSupabaseAdminClient();
+  const { error: profileError } = await ensureUserProfile(adminSupabase, user);
+
+  if (profileError) {
+    return NextResponse.json(
+      { error: profileError.message },
+      { status: 500 },
+    );
+  }
 
   if (normalized.courtId) {
     const { data: court, error: courtError } = await adminSupabase
       .from("courts")
-      .select("id,sport_id")
+      .select("id")
       .eq("id", normalized.courtId)
       .single();
 
-    if (courtError || !court || court.sport_id !== normalized.sportId) {
+    const courtSportIds = !courtError
+      ? await fetchSportIdsByCourtId(normalized.courtId)
+      : [];
+
+    if (
+      courtError ||
+      !court ||
+      !courtSportIds.includes(normalized.sportId)
+    ) {
       return NextResponse.json(
         { error: "Selected court does not match the chosen sport." },
         { status: 400 },

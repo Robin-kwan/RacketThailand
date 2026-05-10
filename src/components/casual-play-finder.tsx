@@ -316,7 +316,15 @@ export function CasualPlayFinder({
           </div>
         </div>
         {nearbyStatus && (
-          <p className="mt-2 text-sm text-slate-500">{nearbyStatus}</p>
+          <p
+            className={`mt-2 text-sm ${
+              nearbyStatus === copy.nearbyDenied
+                ? "text-red-400"
+                : "text-slate-500"
+            }`}
+          >
+            {nearbyStatus}
+          </p>
         )}
       </div>
 
@@ -375,7 +383,10 @@ export function CasualPlayFinder({
           </p>
           <p className="mt-2 text-sm text-slate-500">{copy.emptyDescription}</p>
           <Link
-            href={buildLocalizedPath("/casual-plays/create", locale)}
+            href={buildLocalizedPath(
+              `/casual-plays/create?sport=${encodeURIComponent(sportCode)}`,
+              locale,
+            )}
             className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
             onClick={() =>
               track("empty_state_cta_click", {

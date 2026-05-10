@@ -30,6 +30,7 @@ type CasualPlayCreationFormProps = {
   locale: Locale;
   minDate: string;
   maxDate: string;
+  defaultSportId?: string;
 };
 
 export function CasualPlayCreationForm({
@@ -39,13 +40,17 @@ export function CasualPlayCreationForm({
   locale,
   minDate,
   maxDate,
+  defaultSportId,
 }: CasualPlayCreationFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
   const initialValues: CasualPlayFormValues = useMemo(
     () => ({
-      sportId: sports[0]?.value ?? "",
+      sportId:
+        defaultSportId && sports.some((sport) => sport.value === defaultSportId)
+          ? defaultSportId
+          : sports[0]?.value ?? "",
       title: "",
       description: "",
       courtId: "",
@@ -60,7 +65,7 @@ export function CasualPlayCreationForm({
       lineId: "",
       allowPublicContact: false,
     }),
-    [minDate, sports],
+    [defaultSportId, minDate, sports],
   );
 
   const handleSubmit = async (payload: {

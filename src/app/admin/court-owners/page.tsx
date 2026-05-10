@@ -7,6 +7,7 @@ import { SPORT_META } from "@/data/sportMeta";
 import { getTranslator, normalizeLocale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
+import { fetchSportIdsByCourtIds } from "@/server/courtSports";
 
 type SearchParams = {
   lang?: string;
@@ -43,7 +44,6 @@ export default async function CourtOwnersPage({
 
   const { data: courts } = await supabaseSelect<{
     id: string;
-    sport_id: string;
     name: string | null;
     address: string | null;
     district: string | null;
@@ -57,17 +57,13 @@ export default async function CourtOwnersPage({
     latitude: string | null;
     longitude: string | null;
     google_place_id: string | null;
-    sports?: {
-      code: string | null;
-      name: string | null;
-    } | null;
     manager?: {
       display_name: string | null;
       username: string | null;
     } | null;
   }>("courts", {
     select:
-      "id,sport_id,name,address,district,province,created_by,description,price_note,phone,line_id,website_url,latitude:lat,longitude:lng,google_place_id,sports(code,name),manager:profiles!courts_created_by_fkey(display_name,username)",
+      "id,name,address,district,province,created_by,description,price_note,phone,line_id,website_url,latitude:lat,longitude:lng,google_place_id,manager:profiles!courts_created_by_fkey(display_name,username)",
     order: "name.asc.nullslast",
   });
 
@@ -80,6 +76,10 @@ export default async function CourtOwnersPage({
     select: "id,display_name,username",
     order: "display_name.asc.nullslast",
   });
+
+  const courtSportIdsByCourtId = await fetchSportIdsByCourtIds(
+    courts?.map((court) => court.id) ?? [],
+  );
 
   const profileOptions =
     profiles?.map((owner) => ({
@@ -112,27 +112,34 @@ export default async function CourtOwnersPage({
     error: t("admin.assignError"),
   };
   const rows =
-    courts?.map((court) => ({
-      id: court.id,
-      sportId: court.sport_id,
-      name: court.name,
-      address: court.address,
-      district: court.district,
-      province: court.province,
-      sportCode: court.sports?.code ?? null,
-      sportName: court.sports?.name ?? null,
-      managerId: court.created_by,
-      managerName:
-        court.manager?.display_name ?? court.manager?.username ?? null,
-      description: court.description,
-      price_note: court.price_note,
-      phone: court.phone,
-      line_id: court.line_id,
-      website_url: court.website_url,
-      latitude: court.latitude,
-      longitude: court.longitude,
-      googlePlaceId: court.google_place_id,
-    })) ?? [];
+    courts?.map((court) => {
+      const courtSportIds = courtSportIdsByCourtId.get(court.id) ?? [];
+      const primarySport = sports?.find(
+        (sport) => sport.id === courtSportIds[0],
+      );
+      return {
+        id: court.id,
+        sportId: courtSportIds[0] ?? "",
+        sportIds: courtSportIds,
+        name: court.name,
+        address: court.address,
+        district: court.district,
+        province: court.province,
+        sportCode: primarySport?.code ?? null,
+        sportName: primarySport?.name ?? null,
+        managerId: court.created_by,
+        managerName:
+          court.manager?.display_name ?? court.manager?.username ?? null,
+        description: court.description,
+        price_note: court.price_note,
+        phone: court.phone,
+        line_id: court.line_id,
+        website_url: court.website_url,
+        latitude: court.latitude,
+        longitude: court.longitude,
+        googlePlaceId: court.google_place_id,
+      };
+    }) ?? [];
 
   return (
     <AdminPortalShell
@@ -174,6 +181,8 @@ export default async function CourtOwnersPage({
             placeSearch: t("admin.placeSearch"),
             placeSearchHelper: t("admin.placeSearchHelper"),
             placeSearchNoResults: t("admin.placeSearchNoResults"),
+            placeAlreadyRegistered: t("admin.placeAlreadyRegistered"),
+            placeExistingCourtLinkFallback: t("admin.placeExistingCourtLinkFallback"),
             updateSubmit: t("admin.updateSubmit"),
             updateSubmitting: t("admin.updateSubmitting"),
             updateSuccess: t("admin.updateSuccess"),

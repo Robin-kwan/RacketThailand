@@ -15,8 +15,9 @@ import {
 } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { fetchSportIdsByCourtIds } from "@/server/courtSports";
 
-type SearchParams = { lang?: string };
+type SearchParams = { lang?: string; sport?: string };
 type SearchParamsInput = Promise<SearchParams> | undefined;
 
 async function resolveSearchParams(
@@ -51,10 +52,9 @@ export default async function CreateCasualPlayPage({
     supabaseSelect<{
       id: string;
       name: string | null;
-      province: string | null;
-      sport_id: string | null;
+      province: string | null;
     }>("courts", {
-      select: "id,name,province,sport_id",
+      select: "id,name,province",
       order: "name.asc.nullslast",
     }),
   ]);
@@ -71,25 +71,30 @@ export default async function CreateCasualPlayPage({
       SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     ]) ?? [],
   );
+  const courtSportIdsByCourtId = await fetchSportIdsByCourtIds(
+    courtsRes.data?.map((court) => court.id) ?? [],
+  );
 
   const courts = courtsRes.data?.reduce<Record<string, Option[]>>(
     (acc, court) => {
-      if (!court.sport_id) return acc;
-      const sportLabel = sportLabelMap.get(court.sport_id);
-      const labelParts = [court.name ?? "Unnamed court"];
-      if (court.province) {
-        labelParts.push(court.province);
-      }
-      if (sportLabel) {
-        labelParts.push(sportLabel);
-      }
-      const entry = {
-        value: court.id,
-        label: labelParts.join(" · "),
-      };
-      acc[court.sport_id] = acc[court.sport_id]
-        ? [...acc[court.sport_id], entry]
-        : [entry];
+      const sportIds = Array.from(
+        new Set(courtSportIdsByCourtId.get(court.id) ?? []),
+      );
+      sportIds.forEach((sportId) => {
+        const sportLabel = sportLabelMap.get(sportId);
+        const labelParts = [court.name ?? "Unnamed court"];
+        if (court.province) {
+          labelParts.push(court.province);
+        }
+        if (sportLabel) {
+          labelParts.push(sportLabel);
+        }
+        const entry = {
+          value: court.id,
+          label: labelParts.join(" · "),
+        };
+        acc[sportId] = acc[sportId] ? [...acc[sportId], entry] : [entry];
+      });
       return acc;
     },
     {},
@@ -137,7 +142,11 @@ export default async function CreateCasualPlayPage({
     success: t("casualPlays.form.success"),
     error: t("casualPlays.form.error"),
   };
-  const primarySportSlug = sportsRes.data?.[0]?.code ?? null;
+  const sourceSport = resolved?.sport
+    ? sportsRes.data?.find((sport) => sport.code === resolved.sport)
+    : null;
+  const defaultSportId = sourceSport?.id;
+  const primarySportSlug = sourceSport?.code ?? sportsRes.data?.[0]?.code ?? null;
   const backHref = buildLocalizedPath(
     primarySportSlug ? `/${primarySportSlug}/casual-plays` : "/",
     locale,
@@ -208,6 +217,7 @@ export default async function CreateCasualPlayPage({
                 locale={locale}
                 minDate={minDate}
                 maxDate={maxDate}
+                defaultSportId={defaultSportId}
               />
             </div>
           )}

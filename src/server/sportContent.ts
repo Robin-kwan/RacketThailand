@@ -1,5 +1,6 @@
 import { FEATURE_DESCRIPTIONS, getSportMeta } from "@/data/sportMeta";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { fetchCourtIdsBySportId } from "@/server/courtSports";
 import type {
   SportFeatureCard,
   SportFeatureGroup,
@@ -242,15 +243,22 @@ export async function buildSportPagePayload(
     }
 
     const sportId = sportRow.id;
+    const multiSportCourtIds = await fetchCourtIdsBySportId(sportId);
 
-    const courtsPromise = supabaseSelect<CourtRow>("courts", {
+    const courtParams: Record<string, string> = {
       select:
         "id,name,description,address,district,province,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
-      sport_id: `eq.${sportId}`,
       is_active: "eq.true",
       order: "created_at.desc",
       limit: "4",
-    });
+    };
+    if (multiSportCourtIds.length > 0) {
+      courtParams.id = `in.(${multiSportCourtIds.join(",")})`;
+    } else {
+      courtParams.id = "eq.00000000-0000-0000-0000-000000000000";
+    }
+
+    const courtsPromise = supabaseSelect<CourtRow>("courts", courtParams);
 
     const groupsPromise = supabaseSelect<GroupRow>("groups", {
       select:

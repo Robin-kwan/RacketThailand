@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { buildProfileDefaults } from "@/server/profile";
+import { ensureUserProfile } from "@/server/profile";
 
 export async function POST() {
   const supabase = await createSupabaseServerClient();
@@ -16,29 +16,11 @@ export async function POST() {
     );
   }
 
-  const { data: existingProfile, error: selectError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
+  const { created, error } = await ensureUserProfile(supabase, user);
 
-  if (selectError && selectError.code !== "PGRST116") {
-    return NextResponse.json(
-      { error: selectError.message },
-      { status: 500 },
-    );
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  if (existingProfile) {
-    return NextResponse.json({ created: false });
-  }
-
-  const defaults = buildProfileDefaults(user);
-  const { error: insertError } = await supabase.from("profiles").insert(defaults);
-
-  if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ created: true });
+  return NextResponse.json({ created });
 }

@@ -15,6 +15,7 @@ import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { SPORT_META } from "@/data/sportMeta";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
+import { fetchSportIdsByCourtIds } from "@/server/courtSports";
 
 type Params = { groupId: string };
 type ParamsInput = Promise<Params>;
@@ -102,9 +103,8 @@ export default async function EditGroupPage({
     id: string;
     name: string | null;
     province: string | null;
-    sport_id: string | null;
   }>("courts", {
-    select: "id,name,province,sport_id",
+    select: "id,name,province",
     order: "name.asc.nullslast",
   });
 
@@ -135,19 +135,24 @@ export default async function EditGroupPage({
       value: sport.id,
       label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
+  const courtSportIdsByCourtId = await fetchSportIdsByCourtIds(
+    courts?.map((court) => court.id) ?? [],
+  );
 
   const courtOptions =
     courts?.reduce<Record<string, Option[]>>((acc, court) => {
-      if (!court.sport_id) return acc;
-      const entry = {
-        value: court.id,
-        label: court.province
-          ? `${court.name ?? "Court"} (${court.province})`
-          : court.name ?? "Court",
-      };
-      acc[court.sport_id] = acc[court.sport_id]
-        ? [...acc[court.sport_id], entry]
-        : [entry];
+      const sportIds = Array.from(
+        new Set(courtSportIdsByCourtId.get(court.id) ?? []),
+      );
+      sportIds.forEach((sportId) => {
+        const entry = {
+          value: court.id,
+          label: court.province
+            ? `${court.name ?? "Court"} (${court.province})`
+            : court.name ?? "Court",
+        };
+        acc[sportId] = acc[sportId] ? [...acc[sportId], entry] : [entry];
+      });
       return acc;
     }, {}) ?? {};
 

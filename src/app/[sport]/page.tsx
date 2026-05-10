@@ -514,21 +514,6 @@ export default async function SportPage({
             >
               {boardCta}
             </TrackedLink>
-            <TrackedLink
-              href={buildLocalizedPath(
-                `/courts/new?sport=${encodeURIComponent(sport.code)}`,
-                locale,
-              )}
-              eventName="sport_cta_click"
-              eventPayload={{
-                surface: "sport_hero",
-                cta: "add_court",
-                sport: sport.code,
-              }}
-              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.25)] bg-[rgb(var(--foreground-rgb)/0.04)] px-6 py-3 text-sm font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.82)] hover:border-[rgb(var(--foreground-rgb)/0.38)]"
-            >
-              {t("courtSubmission.submit")}
-            </TrackedLink>
           </div>
         </div>
       </section>

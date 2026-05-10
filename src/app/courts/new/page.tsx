@@ -126,6 +126,8 @@ export default async function NewCourtPage({
     placeSearch: t("admin.placeSearch"),
     placeSearchHelper: t("admin.placeSearchHelper"),
     placeSearchNoResults: t("admin.placeSearchNoResults"),
+    placeAlreadyRegistered: t("admin.placeAlreadyRegistered"),
+    placeExistingCourtLinkFallback: t("admin.placeExistingCourtLinkFallback"),
     photos: t("admin.photos"),
     primaryPhoto: t("admin.primaryPhoto"),
     makePrimaryPhoto: t("admin.makePrimaryPhoto"),

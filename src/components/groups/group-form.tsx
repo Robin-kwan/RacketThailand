@@ -210,7 +210,6 @@ export function GroupForm({
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === "sportId") {
       const nextOptions = courtCache[value] ?? [];
-      const fallbackCourtId = nextOptions[0]?.value ?? "";
       const optionSet = new Set(nextOptions.map((option) => option.value));
       setCourtSessions((prev) =>
         prev.map((block) => {
@@ -220,21 +219,20 @@ export function GroupForm({
           if (optionSet.has(block.courtId)) {
             return block;
           }
-          return { ...block, courtId: fallbackCourtId };
+          return { ...block, courtId: "" };
         }),
       );
     }
   };
 
   const addCourtBlock = () => {
-    const defaultCourtId = courtOptions[0]?.value ?? "";
     setCourtSessions((prev) => [
       ...prev,
       {
         id: crypto.randomUUID
           ? crypto.randomUUID()
           : `court-${Date.now()}-${Math.random()}`,
-        courtId: defaultCourtId,
+        courtId: "",
         slots: [{ ...createSlot() }],
       },
     ]);

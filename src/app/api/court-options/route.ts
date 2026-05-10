@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { fetchCourtIdsBySportId } from "@/server/courtSports";
 
 type CourtRow = {
   id: string;
@@ -19,10 +20,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data } = await supabaseSelect<CourtRow>("courts", {
+    const courtIds = await fetchCourtIdsBySportId(sportId);
+    const params: Record<string, string> = {
       select: "id,name,province",
-      sport_id: `eq.${sportId}`,
       order: "name.asc.nullslast",
+    };
+    if (courtIds.length > 0) {
+      params.id = `in.(${courtIds.join(",")})`;
+    } else {
+      params.id = "eq.00000000-0000-0000-0000-000000000000";
+    }
+    const { data } = await supabaseSelect<CourtRow>("courts", {
+      ...params,
     });
 
     const options =

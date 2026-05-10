@@ -30,6 +30,7 @@ type GroupCreationFormProps = {
   copy: GroupCreationCopy;
   dayOptions: Option[];
   locale: Locale;
+  defaultSportId?: string;
 };
 
 const GROUP_BUCKET =
@@ -40,6 +41,7 @@ export function GroupCreationForm({
   copy,
   dayOptions,
   locale,
+  defaultSportId,
 }: GroupCreationFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -51,7 +53,10 @@ export function GroupCreationForm({
 
   const initialValues: GroupFormValues = useMemo(
     () => ({
-      sportId: sports[0]?.value ?? "",
+      sportId:
+        defaultSportId && sports.some((sport) => sport.value === defaultSportId)
+          ? defaultSportId
+          : sports[0]?.value ?? "",
       name: "",
       description: "",
       sessions: [],
@@ -60,7 +65,7 @@ export function GroupCreationForm({
       phone: "",
       lineId: "",
     }),
-    [sports],
+    [defaultSportId, sports],
   );
 
   const handleLineQrChange = (file: File | null, previewUrl: string | null) => {

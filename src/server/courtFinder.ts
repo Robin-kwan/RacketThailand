@@ -1,5 +1,9 @@
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import {
+  fetchCourtIdsBySportId,
+  fetchSportIdsByCourtId,
+} from "@/server/courtSports";
 
 export type CourtRecord = {
   id: string;
@@ -19,7 +23,6 @@ export type CourtRecord = {
   updated_at?: string | null;
   is_active?: boolean | null;
   created_by?: string | null;
-  sport_id?: string | null;
   court_photos?: { image_url: string | null; is_primary: boolean | null }[];
   latitude?: number | null;
   longitude?: number | null;
@@ -54,14 +57,34 @@ function buildSearchClause(query: string) {
   return `(name.ilike.${term},description.ilike.${term},district.ilike.${term},province.ilike.${term},address.ilike.${term})`;
 }
 
+function applySportFilter(
+  params: Record<string, string>,
+  courtIds: string[],
+  searchClause?: string,
+) {
+  if (courtIds.length > 0) {
+    params.id = `in.(${courtIds.join(",")})`;
+  } else {
+    params.id = "eq.00000000-0000-0000-0000-000000000000";
+  }
+  if (searchClause) {
+    params.or = searchClause;
+  }
+}
+
 export async function fetchCourtFilters(
   sportId: string,
 ): Promise<string[]> {
-  const { data } = await supabaseSelect<{ province: string | null }>("courts", {
+  const courtIds = await fetchCourtIdsBySportId(sportId);
+  const params: Record<string, string> = {
     select: "province",
-    sport_id: `eq.${sportId}`,
     is_active: "eq.true",
     order: "province.asc.nullslast",
+  };
+  applySportFilter(params, courtIds);
+
+  const { data } = await supabaseSelect<{ province: string | null }>("courts", {
+    ...params,
   });
   return (
     Array.from(
@@ -89,7 +112,6 @@ export async function fetchCourtsBySport(
   const params: Record<string, string> = {
     select:
       "id,name,description,address,district,province,price_note,phone,line_id,website_url,google_place_id,created_at,updated_at,is_active,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
-    sport_id: `eq.${sportRow.id}`,
     is_active: "eq.true",
     order: "created_at.desc",
   };
@@ -103,12 +125,11 @@ export async function fetchCourtsBySport(
   if (filters.province?.trim()) {
     params.province = `eq.${filters.province.trim()}`;
   }
-  if (filters.search) {
-    const clause = buildSearchClause(filters.search);
-    if (clause) {
-      params.or = clause;
-    }
-  }
+  const searchClause = filters.search
+    ? buildSearchClause(filters.search)
+    : undefined;
+  const courtIds = await fetchCourtIdsBySportId(sportRow.id);
+  applySportFilter(params, courtIds, searchClause);
 
   const [courtsRes, provinces] = await Promise.all([
     supabaseSelect<CourtRecord>("courts", params),
@@ -156,7 +177,7 @@ type CourtGroupLink = {
 export async function fetchCourtDetail(courtId: string) {
   const { data: courts } = await supabaseSelect<CourtRecord>("courts", {
     select:
-      "id,name,description,address,district,province,price_note,opening_hours,phone,line_id,line_qr_url,website_url,google_place_id,created_at,updated_at,is_active,sport_id,created_by,latitude:lat,longitude:lng",
+      "id,name,description,address,district,province,price_note,opening_hours,phone,line_id,line_qr_url,website_url,google_place_id,created_at,updated_at,is_active,created_by,latitude:lat,longitude:lng",
     id: `eq.${courtId}`,
     limit: "1",
   });
@@ -166,12 +187,15 @@ export async function fetchCourtDetail(courtId: string) {
     return null;
   }
 
+  const sportIds = await fetchSportIdsByCourtId(courtId);
   const [{ data: sportRows }, { data: photos }, { data: groupLinks }] =
     await Promise.all([
       supabaseSelect<SportRow>("sports", {
         select: "id,code,name",
-        id: `eq.${court.sport_id}`,
-        limit: "1",
+        id:
+          sportIds.length > 0
+            ? `in.(${sportIds.join(",")})`
+            : "eq.00000000-0000-0000-0000-000000000000",
       }),
       supabaseSelect<CourtPhoto>("court_photos", {
         select: "id,image_url,is_primary",
@@ -187,7 +211,8 @@ export async function fetchCourtDetail(courtId: string) {
       }),
     ]);
 
-  const sport = sportRows?.[0];
+  const sport =
+    sportRows?.find((row) => row.id === sportIds[0]) ?? sportRows?.[0];
   return {
     court,
     sport,

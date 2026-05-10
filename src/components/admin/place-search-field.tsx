@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import Link from "next/link";
+import { buildLocalizedPath, normalizeLocale } from "@/lib/i18n";
 import type { MapCoordinates } from "@/lib/google-maps";
 import type { PlaceDetailsPayload } from "@/lib/google-places";
 
@@ -17,14 +19,26 @@ type Suggestion = {
   secondary?: string;
 };
 
+export type ExistingCourt = {
+  id: string;
+  name: string | null;
+  district?: string | null;
+  province?: string | null;
+  is_active?: boolean | null;
+};
+
 type PlaceSearchFieldProps = {
   label: string;
   helper: string;
   noResults: string;
+  duplicateLabel?: string;
+  duplicateLinkLabel?: string;
   onResolve: (resolution: PlaceResolution) => void;
+  onDuplicateCourtChange?: (court: ExistingCourt | null) => void;
   placeholder?: string;
   initialQuery?: string;
   selectedCoordinates?: MapCoordinates | null;
+  currentCourtId?: string;
 };
 
 const SEARCH_DELAY = 300;
@@ -33,16 +47,21 @@ export function PlaceSearchField({
   label,
   helper,
   noResults,
+  duplicateLabel = "This place is already registered as",
+  duplicateLinkLabel = "existing court",
   placeholder = "Search for a venue, mall, or court",
   onResolve,
+  onDuplicateCourtChange,
   initialQuery,
   selectedCoordinates,
+  currentCourtId,
 }: PlaceSearchFieldProps) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const [existingCourt, setExistingCourt] = useState<ExistingCourt | null>(null);
   const sessionToken = useMemo(
     () =>
       (typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -143,8 +162,23 @@ export function PlaceSearchField({
           place: data.place,
           placeId: data.placeId ?? suggestion.placeId,
         });
+        const resolvedPlaceId = data.placeId ?? suggestion.placeId;
+        const params = new URLSearchParams({ placeId: resolvedPlaceId });
+        if (currentCourtId) {
+          params.set("excludeCourtId", currentCourtId);
+        }
+        const lookupResponse = await fetch(`/api/courts/by-place?${params}`, {
+          cache: "no-store",
+        });
+        const lookupData = await lookupResponse.json().catch(() => null);
+        const duplicate =
+          lookupResponse.ok && lookupData?.court ? lookupData.court : null;
+        setExistingCourt(duplicate);
+        onDuplicateCourtChange?.(duplicate);
       } 
     } catch {
+      setExistingCourt(null);
+      onDuplicateCourtChange?.(null);
     } finally {
       setResolving(false);
     }
@@ -206,6 +240,26 @@ export function PlaceSearchField({
         )}
       </div>
       <p className="text-xs text-slate-400">{helper}</p>
+      {existingCourt && (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          {duplicateLabel}{" "}
+          <Link
+            href={buildLocalizedPath(
+              `/courts/${existingCourt.id}`,
+              typeof window === "undefined"
+                ? "th"
+                : normalizeLocale(
+                    new URLSearchParams(window.location.search).get("lang"),
+                  ),
+            )}
+            className="font-semibold underline underline-offset-4"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {existingCourt.name ?? duplicateLinkLabel}
+          </Link>
+        </p>
+      )}
       {mapCoordinates && (
         <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
           <p className="text-xs font-semibold uppercase text-slate-500">
