@@ -488,7 +488,15 @@ export function GroupFinder({
           </div>
         </div>
         {nearbyStatus && (
-          <p className="mt-2 text-sm text-slate-500">{nearbyStatus}</p>
+          <p
+            className={`mt-2 text-sm ${
+              nearbyStatus === copy.nearbyDenied
+                ? "text-red-400"
+                : "text-slate-500"
+            }`}
+          >
+            {nearbyStatus}
+          </p>
         )}
       </div>
 

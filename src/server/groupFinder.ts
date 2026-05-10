@@ -49,6 +49,72 @@ function buildSearchClause(query: string) {
   return `(name.ilike.${term},description.ilike.${term})`;
 }
 
+function buildCourtLocationSearchClause(query: string) {
+  const sanitized = query.replace(/[%*]/g, "").trim();
+  if (!sanitized) return undefined;
+  const term = `*${sanitized}*`;
+  return `(name.ilike.${term},address.ilike.${term},district.ilike.${term},province.ilike.${term})`;
+}
+
+async function fetchCourtIdsByLocationSearch(
+  sportId: string,
+  query: string,
+) {
+  const locationClause = buildCourtLocationSearchClause(query);
+  if (!locationClause) {
+    return [];
+  }
+
+  const { data } = await supabaseSelect<{ id: string }>(
+    "courts",
+    {
+      select: "id",
+      sport_id: `eq.${sportId}`,
+      is_active: "eq.true",
+      or: locationClause,
+      limit: "100",
+    },
+    { preferCount: false },
+  );
+
+  return data?.map((court) => court.id) ?? [];
+}
+
+async function fetchGroupIdsByCourtIds(
+  courtIds: string[],
+  filters: GroupFilterOptions,
+) {
+  if (courtIds.length === 0) {
+    return [];
+  }
+
+  const params: Record<string, string> = {
+    select: "group_id",
+    court_id: `in.(${courtIds.join(",")})`,
+    limit: "500",
+  };
+
+  if (filters.day) {
+    params.day = `eq.${filters.day}`;
+  }
+  if (filters.startTime && filters.endTime) {
+    params.start_time = `lte.${filters.endTime}`;
+    params.end_time = `gte.${filters.startTime}`;
+  } else if (filters.startTime) {
+    params.end_time = `gte.${filters.startTime}`;
+  } else if (filters.endTime) {
+    params.start_time = `lte.${filters.endTime}`;
+  }
+
+  const { data } = await supabaseSelect<{ group_id: string }>(
+    "group_sessions",
+    params,
+    { preferCount: false },
+  );
+
+  return Array.from(new Set(data?.map((session) => session.group_id) ?? []));
+}
+
 export async function fetchGroupsBySport(
   sportCode: string,
   filters: GroupFilterOptions = {},
@@ -82,7 +148,16 @@ export async function fetchGroupsBySport(
   if (filters.search) {
     const clause = buildSearchClause(filters.search);
     if (clause) {
-      params.or = clause;
+      const courtIds = await fetchCourtIdsByLocationSearch(
+        sportRow.id,
+        filters.search,
+      );
+      const groupIds = await fetchGroupIdsByCourtIds(courtIds, filters);
+      if (groupIds.length > 0) {
+        params.or = clause.replace(/\)$/, `,id.in.(${groupIds.join(",")}))`);
+      } else {
+        params.or = clause;
+      }
     }
   }
   if (filters.day) {

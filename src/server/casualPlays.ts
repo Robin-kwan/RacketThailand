@@ -42,6 +42,37 @@ function buildSearchClause(query: string) {
   return `(title.ilike.${term},description.ilike.${term},venue_name.ilike.${term},location_note.ilike.${term})`;
 }
 
+function buildCourtLocationSearchClause(query: string) {
+  const sanitized = query.replace(/[%*]/g, "").trim();
+  if (!sanitized) return undefined;
+  const term = `*${sanitized}*`;
+  return `(name.ilike.${term},address.ilike.${term},district.ilike.${term},province.ilike.${term})`;
+}
+
+async function fetchCourtIdsByLocationSearch(
+  sportId: string,
+  query: string,
+) {
+  const locationClause = buildCourtLocationSearchClause(query);
+  if (!locationClause) {
+    return [];
+  }
+
+  const { data } = await supabaseSelect<{ id: string }>(
+    "courts",
+    {
+      select: "id",
+      sport_id: `eq.${sportId}`,
+      is_active: "eq.true",
+      or: locationClause,
+      limit: "100",
+    },
+    { preferCount: false },
+  );
+
+  return data?.map((court) => court.id) ?? [];
+}
+
 type AcceptedJoinRequestRow = {
   play_id: string;
 };
@@ -119,7 +150,18 @@ export async function fetchCasualPlaysBySport(
   if (filters.search) {
     const clause = buildSearchClause(filters.search);
     if (clause) {
-      params.or = clause;
+      const courtIds = await fetchCourtIdsByLocationSearch(
+        sportRow.id,
+        filters.search,
+      );
+      if (courtIds.length > 0) {
+        params.or = clause.replace(
+          /\)$/,
+          `,court_id.in.(${courtIds.join(",")}))`,
+        );
+      } else {
+        params.or = clause;
+      }
     }
   }
 

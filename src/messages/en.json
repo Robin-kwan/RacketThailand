@@ -207,7 +207,7 @@
   "courtFinder": {
     "title": "Court finder for {sport}",
     "subtitle": "Search verified venues, filter by province, and get booking details for every racket sport hub.",
-    "searchPlaceholder": "Search by court name, district, or keyword",
+    "searchPlaceholder": "Search by court name, location, or keyword",
     "provinceLabel": "Province",
     "reset": "All provinces",
     "emptyTitle": "No courts match your filters yet",
@@ -241,7 +241,7 @@
   "groupFinder": {
     "title": "Group finder for {sport}",
     "subtitle": "Browse community groups and review their weekly sessions.",
-    "searchPlaceholder": "Search by group name or keyword",
+    "searchPlaceholder": "Search by group, court, location, or keyword",
     "reset": "Reset filters",
     "emptyTitle": "No groups match your filters",
     "emptyDescription": "Adjust filters or add your own group to help others find a schedule.",
@@ -269,7 +269,7 @@
   "casualPlays": {
     "title": "Casual plays for {sport}",
     "subtitle": "Browse one-off sessions that automatically expire after the play day.",
-    "searchPlaceholder": "Search by title or keyword",
+    "searchPlaceholder": "Search by title, court, location, or keyword",
     "reset": "Reset filters",
     "emptyTitle": "No casual plays match your filters",
     "emptyDescription": "Try another date or publish your own one-off session.",
