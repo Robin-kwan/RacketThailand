@@ -190,18 +190,6 @@ function FeatureCarousel({
                         location={locationText || undefined}
                         showLocation={Boolean(locationText)}
                         imageAspectClass="aspect-[4/3]"
-                        footer={
-                          (card.sessions?.length ?? 0) === 0 &&
-                          card.details.length > 0 ? (
-                            <ul className="space-y-2 text-sm text-slate-600">
-                              {card.details.map((detail, detailIndex) => (
-                                <li key={`${card.title}-${detailIndex}`}>
-                                  {detail}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null
-                        }
                       />
                     ) : (
                       <CourtCard

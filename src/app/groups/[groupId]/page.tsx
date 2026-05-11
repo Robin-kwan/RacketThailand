@@ -584,14 +584,6 @@ export default async function GroupDetailPage({
           <div className="mt-6 grid gap-5 rounded-3xl border border-slate-100 bg-[rgb(var(--foreground-rgb)/0.02)] px-6 py-5 sm:grid-cols-2">
             <div>
               <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                {copy.owner}
-              </p>
-              <p className="text-base font-semibold text-[var(--foreground)]">
-                {owner?.display_name ?? owner?.username ?? "—"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                 {copy.playFormat}
               </p>
               <p className="text-base font-semibold text-[var(--foreground)]">
