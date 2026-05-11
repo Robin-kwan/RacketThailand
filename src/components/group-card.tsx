@@ -41,7 +41,6 @@ type GroupCardProps = {
   titleClassName?: string;
   imageAspectClass?: string;
   badge?: ReactNode;
-  footer?: ReactNode;
 };
 
 function formatTime(value?: string | null) {
@@ -151,7 +150,6 @@ export function GroupCard({
   titleClassName,
   imageAspectClass = "aspect-[4/3]",
   badge,
-  footer,
 }: GroupCardProps) {
   const router = useRouter();
 
@@ -235,7 +233,6 @@ export function GroupCard({
       {distanceLabel && (
         <div className="text-xs font-semibold text-slate-500">{distanceLabel}</div>
       )}
-      {footer}
     </Wrapper>
   );
 }

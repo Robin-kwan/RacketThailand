@@ -687,16 +687,6 @@ export default async function CourtPage({
                         </span>
                       ) : null
                     }
-                    footer={
-                      group.note ? (
-                        <p
-                          key={`${group.id}-note-footer`}
-                          className="text-xs italic text-[rgb(var(--foreground-rgb)/0.7)]"
-                        >
-                          {copy.noteLabel}: {group.note}
-                        </p>
-                      ) : null
-                    }
                   />
                 );
               })}
