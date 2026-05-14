@@ -218,11 +218,6 @@ export function GroupCard({
           {description}
         </p>
       )}
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {playFormatBadge}
-        {walkInBadge}
-        {badge}
-      </div>
       {showLocation && location && (
         <p className="text-xs font-semibold text-slate-500 line-clamp-1" title={location}>
           {location}
@@ -241,6 +236,11 @@ export function GroupCard({
       {distanceLabel && (
         <div className="text-xs font-semibold text-slate-500">{distanceLabel}</div>
       )}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {playFormatBadge}
+        {walkInBadge}
+        {badge}
+      </div>
     </Wrapper>
   );
 }
