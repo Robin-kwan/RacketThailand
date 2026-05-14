@@ -76,7 +76,6 @@ export function CasualPlayCard({
     maxPlayers !== null
       ? `${locale === "th" ? "ผู้เล่น" : "Players"}: ${joinedPlayers}/${maxPlayers}`
       : null;
-
   return (
     <Wrapper
       {...wrapperProps}

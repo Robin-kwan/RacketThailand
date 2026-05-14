@@ -27,6 +27,14 @@ type GroupFinderCopy = {
   startTimeLabel: string;
   endTimeLabel: string;
   anyTimeLabel: string;
+  playFormatFilterLabel: string;
+  anyPlayFormatLabel: string;
+  playFormatSingle: string;
+  playFormatDouble: string;
+  walkInFilterLabel: string;
+  anyWalkInLabel: string;
+  walkInsWelcome: string;
+  walkInsClosed: string;
   nearbyButton: string;
   nearbyFinding: string;
   nearbyClear: string;
@@ -171,6 +179,8 @@ export function GroupFinder({
   const [dayFilter, setDayFilter] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [playFormatFilter, setPlayFormatFilter] = useState("");
+  const [walkInFilter, setWalkInFilter] = useState("");
   const [serverGroups, setServerGroups] = useState(initialGroups);
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationState | null>(null);
@@ -196,6 +206,8 @@ export function GroupFinder({
       });
       if (debouncedSearch) params.set("q", debouncedSearch);
       if (dayFilter) params.set("day", dayFilter);
+      if (playFormatFilter) params.set("playFormat", playFormatFilter);
+      if (walkInFilter) params.set("allowWalkIn", walkInFilter);
       const response = await fetch(`/api/groups?${params.toString()}`, {
         cache: "no-store",
       });
@@ -208,7 +220,13 @@ export function GroupFinder({
     return () => {
       isActive = false;
     };
-  }, [sportCode, debouncedSearch, dayFilter]);
+  }, [
+    sportCode,
+    debouncedSearch,
+    dayFilter,
+    playFormatFilter,
+    walkInFilter,
+  ]);
 
   const handleReset = () => {
     track("finder_filter_used", {
@@ -220,6 +238,8 @@ export function GroupFinder({
     setDayFilter("");
     setStartTime("");
     setEndTime("");
+    setPlayFormatFilter("");
+    setWalkInFilter("");
     setPrioritizeNearby(false);
     setNearbyStatus(null);
   };
@@ -245,7 +265,26 @@ export function GroupFinder({
     ],
     [copy.anyTimeLabel, locale],
   );
-
+  const playFormatOptions = useMemo(
+    () => [
+      { value: "", label: copy.anyPlayFormatLabel },
+      { value: "double", label: copy.playFormatDouble },
+      { value: "single", label: copy.playFormatSingle },
+    ],
+    [
+      copy.anyPlayFormatLabel,
+      copy.playFormatDouble,
+      copy.playFormatSingle,
+    ],
+  );
+  const walkInOptions = useMemo(
+    () => [
+      { value: "", label: copy.anyWalkInLabel },
+      { value: "true", label: copy.walkInsWelcome },
+      { value: "false", label: copy.walkInsClosed },
+    ],
+    [copy.anyWalkInLabel, copy.walkInsWelcome, copy.walkInsClosed],
+  );
   const endTimeOptions = useMemo(() => {
     if (!startTime) return timeOptions;
     const startMinutes = timeStringToMinutes(startTime);
@@ -458,6 +497,38 @@ export function GroupFinder({
             variant="light"
           />
         </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <BaseSelect
+            label={copy.playFormatFilterLabel}
+            name="playFormatFilter"
+            value={playFormatFilter}
+            onChange={(event) => {
+              setPlayFormatFilter(event.target.value);
+              track("finder_filter_used", {
+                surface: "group_finder",
+                sport: sportCode,
+                cta: "play_format",
+              });
+            }}
+            options={playFormatOptions}
+            variant="light"
+          />
+          <BaseSelect
+            label={copy.walkInFilterLabel}
+            name="walkInFilter"
+            value={walkInFilter}
+            onChange={(event) => {
+              setWalkInFilter(event.target.value);
+              track("finder_filter_used", {
+                surface: "group_finder",
+                sport: sportCode,
+                cta: "walk_in",
+              });
+            }}
+            options={walkInOptions}
+            variant="light"
+          />
+        </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
           <p>{countSummary}</p>
           <div className="flex flex-wrap items-center gap-3">
@@ -640,6 +711,7 @@ export function GroupFinder({
                 imageAlt={group.name ?? fallbackGroupPhotoAlt}
                 sessions={group.group_sessions ?? []}
                 playFormat={group.play_format ?? null}
+                allowWalkIn={group.allow_walk_in ?? null}
                 dayLabels={dayLabels}
                 scheduleAnytime={copy.scheduleAnytime}
                 locale={locale}

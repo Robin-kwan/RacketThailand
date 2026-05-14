@@ -62,6 +62,7 @@ export function GroupCreationForm({
       sessions: [],
       playFormat: "double",
       playerAmount: "",
+      allowWalkIn: true,
       phone: "",
       lineId: "",
     }),
@@ -82,6 +83,7 @@ export function GroupCreationForm({
     description: string;
     playFormat: PlayFormat;
     playerAmount?: string;
+    allowWalkIn: boolean;
     phone?: string;
     lineId?: string;
     sessions: { courtId: string; day: string; start: string; end: string }[];

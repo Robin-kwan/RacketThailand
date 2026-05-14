@@ -184,6 +184,7 @@ function FeatureCarousel({
                         scheduleAnytime={subtitle}
                         locale={locale}
                         sessions={card.sessions ?? []}
+                        allowWalkIn={card.allowWalkIn}
                         showSessions={false}
                         description={description}
                         showDescription

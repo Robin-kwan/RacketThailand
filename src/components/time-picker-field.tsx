@@ -9,14 +9,18 @@ export type TimePickerOption = {
   label: string;
 };
 
+export const END_OF_DAY_TIME = "00:00";
+
 type CreateTimeOptionsInput = {
   minuteStep?: number;
   includeEndOfDay?: boolean;
+  endOfDayLast?: boolean;
 };
 
 export function createTimeOptions({
   minuteStep = 30,
   includeEndOfDay = false,
+  endOfDayLast = false,
 }: CreateTimeOptionsInput = {}): TimePickerOption[] {
   const options: TimePickerOption[] = [];
 
@@ -30,17 +34,84 @@ export function createTimeOptions({
     }
   }
 
-  if (includeEndOfDay && !options.some((option) => option.value === "00:00")) {
+  if (
+    includeEndOfDay &&
+    !options.some((option) => option.value === END_OF_DAY_TIME)
+  ) {
     options.push({
-      value: "00:00",
-      label: "00:00",
+      value: END_OF_DAY_TIME,
+      label: END_OF_DAY_TIME,
     });
+  }
+
+  if (endOfDayLast) {
+    const midnight = options.find((option) => option.value === END_OF_DAY_TIME);
+    if (midnight) {
+      return [
+        ...options.filter((option) => option.value !== END_OF_DAY_TIME),
+        midnight,
+      ];
+    }
   }
 
   return options;
 }
 
-type TimePickerFieldProps = {
+export function createClosingTimeOptions({
+  minuteStep = 30,
+}: Pick<CreateTimeOptionsInput, "minuteStep"> = {}) {
+  return createTimeOptions({ minuteStep, endOfDayLast: true });
+}
+
+export function isClosingTimeAfterStart(endTime: string, startTime: string) {
+  if (!startTime || !endTime) return true;
+  if (endTime === END_OF_DAY_TIME) return true;
+  return endTime > startTime;
+}
+
+export function isOpeningTimeBeforeClose(openTime: string, closeTime: string) {
+  if (!openTime || !closeTime) return true;
+  if (closeTime === END_OF_DAY_TIME) {
+    return openTime !== END_OF_DAY_TIME;
+  }
+  return openTime < closeTime;
+}
+
+export function filterTimeOptionsWithFallback(
+  options: TimePickerOption[],
+  predicate: (option: TimePickerOption) => boolean,
+) {
+  const filtered = options.filter(predicate);
+  return filtered.length > 0 ? filtered : options;
+}
+
+export function getOpeningTimeOptions({
+  closeTime,
+  options = createTimeOptions(),
+}: {
+  closeTime?: string;
+  options?: TimePickerOption[];
+}) {
+  if (!closeTime) return options;
+  return filterTimeOptionsWithFallback(options, (option) =>
+    isOpeningTimeBeforeClose(option.value, closeTime),
+  );
+}
+
+export function getClosingTimeOptions({
+  startTime,
+  options = createClosingTimeOptions(),
+}: {
+  startTime?: string;
+  options?: TimePickerOption[];
+}) {
+  if (!startTime) return options;
+  return filterTimeOptionsWithFallback(options, (option) =>
+    isClosingTimeAfterStart(option.value, startTime),
+  );
+}
+
+export type TimePickerFieldProps = {
   id?: string;
   label: string;
   value: string;
@@ -236,5 +307,34 @@ export function TimePickerField({
         )}
       </div>
     </div>
+  );
+}
+
+type ClosingTimePickerFieldProps = Omit<TimePickerFieldProps, "options" | "min"> & {
+  startTime?: string;
+  options?: TimePickerOption[];
+};
+
+export function ClosingTimePickerField({
+  startTime,
+  options,
+  minuteStep = 30,
+  ...props
+}: ClosingTimePickerFieldProps) {
+  const resolvedOptions = useMemo(
+    () =>
+      getClosingTimeOptions({
+        startTime,
+        options: options ?? createClosingTimeOptions({ minuteStep }),
+      }),
+    [minuteStep, options, startTime],
+  );
+
+  return (
+    <TimePickerField
+      {...props}
+      minuteStep={minuteStep}
+      options={resolvedOptions}
+    />
   );
 }

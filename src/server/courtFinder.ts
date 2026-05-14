@@ -160,6 +160,7 @@ type CourtGroupLink = {
       id: string;
       name: string | null;
       description: string | null;
+      allow_walk_in: boolean | null;
       sports?: { code: string } | null;
       group_photos?: {
         image_url: string | null;
@@ -205,7 +206,7 @@ export async function fetchCourtDetail(courtId: string) {
       }),
       supabaseSelect<CourtGroupLink>("court_groups", {
         select:
-          "id,verification_status,verified_by,verified_at,note,groups(id,name,description,sports(code),group_photos(image_url,is_primary),group_sessions(court_id,day,start_time,end_time))",
+          "id,verification_status,verified_by,verified_at,note,groups(id,name,description,allow_walk_in,sports(code),group_photos(image_url,is_primary),group_sessions(court_id,day,start_time,end_time))",
         court_id: `eq.${courtId}`,
         order: "created_at.desc",
       }),

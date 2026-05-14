@@ -27,6 +27,7 @@ type PatchGroupPayload = {
   sessions?: SessionPayload[];
   playFormat?: string | null;
   playerAmount?: number | string | null;
+  allowWalkIn?: boolean | null;
   phone?: string | null;
   lineId?: string | null;
   lineQrUrl?: string | null;
@@ -115,6 +116,9 @@ export async function PATCH(
   }
   if (payload.playerAmount !== undefined) {
     update.player_amount = normalizePlayerAmount(payload.playerAmount);
+  }
+  if (payload.allowWalkIn !== undefined) {
+    update.allow_walk_in = payload.allowWalkIn !== false;
   }
   if (payload.phone !== undefined) {
     update.phone = normalizeContact(payload.phone);

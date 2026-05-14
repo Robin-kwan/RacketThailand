@@ -134,6 +134,8 @@ export default async function CreateGroupPage({
     playerAmountLabel: t("groups.form.playerAmountLabel"),
     playerAmountPlaceholder: t("groups.form.playerAmountPlaceholder"),
     playerAmountHelp: t("groups.form.playerAmountHelp"),
+    allowWalkInLabel: t("groups.form.allowWalkInLabel"),
+    allowWalkInHelp: t("groups.form.allowWalkInHelp"),
     phoneLabel: t("groups.form.phoneLabel"),
     phonePlaceholder: t("groups.form.phonePlaceholder"),
     lineLabel: t("groups.form.lineLabel"),
