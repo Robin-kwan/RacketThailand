@@ -137,6 +137,14 @@ export default async function GroupFinderPage({
     startTimeLabel: t("groupFinder.startTimeLabel"),
     endTimeLabel: t("groupFinder.endTimeLabel"),
     anyTimeLabel: t("groupFinder.anyTimeLabel"),
+    playFormatFilterLabel: t("groupFinder.playFormatFilterLabel"),
+    anyPlayFormatLabel: t("groupFinder.anyPlayFormatLabel"),
+    playFormatSingle: t("groups.form.playFormatSingle"),
+    playFormatDouble: t("groups.form.playFormatDouble"),
+    walkInFilterLabel: t("groupFinder.walkInFilterLabel"),
+    anyWalkInLabel: t("groupFinder.anyWalkInLabel"),
+    walkInsWelcome: t("groups.detail.walkInsWelcome"),
+    walkInsClosed: t("groups.detail.walkInsClosed"),
     nearbyButton: t("groupFinder.nearbyButton"),
     nearbyFinding: t("groupFinder.nearbyFinding"),
     nearbyClear: t("groupFinder.nearbyClear"),
@@ -163,10 +171,7 @@ export default async function GroupFinderPage({
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--rt-primary-rgb)/0.16),transparent_42%),radial-gradient(circle_at_92%_18%,rgb(var(--foreground-rgb)/0.08),transparent_44%)]"
         />
         <section className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)] backdrop-blur">
-          <span className="rounded-full border border-[rgb(var(--rt-primary-rgb)/0.3)] bg-[rgb(var(--rt-primary-rgb)/0.1)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--rt-primary-rgb))]">
-            {t("header.groupFinder")}
-          </span>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
             {copy.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>

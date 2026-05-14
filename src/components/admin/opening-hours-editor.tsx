@@ -3,6 +3,13 @@
 import { Plus, Trash2 } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import {
+  createClosingTimeOptions,
+  createTimeOptions,
+  filterTimeOptionsWithFallback,
+  isClosingTimeAfterStart,
+  isOpeningTimeBeforeClose,
+} from "@/components/time-picker-field";
+import {
   ensureAllDays,
   createAlwaysOpenSchedule,
   type OpeningHoursEntry,
@@ -26,40 +33,15 @@ const DAY_LABELS: Record<string, string> = {
 
 const DEFAULT_RANGE = { open: "09:00", close: "18:00" };
 
-const HALF_HOUR_OPTIONS = Array.from({ length: 48 }, (_, index) => {
-  const hours = String(Math.floor(index / 2)).padStart(2, "0");
-  const minutes = index % 2 === 0 ? "00" : "30";
-  return `${hours}:${minutes}`;
-});
-
-const TIME_OPTIONS = HALF_HOUR_OPTIONS.map((time) => ({
-  value: time,
-  label: time,
-}));
-
-const CLOSE_TIME_OPTIONS = [
-  ...HALF_HOUR_OPTIONS.filter((time) => time !== "00:00"),
-  "00:00",
-].map((time) => ({
-  value: time,
-  label: time,
-}));
-
-const filterOptionsWithFallback = (
-  predicate: (option: { value: string; label: string }) => boolean,
-  options = TIME_OPTIONS,
-) => {
-  const filtered = options.filter(predicate);
-  return filtered.length > 0 ? filtered : options;
-};
+const TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
+const CLOSE_TIME_OPTIONS = createClosingTimeOptions({ minuteStep: 30 });
 
 const normalizeRangeOrder = (
   range: OpeningHoursRange,
   changedField: "open" | "close",
 ): OpeningHoursRange => {
   if (!range.close) return range;
-  if (range.close === "00:00") return range;
-  if (range.open <= range.close) return range;
+  if (isClosingTimeAfterStart(range.close, range.open)) return range;
   if (changedField === "open") {
     return { ...range, close: range.open };
   }
@@ -177,9 +159,13 @@ export function OpeningHoursEditor({
                         range.close
                           ? range.close === "00:00"
                             ? TIME_OPTIONS
-                            : filterOptionsWithFallback(
+                            : filterTimeOptionsWithFallback(
+                                TIME_OPTIONS,
                                 (option) =>
-                                  option.value < (range.close as string),
+                                  isOpeningTimeBeforeClose(
+                                    option.value,
+                                    range.close as string,
+                                  ),
                               )
                           : TIME_OPTIONS
                       }
@@ -203,11 +189,13 @@ export function OpeningHoursEditor({
                       }
                       options={
                         range.open
-                          ? filterOptionsWithFallback(
-                              (option) =>
-                                option.value > range.open ||
-                                option.value === "00:00",
+                          ? filterTimeOptionsWithFallback(
                               CLOSE_TIME_OPTIONS,
+                              (option) =>
+                                isClosingTimeAfterStart(
+                                  option.value,
+                                  range.open,
+                                ),
                             )
                           : CLOSE_TIME_OPTIONS
                       }

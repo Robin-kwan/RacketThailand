@@ -32,6 +32,7 @@ type GroupRow = {
   name: string | null;
   description: string | null;
   created_at: string | null;
+  allow_walk_in: boolean | null;
   group_photos?: PhotoRow[] | null;
   group_sessions?: {
     day: string;
@@ -152,6 +153,7 @@ function mapGroups(
       location: undefined,
       badgeLabel: "COMMUNITY",
       href: `/groups/${group.id}`,
+      allowWalkIn: group.allow_walk_in,
       sessions,
     };
   });
@@ -262,7 +264,7 @@ export async function buildSportPagePayload(
 
     const groupsPromise = supabaseSelect<GroupRow>("groups", {
       select:
-        "id,name,description,created_at,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(id,name))",
+        "id,name,description,created_at,allow_walk_in,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(id,name))",
       sport_id: `eq.${sportId}`,
       order: "created_at.desc",
       limit: "4",

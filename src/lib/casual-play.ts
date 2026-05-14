@@ -78,6 +78,7 @@ export function isCasualPlayTimeRangeValid(
 ) {
   if (!startTime) return false;
   if (!endTime) return true;
+  if (endTime === "00:00") return true;
   return startTime < endTime;
 }
 

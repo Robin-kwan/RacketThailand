@@ -164,7 +164,6 @@ export async function fetchCasualPlaysBySport(
       }
     }
   }
-
   const playsRes = await supabaseSelect<CasualPlayRecord>("casual_plays", params);
   const plays = await attachAcceptedCounts(playsRes.data ?? []);
 

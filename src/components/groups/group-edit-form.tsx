@@ -46,8 +46,9 @@ type GroupRecord = {
   sessions: GroupFormValues["sessions"];
   playFormat?: PlayFormat | null;
   playerAmount?: string | null;
+  allowWalkIn?: boolean | null;
   phone?: string | null;
-  line_id?: string | null;
+  lineId?: string | null;
   lineQrUrl?: string | null;
 };
 
@@ -115,8 +116,9 @@ export function GroupEditForm({
     sessions: group.sessions,
     playFormat: group.playFormat ?? "double",
     playerAmount: group.playerAmount ?? "",
+    allowWalkIn: group.allowWalkIn !== false,
     phone: group.phone ?? "",
-    lineId: group.line_id ?? "",
+    lineId: group.lineId ?? "",
   };
 
   const formStateKey = useMemo(
@@ -246,6 +248,7 @@ export function GroupEditForm({
     description: string;
     playFormat: PlayFormat;
     playerAmount?: string;
+    allowWalkIn: boolean;
     phone?: string;
     lineId?: string;
     sessions: { courtId: string; day: string; start: string; end: string }[];
@@ -269,6 +272,7 @@ export function GroupEditForm({
         playFormat: payload.playFormat,
         sessions: payload.sessions,
         playerAmount: payload.playerAmount,
+        allowWalkIn: payload.allowWalkIn,
         phone: payload.phone,
         lineId: payload.lineId,
       }),

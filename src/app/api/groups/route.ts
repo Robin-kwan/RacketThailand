@@ -19,6 +19,7 @@ type GroupPayload = {
   sessions?: SessionPayload[];
   playFormat?: string | null;
   playerAmount?: number | string;
+  allowWalkIn?: boolean | null;
   phone?: string | null;
   lineId?: string | null;
 };
@@ -39,6 +40,8 @@ export async function GET(request: Request) {
   const day = searchParams.get("day") ?? undefined;
   const startTime = searchParams.get("start") ?? undefined;
   const endTime = searchParams.get("end") ?? undefined;
+  const playFormat = searchParams.get("playFormat") ?? undefined;
+  const allowWalkIn = searchParams.get("allowWalkIn") ?? undefined;
 
   try {
     const result = await fetchGroupsBySport(sport, {
@@ -48,6 +51,8 @@ export async function GET(request: Request) {
       day,
       startTime,
       endTime,
+      playFormat,
+      allowWalkIn,
     });
     if (!result.sport) {
       return NextResponse.json(
@@ -159,6 +164,7 @@ export async function POST(request: Request) {
       updated_at: new Date().toISOString(),
       play_format: normalizedPlayFormat,
       player_amount: normalizedPlayerAmount,
+      allow_walk_in: payload.allowWalkIn !== false,
       phone: normalizedPhone,
       line_id: normalizedLine,
     })

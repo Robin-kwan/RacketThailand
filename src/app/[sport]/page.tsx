@@ -184,6 +184,7 @@ function FeatureCarousel({
                         scheduleAnytime={subtitle}
                         locale={locale}
                         sessions={card.sessions ?? []}
+                        allowWalkIn={card.allowWalkIn}
                         showSessions={false}
                         description={description}
                         showDescription
@@ -417,9 +418,6 @@ export default async function SportPage({
         />
         <div className="relative mx-auto flex max-w-5xl flex-col gap-8 text-[var(--foreground)]">
           <div className="space-y-4">
-            <span className="inline-flex rounded-full border border-[rgb(var(--rt-primary-rgb)/0.32)] bg-[rgb(var(--rt-primary-rgb)/0.1)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[rgb(var(--rt-primary-rgb))]">
-              {sport.name[locale]}
-            </span>
             <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
               {sport.hero.headline[locale]}
             </h1>

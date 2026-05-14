@@ -92,6 +92,7 @@ type GroupRow = {
   updated_at: string | null;
   play_format: "single" | "double" | null;
   player_amount: number | null;
+  allow_walk_in: boolean | null;
   phone: string | null;
   line_id: string | null;
   line_qr_url: string | null;
@@ -319,7 +320,7 @@ export default async function GroupDetailPage({
 
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
     select:
-      "id,name,description,owner_id,sports(code,name),updated_at,play_format,player_amount,phone,line_id,line_qr_url",
+      "id,name,description,owner_id,sports(code,name),updated_at,play_format,player_amount,allow_walk_in,phone,line_id,line_qr_url",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -506,6 +507,9 @@ export default async function GroupDetailPage({
     sessionsEmpty: t("groups.detail.sessionsEmpty"),
     playFormat: t("groups.detail.playFormat"),
     playerAmount: t("groups.detail.playerAmount"),
+    walkIn: t("groups.detail.walkIn"),
+    walkInsWelcome: t("groups.detail.walkInsWelcome"),
+    walkInsClosed: t("groups.detail.walkInsClosed"),
     phone: t("groups.detail.phone"),
     line: t("groups.detail.line"),
     lineQr: t("groups.detail.lineQr"),
@@ -601,6 +605,16 @@ export default async function GroupDetailPage({
                   </p>
                 </div>
               )}
+            <div>
+              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                {copy.walkIn}
+              </p>
+              <p className="text-base font-semibold text-[var(--foreground)]">
+                {group.allow_walk_in === false
+                  ? copy.walkInsClosed
+                  : copy.walkInsWelcome}
+              </p>
+            </div>
             {group.phone && (
               <div>
                 <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">

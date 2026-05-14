@@ -71,9 +71,10 @@ export default async function EditGroupPage({
     line_id: string | null;
     line_qr_url: string | null;
     play_format: "single" | "double" | null;
+    allow_walk_in: boolean | null;
   }>("groups", {
     select:
-      "id,sport_id,name,description,owner_id,player_amount,phone,line_id,line_qr_url,play_format",
+      "id,sport_id,name,description,owner_id,player_amount,phone,line_id,line_qr_url,play_format,allow_walk_in",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -212,6 +213,7 @@ export default async function EditGroupPage({
       typeof group.player_amount === "number"
         ? String(group.player_amount)
         : "",
+    allowWalkIn: group.allow_walk_in !== false,
     phone: group.phone ?? "",
     lineId: group.line_id ?? "",
     lineQrUrl: resolvedLineQrUrl ?? null,
@@ -252,6 +254,8 @@ export default async function EditGroupPage({
     playerAmountLabel: t("groups.form.playerAmountLabel"),
     playerAmountPlaceholder: t("groups.form.playerAmountPlaceholder"),
     playerAmountHelp: t("groups.form.playerAmountHelp"),
+    allowWalkInLabel: t("groups.form.allowWalkInLabel"),
+    allowWalkInHelp: t("groups.form.allowWalkInHelp"),
     phoneLabel: t("groups.form.phoneLabel"),
     phonePlaceholder: t("groups.form.phonePlaceholder"),
     lineLabel: t("groups.form.lineLabel"),

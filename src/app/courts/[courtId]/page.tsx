@@ -666,6 +666,7 @@ export default async function CourtPage({
                     imageUrl={coverImage}
                     imageAlt={group.groups?.name ?? fallbackGroupPhotoAlt}
                     sessions={sessionsForCourt}
+                    allowWalkIn={group.groups?.allow_walk_in ?? null}
                     dayLabels={dayLabels}
                     scheduleAnytime={copy.groupScheduleAny}
                     locale={locale as Locale}

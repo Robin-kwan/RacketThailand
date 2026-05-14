@@ -8,9 +8,12 @@ import { BaseTextField } from "@/components/base-text-field";
 import { BaseNumberField } from "@/components/base-number-field";
 import { BaseTextArea } from "@/components/base-text-area";
 import {
+  ClosingTimePickerField,
   TimePickerField,
+  createClosingTimeOptions,
   createTimeOptions,
-  type TimePickerOption,
+  getOpeningTimeOptions,
+  isClosingTimeAfterStart,
 } from "@/components/time-picker-field";
 import {
   DEFAULT_PLAY_FORMAT,
@@ -56,6 +59,7 @@ export type GroupFormValues = {
   sessions: CourtSessionBlock[];
   playFormat?: PlayFormat | null;
   playerAmount?: string | null;
+  allowWalkIn?: boolean | null;
   phone?: string | null;
   lineId?: string | null;
 };
@@ -82,6 +86,8 @@ export type GroupFormCopy = {
   playerAmountLabel: string;
   playerAmountPlaceholder: string;
   playerAmountHelp: string;
+  allowWalkInLabel: string;
+  allowWalkInHelp: string;
   phoneLabel: string;
   phonePlaceholder: string;
   lineLabel: string;
@@ -96,6 +102,7 @@ type SubmitPayload = {
   sessions: { courtId: string; day: string; start: string; end: string }[];
   playFormat: PlayFormat;
   playerAmount?: string;
+  allowWalkIn: boolean;
   phone?: string;
   lineId?: string;
 };
@@ -126,14 +133,7 @@ const createSlot = (): SessionSlot => ({
 });
 
 const GROUP_TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
-
-const filterTimeOptions = (
-  options: TimePickerOption[],
-  predicate: (option: TimePickerOption) => boolean,
-) => {
-  const filtered = options.filter(predicate);
-  return filtered.length > 0 ? filtered : options;
-};
+const GROUP_CLOSING_TIME_OPTIONS = createClosingTimeOptions({ minuteStep: 30 });
 
 export function GroupForm({
   initialValues,
@@ -156,6 +156,7 @@ export function GroupForm({
     description: initialValues.description,
     playFormat: initialValues.playFormat ?? DEFAULT_PLAY_FORMAT,
     playerAmount: initialValues.playerAmount ?? "",
+    allowWalkIn: initialValues.allowWalkIn !== false,
     phone: initialValues.phone ?? "",
     lineId: initialValues.lineId ?? "",
   });
@@ -170,7 +171,6 @@ export function GroupForm({
       })),
     [sports],
   );
-
   const [courtCache, setCourtCache] = useState<Record<string, Option[]>>(courts);
   const courtOptions = useMemo(
     () => courtCache[form.sportId] ?? [],
@@ -285,7 +285,7 @@ export function GroupForm({
                   field === "start" &&
                   slot.end &&
                   value &&
-                  slot.end <= value
+                  !isClosingTimeAfterStart(slot.end, value)
                 ) {
                   nextSlot.end = "";
                 }
@@ -294,7 +294,7 @@ export function GroupForm({
                   field === "end" &&
                   slot.start &&
                   value &&
-                  value <= slot.start
+                  !isClosingTimeAfterStart(value, slot.start)
                 ) {
                   nextSlot.end = "";
                 }
@@ -332,6 +332,7 @@ export function GroupForm({
         description: initialValues.description,
         playFormat: initialValues.playFormat ?? DEFAULT_PLAY_FORMAT,
         playerAmount: initialValues.playerAmount ?? "",
+        allowWalkIn: initialValues.allowWalkIn !== false,
         phone: initialValues.phone ?? "",
         lineId: initialValues.lineId ?? "",
         sessions: normalizeSessions(initialValues.sessions),
@@ -347,6 +348,7 @@ export function GroupForm({
         description: form.description,
         playFormat: form.playFormat,
         playerAmount: form.playerAmount,
+        allowWalkIn: form.allowWalkIn,
         phone: form.phone,
         lineId: form.lineId,
         sessions: serializedSessions,
@@ -364,6 +366,7 @@ export function GroupForm({
       description: form.description,
       playFormat: form.playFormat,
       playerAmount: form.playerAmount,
+      allowWalkIn: form.allowWalkIn,
       phone: form.phone,
       lineId: form.lineId,
       sessions: serializedSessions,
@@ -434,6 +437,27 @@ export function GroupForm({
           variant="light"
         />
       </div>
+      <label className="flex cursor-pointer items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <input
+          type="checkbox"
+          checked={form.allowWalkIn}
+          onChange={(event) =>
+            setForm((prev) => ({
+              ...prev,
+              allowWalkIn: event.target.checked,
+            }))
+          }
+          className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--rt-primary)] focus:ring-[var(--rt-primary)]"
+        />
+        <span>
+          <span className="block text-sm font-semibold text-slate-800">
+            {copy.allowWalkInLabel}
+          </span>
+          <span className="mt-1 block text-xs text-slate-500">
+            {copy.allowWalkInHelp}
+          </span>
+        </span>
+      </label>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-[var(--foreground)]">
@@ -552,10 +576,10 @@ export function GroupForm({
                           value={slot.start}
                           options={
                             slot.end
-                              ? filterTimeOptions(
-                                  GROUP_TIME_OPTIONS,
-                                  (option) => option.value < slot.end,
-                                )
+                              ? getOpeningTimeOptions({
+                                  closeTime: slot.end,
+                                  options: GROUP_TIME_OPTIONS,
+                                })
                               : GROUP_TIME_OPTIONS
                           }
                           onChange={(next) =>
@@ -567,18 +591,12 @@ export function GroupForm({
                             )
                           }
                         />
-                        <TimePickerField
+                        <ClosingTimePickerField
                           id={endInputId}
                           label={copy.scheduleEnd}
                           value={slot.end}
-                          options={
-                            slot.start
-                              ? filterTimeOptions(
-                                  GROUP_TIME_OPTIONS,
-                                  (option) => option.value > slot.start,
-                                )
-                              : GROUP_TIME_OPTIONS
-                          }
+                          options={GROUP_CLOSING_TIME_OPTIONS}
+                          startTime={slot.start}
                           onChange={(next) =>
                             updateSessionSlot(block.id, slot.id, "end", next)
                           }

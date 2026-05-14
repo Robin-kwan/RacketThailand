@@ -8,9 +8,12 @@ import { BaseTextField } from "@/components/base-text-field";
 import { DatePickerField } from "@/components/date-picker-field";
 import type { Option } from "@/components/groups/group-form";
 import {
+  ClosingTimePickerField,
   TimePickerField,
+  createClosingTimeOptions,
   createTimeOptions,
-  type TimePickerOption,
+  getOpeningTimeOptions,
+  isClosingTimeAfterStart,
 } from "@/components/time-picker-field";
 import type { Locale } from "@/lib/i18n";
 import {
@@ -102,14 +105,9 @@ type CasualPlayFormProps = {
 };
 
 const CASUAL_PLAY_TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
-
-const filterTimeOptions = (
-  options: TimePickerOption[],
-  predicate: (option: TimePickerOption) => boolean,
-) => {
-  const filtered = options.filter(predicate);
-  return filtered.length > 0 ? filtered : options;
-};
+const CASUAL_PLAY_CLOSING_TIME_OPTIONS = createClosingTimeOptions({
+  minuteStep: 30,
+});
 
 export function CasualPlayForm({
   initialValues,
@@ -209,7 +207,9 @@ export function CasualPlayForm({
       ...prev,
       startTime: nextStartTime,
       endTime:
-        prev.endTime && nextStartTime && prev.endTime <= nextStartTime
+        prev.endTime &&
+        nextStartTime &&
+        !isClosingTimeAfterStart(prev.endTime, nextStartTime)
           ? ""
           : prev.endTime,
     }));
@@ -219,7 +219,9 @@ export function CasualPlayForm({
     setForm((prev) => ({
       ...prev,
       endTime:
-        nextEndTime && prev.startTime && nextEndTime <= prev.startTime
+        nextEndTime &&
+        prev.startTime &&
+        !isClosingTimeAfterStart(nextEndTime, prev.startTime)
           ? ""
           : nextEndTime,
     }));
@@ -372,10 +374,10 @@ export function CasualPlayForm({
             onChange={updateStartTime}
             options={
               form.endTime
-                ? filterTimeOptions(
-                    CASUAL_PLAY_TIME_OPTIONS,
-                    (option) => option.value < form.endTime,
-                  )
+                ? getOpeningTimeOptions({
+                    closeTime: form.endTime,
+                    options: CASUAL_PLAY_TIME_OPTIONS,
+                  })
                 : CASUAL_PLAY_TIME_OPTIONS
             }
             minuteStep={30}
@@ -384,20 +386,13 @@ export function CasualPlayForm({
           />
         </div>
         <div className="space-y-2">
-          <TimePickerField
+          <ClosingTimePickerField
             label={copy.endTime}
             value={form.endTime}
             onChange={updateEndTime}
-            options={
-              form.startTime
-                ? filterTimeOptions(
-                    CASUAL_PLAY_TIME_OPTIONS,
-                    (option) => option.value > form.startTime,
-                  )
-                : CASUAL_PLAY_TIME_OPTIONS
-            }
+            options={CASUAL_PLAY_CLOSING_TIME_OPTIONS}
+            startTime={form.startTime}
             minuteStep={30}
-            min={form.startTime || undefined}
             allowClear
             clearLabel={copy.clearTime}
             className="space-y-0"
