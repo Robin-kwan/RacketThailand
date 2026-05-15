@@ -168,7 +168,7 @@ export default async function CreateGroupPage({
           <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
             Community · Groups
           </p>
-          <h1 className="mt-3 text-3xl font-semibold text-[var(--foreground)]">
+          <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h1>
           <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.75)]">

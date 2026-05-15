@@ -179,7 +179,7 @@ export default async function AdminPanel({
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
               {t("admin.quickActionsLabel")}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">
               {t("admin.quickActionsHeading")}
             </h2>
           </div>
@@ -208,7 +208,7 @@ export default async function AdminPanel({
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
               {label}
             </p>
-            <p className="mt-3 text-4xl font-semibold text-slate-900">
+            <p className="mt-3 text-xl font-semibold text-slate-900">
               {metricValues[index].toLocaleString(
                 locale === "th" ? "th-TH" : "en-US",
               )}

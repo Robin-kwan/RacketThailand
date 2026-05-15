@@ -53,7 +53,7 @@ export function CommunityPostCard({
         </div>
       </div>
       <div className="mt-3">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)]">
+        <h2 className="text-xl font-semibold text-[var(--foreground)]">
           {post.title}
         </h2>
         <p className="mt-2 line-clamp-3 text-sm text-[rgb(var(--foreground-rgb)/0.75)]">

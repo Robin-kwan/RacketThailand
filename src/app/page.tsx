@@ -133,7 +133,7 @@ export default async function Landing({
             className="pointer-events-none absolute inset-x-0 -top-16 h-36 bg-[radial-gradient(circle,rgb(var(--rt-primary-rgb)/0.1)_0%,transparent_72%)]"
           />
           <div className="relative flex flex-col items-center gap-5">
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-[var(--foreground)] md:text-5xl">
+            <h1 className="text-xl font-semibold leading-tight tracking-tight text-[var(--foreground)]">
               {t("landing.heroTitle")}
             </h1>
             <p className="max-w-3xl text-sm text-[rgb(var(--foreground-rgb)/0.75)] md:text-lg">
@@ -192,7 +192,7 @@ export default async function Landing({
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 text-left text-white">
-                    <p className="text-2xl font-semibold tracking-tight">
+                    <p className="text-xl font-semibold tracking-tight">
                       {sport.name[locale]}
                     </p>
                     <p className="mt-1 text-xs uppercase tracking-[0.22em] text-white/75">

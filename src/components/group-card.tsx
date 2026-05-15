@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import type { ReactNode, ElementType } from "react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import {
@@ -30,9 +31,12 @@ type GroupCardProps = {
   sessions?: GroupCardSession[] | null;
   playFormat?: PlayFormat | null;
   allowWalkIn?: boolean | null;
+  verifiedLabel?: string | null;
+  verifiedTooltip?: string | null;
   dayLabels: Record<string, string>;
   scheduleAnytime: string;
   locale: Locale;
+  courtSportCode?: string | null;
   sessionLimit?: number;
   showSessions?: boolean;
   showDescription?: boolean;
@@ -57,6 +61,7 @@ function SessionList({
   scheduleAnytime,
   sessionLimit = 3,
   locale,
+  courtSportCode,
   onCourtClick,
 }: {
   sessions?: GroupCardSession[] | null;
@@ -64,6 +69,7 @@ function SessionList({
   scheduleAnytime: string;
   sessionLimit?: number;
   locale: Locale;
+  courtSportCode?: string | null;
   onCourtClick?: (href: string) => void;
 }) {
   if (!sessions || sessions.length === 0) {
@@ -90,7 +96,14 @@ function SessionList({
           const courtId = session.courts?.id ?? null;
           const courtHref =
             courtId && locale
-              ? buildLocalizedPath(`/courts/${courtId}`, locale)
+              ? buildLocalizedPath(
+                  `/courts/${courtId}${
+                    courtSportCode
+                      ? `?sport=${encodeURIComponent(courtSportCode)}`
+                      : ""
+                  }`,
+                  locale,
+                )
               : null;
           return (
             <li key={`${session.day}-${session.start_time}-${index}`}>
@@ -140,9 +153,12 @@ export function GroupCard({
   sessions,
   playFormat,
   allowWalkIn,
+  verifiedLabel = null,
+  verifiedTooltip = null,
   dayLabels,
   scheduleAnytime,
   locale,
+  courtSportCode,
   sessionLimit = 3,
   showSessions = false,
   showDescription = true,
@@ -187,6 +203,7 @@ export function GroupCard({
         {locale === "th" ? "รับวอล์กอิน" : "Walk-ins welcome"}
       </span>
     ) : null;
+  const verifiedText = verifiedTooltip ?? verifiedLabel;
   return (
     <Wrapper
       {...wrapperProps}
@@ -205,9 +222,28 @@ export function GroupCard({
       </div>
       <div className="text-left">
         <p
-          className={`text-2xl font-semibold text-slate-900 ${titleClassName ?? ""}`}
+          className={`text-xl font-semibold text-slate-900 ${titleClassName ?? ""}`}
         >
           {name || fallbackGroupName}
+          {verifiedText && (
+            <span
+              className="group/verified relative ml-1.5 inline-flex align-[-2px]"
+              aria-label={verifiedText}
+              title={verifiedText}
+            >
+              <CheckCircle2
+                className="h-4 w-4 text-emerald-500"
+                strokeWidth={2}
+                aria-hidden
+              />
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-52 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium leading-snug text-white shadow-lg group-hover/verified:block"
+              >
+                {verifiedText}
+              </span>
+            </span>
+          )}
         </p>
       </div>
       {showDescription && description && (
@@ -230,6 +266,7 @@ export function GroupCard({
           scheduleAnytime={scheduleAnytime}
           sessionLimit={sessionLimit}
           locale={locale}
+          courtSportCode={courtSportCode}
           onCourtClick={handleCourtNavigate}
         />
       )}

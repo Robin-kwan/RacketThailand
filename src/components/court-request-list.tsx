@@ -85,7 +85,7 @@ export function CourtRequestList({
               <p className="text-sm font-semibold uppercase text-slate-500">
                 {copy.badge}
               </p>
-              <h3 className="text-2xl font-semibold text-slate-900">
+              <h3 className="text-xl font-semibold text-slate-900">
                 {request.groups?.name ?? "Unnamed group"}
               </h3>
               <p className="text-sm text-slate-500">

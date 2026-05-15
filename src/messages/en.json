@@ -698,6 +698,7 @@
     "groupsTitle": "Groups using this court",
     "groupsEmpty": "No groups have linked their sessions to this court yet.",
     "verified": "Verified",
+    "verifiedTooltip": "This group has been verified by the court.",
     "statusPending": "Pending verification",
     "statusRejected": "Rejected",
     "note": "Court note",

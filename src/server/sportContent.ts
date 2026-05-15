@@ -111,6 +111,7 @@ function pickPrimaryPhoto(
 function mapCourts(
   rows: CourtRow[],
   fallbackImage: string,
+  sportCode: string,
 ): SportFeatureCard[] {
   return rows.map((court) => {
     const location = compactDetails([court.province, court.district]).join(" · ");
@@ -125,7 +126,7 @@ function mapCourts(
       imageUrl,
       location,
       badgeLabel: court.province ?? undefined,
-      href: `/courts/${court.id}`,
+      href: `/courts/${court.id}?sport=${encodeURIComponent(sportCode)}`,
     };
   });
 }
@@ -307,7 +308,7 @@ export async function buildSportPagePayload(
     ]);
 
     const fallbackImage = meta.coverImage;
-    const courts = mapCourts(courtsRes.data ?? [], fallbackImage);
+    const courts = mapCourts(courtsRes.data ?? [], fallbackImage, sportRow.code);
     const groups = mapGroups(groupsRes.data ?? [], fallbackImage);
     const posts = mapPosts(postsRes.data ?? []);
     const profiles = mapProfiles(profilesRes.data ?? []);

@@ -65,7 +65,7 @@ export function FeedbackForm({ copy }: FeedbackFormProps) {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgb(var(--foreground-rgb)/0.65)]">
           Feedback
         </p>
-        <h2 className="text-2xl font-semibold">
+        <h2 className="text-xl font-semibold">
           {copy.title}
         </h2>
         <p className="text-sm text-[rgb(var(--foreground-rgb)/0.55)]">

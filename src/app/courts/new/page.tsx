@@ -154,7 +154,7 @@ export default async function NewCourtPage({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--foreground-rgb)/0.52)]">
             {locale === "th" ? "ชุมชน · สนาม" : "Community · Courts"}
           </p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
+          <h1 className="mt-4 text-xl font-semibold tracking-tight text-[var(--foreground)]">
             {t("courtSubmission.title")}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-[rgb(var(--foreground-rgb)/0.72)]">

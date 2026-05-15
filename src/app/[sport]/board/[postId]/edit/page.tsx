@@ -90,7 +90,7 @@ export default async function EditCommunityPostPage({
       <HeaderSportScope sportSlug={sport} />
       <HeaderSubLabel value={sportMeta.name[locale]} />
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 md:px-10">
-        <h1 className="text-3xl font-semibold text-white">{copy.heading}</h1>
+        <h1 className="text-xl font-semibold text-white">{copy.heading}</h1>
         <div className="rounded-[32px] border border-[var(--rt-primary-border)] bg-[rgb(var(--rt-primary-soft-rgb)/0.6)] p-6 text-[var(--rt-primary-text)]">
           <CommunityPostEditForm
             postId={post.id}

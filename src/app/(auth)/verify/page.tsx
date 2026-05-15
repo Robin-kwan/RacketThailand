@@ -56,7 +56,7 @@ export default async function VerifyPage({
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white px-8 py-10"
         >
-          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("auth.pendingTitle")}
           </h1>
           <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">

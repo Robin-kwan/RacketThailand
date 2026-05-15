@@ -242,7 +242,7 @@ export default async function AdminCourtsPage({
     >
       <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-slate-900">
+          <h2 className="text-xl font-semibold text-slate-900">
             {t("admin.management.courts.listTitle")}
           </h2>
           <p className="mt-2 text-sm text-slate-600">
@@ -283,7 +283,7 @@ export default async function AdminCourtsPage({
 
       <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-slate-900">
+          <h2 className="text-xl font-semibold text-slate-900">
             {t("admin.courtTitle")}
           </h2>
           <p className="mt-2 text-sm text-slate-600">

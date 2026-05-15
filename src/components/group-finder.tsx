@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { track } from "@vercel/analytics";
 import type { GroupRecord } from "@/server/groupFinder";
 import {
-  DEFAULT_LOCALE,
   buildLocalizedPath,
   type Locale,
 } from "@/lib/i18n";
@@ -191,6 +190,14 @@ export function GroupFinder({
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackGroupPhotoAlt =
     locale === "th" ? "รูปกลุ่ม" : "Group photo";
+  const buildCourtHref = useCallback(
+    (courtId: string) =>
+      buildLocalizedPath(
+        `/courts/${courtId}?sport=${encodeURIComponent(sportCode)}`,
+        locale,
+      ),
+    [locale, sportCode],
+  );
   const distanceUnit = locale === "th" ? "กม." : "km";
   useEffect(() => {
     setServerGroups(initialGroups);
@@ -394,7 +401,7 @@ export function GroupFinder({
             name: session.courts?.name ?? (locale === "th" ? "สนาม" : "Court"),
             latitude: lat,
             longitude: lng,
-            href: `/courts/${courtId}${locale === DEFAULT_LOCALE ? "" : `?lang=${locale}`}`,
+            href: buildCourtHref(courtId),
           };
         }
       });
@@ -405,7 +412,7 @@ export function GroupFinder({
         nearestCourt: bestCourt,
       };
     });
-  }, [groupsWithLocation, userLocation, locale]);
+  }, [buildCourtHref, groupsWithLocation, locale, userLocation]);
 
   const displayedGroups = useMemo(() => {
     if (prioritizeNearby && userLocation) {
@@ -719,6 +726,7 @@ export function GroupFinder({
                 showDescription={false}
                 showLocation={false}
                 distanceLabel={distanceLabel}
+                courtSportCode={sportCode}
               />
             );
           })}

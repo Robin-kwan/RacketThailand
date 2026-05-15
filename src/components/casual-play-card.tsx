@@ -84,7 +84,7 @@ export function CasualPlayCard({
       className="group flex h-full w-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400"
     >
       <div className="min-w-0">
-        <p className="line-clamp-2 text-2xl font-semibold text-slate-900">
+        <p className="line-clamp-2 text-xl font-semibold text-slate-900">
           {title || fallbackTitle}
         </p>
       </div>

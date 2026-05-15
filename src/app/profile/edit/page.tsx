@@ -118,7 +118,7 @@ export default async function ProfileEditPage({
           as="section"
           className="flex-1 rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h1>
           <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
@@ -139,7 +139,7 @@ export default async function ProfileEditPage({
             <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.6)]">
               {t("header.brand")}
             </p>
-            <h2 className="text-2xl font-semibold text-[var(--foreground)]">
+            <h2 className="text-xl font-semibold text-[var(--foreground)]">
               {t("profile.sidebarTitle")}
             </h2>
             <p className="text-sm text-[rgb(var(--foreground-rgb)/0.7)]">

@@ -85,7 +85,7 @@ export default async function MyCommunityPostsPage({
             >
               {copy.back}
             </BaseBackLink>
-            <h1 className="mt-4 text-3xl font-semibold text-[var(--foreground)]">
+            <h1 className="mt-4 text-xl font-semibold text-[var(--foreground)]">
               {copy.title}
             </h1>
           </div>

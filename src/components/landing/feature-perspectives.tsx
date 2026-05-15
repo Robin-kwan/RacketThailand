@@ -159,7 +159,7 @@ export function FeaturePerspectives({ copy }: FeaturePerspectivesProps) {
   return (
     <section className="w-full max-w-[1100px] rounded-[30px] border border-[rgb(var(--foreground-rgb)/0.1)] bg-[rgb(var(--foreground-rgb)/0.02)] p-4 md:p-7">
       <header className="mx-auto mb-6 max-w-3xl text-center">
-        <h2 className="text-2xl font-semibold text-[var(--foreground)] md:text-3xl">
+        <h2 className="text-xl font-semibold text-[var(--foreground)]">
           {copy.title}
         </h2>
         <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.72)] md:text-base">

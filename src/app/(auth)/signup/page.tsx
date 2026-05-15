@@ -61,7 +61,7 @@ export default async function SignupPage({
           as="section"
           className="w-full rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("auth.signupTitle")}
           </h1>
           <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">

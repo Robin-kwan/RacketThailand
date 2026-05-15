@@ -128,7 +128,7 @@ export default async function NotificationsPage({
             as="section"
             className="rounded-[32px] border border-slate-200 bg-white p-6 text-sm text-[rgb(var(--foreground-rgb)/0.72)]"
           >
-            <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+            <h1 className="text-xl font-semibold text-[var(--foreground)]">
               {copy.title}
             </h1>
             <p className="mt-2">

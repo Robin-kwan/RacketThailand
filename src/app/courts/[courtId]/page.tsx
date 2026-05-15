@@ -48,6 +48,68 @@ function getCourtFallbackImage(sportCode?: string | null) {
   return SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.png";
 }
 
+type CourtDetail = NonNullable<Awaited<ReturnType<typeof fetchCourtDetail>>>;
+type CourtGroupEntry = CourtDetail["groups"][number];
+
+function getSportDisplayName(
+  sport:
+    | {
+        code?: string | null;
+        name?: string | null;
+      }
+    | null
+    | undefined,
+  locale: Locale,
+) {
+  const code = sport?.code ?? "";
+  return (
+    SPORT_META[code]?.name?.[locale] ??
+    sport?.name ??
+    (locale === "th" ? "กีฬาอื่น" : "Other sport")
+  );
+}
+
+function buildCourtGroupSections(
+  groups: CourtGroupEntry[],
+  locale: Locale,
+  prioritySportCode?: string | null,
+) {
+  const sections = new Map<
+    string,
+    {
+      code: string;
+      label: string;
+      groups: CourtGroupEntry[];
+    }
+  >();
+
+  groups.forEach((group) => {
+    const sport = group.groups?.sports;
+    const code = sport?.code ?? "unknown";
+    const existing = sections.get(code);
+    if (existing) {
+      existing.groups.push(group);
+      return;
+    }
+    sections.set(code, {
+      code,
+      label: getSportDisplayName(sport, locale),
+      groups: [group],
+    });
+  });
+
+  return Array.from(sections.values()).sort((left, right) => {
+    if (prioritySportCode) {
+      const leftIsPriority = left.code === prioritySportCode;
+      const rightIsPriority = right.code === prioritySportCode;
+      if (leftIsPriority !== rightIsPriority) {
+        return leftIsPriority ? -1 : 1;
+      }
+    }
+    return left.label.localeCompare(right.label, locale === "th" ? "th" : "en");
+  });
+}
+
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
   monday: { en: "Monday", th: "วันจันทร์" },
@@ -131,7 +193,7 @@ type Params = {
 };
 
 type ParamsInput = Promise<Params>;
-type SearchParams = { lang?: string };
+type SearchParams = { lang?: string; sport?: string };
 type SearchParamsInput = Promise<SearchParams> | undefined;
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
@@ -299,12 +361,23 @@ export default async function CourtPage({
     notFound();
   }
 
+  const requestedSportCode = resolvedSearch?.sport?.trim() || null;
+  const activeSport =
+    detail.sports.find((sport) => sport.code === requestedSportCode) ??
+    detail.sport;
+  const activeSportCode = activeSport?.code ?? detail.sport?.code ?? null;
+  const groupSections = buildCourtGroupSections(
+    detail.groups,
+    locale,
+    activeSportCode,
+  );
+
   const gallery = detail.photos.length
     ? detail.photos
     : [
         {
           id: "placeholder",
-          image_url: getCourtFallbackImage(detail.sport?.code),
+          image_url: getCourtFallbackImage(activeSportCode),
           is_primary: true,
         },
       ];
@@ -369,6 +442,7 @@ export default async function CourtPage({
     groupsTitle: t("courtPage.groupsTitle"),
     groupsEmpty: t("courtPage.groupsEmpty"),
     verified: t("courtPage.verified"),
+    verifiedTooltip: t("courtPage.verifiedTooltip"),
     statusPending: t("courtPage.statusPending"),
     statusRejected: t("courtPage.statusRejected"),
     noteLabel: t("courtPage.note"),
@@ -451,12 +525,12 @@ export default async function CourtPage({
         event="court_view"
         payload={{ courtId: detail.court.id }}
       />
-      <HeaderSportScope sportSlug={detail.sport?.code ?? undefined} />
-      <HeaderSubLabel value={detail.sport?.name ?? undefined} />
+      <HeaderSportScope sportSlug={activeSportCode ?? undefined} />
+      <HeaderSubLabel value={activeSport?.name ?? undefined} />
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 pb-20 pt-10 md:px-10">
         <BaseBackLink
           href={buildLocalizedPath(
-            `/${detail.sport?.code ?? ""}`,
+            `/${activeSportCode ?? ""}`,
             locale,
           )}
         >
@@ -465,7 +539,7 @@ export default async function CourtPage({
         <header className="space-y-3 border-b border-slate-200 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-semibold text-slate-900">
+              <h1 className="text-xl font-semibold text-slate-900">
                 {detail.court.name ?? fallbackCourtName}
               </h1>
               <p className="text-sm text-slate-600">
@@ -626,76 +700,88 @@ export default async function CourtPage({
           {detail.groups.length === 0 ? (
             <p className="mt-3 text-sm text-slate-600">{copy.groupsEmpty}</p>
           ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {detail.groups.map((group) => {
-                const status = group.verification_status ?? "pending";
-                const statusLabel = status === "verified" ? copy.verified : null;
-                const badgeClass =
-                  status === "verified"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "";
-                const groupLink = group.groups?.id
-                  ? buildLocalizedPath(
-                      `/groups/${group.groups.id}`,
-                      locale,
-                    )
-                  : null;
-                const coverImage = group.groups
-                  ? getGroupCover(group.groups)
-                  : "/sports/badminton.png";
-                const scheduleEntries =
-                  group.groups?.group_sessions &&
-                  Array.isArray(group.groups.group_sessions)
-                    ? group.groups.group_sessions.filter(
-                        (session) => session.court_id === detail.court.id,
-                      )
-                    : [];
-                const sessionsForCourt: GroupCardSession[] = scheduleEntries.map(
-                  (session) => ({
-                    day: session.day,
-                    start_time: session.start_time,
-                    end_time: session.end_time,
-                    courts: null,
-                  }),
-                );
-                return (
-                  <GroupCard
-                    key={group.id}
-                    href={groupLink}
-                    name={group.groups?.name ?? fallbackGroupName}
-                    imageUrl={coverImage}
-                    imageAlt={group.groups?.name ?? fallbackGroupPhotoAlt}
-                    sessions={sessionsForCourt}
-                    allowWalkIn={group.groups?.allow_walk_in ?? null}
-                    dayLabels={dayLabels}
-                    scheduleAnytime={copy.groupScheduleAny}
-                    locale={locale as Locale}
-                    sessionLimit={3}
-                    showSessions
-                    className="p-4 text-sm text-[var(--foreground)]"
-                    titleClassName="text-base font-semibold text-[var(--foreground)]"
-                    imageAspectClass="aspect-square"
-                    description={group.groups?.description ?? null}
-                    showDescription
-                    showLocation={false}
-                    badge={
-                      statusLabel ? (
-                        <span
-                          key={`${group.id}-status-badge`}
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass}`}
-                        >
-                          {statusLabel}
-                        </span>
-                      ) : null
-                    }
-                  />
-                );
-              })}
+            <div className="mt-5 space-y-8">
+              {groupSections.map((section) => (
+                <section key={section.code} className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-base font-semibold text-slate-900">
+                      {section.label}
+                    </h3>
+                    <span className="text-xs font-semibold text-slate-500">
+                      {locale === "th"
+                        ? `${section.groups.length.toLocaleString("th-TH")} กลุ่ม`
+                        : `${section.groups.length.toLocaleString("en-US")} groups`}
+                    </span>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {section.groups.map((group) => {
+                      const status = group.verification_status ?? "pending";
+                      const statusLabel =
+                        status === "verified" ? copy.verified : null;
+                      const groupSportCode = group.groups?.sports?.code ?? null;
+                      const groupLink = group.groups?.id
+                        ? buildLocalizedPath(
+                            `/groups/${group.groups.id}${
+                              groupSportCode
+                                ? `?sport=${encodeURIComponent(groupSportCode)}`
+                                : ""
+                            }`,
+                            locale,
+                          )
+                        : null;
+                      const coverImage = group.groups
+                        ? getGroupCover(group.groups)
+                        : "/sports/badminton.png";
+                      const scheduleEntries =
+                        group.groups?.group_sessions &&
+                        Array.isArray(group.groups.group_sessions)
+                          ? group.groups.group_sessions.filter(
+                              (session) => session.court_id === detail.court.id,
+                            )
+                          : [];
+                      const sessionsForCourt: GroupCardSession[] =
+                        scheduleEntries.map((session) => ({
+                          day: session.day,
+                          start_time: session.start_time,
+                          end_time: session.end_time,
+                          courts: null,
+                        }));
+                      return (
+                        <GroupCard
+                          key={group.id}
+                          href={groupLink}
+                          name={group.groups?.name ?? fallbackGroupName}
+                          imageUrl={coverImage}
+                          imageAlt={group.groups?.name ?? fallbackGroupPhotoAlt}
+                          sessions={sessionsForCourt}
+                          playFormat={group.groups?.play_format ?? null}
+                          allowWalkIn={group.groups?.allow_walk_in ?? null}
+                          verifiedLabel={statusLabel}
+                          verifiedTooltip={
+                            statusLabel ? copy.verifiedTooltip : null
+                          }
+                          dayLabels={dayLabels}
+                          scheduleAnytime={copy.groupScheduleAny}
+                          locale={locale as Locale}
+                          sessionLimit={3}
+                          showSessions
+                          className="p-4 text-sm text-[var(--foreground)]"
+                          titleClassName="text-base font-semibold text-[var(--foreground)]"
+                          imageAspectClass="aspect-square"
+                          description={group.groups?.description ?? null}
+                          showDescription
+                          showLocation={false}
+                        />
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
             </div>
           )}
           <BaseBackLink
             href={buildLocalizedPath(
-              `/${detail.sport?.code ?? ""}/group-finder`,
+              `/${activeSportCode ?? ""}/group-finder`,
               locale,
             )}
             className="mt-6 inline-flex w-fit"

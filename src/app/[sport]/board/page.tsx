@@ -174,7 +174,7 @@ export default async function CommunityBoardPage({
         <header className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+              <h1 className="text-xl font-semibold text-[var(--foreground)]">
                 {copy.title}
               </h1>
               <p className="text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
@@ -219,7 +219,7 @@ export default async function CommunityBoardPage({
             as="section"
             className="rounded-[32px] border border-slate-200 bg-white p-6"
           >
-            <h2 className="text-2xl font-semibold text-[var(--foreground)]">
+            <h2 className="text-xl font-semibold text-[var(--foreground)]">
               {copy.createHeading}
             </h2>
             <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">

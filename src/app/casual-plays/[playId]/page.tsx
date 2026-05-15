@@ -447,7 +447,7 @@ export default async function CasualPlayDetailPage({
             {play.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+            <h1 className="text-xl font-semibold text-[var(--foreground)]">
               {shareTitle}
             </h1>
             <div className="flex flex-wrap items-center gap-2">
@@ -504,7 +504,12 @@ export default async function CasualPlayDetailPage({
               </p>
               {play.courts?.id ? (
                 <Link
-                  href={buildLocalizedPath(`/courts/${play.courts.id}`, locale)}
+                  href={buildLocalizedPath(
+                    `/courts/${play.courts.id}${
+                      sportCode ? `?sport=${encodeURIComponent(sportCode)}` : ""
+                    }`,
+                    locale,
+                  )}
                   className="text-base font-semibold text-blue-600 underline-offset-2 hover:underline"
                 >
                   {venueName ?? "—"}

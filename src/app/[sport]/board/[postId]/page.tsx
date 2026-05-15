@@ -244,7 +244,7 @@ export default async function CommunityPostPage({
               </Link>
             )}
           </div>
-          <h1 className="mt-4 text-3xl font-semibold text-[var(--foreground)]">
+          <h1 className="mt-4 text-xl font-semibold text-[var(--foreground)]">
             {post.title}
           </h1>
           <div className="mt-6 whitespace-pre-line text-[var(--foreground)]">
