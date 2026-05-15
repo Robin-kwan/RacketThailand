@@ -81,7 +81,8 @@ export function CasualPlayJoinRequestsManager({
       ? maxPlayers
       : null;
   const acceptedCount = items.filter((item) => item.status === "accepted").length;
-  const isFull = playerLimit !== null && acceptedCount >= playerLimit;
+  const playerCount = playerLimit === null ? 0 : acceptedCount + 1;
+  const isFull = playerLimit !== null && playerCount >= playerLimit;
 
   const updateRequest = (requestId: string, action: "accept" | "reject") => {
     setPendingId(requestId);
@@ -126,7 +127,7 @@ export function CasualPlayJoinRequestsManager({
       </p>
       {playerLimit !== null && (
         <p className="mt-3 inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-          {locale === "th" ? "ผู้เล่น" : "Players"}: {acceptedCount}/
+          {locale === "th" ? "ผู้เล่น" : "Players"}: {playerCount}/
           {playerLimit}
           {isFull && (
             <span className="ml-2 text-rose-700">{copy.full}</span>

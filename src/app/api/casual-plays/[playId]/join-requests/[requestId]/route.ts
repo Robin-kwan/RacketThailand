@@ -107,7 +107,7 @@ export async function PATCH(
       );
     }
 
-    if ((acceptedCount ?? 0) >= maxPlayers) {
+    if ((acceptedCount ?? 0) + 1 >= maxPlayers) {
       return NextResponse.json(
         { error: "This casual play is full." },
         { status: 409 },

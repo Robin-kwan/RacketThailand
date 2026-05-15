@@ -268,14 +268,15 @@ export default async function CasualPlayDetailPage({
   const owner = owners?.[0] ?? null;
   const currentJoinRequest = currentJoinRequestResult.data?.[0] ?? null;
   const ownerJoinRequests = ownerJoinRequestsResult.data ?? [];
-  const acceptedCount =
+  const acceptedJoinerCount =
     maxPlayers === null
       ? 0
       : isOwner
         ? ownerJoinRequests.filter((request) => request.status === "accepted")
             .length
         : (acceptedJoinRequestsResult.data?.length ?? 0);
-  const isFull = maxPlayers !== null && acceptedCount >= maxPlayers;
+  const playerCount = maxPlayers === null ? 0 : acceptedJoinerCount + 1;
+  const isFull = maxPlayers !== null && playerCount >= maxPlayers;
   const playFormatLabel = getPlayFormatLabel(play.play_format, locale);
   const requesterIds = Array.from(
     new Set(ownerJoinRequests.map((request) => request.requester_id)),
@@ -545,7 +546,7 @@ export default async function CasualPlayDetailPage({
                   {copy.playerAmount}
                 </p>
                 <p className="text-base font-semibold text-[var(--foreground)]">
-                  {acceptedCount}/{maxPlayers}
+                  {playerCount}/{maxPlayers}
                   {isFull && (
                     <span className="ml-2 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">
                       {copy.full}

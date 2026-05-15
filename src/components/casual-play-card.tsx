@@ -65,8 +65,10 @@ export function CasualPlayCard({
       ? playerAmount
       : null;
   const joinedPlayers =
-    typeof acceptedCount === "number" && Number.isFinite(acceptedCount)
-      ? Math.max(0, acceptedCount)
+    maxPlayers !== null
+      ? (typeof acceptedCount === "number" && Number.isFinite(acceptedCount)
+          ? Math.max(0, acceptedCount)
+          : 0) + 1
       : 0;
   const isFull = maxPlayers !== null && joinedPlayers >= maxPlayers;
   const locationLabel = [venueName ?? fallbackVenue, location]
