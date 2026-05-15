@@ -55,7 +55,7 @@ export default async function ResetPasswordPage({
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <h1 className="mt-3 text-3xl font-semibold text-[var(--foreground)]">
+          <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h1>
           <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">

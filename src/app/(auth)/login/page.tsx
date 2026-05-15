@@ -57,7 +57,7 @@ export default async function LoginPage({
           as="section"
           className="w-full rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("auth.loginTitle")}
           </h1>
           <LoginForm locale={locale} copy={formCopy} />

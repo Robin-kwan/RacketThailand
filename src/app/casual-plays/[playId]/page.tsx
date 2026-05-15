@@ -268,14 +268,15 @@ export default async function CasualPlayDetailPage({
   const owner = owners?.[0] ?? null;
   const currentJoinRequest = currentJoinRequestResult.data?.[0] ?? null;
   const ownerJoinRequests = ownerJoinRequestsResult.data ?? [];
-  const acceptedCount =
+  const acceptedJoinerCount =
     maxPlayers === null
       ? 0
       : isOwner
         ? ownerJoinRequests.filter((request) => request.status === "accepted")
             .length
         : (acceptedJoinRequestsResult.data?.length ?? 0);
-  const isFull = maxPlayers !== null && acceptedCount >= maxPlayers;
+  const playerCount = maxPlayers === null ? 0 : acceptedJoinerCount + 1;
+  const isFull = maxPlayers !== null && playerCount >= maxPlayers;
   const playFormatLabel = getPlayFormatLabel(play.play_format, locale);
   const requesterIds = Array.from(
     new Set(ownerJoinRequests.map((request) => request.requester_id)),
@@ -446,7 +447,7 @@ export default async function CasualPlayDetailPage({
             {play.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+            <h1 className="text-xl font-semibold text-[var(--foreground)]">
               {shareTitle}
             </h1>
             <div className="flex flex-wrap items-center gap-2">
@@ -503,7 +504,12 @@ export default async function CasualPlayDetailPage({
               </p>
               {play.courts?.id ? (
                 <Link
-                  href={buildLocalizedPath(`/courts/${play.courts.id}`, locale)}
+                  href={buildLocalizedPath(
+                    `/courts/${play.courts.id}${
+                      sportCode ? `?sport=${encodeURIComponent(sportCode)}` : ""
+                    }`,
+                    locale,
+                  )}
                   className="text-base font-semibold text-blue-600 underline-offset-2 hover:underline"
                 >
                   {venueName ?? "—"}
@@ -545,7 +551,7 @@ export default async function CasualPlayDetailPage({
                   {copy.playerAmount}
                 </p>
                 <p className="text-base font-semibold text-[var(--foreground)]">
-                  {acceptedCount}/{maxPlayers}
+                  {playerCount}/{maxPlayers}
                   {isFull && (
                     <span className="ml-2 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">
                       {copy.full}

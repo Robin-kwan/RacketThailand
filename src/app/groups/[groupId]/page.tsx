@@ -559,7 +559,7 @@ export default async function GroupDetailPage({
             {locale === "th" ? "กลุ่ม" : "Group"} · {group.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="mt-3 text-3xl font-semibold text-[var(--foreground)]">
+            <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
               {group.name ?? fallbackGroupName}
             </h1>
             <div className="flex flex-wrap items-center gap-2">
@@ -689,7 +689,14 @@ export default async function GroupDetailPage({
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <Link
-                            href={buildLocalizedPath(`/courts/${entry.court.id}`, locale)}
+                            href={buildLocalizedPath(
+                              `/courts/${entry.court.id}${
+                                sportCode
+                                  ? `?sport=${encodeURIComponent(sportCode)}`
+                                  : ""
+                              }`,
+                              locale,
+                            )}
                             className="text-base font-semibold text-[var(--foreground)] hover:text-[var(--rt-primary)]"
                           >
                             {entry.court.name ?? fallbackCourtName}

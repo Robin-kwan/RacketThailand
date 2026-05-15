@@ -57,7 +57,7 @@ export function CourtCard({
 
       <div className="space-y-1">
         <h3
-          className={`text-2xl font-semibold text-slate-900 ${titleClassName ?? ""}`}
+          className={`text-xl font-semibold text-slate-900 ${titleClassName ?? ""}`}
         >
           {name || "Court"}
         </h3>

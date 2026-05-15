@@ -278,7 +278,7 @@ export default async function DashboardPage({
           <p className="text-xs font-semibold uppercase rt-text-muted tracking-[0.3em]">
             {locale === "th" ? "แดชบอร์ด · คำขอใช้สนาม" : "Dashboard · Courts"}
           </p>
-          <h2 className="mt-3 text-2xl font-semibold text-[var(--foreground)]">
+          <h2 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h2>
           <p className="mt-2 text-sm rt-text-muted">{copy.subtitle}</p>

@@ -616,7 +616,7 @@ export function CourtOwnersTable({
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-semibold text-slate-900">
+              <h2 className="text-xl font-semibold text-slate-900">
                 {copy.updateTitle}
               </h2>
               <button

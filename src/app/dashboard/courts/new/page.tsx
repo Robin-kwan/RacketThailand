@@ -110,7 +110,7 @@ export default async function DashboardAddCourtPage({
         <p className="text-xs font-semibold uppercase text-slate-400">
           Dashboard · Courts
         </p>
-        <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+        <h1 className="mt-3 text-xl font-semibold text-slate-900">
           {copy.title}
         </h1>
         <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>

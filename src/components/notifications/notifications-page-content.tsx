@@ -230,7 +230,7 @@ export function NotificationsPageContent({
     <section className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h1>
           <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.72)]">

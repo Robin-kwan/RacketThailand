@@ -6,7 +6,6 @@ import { track } from "@vercel/analytics";
 import type { CourtRecord } from "@/server/courtFinder";
 import {
   buildLocalizedPath,
-  DEFAULT_LOCALE,
   type Locale,
 } from "@/lib/i18n";
 import { BaseSelect } from "@/components/base-select";
@@ -98,8 +97,14 @@ export function CourtFinder({
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const localeQuery =
-    locale === DEFAULT_LOCALE ? "" : `?lang=${locale}`;
+  const buildCourtHref = useCallback(
+    (courtId: string) =>
+      buildLocalizedPath(
+        `/courts/${courtId}?sport=${encodeURIComponent(sportCode)}`,
+        locale,
+      ),
+    [locale, sportCode],
+  );
   const provinceOptions = useMemo(
     () => [
       { value: "", label: copy.resetFilters },
@@ -302,7 +307,7 @@ export function CourtFinder({
             name: court.name,
             latitude: lat,
             longitude: lng,
-            href: `/courts/${court.id}${localeQuery}`,
+            href: buildCourtHref(court.id),
           };
         })
         .filter(
@@ -315,7 +320,7 @@ export function CourtFinder({
           } => value !== null,
         )
         .slice(0, 15),
-    [displayedCourts, localeQuery],
+    [buildCourtHref, displayedCourts],
   );
 
   return (
@@ -428,7 +433,7 @@ export function CourtFinder({
                   className="flex flex-wrap items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
                 >
                   <Link
-                    href={`/courts/${entry.court.id}${localeQuery}`}
+                    href={buildCourtHref(entry.court.id)}
                     target="_blank"
                     rel="noreferrer"
                     className="group block"
@@ -497,7 +502,7 @@ export function CourtFinder({
               return (
                 <CourtCard
                   key={court.id}
-                  href={`/courts/${court.id}${localeQuery}`}
+                  href={buildCourtHref(court.id)}
                   name={court.name ?? fallbackCourtName}
                   imageUrl={photo}
                   imageAlt={court.name ?? fallbackCourtImageAlt}

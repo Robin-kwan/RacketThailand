@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { track } from "@vercel/analytics";
 import type { CasualPlayRecord } from "@/server/casualPlays";
 import { CasualPlayCard } from "@/components/casual-play-card";
@@ -87,6 +87,14 @@ export function CasualPlayFinder({
   const fallbackTitle =
     locale === "th" ? "หาเพื่อนตี" : "Casual play";
   const distanceUnit = locale === "th" ? "กม." : "km";
+  const buildCourtHref = useCallback(
+    (courtId: string) =>
+      buildLocalizedPath(
+        `/courts/${courtId}?sport=${encodeURIComponent(sportCode)}`,
+        locale,
+      ),
+    [locale, sportCode],
+  );
 
   useEffect(() => {
     setServerPlays(initialPlays);
@@ -195,11 +203,11 @@ export function CasualPlayFinder({
           name: play.courts?.name ?? (locale === "th" ? "สนาม" : "Court"),
           latitude,
           longitude,
-          href: buildLocalizedPath(`/courts/${courtId}`, locale),
+          href: buildCourtHref(courtId),
         },
       };
     });
-  }, [locale, serverPlays, userLocation]);
+  }, [buildCourtHref, locale, serverPlays, userLocation]);
 
   const displayedPlays = useMemo(() => {
     if (prioritizeNearby && userLocation) {

@@ -97,6 +97,7 @@ type FeatureCarouselProps = {
   ctaHref: string;
   ctaLabel: string;
   locale: Locale;
+  sportCode: string;
   type: "court" | "group";
 };
 
@@ -108,6 +109,7 @@ function FeatureCarousel({
   ctaHref,
   ctaLabel,
   locale,
+  sportCode,
   type,
 }: FeatureCarouselProps) {
   const hasCards = cards.length > 0;
@@ -136,7 +138,7 @@ function FeatureCarousel({
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold">{title}</h2>
+            <h2 className="text-xl font-semibold">{title}</h2>
             <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
               {subtitle}
             </p>
@@ -183,6 +185,7 @@ function FeatureCarousel({
                         dayLabels={dayLabels}
                         scheduleAnytime={subtitle}
                         locale={locale}
+                        courtSportCode={sportCode}
                         sessions={card.sessions ?? []}
                         allowWalkIn={card.allowWalkIn}
                         showSessions={false}
@@ -246,7 +249,7 @@ function CasualPlayPreviewSection({
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold">{title}</h2>
+            <h2 className="text-xl font-semibold">{title}</h2>
             <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
               {subtitle}
             </p>
@@ -418,10 +421,10 @@ export default async function SportPage({
         />
         <div className="relative mx-auto flex max-w-5xl flex-col gap-8 text-[var(--foreground)]">
           <div className="space-y-4">
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+            <h1 className="text-xl font-semibold leading-tight tracking-tight">
               {sport.hero.headline[locale]}
             </h1>
-            <p className="text-lg text-[rgb(var(--foreground-rgb)/0.78)] md:text-xl">
+            <p className="text-lg text-[rgb(var(--foreground-rgb)/0.78)]">
               {sport.hero.description[locale]}
             </p>
           </div>
@@ -438,7 +441,7 @@ export default async function SportPage({
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.55)]">
                         {t(`sport.stats.${stat.key}`)}
                       </p>
-                      <p className={`mt-2 text-4xl font-semibold leading-none tracking-tight ${styles.valueText}`}>
+                      <p className={`mt-2 text-xl font-semibold leading-none tracking-tight ${styles.valueText}`}>
                         {stat.value}
                       </p>
                     </div>
@@ -528,6 +531,7 @@ export default async function SportPage({
           ctaHref={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
           ctaLabel={viewAllLabel}
           locale={locale}
+          sportCode={sport.code}
           type="court"
         />
       )}
@@ -542,6 +546,7 @@ export default async function SportPage({
           ctaHref={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
           ctaLabel={viewAllLabel}
           locale={locale}
+          sportCode={sport.code}
           type="group"
         />
       )}

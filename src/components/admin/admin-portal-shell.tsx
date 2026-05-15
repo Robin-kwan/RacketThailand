@@ -95,7 +95,7 @@ export function AdminPortalShell({
 
         <div className="min-w-0 flex-1 space-y-6">
           <section className="rounded-[32px] border border-slate-200 bg-white px-8 py-7 shadow-sm">
-            <h1 className="text-3xl font-semibold text-slate-900">{title}</h1>
+            <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
           </section>
           {children}
         </div>

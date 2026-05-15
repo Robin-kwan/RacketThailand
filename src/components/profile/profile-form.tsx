@@ -202,7 +202,7 @@ export function ProfileForm({
               className="object-cover"
             />
           ) : (
-            <span className="flex h-full items-center justify-center text-2xl font-semibold text-slate-600">
+            <span className="flex h-full items-center justify-center text-xl font-semibold text-slate-600">
               {avatarInitial.toUpperCase()}
             </span>
           )}
