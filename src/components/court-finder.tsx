@@ -486,15 +486,13 @@ export function CourtFinder({
         </div>
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
             {displayedCourts.map(({ court, distanceKm }) => {
               const photo =
                 court.court_photos?.find((p) => p.is_primary)?.image_url ??
                 court.court_photos?.[0]?.image_url ??
                 `/sports/${sportCode}.png`;
-              const locationText = [court.district, court.province]
-                .filter(Boolean)
-                .join(" · ");
+              const locationText = court.district ?? "";
               const distanceLabel =
                 distanceKm !== null
                   ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`

@@ -713,7 +713,7 @@ export default async function CourtPage({
                         : `${section.groups.length.toLocaleString("en-US")} groups`}
                     </span>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4">
                     {section.groups.map((group) => {
                       const status = group.verification_status ?? "pending";
                       const statusLabel =
@@ -765,8 +765,8 @@ export default async function CourtPage({
                           locale={locale as Locale}
                           sessionLimit={3}
                           showSessions
-                          className="p-4 text-sm text-[var(--foreground)]"
-                          titleClassName="text-base font-semibold text-[var(--foreground)]"
+                          className="text-sm text-[var(--foreground)]"
+                          titleClassName="text-sm font-medium text-[var(--foreground)] sm:text-base"
                           imageAspectClass="aspect-square"
                           description={group.groups?.description ?? null}
                           showDescription

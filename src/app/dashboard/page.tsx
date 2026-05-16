@@ -212,7 +212,7 @@ export default async function DashboardPage({
                     getSportFallbackImage(court.sports?.code)
                   }
                   imageAlt={court.name ?? fallbackCourtImageAlt}
-                  location={[court.district, court.province].filter(Boolean).join(" · ")}
+                  location={court.district ?? ""}
                   showDetails={false}
                   primaryBadge={court.province ?? undefined}
                 />

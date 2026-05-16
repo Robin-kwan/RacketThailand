@@ -81,30 +81,30 @@ export function CasualPlayCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className="group flex h-full w-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400"
+      className="group flex h-full w-full flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-4 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 sm:gap-3 sm:rounded-3xl sm:px-5 sm:py-6"
     >
       <div className="min-w-0">
-        <p className="line-clamp-2 text-xl font-semibold text-slate-900">
+        <p className="line-clamp-2 text-sm font-medium text-slate-900 sm:text-xl">
           {title || fallbackTitle}
         </p>
       </div>
-      <div className="space-y-2 border-t border-slate-100 pt-3 text-sm text-slate-600">
-        <div className="flex min-w-0 items-center gap-2">
-          <MapPin className="h-4 w-4 shrink-0 text-sky-600" aria-hidden />
+      <div className="space-y-1.5 border-t border-slate-100 pt-2 text-xs text-slate-600 sm:space-y-2 sm:pt-3 sm:text-sm">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-sky-600 sm:h-4 sm:w-4" aria-hidden />
           <span className="truncate font-semibold text-slate-800">
             {locationLabel}
           </span>
         </div>
-        <div className="flex min-w-0 items-center gap-2">
-          <Clock3 className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <Clock3 className="h-3.5 w-3.5 shrink-0 text-amber-600 sm:h-4 sm:w-4" aria-hidden />
           <span className="truncate font-semibold text-slate-800">
             {dateLabel} ·{" "}
             {timeLabel || (locale === "th" ? "ยังไม่ระบุเวลา" : "Time not set")}
           </span>
         </div>
         {playerLabel && (
-          <div className="flex min-w-0 items-center gap-2">
-            <UsersRound className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+            <UsersRound className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" aria-hidden />
             <span className="truncate font-semibold text-slate-800">
               {playerLabel}
               {isFull && (
@@ -118,20 +118,20 @@ export function CasualPlayCard({
       </div>
       {description && (
         <p
-          className="line-clamp-3 text-sm text-slate-600"
+          className="line-clamp-2 text-xs text-slate-600 sm:line-clamp-3 sm:text-sm"
           title={description}
         >
           {description}
         </p>
       )}
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
         <span
-          className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${playFormatBadgeClass}`}
+          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:px-3 sm:py-1 sm:text-[11px] ${playFormatBadgeClass}`}
         >
           {playFormatLabel}
         </span>
         {isFull && (
-          <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-700">
+          <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 sm:px-3 sm:py-1 sm:text-[11px]">
             {locale === "th" ? "เต็ม" : "Full"}
           </span>
         )}
