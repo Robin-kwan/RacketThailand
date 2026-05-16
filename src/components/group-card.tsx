@@ -192,14 +192,14 @@ export function GroupCard({
       : "border-emerald-200 bg-emerald-50 text-emerald-700";
   const playFormatBadge = (
     <span
-      className={`inline-flex shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold ${playFormatBadgeClass}`}
+      className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:px-3 sm:py-1 sm:text-[11px] ${playFormatBadgeClass}`}
     >
       {playFormatLabel}
     </span>
   );
   const walkInBadge =
     allowWalkIn === true ? (
-      <span className="inline-flex shrink-0 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-700">
+      <span className="inline-flex shrink-0 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 sm:px-3 sm:py-1 sm:text-[11px]">
         {locale === "th" ? "รับวอล์กอิน" : "Walk-ins welcome"}
       </span>
     ) : null;
@@ -207,9 +207,9 @@ export function GroupCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className={`group flex h-full w-full flex-col gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-6 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 ${className ?? ""}`}
+      className={`group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 sm:rounded-3xl ${className ?? ""}`}
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
+      <div className="overflow-hidden border-b border-slate-100 bg-slate-100">
         <div className={`relative ${imageAspectClass} w-full`}>
           <Image
             src={imageUrl}
@@ -220,63 +220,66 @@ export function GroupCard({
           />
         </div>
       </div>
-      <div className="text-left">
-        <p
-          className={`text-xl font-semibold text-slate-900 ${titleClassName ?? ""}`}
-        >
-          {name || fallbackGroupName}
-          {verifiedText && (
-            <span
-              className="group/verified relative ml-1.5 inline-flex align-[-2px]"
-              aria-label={verifiedText}
-              title={verifiedText}
-            >
-              <CheckCircle2
-                className="h-4 w-4 text-emerald-500"
-                strokeWidth={2}
-                aria-hidden
-              />
+
+      <div className="flex flex-1 flex-col gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
+        <div className="text-left">
+          <p
+            className={`line-clamp-2 text-sm font-medium text-slate-900 sm:text-xl ${titleClassName ?? ""}`}
+          >
+            {name || fallbackGroupName}
+            {verifiedText && (
               <span
-                role="tooltip"
-                className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-52 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium leading-snug text-white shadow-lg group-hover/verified:block"
+                className="group/verified relative ml-1.5 inline-flex align-[-2px]"
+                aria-label={verifiedText}
+                title={verifiedText}
               >
-                {verifiedText}
+                <CheckCircle2
+                  className="h-3.5 w-3.5 text-emerald-500 sm:h-4 sm:w-4"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                <span
+                  role="tooltip"
+                  className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-44 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium leading-snug text-white shadow-lg group-hover/verified:block sm:w-52"
+                >
+                  {verifiedText}
+                </span>
               </span>
-            </span>
-          )}
-        </p>
-      </div>
-      {showDescription && description && (
-        <p
-          className="text-sm text-slate-600 line-clamp-2 break-all"
-          title={description}
-        >
-          {description}
-        </p>
-      )}
-      {showLocation && location && (
-        <p className="text-xs font-semibold text-slate-500 line-clamp-1" title={location}>
-          {location}
-        </p>
-      )}
-      {showSessions && (
-        <SessionList
-          sessions={sessions}
-          dayLabels={dayLabels}
-          scheduleAnytime={scheduleAnytime}
-          sessionLimit={sessionLimit}
-          locale={locale}
-          courtSportCode={courtSportCode}
-          onCourtClick={handleCourtNavigate}
-        />
-      )}
-      {distanceLabel && (
-        <div className="text-xs font-semibold text-slate-500">{distanceLabel}</div>
-      )}
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {playFormatBadge}
-        {walkInBadge}
-        {badge}
+            )}
+          </p>
+        </div>
+        {showDescription && description && (
+          <p
+            className="line-clamp-2 break-all text-xs text-slate-600 sm:text-sm"
+            title={description}
+          >
+            {description}
+          </p>
+        )}
+        {showLocation && location && (
+          <p className="line-clamp-1 text-[11px] font-semibold text-slate-500 sm:text-xs" title={location}>
+            {location}
+          </p>
+        )}
+        {showSessions && (
+          <SessionList
+            sessions={sessions}
+            dayLabels={dayLabels}
+            scheduleAnytime={scheduleAnytime}
+            sessionLimit={sessionLimit}
+            locale={locale}
+            courtSportCode={courtSportCode}
+            onCourtClick={handleCourtNavigate}
+          />
+        )}
+        {distanceLabel && (
+          <div className="text-xs font-semibold text-slate-500">{distanceLabel}</div>
+        )}
+        <div className="mt-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+          {playFormatBadge}
+          {walkInBadge}
+          {badge}
+        </div>
       </div>
     </Wrapper>
   );

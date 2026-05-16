@@ -134,7 +134,7 @@ function FeatureCarousel({
       };
 
   return (
-    <section className="px-6 py-12 text-[var(--foreground)] md:px-12">
+    <section className="px-6 py-4 text-[var(--foreground)] md:px-12">
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -174,7 +174,7 @@ function FeatureCarousel({
                 return (
                   <div
                     key={`${card.title}-${index}`}
-                    className="snap-start w-[320px] shrink-0 self-stretch md:w-[360px]"
+                    className="snap-start w-[240px] shrink-0 self-stretch"
                   >
                     {type === "group" ? (
                       <GroupCard
@@ -245,7 +245,7 @@ function CasualPlayPreviewSection({
   const hasPlays = plays.length > 0;
 
   return (
-    <section className="px-6 py-12 text-[var(--foreground)] md:px-12">
+    <section className="px-6 py-4 text-[var(--foreground)] md:px-12">
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -285,7 +285,7 @@ function CasualPlayPreviewSection({
                 return (
                   <div
                     key={play.id}
-                    className="snap-start w-[320px] shrink-0 md:w-[360px]"
+                    className="snap-start w-[240px] shrink-0"
                   >
                     <CasualPlayCard
                       title={play.title || ""}
@@ -414,7 +414,7 @@ export default async function SportPage({
     <div className="min-h-screen text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
-      <section className="relative overflow-hidden border-y border-[rgb(var(--foreground-rgb)/0.1)] bg-white px-6 py-20 md:px-12">
+      <section className="relative overflow-hidden border-y border-[rgb(var(--foreground-rgb)/0.1)] bg-white px-6 py-12 md:px-12">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--rt-primary-rgb)/0.14),transparent_34%),radial-gradient(circle_at_95%_15%,rgb(var(--foreground-rgb)/0.08),transparent_42%)]"
