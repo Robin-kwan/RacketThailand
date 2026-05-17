@@ -28,6 +28,7 @@ type GroupCardProps = {
   imageAlt?: string;
   description?: string | null;
   location?: string | null;
+  trustItems?: string[];
   sessions?: GroupCardSession[] | null;
   playFormat?: PlayFormat | null;
   allowWalkIn?: boolean | null;
@@ -150,6 +151,7 @@ export function GroupCard({
   imageAlt,
   description,
   location,
+  trustItems = [],
   sessions,
   playFormat,
   allowWalkIn,
@@ -222,6 +224,18 @@ export function GroupCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
+        {trustItems.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[11px]">
+            {trustItems.map((item) => (
+              <span
+                key={`${name}-trust-${item}`}
+                className="inline-flex rounded-full border border-[rgb(var(--rt-primary-rgb)/0.18)] bg-[rgb(var(--rt-primary-rgb)/0.08)] px-2 py-0.5 text-[var(--rt-primary)]"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="text-left">
           <p
             className={`line-clamp-2 text-sm font-medium text-slate-900 sm:text-xl ${titleClassName ?? ""}`}

@@ -30,6 +30,7 @@ export type LocaleInfo = Record<
 
 export type MobileMenuLabels = {
   brand: string;
+  home: string;
   login: string;
   profile: string;
   dashboard: string;
@@ -111,8 +112,25 @@ export function SiteHeaderMobileMenu({
             />
           </button>
         </div>
-        {navLinks.length > 0 && (
-          <nav className="space-y-3">
+        <nav className="space-y-3">
+            <Link
+              href={buildLocalizedPath("/", locale)}
+              onClick={onClose}
+              className={`flex items-center justify-between text-base font-semibold ${
+                pathname === "/"
+                  ? "text-slate-900"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              {labels.home}
+              {pathname === "/" && (
+                <Check
+                  className="h-4 w-4"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              )}
+            </Link>
             {navLinks.map((link) => {
               const isLinkActive =
                 pathname === link.path ||
@@ -135,10 +153,9 @@ export function SiteHeaderMobileMenu({
                     />
                   )}
                 </Link>
-              );
-            })}
-          </nav>
-        )}
+                );
+              })}
+        </nav>
         <div className="space-y-5">
           {isAuthenticated ? (
             <>

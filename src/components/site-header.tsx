@@ -32,15 +32,25 @@ type SiteHeaderProps = {
 };
 
 type HeaderLabels = typeof enMessages.header;
+type CommunityLabels = typeof enMessages.community;
 
 const UI_STRINGS = {
-  th: { header: thMessages.header, notifications: thMessages.notifications },
-  en: { header: enMessages.header, notifications: enMessages.notifications },
+  th: {
+    header: thMessages.header,
+    notifications: thMessages.notifications,
+    community: thMessages.community,
+  },
+  en: {
+    header: enMessages.header,
+    notifications: enMessages.notifications,
+    community: enMessages.community,
+  },
 } satisfies Record<
   Locale,
   {
     header: HeaderLabels;
     notifications: NotificationCopy;
+    community: CommunityLabels;
   }
 >;
 
@@ -82,6 +92,7 @@ export function SiteHeader({
   const strings = UI_STRINGS[locale];
   const labels = strings.header;
   const notificationCopy = strings.notifications;
+  const communityLabels = strings.community;
   const segments = useMemo(
     () => pathname.split("/").filter(Boolean),
     [pathname],
@@ -109,6 +120,10 @@ export function SiteHeader({
         label: labels.casualPlayFinder ?? "Casual plays",
         path: `${basePath}/casual-plays`,
       },
+      {
+        label: communityLabels.boardCta ?? "Community board",
+        path: `${basePath}/board`,
+      },
     ];
     return definitions.map((definition) => ({
       ...definition,
@@ -122,6 +137,7 @@ export function SiteHeader({
     labels.courtFinder,
     labels.groupFinder,
     labels.casualPlayFinder,
+    communityLabels.boardCta,
     locale,
   ]);
   const autoSubLabel = useMemo(
@@ -411,6 +427,7 @@ export function SiteHeader({
         locale={locale}
         labels={{
           brand: labels.brand,
+          home: locale === "th" ? "หน้าแรก" : "Home",
           login: labels.login,
           profile: labels.profile,
           dashboard: labels.dashboard,
