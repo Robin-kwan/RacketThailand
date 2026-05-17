@@ -182,6 +182,7 @@ function FeatureCarousel({
                         href={href}
                         imageUrl={cover}
                         imageAlt={card.title}
+                        trustItems={card.trustItems}
                         dayLabels={dayLabels}
                         scheduleAnytime={subtitle}
                         locale={locale}
@@ -201,6 +202,7 @@ function FeatureCarousel({
                         href={href}
                         imageUrl={cover}
                         imageAlt={card.title}
+                        trustItems={card.trustItems}
                         location={card.subtitle || card.location || undefined}
                         imageAspectClass="aspect-[4/3]"
                         showDetails={card.details.length > 0}
@@ -397,6 +399,18 @@ export default async function SportPage({
   const carouselEmptyCopy = t("sport.carouselEmpty");
   const viewAllLabel = t("sport.viewAll");
   const boardCta = t("community.boardCta");
+  const trustProofHeadline =
+    locale === "th"
+      ? "ดูรายการที่มีข้อมูลติดต่อจริงและอัปเดตล่าสุดได้ทันที"
+      : "Browse listings with direct contacts and recent public updates right away.";
+  const trustProofBody =
+    locale === "th"
+      ? `${sport.hero.stats[0]?.value ?? "0"} สนาม, ${sport.hero.stats[1]?.value ?? "0"} กลุ่ม และ ${casualPlayResult.count.toLocaleString("th-TH")} นัดหาเพื่อนตีกำลังแสดงอยู่ในพอร์ทัลนี้`
+      : `${sport.hero.stats[0]?.value ?? "0"} courts, ${sport.hero.stats[1]?.value ?? "0"} groups, and ${casualPlayResult.count.toLocaleString("en-US")} live casual plays are already visible in this portal.`;
+  const trustVerificationNote =
+    locale === "th"
+      ? "สนามจะเน้นข้อมูลติดต่อและรายละเอียดที่อัปเดต ส่วนกลุ่มสามารถขอยืนยันกับสนามเพื่อเพิ่มความน่าเชื่อถือก่อนนัดเล่น"
+      : "Venue listings emphasize real contact details and fresh data, while groups can request court verification to build trust before anyone joins.";
   const renderStatIcon = (key: string) => {
     const Icon = STAT_ICONS[key] ?? Plus;
     return (
@@ -503,6 +517,15 @@ export default async function SportPage({
             >
               {boardCta}
             </TrackedLink>
+          </div>
+          <div className="rounded-3xl border border-[rgb(var(--rt-primary-rgb)/0.18)] bg-[rgb(var(--rt-primary-rgb)/0.06)] px-5 py-4 text-sm text-[rgb(var(--foreground-rgb)/0.78)] shadow-[0_14px_36px_rgb(var(--foreground-rgb)/0.06)]">
+            <p className="font-semibold text-[var(--foreground)]">
+              {trustProofHeadline}
+            </p>
+            <p className="mt-1">{trustProofBody}</p>
+            <p className="mt-2 text-[rgb(var(--foreground-rgb)/0.68)]">
+              {trustVerificationNote}
+            </p>
           </div>
         </div>
       </section>

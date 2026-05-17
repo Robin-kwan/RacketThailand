@@ -9,6 +9,7 @@ export type SportFeatureCard = {
   details: string[];
   imageUrl?: string | null;
   location?: string | null;
+  trustItems?: string[];
   badgeLabel?: string | null;
   badgeColor?: string | null;
   href?: string | null;

@@ -59,6 +59,21 @@ const parseCoordinate = (value: unknown): number | null => {
 
 const EARTH_RADIUS_KM = 6371;
 
+const TRUST_DATE_FORMATTERS: Record<Locale, Intl.DateTimeFormat> = {
+  th: new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short" }),
+  en: new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" }),
+};
+
+function formatTrustDate(
+  value: string | null | undefined,
+  locale: Locale,
+) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return TRUST_DATE_FORMATTERS[locale].format(date);
+}
+
 const haversineDistance = (a: LocationState, b: LocationState) => {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const dLat = toRad(b.latitude - a.latitude);
@@ -493,6 +508,23 @@ export function CourtFinder({
                 court.court_photos?.[0]?.image_url ??
                 `/sports/${sportCode}.png`;
               const locationText = court.district ?? "";
+              const updatedLabel = formatTrustDate(
+                court.updated_at ?? court.created_at,
+                locale,
+              );
+              const trustItems = [
+                locale === "th" ? "ยืนยันแล้ว" : "Verified venue",
+                court.phone || court.line_id || court.website_url
+                  ? locale === "th"
+                    ? "ติดต่อได้ทันที"
+                    : "Direct contact"
+                  : null,
+                updatedLabel
+                  ? locale === "th"
+                    ? `อัปเดต ${updatedLabel}`
+                    : `Updated ${updatedLabel}`
+                  : null,
+              ].filter((item): item is string => Boolean(item));
               const distanceLabel =
                 distanceKm !== null
                   ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
@@ -505,6 +537,7 @@ export function CourtFinder({
                   imageUrl={photo}
                   imageAlt={court.name ?? fallbackCourtImageAlt}
                   location={locationText}
+                  trustItems={trustItems}
                   primaryBadge={court.province || "TH"}
                   secondaryBadge={distanceLabel}
                 />
