@@ -99,6 +99,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 1,
     }),
+    ...buildLocalizedSitemapEntries({
+      path: "/terms",
+      changeFrequency: "monthly",
+      priority: 0.3,
+    }),
     ...SUPPORTED_SPORTS.flatMap((code) =>
       buildLocalizedSitemapEntries({
         path: `/${code}`,

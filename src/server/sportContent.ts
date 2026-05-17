@@ -85,11 +85,6 @@ function formatDate(dateString: string | null | undefined) {
   return date.toLocaleDateString("en-US", DATE_FORMAT);
 }
 
-function formatUpdatedLabel(dateString: string | null | undefined) {
-  const formatted = formatDate(dateString);
-  return formatted ? `Updated ${formatted}` : null;
-}
-
 function formatCount(count?: number | null) {
   if (count == null) return "0";
   return count.toLocaleString("en-US");
@@ -128,13 +123,6 @@ function mapCourts(
         court.description,
         court.line_id ? `Line: ${court.line_id}` : null,
       ]),
-      trustItems: compactDetails([
-        "Verified venue",
-        court.phone || court.line_id || court.website_url
-          ? "Direct contact"
-          : null,
-        formatUpdatedLabel(court.created_at),
-      ]),
       imageUrl,
       location,
       badgeLabel: court.province ?? undefined,
@@ -162,10 +150,6 @@ function mapGroups(
       title: group.name ?? "Untitled group",
       subtitle: "",
       details: compactDetails([group.description]),
-      trustItems: compactDetails([
-        group.group_sessions?.length ? "Weekly schedule" : null,
-        formatUpdatedLabel(group.created_at),
-      ]),
       imageUrl,
       location: undefined,
       badgeLabel: "COMMUNITY",

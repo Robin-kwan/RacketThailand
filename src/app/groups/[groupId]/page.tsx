@@ -61,44 +61,6 @@ function formatTimeRange(start: string, end: string, locale: string) {
   return `${formatTimeValue(start, locale)} – ${formatTimeValue(end, locale)}`;
 }
 
-function formatUpdatedDate(value: string | null | undefined, locale: "th" | "en") {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
-
-function buildGoogleMapsSearchUrl({
-  name,
-  latitude,
-  longitude,
-  placeId,
-}: {
-  name: string;
-  latitude: number;
-  longitude: number;
-  placeId?: string | null;
-}) {
-  const normalizedPlaceId = placeId?.trim() || null;
-  if (normalizedPlaceId) {
-    const params = new URLSearchParams({
-      api: "1",
-      query: `${latitude},${longitude}`,
-      query_place_id: normalizedPlaceId,
-    });
-    return `https://www.google.com/maps/search/?${params.toString()}`;
-  }
-  const fallbackParams = new URLSearchParams({
-    api: "1",
-    query: `${name} ${latitude},${longitude}`,
-  });
-  return `https://www.google.com/maps/search/?${fallbackParams.toString()}`;
-}
-
 type Params = {
   groupId: string;
 };
@@ -159,10 +121,6 @@ type GroupSessionRow = {
     name: string | null;
     district: string | null;
     province: string | null;
-    website_url: string | null;
-    latitude: number | string | null;
-    longitude: number | string | null;
-    google_place_id: string | null;
   } | null;
 };
 
@@ -406,7 +364,7 @@ export default async function GroupDetailPage({
       }),
       supabaseSelect<GroupSessionRow>("group_sessions", {
         select:
-          "id,court_id,day,start_time,end_time,courts(id,name,district,province,website_url,latitude,longitude,google_place_id)",
+          "id,court_id,day,start_time,end_time,courts(id,name,district,province)",
         group_id: `eq.${group.id}`,
         order: "day.asc,start_time.asc",
       }),
@@ -577,60 +535,6 @@ export default async function GroupDetailPage({
     (locale === "th"
       ? `ดูรายละเอียดกลุ่ม ${shareTitle} บน RacketThailand`
       : `View ${shareTitle} on RacketThailand`);
-  const updatedAtLabel = formatUpdatedDate(group.updated_at, locale);
-  const primarySessionLocation = [
-    primarySessionCourt?.district,
-    primarySessionCourt?.province,
-  ]
-    .filter((value): value is string => Boolean(value && value.trim()))
-    .join(" · ");
-  const primarySessionCourtHref = primarySessionCourt?.id
-    ? buildLocalizedPath(`/courts/${primarySessionCourt.id}`, locale)
-    : null;
-  const numericLatitude =
-    primarySessionCourt?.latitude == null
-      ? null
-      : Number(primarySessionCourt.latitude);
-  const numericLongitude =
-    primarySessionCourt?.longitude == null
-      ? null
-      : Number(primarySessionCourt.longitude);
-  const primarySessionMapsUrl =
-    numericLatitude !== null &&
-    !Number.isNaN(numericLatitude) &&
-    numericLongitude !== null &&
-    !Number.isNaN(numericLongitude)
-      ? buildGoogleMapsSearchUrl({
-          name: primarySessionCourt?.name ?? fallbackCourtName,
-          latitude: numericLatitude,
-          longitude: numericLongitude,
-          placeId: primarySessionCourt?.google_place_id,
-        })
-      : null;
-  const trustBadges = [
-    group.allow_walk_in === false
-      ? locale === "th"
-        ? "ติดต่อก่อนมาเล่น"
-        : "Contact before joining"
-      : locale === "th"
-        ? "รับวอล์กอิน"
-        : "Walk-ins welcome",
-    sessionGroups.length > 0
-      ? locale === "th"
-        ? "มีตารางเล่นประจำ"
-        : "Weekly schedule"
-      : null,
-    group.phone || displayGroup.line_id
-      ? locale === "th"
-        ? "มีช่องทางติดต่อ"
-        : "Direct contact"
-      : null,
-    updatedAtLabel
-      ? locale === "th"
-        ? `อัปเดต ${updatedAtLabel}`
-        : `Updated ${updatedAtLabel}`
-      : null,
-  ].filter((item): item is string => Boolean(item));
   const backHref = buildLocalizedPath(
     sportCode ? `/${sportCode}/group-finder` : "/",
     locale,
@@ -646,127 +550,7 @@ export default async function GroupDetailPage({
         <HeaderSportScope sportSlug={sportCode ?? undefined} />
         <HeaderSubLabel value={sportName} />
         <BaseBackLink href={backHref}>{copy.back}</BaseBackLink>
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] lg:items-start">
-          <BaseCard
-            as="section"
-            className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"
-          >
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--foreground-rgb)/0.52)]">
-              <span>{sportName ?? "RacketThailand"}</span>
-              <span aria-hidden>•</span>
-              <span>{locale === "th" ? "โปรไฟล์กลุ่มสาธารณะ" : "Public group profile"}</span>
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">
-                {group.name ?? fallbackGroupName}
-              </h1>
-              {primarySessionLocation && (
-                <p className="text-base text-[rgb(var(--foreground-rgb)/0.72)]">
-                  {primarySessionLocation}
-                </p>
-              )}
-              {group.description && (
-                <p className="whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.76)]">
-                  {group.description}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {trustBadges.map((badge) => (
-                <span
-                  key={badge}
-                  className="inline-flex rounded-full border border-[rgb(var(--rt-primary-rgb)/0.18)] bg-[rgb(var(--rt-primary-rgb)/0.08)] px-3 py-1 text-xs font-semibold text-[var(--rt-primary)]"
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {primarySessionCourtHref && (
-                <Link
-                  href={primarySessionCourtHref}
-                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                >
-                  {locale === "th" ? "ดูสนามที่นัดเล่น" : "View linked court"}
-                </Link>
-              )}
-              {primarySessionMapsUrl && (
-                <a
-                  href={primarySessionMapsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {locale === "th" ? "เส้นทาง / แผนที่" : "Directions / map"}
-                </a>
-              )}
-              {primarySessionCourt?.website_url && (
-                <a
-                  href={primarySessionCourt.website_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {locale === "th" ? "เว็บไซต์สนาม" : "Court website"}
-                </a>
-              )}
-              <ShareButton
-                title={shareTitle}
-                text={shareText}
-                url={canonicalUrl}
-                label={copy.shareAction}
-                copiedLabel={copy.linkCopiedAction}
-              />
-              {canEdit && (
-                <Link
-                  href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {copy.edit}
-                </Link>
-              )}
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {group.phone && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.52)]">
-                    {copy.phone}
-                  </p>
-                  <ContactActionValue
-                    mode="phone"
-                    value={group.phone}
-                    copyLabel={copy.copyAction}
-                    copiedLabel={copy.copiedAction}
-                    callLabel={copy.callAction}
-                  />
-                </div>
-              )}
-              {displayGroup.line_id && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.52)]">
-                    {copy.line}
-                  </p>
-                  <ContactActionValue
-                    mode="line"
-                    value={displayGroup.line_id}
-                    copyLabel={copy.copyAction}
-                    copiedLabel={copy.copiedAction}
-                    callLabel={copy.callAction}
-                  />
-                </div>
-              )}
-            </div>
-          </BaseCard>
-          <BaseCard
-            as="section"
-            className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"
-          >
-            <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
-          </BaseCard>
-        </section>
-        <div className="hidden">
-          <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
-        </div>
+        <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
         <BaseCard
           as="section"
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
@@ -775,9 +559,9 @@ export default async function GroupDetailPage({
             {locale === "th" ? "กลุ่ม" : "Group"} · {group.sports?.name ?? "RacketThailand"}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
+            <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
               {group.name ?? fallbackGroupName}
-            </h2>
+            </h1>
             <div className="flex flex-wrap items-center gap-2">
               <ShareButton
                 title={shareTitle}

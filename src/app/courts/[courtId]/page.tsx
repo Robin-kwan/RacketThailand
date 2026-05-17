@@ -50,7 +50,6 @@ function getCourtFallbackImage(sportCode?: string | null) {
 
 type CourtDetail = NonNullable<Awaited<ReturnType<typeof fetchCourtDetail>>>;
 type CourtGroupEntry = CourtDetail["groups"][number];
-type CourtSport = CourtDetail["sports"][number];
 
 function getSportDisplayName(
   sport:
@@ -189,60 +188,6 @@ function toSchemaCloseTime(value: string | null) {
   return value;
 }
 
-function resolveActiveCourtSport(
-  detail: CourtDetail,
-  requestedSportCode?: string | null,
-) {
-  const normalizedCode = requestedSportCode?.trim().toLowerCase();
-  if (normalizedCode) {
-    const requestedSport = detail.sports.find(
-      (sport) => sport.code.toLowerCase() === normalizedCode,
-    );
-    if (requestedSport) {
-      return requestedSport;
-    }
-  }
-  return (detail.sport ?? detail.sports[0] ?? null) as CourtSport | null;
-}
-
-function formatUpdatedDate(value: string | null | undefined, locale: Locale) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
-
-function buildGoogleMapsSearchUrl({
-  name,
-  latitude,
-  longitude,
-  placeId,
-}: {
-  name: string;
-  latitude: number;
-  longitude: number;
-  placeId?: string | null;
-}) {
-  const normalizedPlaceId = placeId?.trim() || null;
-  if (normalizedPlaceId) {
-    const params = new URLSearchParams({
-      api: "1",
-      query: `${latitude},${longitude}`,
-      query_place_id: normalizedPlaceId,
-    });
-    return `https://www.google.com/maps/search/?${params.toString()}`;
-  }
-  const fallbackParams = new URLSearchParams({
-    api: "1",
-    query: `${name} ${latitude},${longitude}`,
-  });
-  return `https://www.google.com/maps/search/?${fallbackParams.toString()}`;
-}
-
 type Params = {
   courtId: string;
 };
@@ -286,13 +231,12 @@ export async function generateMetadata({
     };
   }
   const court = detail.court;
-  const activeSport = resolveActiveCourtSport(detail, resolvedSearch?.sport);
-  const sportMeta = activeSport?.code
-    ? SPORT_META[activeSport.code]
+  const sportMeta = detail.sport?.code
+    ? SPORT_META[detail.sport.code]
     : undefined;
   const sportName =
     sportMeta?.name?.[locale] ??
-    activeSport?.name ??
+    detail.sport?.name ??
     (locale === "th" ? "สนามกีฬาแร็กเกต" : "Racket sport");
   const locationParts = [court.district, court.province]
     .filter((part): part is string => Boolean(part && part.trim()))
@@ -314,13 +258,6 @@ export async function generateMetadata({
       ? `ดูรายละเอียด${sportName}บน RacketThailand`
       : `${sportName} venue listed on RacketThailand.`);
   const description = truncateMetaDescription(rawDescription);
-  const seoTitle = `${court.name ?? sportName}${
-    locationParts
-      ? locale === "th"
-        ? ` ที่ ${locationParts}`
-        : ` in ${locationParts}`
-      : ""
-  } | ${sportName} | RacketThailand`;
   const canonicalPath = `/courts/${resolvedParams.courtId}`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternateLanguages = buildLocaleAlternates(canonicalPath);
@@ -328,18 +265,29 @@ export async function generateMetadata({
     detail.photos?.find((photo) => photo.is_primary)?.image_url ??
     detail.photos?.[0]?.image_url ??
     sportMeta?.coverImage ??
-    getCourtFallbackImage(activeSport?.code) ??
     undefined;
 
   return {
-    title: seoTitle,
+    title: `${court.name ?? sportName}${
+      locationParts
+        ? locale === "th"
+          ? ` ที่ ${locationParts}`
+          : ` in ${locationParts}`
+        : ""
+    } | ${sportName} | RacketThailand`,
     description,
     alternates: {
       canonical,
       languages: alternateLanguages,
     },
     openGraph: {
-      title: seoTitle,
+      title: `${court.name ?? sportName}${
+        locationParts
+          ? locale === "th"
+            ? ` ที่ ${locationParts}`
+            : ` in ${locationParts}`
+          : ""
+      } | RacketThailand`,
       description,
       url: canonical,
       type: "website",
@@ -357,7 +305,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: seoTitle,
+      title: `${court.name ?? sportName} | RacketThailand`,
       description,
       images: heroImage ? [heroImage] : undefined,
     },
@@ -414,7 +362,9 @@ export default async function CourtPage({
   }
 
   const requestedSportCode = resolvedSearch?.sport?.trim() || null;
-  const activeSport = resolveActiveCourtSport(detail, requestedSportCode);
+  const activeSport =
+    detail.sports.find((sport) => sport.code === requestedSportCode) ??
+    detail.sport;
   const activeSportCode = activeSport?.code ?? detail.sport?.code ?? null;
   const groupSections = buildCourtGroupSections(
     detail.groups,
@@ -515,10 +465,6 @@ export default async function CourtPage({
   const canEdit = Boolean(isOwnerViewer || isAdminViewer);
   const canonicalPath = `/courts/${detail.court.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
-  const updatedAtLabel = formatUpdatedDate(
-    detail.court.updated_at ?? detail.court.created_at,
-    locale,
-  );
   const shareTitle = detail.court.name ?? fallbackCourtName;
   const shareText =
     [detail.court.address, detail.court.district, detail.court.province]
@@ -528,32 +474,6 @@ export default async function CourtPage({
       ? `ดูรายละเอียดสนาม ${shareTitle} บน RacketThailand`
       : `View ${shareTitle} on RacketThailand`);
   const primaryImage = gallery[0]?.image_url ?? null;
-  const mapsUrl = hasMapCoordinates
-    ? buildGoogleMapsSearchUrl({
-        name: detail.court.name ?? fallbackCourtName,
-        latitude: numericLatitude as number,
-        longitude: numericLongitude as number,
-        placeId: detail.court.google_place_id,
-      })
-    : null;
-  const trustBadges = [
-    locale === "th" ? "รายการที่เผยแพร่แล้ว" : "Live listing",
-    detail.court.phone || detail.court.line_id || detail.court.website_url
-      ? locale === "th"
-        ? "มีช่องทางติดต่อ"
-        : "Direct contact"
-      : null,
-    hasAnyHours
-      ? locale === "th"
-        ? "มีเวลาเปิด-ปิด"
-        : "Hours posted"
-      : null,
-    updatedAtLabel
-      ? locale === "th"
-        ? `อัปเดต ${updatedAtLabel}`
-        : `Updated ${updatedAtLabel}`
-      : null,
-  ].filter((item): item is string => Boolean(item));
   const structuredDataImage = primaryImage
     ? primaryImage.startsWith("http")
       ? primaryImage
@@ -616,120 +536,7 @@ export default async function CourtPage({
         >
           {copy.back}
         </BaseBackLink>
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.85fr)] lg:items-start">
-          <BaseCard
-            as="section"
-            className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"
-          >
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--foreground-rgb)/0.52)]">
-              <span>{activeSport?.name ?? shareTitle}</span>
-              <span aria-hidden>•</span>
-              <span>{locale === "th" ? "หน้าสนามสาธารณะ" : "Public court profile"}</span>
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-                {detail.court.name ?? fallbackCourtName}
-              </h1>
-              <p className="text-base text-slate-600">
-                {[detail.court.district, detail.court.province]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-              {detail.court.description && (
-                <p className="max-w-3xl whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.76)]">
-                  {detail.court.description}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {trustBadges.map((badge) => (
-                <span
-                  key={badge}
-                  className="inline-flex rounded-full border border-[rgb(var(--rt-primary-rgb)/0.18)] bg-[rgb(var(--rt-primary-rgb)/0.08)] px-3 py-1 text-xs font-semibold text-[var(--rt-primary)]"
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {mapsUrl && (
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                >
-                  {locale === "th" ? "เส้นทาง / แผนที่" : "Directions / map"}
-                </a>
-              )}
-              {detail.court.website_url && (
-                <a
-                  href={detail.court.website_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {copy.website}
-                </a>
-              )}
-              <ShareButton
-                title={shareTitle}
-                text={shareText}
-                url={canonicalUrl}
-                label={copy.shareAction}
-                copiedLabel={copy.linkCopiedAction}
-              />
-              {canEdit && (
-                <Link
-                  href={buildLocalizedPath(
-                    `/courts/${resolvedParams.courtId}/edit`,
-                    locale,
-                  )}
-                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {copy.edit}
-                </Link>
-              )}
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {detail.court.phone && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.52)]">
-                    {copy.phone}
-                  </p>
-                  <ContactActionValue
-                    mode="phone"
-                    value={detail.court.phone}
-                    copyLabel={copy.copyAction}
-                    copiedLabel={copy.copiedAction}
-                    callLabel={copy.callAction}
-                  />
-                </div>
-              )}
-              {detail.court.line_id && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.52)]">
-                    {copy.line}
-                  </p>
-                  <ContactActionValue
-                    mode="line"
-                    value={detail.court.line_id}
-                    copyLabel={copy.copyAction}
-                    copiedLabel={copy.copiedAction}
-                    callLabel={copy.callAction}
-                  />
-                </div>
-              )}
-            </div>
-          </BaseCard>
-          <BaseCard
-            as="section"
-            className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"
-          >
-            <CourtGallery gallery={gallery} courtName={detail.court.name} />
-          </BaseCard>
-        </section>
-        <header className="hidden">
+        <header className="space-y-3 border-b border-slate-200 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-xl font-semibold text-slate-900">
@@ -763,9 +570,7 @@ export default async function CourtPage({
             </div>
           </div>
         </header>
-        <div className="hidden">
-          <CourtGallery gallery={gallery} courtName={detail.court.name} />
-        </div>
+        <CourtGallery gallery={gallery} courtName={detail.court.name} />
 
         <BaseCard
           as="section"
@@ -908,7 +713,7 @@ export default async function CourtPage({
                         : `${section.groups.length.toLocaleString("en-US")} groups`}
                     </span>
                   </div>
-                  <div className="grid gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {section.groups.map((group) => {
                       const status = group.verification_status ?? "pending";
                       const statusLabel =

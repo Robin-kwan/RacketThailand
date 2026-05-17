@@ -70,11 +70,6 @@ const TIME_VALUES = Array.from({ length: 48 }, (_, index) => {
   return `${hours}:${minutes}`;
 });
 
-const TRUST_DATE_FORMATTERS: Record<Locale, Intl.DateTimeFormat> = {
-  th: new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short" }),
-  en: new Intl.DateTimeFormat("en-US", { day: "numeric", month: "short" }),
-};
-
 const MINUTES_IN_DAY = 24 * 60;
 
 const parseCoordinate = (value?: number | string | null) => {
@@ -107,16 +102,6 @@ function timeStringToMinutes(value?: string | null) {
     return null;
   }
   return hours * 60 + minutes;
-}
-
-function formatTrustDate(
-  value: string | null | undefined,
-  locale: Locale,
-) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return TRUST_DATE_FORMATTERS[locale].format(date);
 }
 
 function normalizeEndMinutes(
@@ -720,24 +705,6 @@ export function GroupFinder({
               group.group_photos?.[0]?.image_url ??
               fallbackImage;
             const groupHref = buildLocalizedPath(`/groups/${group.id}`, locale);
-            const updatedLabel = formatTrustDate(group.updated_at, locale);
-            const trustItems = [
-              group.group_sessions?.length
-                ? locale === "th"
-                  ? "มีตารางประจำ"
-                  : "Weekly schedule"
-                : null,
-              group.phone || group.line_id
-                ? locale === "th"
-                  ? "ติดต่อได้ทันที"
-                  : "Direct contact"
-                : null,
-              updatedLabel
-                ? locale === "th"
-                  ? `อัปเดต ${updatedLabel}`
-                  : `Updated ${updatedLabel}`
-                : null,
-            ].filter((item): item is string => Boolean(item));
             const distanceLabel =
               distanceKm !== null
                 ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
@@ -749,15 +716,13 @@ export function GroupFinder({
                 name={group.name ?? fallbackGroupName}
                 imageUrl={primaryPhoto}
                 imageAlt={group.name ?? fallbackGroupPhotoAlt}
-                trustItems={trustItems}
                 sessions={group.group_sessions ?? []}
                 playFormat={group.play_format ?? null}
                 allowWalkIn={group.allow_walk_in ?? null}
                 dayLabels={dayLabels}
                 scheduleAnytime={copy.scheduleAnytime}
                 locale={locale}
-                showSessions
-                sessionLimit={1}
+                showSessions={false}
                 showDescription={false}
                 showLocation={false}
                 distanceLabel={distanceLabel}
