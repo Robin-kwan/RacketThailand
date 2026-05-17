@@ -11,7 +11,6 @@ type CourtCardProps = {
   imageAlt?: string;
   location?: string | null;
   details?: string[];
-  trustItems?: string[];
   primaryBadge?: string | null;
   secondaryBadge?: string | null;
   className?: string;
@@ -28,7 +27,6 @@ export function CourtCard({
   imageAlt,
   location,
   details = [],
-  trustItems = [],
   primaryBadge,
   secondaryBadge,
   className,
@@ -58,18 +56,6 @@ export function CourtCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 px-3 py-2 sm:gap-2 sm:px-5 sm:py-3">
-        {trustItems.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[11px]">
-            {trustItems.map((item) => (
-              <span
-                key={`${name}-trust-${item}`}
-                className="inline-flex rounded-full border border-[rgb(var(--rt-primary-rgb)/0.18)] bg-[rgb(var(--rt-primary-rgb)/0.08)] px-2 py-0.5 text-[var(--rt-primary)]"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        )}
         <div className="space-y-0.5">
           <h3
             className={`line-clamp-2 text-sm font-medium text-slate-900 sm:text-xl ${titleClassName ?? ""}`}

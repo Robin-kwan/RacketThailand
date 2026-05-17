@@ -14,8 +14,6 @@ import {
   normalizeLocale,
 } from "@/lib/i18n";
 import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
-import { getThailandTodayDateString } from "@/lib/casual-play";
-import { supabaseSelect } from "@/lib/supabaseRest";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type SearchParams = {
@@ -23,53 +21,6 @@ type SearchParams = {
 };
 
 type SearchParamInput = Promise<SearchParams> | undefined;
-
-type TrustMetric = {
-  count: number;
-  label: string;
-};
-
-async function fetchPlatformTrustSnapshot() {
-  const today = getThailandTodayDateString();
-  try {
-    const [courtsRes, groupsRes, casualPlaysRes, postsRes] = await Promise.all([
-      supabaseSelect<{ id: string }>("courts", {
-        select: "id",
-        is_active: "eq.true",
-        limit: "1",
-      }),
-      supabaseSelect<{ id: string }>("groups", {
-        select: "id",
-        limit: "1",
-      }),
-      supabaseSelect<{ id: string }>("casual_plays", {
-        select: "id",
-        play_date: `gte.${today}`,
-        limit: "1",
-      }),
-      supabaseSelect<{ id: string }>("community_posts", {
-        select: "id",
-        status: "eq.published",
-        limit: "1",
-      }),
-    ]);
-
-    return {
-      courts: courtsRes.count ?? 0,
-      groups: groupsRes.count ?? 0,
-      casualPlays: casualPlaysRes.count ?? 0,
-      boardPosts: postsRes.count ?? 0,
-    };
-  } catch (error) {
-    console.error("Failed to load landing trust snapshot", error);
-    return {
-      courts: 0,
-      groups: 0,
-      casualPlays: 0,
-      boardPosts: 0,
-    };
-  }
-}
 
 async function resolveSearchParams(
   searchParams?: SearchParamInput,
@@ -127,7 +78,6 @@ export default async function Landing({
   const locale = normalizeLocale(resolvedParams?.lang);
   const t = await getTranslator(locale);
   const supabase = await createSupabaseServerClient();
-  const trustSnapshot = await fetchPlatformTrustSnapshot();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -174,44 +124,10 @@ export default async function Landing({
     },
   };
   const isAuthenticated = Boolean(user);
-  const trustMetrics: TrustMetric[] = [
-    {
-      count: trustSnapshot.courts,
-      label: locale === "th" ? "สนามที่เปิดอยู่" : "Live courts",
-    },
-    {
-      count: trustSnapshot.groups,
-      label: locale === "th" ? "กลุ่มที่เปิดรับสมาชิก" : "Active groups",
-    },
-    {
-      count: trustSnapshot.casualPlays,
-      label: locale === "th" ? "นัดหาเพื่อนตี" : "Casual plays",
-    },
-    {
-      count: trustSnapshot.boardPosts,
-      label: locale === "th" ? "โพสต์คอมมูนิตี้" : "Community posts",
-    },
-  ];
-  const trustHeadline =
-    locale === "th"
-      ? "ตัวเลขจริงจากรายการที่เผยแพร่อยู่ตอนนี้"
-      : "Live proof from the public listings already online";
-  const trustBody =
-    locale === "th"
-      ? "ทุกพอร์ทัลแสดงข้อมูลติดต่อ ตารางเล่น หรืออัปเดตล่าสุดเพื่อช่วยให้ผู้เล่นตัดสินใจได้เร็วขึ้น"
-      : "Each portal surfaces direct contacts, weekly schedules, and recent public updates so visitors can judge credibility faster.";
-  const verificationBody =
-    locale === "th"
-      ? "สนามและกลุ่มที่แสดงจะเน้นรายละเอียดที่อัปเดตและคำขอยืนยันสนามเพื่อเพิ่มความน่าเชื่อถือก่อนติดต่อ"
-      : "Listings emphasize fresh details and court-verification workflows so visitors know what to trust before they reach out.";
   return (
     <div className="rt-page">
       <main className="mx-auto mt-6 flex w-full max-w-screen-xl flex-col items-center gap-12 px-6 pb-10 text-center text-[var(--foreground)] md:px-10">
-        <header className="relative w-full max-w-4xl overflow-hidden rounded-[38px] border border-emerald-100/85 bg-[linear-gradient(165deg,#ffffff_0%,#f6fcf9_68%,#eef8f4_100%)] px-7 py-10 shadow-[0_14px_48px_rgb(var(--foreground-rgb)/0.08)] md:px-12">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 -top-16 h-36 bg-[radial-gradient(circle,rgb(var(--rt-primary-rgb)/0.1)_0%,transparent_72%)]"
-          />
+        <header className="relative w-full max-w-4xl overflow-hidden rounded-[38px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white px-7 py-10 shadow-[0_14px_48px_rgb(var(--foreground-rgb)/0.08)] md:px-12">
           <div className="relative flex flex-col items-center gap-5">
             <h1 className="text-xl font-semibold leading-tight tracking-tight text-[var(--foreground)]">
               {t("landing.heroTitle")}
@@ -242,32 +158,6 @@ export default async function Landing({
               >
                 {t("header.createGroup")}
               </TrackedLink>
-            </div>
-            <div className="grid w-full gap-3 pt-2 sm:grid-cols-2 xl:grid-cols-4">
-              {trustMetrics.map((metric) => (
-                <div
-                  key={metric.label}
-                  className="rounded-2xl border border-[rgb(var(--rt-primary-rgb)/0.14)] bg-white/90 px-4 py-4 text-left shadow-[0_14px_36px_rgb(var(--foreground-rgb)/0.06)]"
-                >
-                  <p className="text-xl font-semibold text-[var(--rt-primary)]">
-                    {metric.count.toLocaleString(locale === "th" ? "th-TH" : "en-US")}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--foreground-rgb)/0.55)]">
-                    {metric.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="max-w-3xl rounded-3xl border border-[rgb(var(--rt-primary-rgb)/0.16)] bg-[rgb(var(--rt-primary-rgb)/0.06)] px-5 py-4 text-left">
-              <p className="text-sm font-semibold text-[var(--foreground)]">
-                {trustHeadline}
-              </p>
-              <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.74)]">
-                {trustBody}
-              </p>
-              <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.68)]">
-                {verificationBody}
-              </p>
             </div>
           </div>
         </header>
@@ -300,11 +190,6 @@ export default async function Landing({
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 text-left text-white">
                     <p className="text-xl font-semibold tracking-tight">
                       {sport.name[locale]}
-                    </p>
-                    <p className="mt-2 text-xs text-white/85">
-                      {locale === "th"
-                        ? "ข้อมูลติดต่อและรายการที่อัปเดตล่าสุด"
-                        : "Direct contacts and fresh public listings"}
                     </p>
                     <p className="mt-1 text-xs uppercase tracking-[0.22em] text-white/75">
                       {t("landing.cardCta")}
