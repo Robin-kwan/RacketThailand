@@ -379,6 +379,7 @@ export default async function CourtPage({
           id: "placeholder",
           image_url: getCourtFallbackImage(activeSportCode),
           is_primary: true,
+          allowFullscreen: false,
         },
       ];
 

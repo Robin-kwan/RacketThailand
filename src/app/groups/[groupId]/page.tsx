@@ -396,6 +396,7 @@ export default async function GroupDetailPage({
             id: "placeholder",
             image_url: fallbackImage,
             is_primary: true,
+            allowFullscreen: false,
           },
         ];
 
