@@ -5,6 +5,7 @@ import {
   type PlaceDetailsPayload,
 } from "@/lib/google-places";
 import type { MapCoordinates } from "@/lib/google-maps";
+import { enrichPlaceWithThailandLocation } from "@/server/place-location";
 
 const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -18,6 +19,54 @@ type SuccessResponse = {
   place?: PlaceDetailsPayload | null;
   placeId?: string;
 };
+
+async function resolveReverseGeocodedPlace(
+  latitude: number,
+  longitude: number,
+): Promise<PlaceDetailsPayload | null> {
+  if (!GOOGLE_MAPS_KEY) {
+    return null;
+  }
+
+  const geocodeUrl = new URL(
+    "https://maps.googleapis.com/maps/api/geocode/json",
+  );
+  geocodeUrl.searchParams.set("latlng", `${latitude},${longitude}`);
+  geocodeUrl.searchParams.set("language", "th");
+  geocodeUrl.searchParams.set("key", GOOGLE_MAPS_KEY);
+
+  const response = await fetch(geocodeUrl);
+  const data = (await response.json()) as {
+    status: string;
+    results?: Array<{
+      place_id?: string;
+      formatted_address?: string;
+      address_components?: GoogleAddressComponent[];
+    }>;
+  };
+
+  if (data.status !== "OK" || !data.results || data.results.length === 0) {
+    return null;
+  }
+
+  let fallback: PlaceDetailsPayload | null = null;
+  for (const result of data.results) {
+    const normalized = normalizePlaceDetails({
+      formatted_address: result.formatted_address,
+      address_components: result.address_components,
+      place_id: result.place_id,
+    });
+    const enriched = await enrichPlaceWithThailandLocation(normalized);
+    if (!fallback && enriched) {
+      fallback = enriched;
+    }
+    if (enriched?.provinceId && enriched?.districtId) {
+      return enriched;
+    }
+  }
+
+  return fallback;
+}
 
 export async function POST(request: Request) {
   if (!GOOGLE_MAPS_KEY) {
@@ -99,9 +148,32 @@ export async function POST(request: Request) {
     longitude: location.lng.toString(),
   };
 
-  const place = normalizePlaceDetails(
-    { ...data.result, place_id: data.result.place_id ?? payload.placeId },
+  let place = await enrichPlaceWithThailandLocation(
+    normalizePlaceDetails({
+      ...data.result,
+      place_id: data.result.place_id ?? payload.placeId,
+    }),
   );
+
+  if (!place?.provinceId || !place?.districtId) {
+    const reverseGeocoded = await resolveReverseGeocodedPlace(
+      location.lat,
+      location.lng,
+    );
+    if (reverseGeocoded) {
+      place = {
+        ...reverseGeocoded,
+        name: place?.name ?? reverseGeocoded.name,
+        phone: place?.phone ?? reverseGeocoded.phone,
+        website: place?.website ?? reverseGeocoded.website,
+        openingHours: place?.openingHours ?? reverseGeocoded.openingHours,
+        openingHoursStructured:
+          place?.openingHoursStructured ??
+          reverseGeocoded.openingHoursStructured,
+        placeId: place?.placeId ?? reverseGeocoded.placeId,
+      };
+    }
+  }
 
   return NextResponse.json<SuccessResponse>({
     coordinates,

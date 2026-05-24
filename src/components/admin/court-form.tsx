@@ -85,6 +85,8 @@ export function CourtAdminForm({
     address: "",
     district: "",
     province: "",
+    districtId: "",
+    provinceId: "",
     price_note: "",
     phone: "",
     line_id: "",
@@ -133,7 +135,7 @@ export function CourtAdminForm({
     event.preventDefault();
     setSubmitting(true);
 
-    if (!form.latitude || !form.longitude) {
+    if (!form.latitude || !form.longitude || !form.provinceId || !form.districtId) {
       showToast({
         variant: "error",
         message: copy.locationMissing,
@@ -179,6 +181,8 @@ export function CourtAdminForm({
         opening_hours: parsedHours,
         latitude: Number(form.latitude),
         longitude: Number(form.longitude),
+        provinceId: Number(form.provinceId),
+        districtId: Number(form.districtId),
       }),
     });
 
@@ -268,6 +272,8 @@ export function CourtAdminForm({
       address: "",
       district: "",
       province: "",
+      districtId: "",
+      provinceId: "",
       price_note: "",
       phone: "",
       line_id: "",
@@ -305,6 +311,14 @@ export function CourtAdminForm({
       address: resolution.place?.address ?? prev.address,
       district: resolution.place?.district ?? prev.district,
       province: resolution.place?.province ?? prev.province,
+      districtId:
+        resolution.place?.districtId != null
+          ? String(resolution.place.districtId)
+          : prev.districtId,
+      provinceId:
+        resolution.place?.provinceId != null
+          ? String(resolution.place.provinceId)
+          : prev.provinceId,
       phone: resolution.place?.phone ?? prev.phone,
       website_url: resolution.place?.website ?? prev.website_url,
       googlePlaceId: resolution.place?.placeId ?? resolution.placeId ?? prev.googlePlaceId,

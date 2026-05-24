@@ -48,6 +48,8 @@ export default async function CourtOwnersPage({
     address: string | null;
     district: string | null;
     province: string | null;
+    district_id: number | null;
+    province_id: number | null;
     created_by: string | null;
     description: string | null;
     price_note: string | null;
@@ -63,7 +65,7 @@ export default async function CourtOwnersPage({
     } | null;
   }>("courts", {
     select:
-      "id,name,address,district,province,created_by,description,price_note,phone,line_id,website_url,latitude:lat,longitude:lng,google_place_id,manager:profiles!courts_created_by_fkey(display_name,username)",
+      "id,name,address,district,province,district_id,province_id,created_by,description,price_note,phone,line_id,website_url,latitude:lat,longitude:lng,google_place_id,manager:profiles!courts_created_by_fkey(display_name,username)",
     order: "name.asc.nullslast",
   });
 
@@ -125,6 +127,8 @@ export default async function CourtOwnersPage({
         address: court.address,
         district: court.district,
         province: court.province,
+        districtId: court.district_id != null ? String(court.district_id) : "",
+        provinceId: court.province_id != null ? String(court.province_id) : "",
         sportCode: primarySport?.code ?? null,
         sportName: primarySport?.name ?? null,
         managerId: court.created_by,

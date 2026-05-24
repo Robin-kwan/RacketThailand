@@ -16,6 +16,8 @@ type CourtPayload = {
   address: string;
   district?: string;
   province: string;
+  provinceId: number;
+  districtId: number;
   price_note?: string;
   opening_hours?: OpeningHoursEntry[] | null;
   phone?: string;
@@ -64,6 +66,8 @@ export async function POST(request: Request) {
   if (
     !sportId ||
     !payload.name ||
+    typeof payload.provinceId !== "number" ||
+    typeof payload.districtId !== "number" ||
     typeof payload.latitude !== "number" ||
     typeof payload.longitude !== "number" ||
     Number.isNaN(payload.latitude) ||
@@ -90,6 +94,8 @@ export async function POST(request: Request) {
       address: payload.address,
       district: payload.district || null,
       province: payload.province,
+      province_id: payload.provinceId,
+      district_id: payload.districtId,
       price_note: payload.price_note || null,
       opening_hours: payload.opening_hours ?? null,
       phone: payload.phone || null,

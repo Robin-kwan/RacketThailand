@@ -17,6 +17,8 @@ type CourtPayload = Partial<{
   address: string;
   district?: string;
   province: string;
+  provinceId?: number;
+  districtId?: number;
   price_note?: string;
   opening_hours?: OpeningHoursEntry[] | null;
   phone?: string;
@@ -111,6 +113,12 @@ export async function PATCH(
   }
   if (payload.province !== undefined) {
     update.province = payload.province;
+  }
+  if (payload.provinceId !== undefined) {
+    update.province_id = payload.provinceId ?? null;
+  }
+  if (payload.districtId !== undefined) {
+    update.district_id = payload.districtId ?? null;
   }
   if (payload.price_note !== undefined) {
     update.price_note = payload.price_note ?? null;

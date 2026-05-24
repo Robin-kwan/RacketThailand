@@ -19,6 +19,8 @@ export type CourtFormValues = {
   address: string;
   district: string;
   province: string;
+  districtId: string;
+  provinceId: string;
   price_note: string;
   phone: string;
   line_id: string;
@@ -74,6 +76,8 @@ const fieldConfigs: { name: FieldName; labelKey: keyof CourtFormCopy; required: 
   { name: "line_id", labelKey: "line", required: false },
   { name: "website_url", labelKey: "website", required: false },
 ];
+
+const LOCKED_LOCATION_FIELDS = new Set<FieldName>(["address", "district", "province"]);
 
 export function CourtFormFields({
   values,
@@ -189,11 +193,19 @@ export function CourtFormFields({
               value={values[field.name]}
               onChange={onChange}
               required={field.required}
+              readOnly={LOCKED_LOCATION_FIELDS.has(field.name)}
+              className={
+                LOCKED_LOCATION_FIELDS.has(field.name)
+                  ? "bg-slate-50 text-slate-600 focus-visible:border-slate-200 focus-visible:ring-0"
+                  : undefined
+              }
               variant="light"
             />
           )}
         </div>
       ))}
+      <input type="hidden" name="provinceId" value={values.provinceId} />
+      <input type="hidden" name="districtId" value={values.districtId} />
       {extras}
     </>
   );

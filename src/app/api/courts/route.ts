@@ -22,6 +22,8 @@ type CourtCreatePayload = {
   address?: string;
   district?: string;
   province?: string;
+  provinceId?: number;
+  districtId?: number;
   price_note?: string;
   opening_hours?: OpeningHoursEntry[] | null;
   phone?: string;
@@ -109,6 +111,10 @@ export async function POST(request: Request) {
   const lineId = sanitizeText(payload.line_id);
   const website = sanitizeText(payload.website_url);
   const googlePlaceId = sanitizeText(payload.googlePlaceId);
+  const provinceId =
+    typeof payload.provinceId === "number" ? payload.provinceId : Number.NaN;
+  const districtId =
+    typeof payload.districtId === "number" ? payload.districtId : Number.NaN;
   const latitude =
     typeof payload.latitude === "number" ? payload.latitude : Number.NaN;
   const longitude =
@@ -119,6 +125,8 @@ export async function POST(request: Request) {
     !name ||
     !address ||
     !province ||
+    Number.isNaN(provinceId) ||
+    Number.isNaN(districtId) ||
     Number.isNaN(latitude) ||
     Number.isNaN(longitude)
   ) {
@@ -157,6 +165,8 @@ export async function POST(request: Request) {
       address,
       district: district || null,
       province,
+      province_id: provinceId,
+      district_id: districtId,
       price_note: priceNote || null,
       opening_hours: openingHours,
       phone: phone || null,

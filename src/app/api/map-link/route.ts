@@ -9,6 +9,7 @@ import {
   type GoogleAddressComponent,
   type PlaceDetailsPayload,
 } from "@/lib/google-places";
+import { enrichPlaceWithThailandLocation } from "@/server/place-location";
 
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
@@ -172,7 +173,9 @@ async function resolvePlaceDetails(
     return baseDetails;
   }
 
-  return normalizePlaceDetails(detailData.result, baseDetails);
+  return enrichPlaceWithThailandLocation(
+    normalizePlaceDetails(detailData.result, baseDetails),
+  );
 }
 
 function pickAddressComponent(

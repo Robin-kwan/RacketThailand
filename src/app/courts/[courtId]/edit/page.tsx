@@ -63,6 +63,8 @@ export default async function EditCourtPage({
     address: string | null;
     district: string | null;
     province: string | null;
+    district_id: number | null;
+    province_id: number | null;
     description: string | null;
     price_note: string | null;
     opening_hours: OpeningHoursEntry[] | null;
@@ -76,7 +78,7 @@ export default async function EditCourtPage({
     line_qr_url: string | null;
   }>("courts", {
     select:
-      "id,name,address,district,province,description,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id,line_qr_url",
+      "id,name,address,district,province,district_id,province_id,description,price_note,opening_hours,phone,line_id,website_url,created_by,latitude:lat,longitude:lng,google_place_id,line_qr_url",
     id: `eq.${resolvedParams.courtId}`,
     limit: "1",
   });
@@ -130,6 +132,8 @@ export default async function EditCourtPage({
     address: court.address ?? "",
     district: court.district ?? "",
     province: court.province ?? "",
+    districtId: court.district_id != null ? String(court.district_id) : "",
+    provinceId: court.province_id != null ? String(court.province_id) : "",
     price_note: court.price_note ?? "",
     opening_hours: court.opening_hours ?? null,
     phone: court.phone ?? "",
