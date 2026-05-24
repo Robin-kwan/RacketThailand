@@ -30,6 +30,8 @@ export type CourtOwnerTableRow = {
   address: string | null;
   district: string | null;
   province: string | null;
+  districtId?: string | null;
+  provinceId?: string | null;
   sportCode: string | null;
   sportName: string | null;
   managerId: string | null;
@@ -120,6 +122,8 @@ function buildFormFromRow(row: CourtOwnerTableRow): CourtFormValues {
     address: row.address ?? "",
     district: row.district ?? "",
     province: row.province ?? "",
+    districtId: row.districtId ?? "",
+    provinceId: row.provinceId ?? "",
     price_note: row.price_note ?? "",
     phone: row.phone ?? "",
     line_id: row.line_id ?? "",
@@ -348,6 +352,14 @@ export function CourtOwnersTable({
         address: resolution.place?.address ?? previous.address,
         district: resolution.place?.district ?? previous.district,
         province: resolution.place?.province ?? previous.province,
+        districtId:
+          resolution.place?.districtId != null
+            ? String(resolution.place.districtId)
+            : previous.districtId,
+        provinceId:
+          resolution.place?.provinceId != null
+            ? String(resolution.place.provinceId)
+            : previous.provinceId,
         phone: resolution.place?.phone ?? previous.phone,
         website_url: resolution.place?.website ?? previous.website_url,
         googlePlaceId:
@@ -371,7 +383,12 @@ export function CourtOwnersTable({
       return;
     }
 
-    if (!editForm.latitude || !editForm.longitude) {
+    if (
+      !editForm.latitude ||
+      !editForm.longitude ||
+      !editForm.provinceId ||
+      !editForm.districtId
+    ) {
       showToast({
         variant: "error",
         message: copy.locationMissing,
@@ -392,6 +409,8 @@ export function CourtOwnersTable({
           address: editForm.address,
           district: editForm.district,
           province: editForm.province,
+          provinceId: Number(editForm.provinceId),
+          districtId: Number(editForm.districtId),
           price_note: editForm.price_note,
           phone: editForm.phone,
           line_id: editForm.line_id,
@@ -420,6 +439,8 @@ export function CourtOwnersTable({
                 address: editForm.address,
                 district: editForm.district,
                 province: editForm.province,
+                districtId: editForm.districtId,
+                provinceId: editForm.provinceId,
                 price_note: editForm.price_note,
                 phone: editForm.phone,
                 line_id: editForm.line_id,

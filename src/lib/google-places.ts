@@ -15,6 +15,8 @@ export type PlaceDetailsPayload = {
   address?: string;
   district?: string;
   province?: string;
+  districtId?: number;
+  provinceId?: number;
   phone?: string;
   website?: string;
   openingHours?: string;

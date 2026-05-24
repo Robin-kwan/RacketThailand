@@ -37,6 +37,8 @@ type CourtRecord = {
   address: string;
   district: string;
   province: string;
+  districtId: string;
+  provinceId: string;
   price_note: string;
   opening_hours: OpeningHoursEntry[] | null;
   phone: string;
@@ -64,7 +66,12 @@ const formatPayload = (changes: Partial<CourtFormValues>) => {
   (Object.keys(changes) as (keyof CourtFormValues)[]).forEach((key) => {
     const value = changes[key];
     if (value === undefined) return;
-    if (key === "latitude" || key === "longitude") {
+    if (
+      key === "latitude" ||
+      key === "longitude" ||
+      key === "provinceId" ||
+      key === "districtId"
+    ) {
       if (value === "") {
         payload[key] = null;
         return;
@@ -139,6 +146,8 @@ export function CourtEditForm({
     address: court.address,
     district: court.district,
     province: court.province,
+    districtId: court.districtId,
+    provinceId: court.provinceId,
     price_note: court.price_note,
     phone: court.phone,
     line_id: court.line_id,
@@ -270,7 +279,7 @@ export function CourtEditForm({
       setSubmitting(false);
       return;
     }
-    if (!form.latitude || !form.longitude) {
+    if (!form.latitude || !form.longitude || !form.provinceId || !form.districtId) {
       showToast({ variant: "error", message: copy.locationMissing });
       setSubmitting(false);
       return;
@@ -558,6 +567,14 @@ export function CourtEditForm({
       address: resolution.place?.address ?? prev.address,
       district: resolution.place?.district ?? prev.district,
       province: resolution.place?.province ?? prev.province,
+      districtId:
+        resolution.place?.districtId != null
+          ? String(resolution.place.districtId)
+          : prev.districtId,
+      provinceId:
+        resolution.place?.provinceId != null
+          ? String(resolution.place.provinceId)
+          : prev.provinceId,
       phone: resolution.place?.phone ?? prev.phone,
       website_url: resolution.place?.website ?? prev.website_url,
       googlePlaceId:
