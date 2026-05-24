@@ -209,6 +209,7 @@ export function GroupFinder({
       setLoading(true);
       const params = new URLSearchParams({
         sport: sportCode,
+        lang: locale,
         limit: PAGE_SIZE.toString(),
       });
       if (debouncedSearch) params.set("q", debouncedSearch);
@@ -229,6 +230,7 @@ export function GroupFinder({
     };
   }, [
     sportCode,
+    locale,
     debouncedSearch,
     dayFilter,
     playFormatFilter,

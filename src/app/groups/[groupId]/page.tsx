@@ -26,6 +26,7 @@ import { BaseBackLink } from "@/components/base-back-link";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
 import { getPlayFormatLabel } from "@/lib/play-format";
+import { localizeThailandLocation } from "@/server/thailand-location";
 
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
@@ -121,6 +122,8 @@ type GroupSessionRow = {
     name: string | null;
     district: string | null;
     province: string | null;
+    district_id?: number | null;
+    province_id?: number | null;
   } | null;
 };
 
@@ -139,6 +142,8 @@ type GroupMetadataRow = {
       name: string | null;
       district: string | null;
       province: string | null;
+      district_id?: number | null;
+      province_id?: number | null;
     } | null;
   }[] | null;
 };
@@ -196,11 +201,37 @@ export async function generateMetadata({
   const locale = normalizeLocale(resolvedSearch?.lang);
   const { data } = await supabaseSelect<GroupMetadataRow>("groups", {
     select:
-      "id,name,description,play_format,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,province))",
+      "id,name,description,play_format,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,district_id,province,province_id))",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
-  const group = data?.[0];
+  const group =
+    data?.[0]
+      ? {
+          ...data[0],
+          group_sessions: data[0].group_sessions
+            ? await Promise.all(
+                data[0].group_sessions.map(async (session) => {
+                  if (!session.courts) {
+                    return session;
+                  }
+                  const localized = await localizeThailandLocation(
+                    session.courts,
+                    locale,
+                  );
+                  return {
+                    ...session,
+                    courts: {
+                      ...session.courts,
+                      district: localized.district,
+                      province: localized.province,
+                    },
+                  };
+                }),
+              )
+            : data[0].group_sessions,
+        }
+      : null;
   if (!group) {
     return {
       title:
@@ -364,7 +395,7 @@ export default async function GroupDetailPage({
       }),
       supabaseSelect<GroupSessionRow>("group_sessions", {
         select:
-          "id,court_id,day,start_time,end_time,courts(id,name,district,province)",
+          "id,court_id,day,start_time,end_time,courts(id,name,district,district_id,province,province_id)",
         group_id: `eq.${group.id}`,
         order: "day.asc,start_time.asc",
       }),
@@ -400,8 +431,25 @@ export default async function GroupDetailPage({
           },
         ];
 
+  const localizedSessionRows = await Promise.all(
+    (sessionRows ?? []).map(async (session) => {
+      if (!session.courts) {
+        return session;
+      }
+      const localized = await localizeThailandLocation(session.courts, locale);
+      return {
+        ...session,
+        courts: {
+          ...session.courts,
+          district: localized.district,
+          province: localized.province,
+        },
+      };
+    }),
+  );
+
   const sessionCourtIds = Array.from(
-    new Set((sessionRows ?? []).map((session) => session.court_id).filter(Boolean)),
+    new Set(localizedSessionRows.map((session) => session.court_id).filter(Boolean)),
   ) as string[];
 
   let courtPhotos: { court_id: string; image_url: string | null; is_primary: boolean | null }[] = [];
@@ -436,7 +484,7 @@ export default async function GroupDetailPage({
         photoUrl: string | null;
       }
     >();
-    (sessionRows ?? []).forEach((session) => {
+    localizedSessionRows.forEach((session) => {
       const key = session.court_id;
       const existing = map.get(key);
       if (existing) {

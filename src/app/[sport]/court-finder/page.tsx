@@ -100,7 +100,7 @@ export default async function CourtFinderPage({
 
   const courtData = await fetchCourtsBySport(resolvedParams.sport, {
     limit: 12,
-  });
+  }, locale);
   if (!courtData.sport) {
     notFound();
   }

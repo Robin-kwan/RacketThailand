@@ -382,7 +382,7 @@ export default async function SportPage({
   const locale = normalizeLocale(resolvedParams?.lang);
   const resolvedParamsValue = await resolveParams(params);
   const t = await getTranslator(locale);
-  const sport = await buildSportPagePayload(resolvedParamsValue.sport);
+  const sport = await buildSportPagePayload(resolvedParamsValue.sport, locale);
 
   if (!sport) {
     notFound();
@@ -390,7 +390,7 @@ export default async function SportPage({
 
   const casualPlayResult = await fetchCasualPlaysBySport(sport.code, {
     limit: 10,
-  });
+  }, locale);
 
   const courtFeature = sport.features.find((feature) => feature.key === "courts");
   const groupFeature = sport.features.find((feature) => feature.key === "groups");

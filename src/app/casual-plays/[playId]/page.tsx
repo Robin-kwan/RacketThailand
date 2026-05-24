@@ -35,6 +35,7 @@ import {
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { getPlayFormatLabel } from "@/lib/play-format";
+import { localizeThailandLocation } from "@/server/thailand-location";
 
 type Params = {
   playId: string;
@@ -70,6 +71,8 @@ type CasualPlayRow = {
     name: string | null;
     district: string | null;
     province: string | null;
+    district_id?: number | null;
+    province_id?: number | null;
   } | null;
 };
 
@@ -117,11 +120,22 @@ export async function generateMetadata({
   const locale = normalizeLocale(resolvedSearch?.lang);
   const { data } = await supabaseSelect<CasualPlayRow>("casual_plays", {
     select:
-      "id,title,description,play_date,start_time,end_time,play_format,venue_name,location_note,sports(code,name),courts(name,district,province)",
+      "id,title,description,play_date,start_time,end_time,play_format,venue_name,location_note,sports(code,name),courts(name,district,district_id,province,province_id)",
     id: `eq.${resolvedParams.playId}`,
     limit: "1",
   });
-  const play = data?.[0];
+  const play =
+    data?.[0]
+      ? {
+          ...data[0],
+          courts: data[0].courts
+            ? {
+                ...data[0].courts,
+                ...(await localizeThailandLocation(data[0].courts, locale)),
+              }
+            : data[0].courts,
+        }
+      : null;
 
   if (!play || isCasualPlayExpired(play.play_date)) {
     return {
@@ -197,11 +211,22 @@ export default async function CasualPlayDetailPage({
 
   const { data: plays } = await supabaseSelect<CasualPlayRow>("casual_plays", {
     select:
-      "id,title,description,owner_id,updated_at,play_date,start_time,end_time,play_format,player_amount,phone,line_id,allow_public_contact,court_id,venue_name,location_note,sports(code,name),courts(id,name,district,province)",
+      "id,title,description,owner_id,updated_at,play_date,start_time,end_time,play_format,player_amount,phone,line_id,allow_public_contact,court_id,venue_name,location_note,sports(code,name),courts(id,name,district,district_id,province,province_id)",
     id: `eq.${resolvedParams.playId}`,
     limit: "1",
   });
-  const play = plays?.[0];
+  const play =
+    plays?.[0]
+      ? {
+          ...plays[0],
+          courts: plays[0].courts
+            ? {
+                ...plays[0].courts,
+                ...(await localizeThailandLocation(plays[0].courts, locale)),
+              }
+            : plays[0].courts,
+        }
+      : null;
 
   if (!play || isCasualPlayExpired(play.play_date)) {
     notFound();

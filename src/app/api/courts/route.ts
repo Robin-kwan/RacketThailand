@@ -13,6 +13,7 @@ import {
   findCourtByGooglePlaceId,
 } from "@/server/courtDuplicate";
 import { normalizeSportIds, syncCourtSports } from "@/server/courtSports";
+import { normalizeLocale } from "@/lib/i18n";
 
 type CourtCreatePayload = {
   sportId?: string;
@@ -52,6 +53,7 @@ export async function GET(request: Request) {
 
   const page = Number(searchParams.get("page") ?? "1");
   const limit = Number(searchParams.get("limit") ?? "12");
+  const locale = normalizeLocale(searchParams.get("lang"));
   const filters: CourtFilterOptions = {
     search: searchParams.get("q") ?? undefined,
     province: searchParams.get("province") ?? undefined,
@@ -61,7 +63,7 @@ export async function GET(request: Request) {
   };
 
   try {
-    const result = await fetchCourtsBySport(sport, filters);
+    const result = await fetchCourtsBySport(sport, filters, locale);
     if (!result.sport) {
       return NextResponse.json({ courts: [], count: 0, provinces: [] });
     }

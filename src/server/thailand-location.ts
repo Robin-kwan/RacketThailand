@@ -1,3 +1,4 @@
+import type { Locale } from "@/lib/i18n";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 type ProvinceRow = {
@@ -24,6 +25,7 @@ type DistrictRecord = DistrictRow & {
 type ThailandLocationIndex = {
   provincesById: Map<number, ProvinceRecord>;
   provinceIdByAlias: Map<string, number>;
+  districtsById: Map<number, DistrictRecord>;
   districtsByProvinceId: Map<number, DistrictRecord[]>;
 };
 
@@ -34,6 +36,13 @@ export type ThailandLocationResolution = {
   districtNameTh: string | null;
   provinceNameEn: string | null;
   districtNameEn: string | null;
+};
+
+type LocalizableThailandLocation = {
+  province_id?: number | null;
+  district_id?: number | null;
+  province?: string | null;
+  district?: string | null;
 };
 
 let indexPromise: Promise<ThailandLocationIndex> | null = null;
@@ -125,6 +134,7 @@ async function loadIndex(): Promise<ThailandLocationIndex> {
 
   const provincesById = new Map<number, ProvinceRecord>();
   const provinceIdByAlias = new Map<string, number>();
+  const districtsById = new Map<number, DistrictRecord>();
   const districtsByProvinceId = new Map<number, DistrictRecord[]>();
 
   for (const province of (provinces ?? []) as ProvinceRow[]) {
@@ -143,6 +153,7 @@ async function loadIndex(): Promise<ThailandLocationIndex> {
       ...district,
       aliases: buildAliases(district.name_th, district.name_en, true),
     };
+    districtsById.set(district.id, record);
     const bucket = districtsByProvinceId.get(district.province_id) ?? [];
     bucket.push(record);
     districtsByProvinceId.set(district.province_id, bucket);
@@ -151,6 +162,7 @@ async function loadIndex(): Promise<ThailandLocationIndex> {
   return {
     provincesById,
     provinceIdByAlias,
+    districtsById,
     districtsByProvinceId,
   };
 }
@@ -198,5 +210,56 @@ export async function resolveThailandLocationIds(input: {
     districtNameTh: districtRecord?.name_th ?? null,
     provinceNameEn: provinceRecord?.name_en ?? null,
     districtNameEn: districtRecord?.name_en ?? null,
+  };
+}
+
+function pickLocalizedName(
+  locale: Locale,
+  thaiName: string | null | undefined,
+  englishName: string | null | undefined,
+  fallbackName: string | null | undefined,
+) {
+  const preferred =
+    locale === "en"
+      ? [englishName, thaiName, fallbackName]
+      : [thaiName, englishName, fallbackName];
+  return preferred.find(
+    (value): value is string => Boolean(value && value.trim()),
+  ) ?? null;
+}
+
+export async function localizeThailandLocation(
+  input: LocalizableThailandLocation,
+  locale: Locale,
+) {
+  if (!indexPromise) {
+    indexPromise = loadIndex();
+  }
+
+  const index = await indexPromise;
+  const provinceId =
+    typeof input.province_id === "number" ? input.province_id : null;
+  const districtId =
+    typeof input.district_id === "number" ? input.district_id : null;
+  const provinceRecord = provinceId
+    ? (index.provincesById.get(provinceId) ?? null)
+    : null;
+  const districtRecord = districtId
+    ? (index.districtsById.get(districtId) ?? null)
+    : null;
+
+  return {
+    province: pickLocalizedName(
+      locale,
+      provinceRecord?.name_th ?? null,
+      provinceRecord?.name_en ?? null,
+      input.province ?? null,
+    ),
+    district: pickLocalizedName(
+      locale,
+      districtRecord?.name_th ?? null,
+      districtRecord?.name_en ?? null,
+      input.district ?? null,
+    ),
   };
 }

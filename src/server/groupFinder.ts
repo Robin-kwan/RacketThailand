@@ -1,5 +1,7 @@
+import type { Locale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchSportRow } from "@/server/courtFinder";
+import { localizeThailandLocation } from "@/server/thailand-location";
 
 export type GroupPhoto = {
   image_url: string | null;
@@ -14,9 +16,11 @@ export type GroupSessionRecord = {
     id: string;
     name: string | null;
     province: string | null;
+    province_id?: number | null;
     latitude: number | null;
     longitude: number | null;
     district?: string | null;
+    district_id?: number | null;
   } | null;
 };
 
@@ -121,6 +125,7 @@ async function fetchGroupIdsByCourtIds(
 export async function fetchGroupsBySport(
   sportCode: string,
   filters: GroupFilterOptions = {},
+  locale: Locale = "th",
 ) {
   const sportRow = await fetchSportRow(sportCode);
   if (!sportRow) {
@@ -137,9 +142,9 @@ export async function fetchGroupsBySport(
 
   const params: Record<string, string> = {
     select:
-      `id,name,description,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),${sessionRelation}(day,start_time,end_time,court_id,courts(id,name,province,latitude:lat,longitude:lng,district))`,
-    sport_id: `eq.${sportRow.id}`,
-    order: "updated_at.desc.nullslast",
+      `id,name,description,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),${sessionRelation}(day,start_time,end_time,court_id,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))`,
+      sport_id: `eq.${sportRow.id}`,
+      order: "updated_at.desc.nullslast",
   };
 
   if (filters.limit) {
@@ -183,9 +188,37 @@ export async function fetchGroupsBySport(
 
   const groupsRes = await supabaseSelect<GroupRecord>("groups", params);
 
+  const localizedGroups = await Promise.all(
+    (groupsRes.data ?? []).map(async (group) => ({
+      ...group,
+      group_sessions:
+        group.group_sessions == null
+          ? group.group_sessions
+          : await Promise.all(
+              group.group_sessions.map(async (session) => {
+                if (!session.courts) {
+                  return session;
+                }
+                const localized = await localizeThailandLocation(
+                  session.courts,
+                  locale,
+                );
+                return {
+                  ...session,
+                  courts: {
+                    ...session.courts,
+                    district: localized.district,
+                    province: localized.province,
+                  },
+                };
+              }),
+            ),
+    })),
+  );
+
   return {
     sport: sportRow,
-    groups: groupsRes.data ?? [],
+    groups: localizedGroups,
     count: groupsRes.count ?? 0,
   };
 }
