@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPPORTED_SPORTS } from "@/data/sportMeta";
+import { normalizeLocale } from "@/lib/i18n";
 import { buildSportPagePayload } from "@/server/sportContent";
 
 type Params = {
@@ -13,11 +14,12 @@ async function resolveParams(params: ParamsInput): Promise<Params> {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: ParamsInput },
 ): Promise<NextResponse> {
   const resolved = await resolveParams(params);
-  const payload = await buildSportPagePayload(resolved.code);
+  const locale = normalizeLocale(request.nextUrl.searchParams.get("lang"));
+  const payload = await buildSportPagePayload(resolved.code, locale);
 
   if (!payload) {
     return NextResponse.json(

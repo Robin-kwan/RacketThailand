@@ -1,6 +1,8 @@
+import type { Locale } from "@/lib/i18n";
 import { getThailandTodayDateString } from "@/lib/casual-play";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchSportRow } from "@/server/courtFinder";
+import { localizeThailandLocation } from "@/server/thailand-location";
 
 export type CasualPlayRecord = {
   id: string;
@@ -22,7 +24,9 @@ export type CasualPlayRecord = {
     id: string;
     name: string | null;
     province: string | null;
+    province_id?: number | null;
     district: string | null;
+    district_id?: number | null;
     latitude: number | null;
     longitude: number | null;
   } | null;
@@ -122,6 +126,7 @@ async function attachAcceptedCounts(plays: CasualPlayRecord[]) {
 export async function fetchCasualPlaysBySport(
   sportCode: string,
   filters: CasualPlayFilterOptions = {},
+  locale: Locale = "th",
 ) {
   const sportRow = await fetchSportRow(sportCode);
   if (!sportRow) {
@@ -135,7 +140,7 @@ export async function fetchCasualPlaysBySport(
 
   const params: Record<string, string> = {
     select:
-      "id,title,description,play_date,start_time,end_time,updated_at,play_format,player_amount,phone,line_id,court_id,venue_name,location_note,courts(id,name,province,district,latitude:lat,longitude:lng)",
+      "id,title,description,play_date,start_time,end_time,updated_at,play_format,player_amount,phone,line_id,court_id,venue_name,location_note,courts(id,name,province,province_id,district,district_id,latitude:lat,longitude:lng)",
     sport_id: `eq.${sportRow.id}`,
     play_date: filters.playDate ? `eq.${filters.playDate}` : `gte.${today}`,
     order: "play_date.asc,start_time.asc,updated_at.desc.nullslast",
@@ -165,7 +170,23 @@ export async function fetchCasualPlaysBySport(
     }
   }
   const playsRes = await supabaseSelect<CasualPlayRecord>("casual_plays", params);
-  const plays = await attachAcceptedCounts(playsRes.data ?? []);
+  const localizedPlays = await Promise.all(
+    (playsRes.data ?? []).map(async (play) => {
+      if (!play.courts) {
+        return play;
+      }
+      const localized = await localizeThailandLocation(play.courts, locale);
+      return {
+        ...play,
+        courts: {
+          ...play.courts,
+          district: localized.district,
+          province: localized.province,
+        },
+      };
+    }),
+  );
+  const plays = await attachAcceptedCounts(localizedPlays);
 
   return {
     sport: sportRow,

@@ -1,6 +1,8 @@
 import { FEATURE_DESCRIPTIONS, getSportMeta } from "@/data/sportMeta";
+import type { Locale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchCourtIdsBySportId } from "@/server/courtSports";
+import { localizeThailandLocation } from "@/server/thailand-location";
 import type {
   SportFeatureCard,
   SportFeatureGroup,
@@ -19,6 +21,8 @@ type CourtRow = {
   address: string | null;
   district: string | null;
   province: string | null;
+  district_id?: number | null;
+  province_id?: number | null;
   price_note: string | null;
   phone: string | null;
   line_id: string | null;
@@ -222,6 +226,7 @@ function mapFeedback(rows: FeedbackRow[]): SportFeatureCard[] {
 
 export async function buildSportPagePayload(
   code: string,
+  locale: Locale = "th",
 ): Promise<SportPagePayload | null> {
   const meta = getSportMeta(code);
   if (!meta) {
@@ -250,7 +255,7 @@ export async function buildSportPagePayload(
 
     const courtParams: Record<string, string> = {
       select:
-        "id,name,description,address,district,province,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
+        "id,name,description,address,district,province,district_id,province_id,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
       is_active: "eq.true",
       order: "created_at.desc",
       limit: "4",
@@ -308,7 +313,17 @@ export async function buildSportPagePayload(
     ]);
 
     const fallbackImage = meta.coverImage;
-    const courts = mapCourts(courtsRes.data ?? [], fallbackImage, sportRow.code);
+    const localizedCourtRows = await Promise.all(
+      (courtsRes.data ?? []).map(async (court) => {
+        const localized = await localizeThailandLocation(court, locale);
+        return {
+          ...court,
+          district: localized.district,
+          province: localized.province,
+        };
+      }),
+    );
+    const courts = mapCourts(localizedCourtRows, fallbackImage, sportRow.code);
     const groups = mapGroups(groupsRes.data ?? [], fallbackImage);
     const posts = mapPosts(postsRes.data ?? []);
     const profiles = mapProfiles(profilesRes.data ?? []);

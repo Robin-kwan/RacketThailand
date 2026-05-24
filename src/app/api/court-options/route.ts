@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
+import { normalizeLocale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchCourtIdsBySportId } from "@/server/courtSports";
+import { localizeThailandLocation } from "@/server/thailand-location";
 
 type CourtRow = {
   id: string;
   name: string | null;
   province: string | null;
+  province_id?: number | null;
 };
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sportId = searchParams.get("sportId");
+  const locale = normalizeLocale(searchParams.get("lang"));
 
   if (!sportId) {
     return NextResponse.json(
@@ -22,7 +26,7 @@ export async function GET(request: Request) {
   try {
     const courtIds = await fetchCourtIdsBySportId(sportId);
     const params: Record<string, string> = {
-      select: "id,name,province",
+      select: "id,name,province,province_id",
       order: "name.asc.nullslast",
     };
     if (courtIds.length > 0) {
@@ -34,17 +38,19 @@ export async function GET(request: Request) {
       ...params,
     });
 
-    const options =
-      data?.map((court) => {
+    const options = await Promise.all(
+      (data ?? []).map(async (court) => {
+        const localized = await localizeThailandLocation(court, locale);
         const labelParts = [court.name ?? "Unnamed court"];
-        if (court.province) {
-          labelParts.push(court.province);
+        if (localized.province) {
+          labelParts.push(localized.province);
         }
         return {
           value: court.id,
           label: labelParts.join(" · "),
         };
-      }) ?? [];
+      }),
+    );
 
     return NextResponse.json({ options });
   } catch (error) {

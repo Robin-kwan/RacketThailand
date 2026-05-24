@@ -107,6 +107,7 @@ export function CasualPlayFinder({
       setLoading(true);
       const params = new URLSearchParams({
         sport: sportCode,
+        lang: locale,
         limit: PAGE_SIZE.toString(),
       });
       if (debouncedSearch) params.set("q", debouncedSearch);
@@ -126,7 +127,7 @@ export function CasualPlayFinder({
     return () => {
       active = false;
     };
-  }, [sportCode, debouncedSearch, dateFilter]);
+  }, [sportCode, locale, debouncedSearch, dateFilter]);
 
   const handleReset = () => {
     track("finder_filter_used", {

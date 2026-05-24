@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
-import type { CourtRecord } from "@/server/courtFinder";
+import type { CourtProvinceOption, CourtRecord } from "@/server/courtFinder";
 import {
   buildLocalizedPath,
   type Locale,
@@ -37,7 +37,7 @@ type CourtFinderProps = {
   locale: Locale;
   copy: CourtFinderCopy;
   initialCourts: CourtRecord[];
-  provinces: string[];
+  provinces: CourtProvinceOption[];
   total: number;
 };
 
@@ -86,7 +86,8 @@ export function CourtFinder({
   const debouncedSearch = useDebounce(search);
   const [province, setProvince] = useState<string>("");
   const [courts, setCourts] = useState(initialCourts);
-  const [availableProvinces, setAvailableProvinces] = useState(provinces);
+  const [availableProvinces, setAvailableProvinces] =
+    useState<CourtProvinceOption[]>(provinces);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
@@ -108,10 +109,7 @@ export function CourtFinder({
   const provinceOptions = useMemo(
     () => [
       { value: "", label: copy.resetFilters },
-      ...availableProvinces.map((prov) => ({
-        value: prov,
-        label: prov,
-      })),
+      ...availableProvinces,
     ],
     [availableProvinces, copy.resetFilters],
   );
@@ -133,6 +131,7 @@ export function CourtFinder({
       setLoading(true);
       const params = new URLSearchParams({
         sport: sportCode,
+        lang: locale,
         limit: PAGE_SIZE.toString(),
         page: "1",
       });
@@ -156,7 +155,7 @@ export function CourtFinder({
     return () => {
       isActive = false;
     };
-  }, [sportCode, debouncedSearch, province]);
+  }, [sportCode, locale, debouncedSearch, province]);
 
   const loadMoreCourts = useCallback(async () => {
     if (loading || loadingMore || !hasMore) return;
@@ -165,6 +164,7 @@ export function CourtFinder({
     try {
       const params = new URLSearchParams({
         sport: sportCode,
+        lang: locale,
         limit: PAGE_SIZE.toString(),
         page: nextPage.toString(),
       });
@@ -200,6 +200,7 @@ export function CourtFinder({
     page,
     province,
     sportCode,
+    locale,
   ]);
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeLocale } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { ensureCourtGroupLinks } from "@/server/groupSessions";
@@ -42,6 +43,7 @@ export async function GET(request: Request) {
   const endTime = searchParams.get("end") ?? undefined;
   const playFormat = searchParams.get("playFormat") ?? undefined;
   const allowWalkIn = searchParams.get("allowWalkIn") ?? undefined;
+  const locale = normalizeLocale(searchParams.get("lang"));
 
   try {
     const result = await fetchGroupsBySport(sport, {
@@ -53,7 +55,7 @@ export async function GET(request: Request) {
       endTime,
       playFormat,
       allowWalkIn,
-    });
+    }, locale);
     if (!result.sport) {
       return NextResponse.json(
         { groups: [], count: 0, sport: null },

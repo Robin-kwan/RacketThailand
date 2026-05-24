@@ -103,7 +103,7 @@ export default async function CasualPlayFinderPage({
 
   const playData = await fetchCasualPlaysBySport(resolvedParams.sport, {
     limit: 12,
-  });
+  }, locale);
   if (!playData.sport) {
     notFound();
   }

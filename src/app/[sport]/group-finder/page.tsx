@@ -100,7 +100,7 @@ export default async function GroupFinderPage({
 
   const groupData = await fetchGroupsBySport(resolvedParams.sport, {
     limit: 12,
-  });
+  }, locale);
   if (!groupData.sport) {
     notFound();
   }

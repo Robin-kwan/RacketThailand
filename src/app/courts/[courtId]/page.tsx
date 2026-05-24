@@ -217,7 +217,7 @@ export async function generateMetadata({
   const resolvedParams = await resolveParams(params);
   const resolvedSearch = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedSearch?.lang);
-  const detail = await fetchCourtDetail(resolvedParams.courtId);
+  const detail = await fetchCourtDetail(resolvedParams.courtId, locale);
   if (!detail?.court || detail.court.is_active === false) {
     return {
       title:
@@ -346,7 +346,7 @@ export default async function CourtPage({
         .single()
     : { data: null };
 
-  const detail = await fetchCourtDetail(resolvedParams.courtId);
+  const detail = await fetchCourtDetail(resolvedParams.courtId, locale);
   if (!detail || !detail.court) {
     notFound();
   }
