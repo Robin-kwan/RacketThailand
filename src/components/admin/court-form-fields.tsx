@@ -1,7 +1,14 @@
 "use client";
 
 import { ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDown,
+  Landmark,
+  LockKeyhole,
+  MapPinned,
+  MapPinPlusInside,
+  ScanSearch,
+} from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import { BaseTextField } from "@/components/base-text-field";
 import { BaseTextArea } from "@/components/base-text-area";
@@ -37,12 +44,30 @@ export type CourtFormCopy = {
   address: string;
   district: string;
   province: string;
+  locationDetailsTitle: string;
+  locationDetailsHelper: string;
+  locationDetailsEmpty: string;
+  locationLockedBadge: string;
   price: string;
   openingHours: string;
   phone: string;
   line: string;
   lineQr: string;
   website: string;
+};
+
+type LocationDetailsCardProps = {
+  values: CourtFormValues;
+  copy: Pick<
+    CourtFormCopy,
+    | "address"
+    | "district"
+    | "province"
+    | "locationDetailsTitle"
+    | "locationDetailsHelper"
+    | "locationDetailsEmpty"
+    | "locationLockedBadge"
+  >;
 };
 
 type CourtFormFieldsProps = {
@@ -57,9 +82,6 @@ type CourtFormFieldsProps = {
 type FieldName =
   | "name"
   | "description"
-  | "address"
-  | "district"
-  | "province"
   | "price_note"
   | "phone"
   | "line_id"
@@ -68,16 +90,120 @@ type FieldName =
 const fieldConfigs: { name: FieldName; labelKey: keyof CourtFormCopy; required: boolean }[] = [
   { name: "name", labelKey: "name", required: true },
   { name: "description", labelKey: "description", required: false },
-  { name: "address", labelKey: "address", required: true },
-  { name: "district", labelKey: "district", required: true },
-  { name: "province", labelKey: "province", required: true },
   { name: "price_note", labelKey: "price", required: false },
   { name: "phone", labelKey: "phone", required: false },
   { name: "line_id", labelKey: "line", required: false },
   { name: "website_url", labelKey: "website", required: false },
 ];
 
-const LOCKED_LOCATION_FIELDS = new Set<FieldName>(["address", "district", "province"]);
+function LocationDetailItem({
+  icon,
+  label,
+  value,
+  mono = false,
+  fullWidth = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  mono?: boolean;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border border-white/80 bg-white/90 p-4 shadow-[0_10px_30px_rgb(var(--foreground-rgb)/0.05)] ${
+        fullWidth ? "sm:col-span-2" : ""
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+          {icon}
+        </span>
+        <div className="min-w-0 space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            {label}
+          </p>
+          <p
+            className={`break-words text-sm text-slate-800 ${
+              mono ? "font-mono text-[13px]" : "font-medium"
+            }`}
+          >
+            {value}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function LocationDetailsCard({
+  values,
+  copy,
+}: LocationDetailsCardProps) {
+  const hasResolvedLocation = Boolean(
+    values.address.trim() ||
+      values.district.trim() ||
+      values.province.trim() ||
+      values.latitude.trim() ||
+      values.longitude.trim() ||
+      values.googlePlaceId.trim(),
+  );
+
+  if (!hasResolvedLocation) {
+    return null;
+  }
+
+  return (
+    <section className="overflow-hidden rounded-[28px] border border-emerald-200 bg-[linear-gradient(145deg,rgba(236,253,245,0.98),rgba(255,255,255,0.96))] shadow-[0_18px_60px_rgb(var(--rt-primary-rgb)/0.08)]">
+      <div className="border-b border-emerald-100/80 px-5 py-5 sm:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 ring-1 ring-emerald-100">
+              <ScanSearch className="h-3.5 w-3.5" strokeWidth={1.9} aria-hidden />
+              Google Maps
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                {copy.locationDetailsTitle}
+              </h3>
+              <p className="mt-1 max-w-2xl text-sm text-slate-600">
+                {copy.locationDetailsHelper}
+              </p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 self-start rounded-full border border-emerald-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+            <LockKeyhole className="h-3.5 w-3.5" strokeWidth={1.9} aria-hidden />
+            {copy.locationLockedBadge}
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 px-5 py-5 sm:grid-cols-2 sm:px-6">
+        {values.address.trim() && (
+          <LocationDetailItem
+            icon={<MapPinned className="h-4 w-4" strokeWidth={1.9} aria-hidden />}
+            label={copy.address}
+            value={values.address.trim()}
+            fullWidth
+          />
+        )}
+        {values.district.trim() && (
+          <LocationDetailItem
+            icon={<MapPinPlusInside className="h-4 w-4" strokeWidth={1.9} aria-hidden />}
+            label={copy.district}
+            value={values.district.trim()}
+          />
+        )}
+        {values.province.trim() && (
+          <LocationDetailItem
+            icon={<Landmark className="h-4 w-4" strokeWidth={1.9} aria-hidden />}
+            label={copy.province}
+            value={values.province.trim()}
+          />
+        )}
+      </div>
+    </section>
+  );
+}
 
 export function CourtFormFields({
   values,
@@ -193,12 +319,6 @@ export function CourtFormFields({
               value={values[field.name]}
               onChange={onChange}
               required={field.required}
-              readOnly={LOCKED_LOCATION_FIELDS.has(field.name)}
-              className={
-                LOCKED_LOCATION_FIELDS.has(field.name)
-                  ? "bg-slate-50 text-slate-600 focus-visible:border-slate-200 focus-visible:ring-0"
-                  : undefined
-              }
               variant="light"
             />
           )}

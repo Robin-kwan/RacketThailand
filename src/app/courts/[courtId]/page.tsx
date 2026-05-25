@@ -231,12 +231,15 @@ export async function generateMetadata({
     };
   }
   const court = detail.court;
-  const sportMeta = detail.sport?.code
-    ? SPORT_META[detail.sport.code]
-    : undefined;
+  const requestedSportCode = resolvedSearch?.sport?.trim() || null;
+  const activeSport =
+    detail.sports.find((sport) => sport.code === requestedSportCode) ??
+    detail.sport;
+  const activeSportCode = activeSport?.code ?? detail.sport?.code ?? null;
+  const sportMeta = activeSportCode ? SPORT_META[activeSportCode] : undefined;
   const sportName =
     sportMeta?.name?.[locale] ??
-    detail.sport?.name ??
+    activeSport?.name ??
     (locale === "th" ? "สนามกีฬาแร็กเกต" : "Racket sport");
   const locationParts = [court.district, court.province]
     .filter((part): part is string => Boolean(part && part.trim()))
@@ -527,7 +530,7 @@ export default async function CourtPage({
         payload={{ courtId: detail.court.id }}
       />
       <HeaderSportScope sportSlug={activeSportCode ?? undefined} />
-      <HeaderSubLabel value={activeSport?.name ?? undefined} />
+      <HeaderSubLabel value={getSportDisplayName(activeSport, locale)} />
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 pb-20 pt-10 md:px-10">
         <BaseBackLink
           href={buildLocalizedPath(
