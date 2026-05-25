@@ -9,6 +9,7 @@ import { showToast } from "@/components/toaster";
 import {
   CourtFormFields,
   CourtFormValues,
+  LocationDetailsCard,
 } from "@/components/admin/court-form-fields";
 import {
   PlaceSearchField,
@@ -42,6 +43,10 @@ type CourtFormProps = {
     address: string;
     district: string;
     province: string;
+    locationDetailsTitle: string;
+    locationDetailsHelper: string;
+    locationDetailsEmpty: string;
+    locationLockedBadge: string;
     price: string;
     openingHours: string;
     phone: string;
@@ -348,6 +353,18 @@ export function CourtAdminForm({
               }
             : null
         }
+      />
+      <LocationDetailsCard
+        values={form}
+        copy={{
+          address: copy.address,
+          district: copy.district,
+          province: copy.province,
+          locationDetailsTitle: copy.locationDetailsTitle,
+          locationDetailsHelper: copy.locationDetailsHelper,
+          locationDetailsEmpty: copy.locationDetailsEmpty,
+          locationLockedBadge: copy.locationLockedBadge,
+        }}
       />
       <div className="space-y-2">
         <label className="text-sm font-semibold text-slate-700">

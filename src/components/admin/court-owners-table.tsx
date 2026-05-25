@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   CourtFormFields,
+  LocationDetailsCard,
   type CourtFormValues,
 } from "@/components/admin/court-form-fields";
 import {
@@ -77,6 +78,10 @@ type CourtOwnersTableCopy = {
   address: string;
   district: string;
   province: string;
+  locationDetailsTitle: string;
+  locationDetailsHelper: string;
+  locationDetailsEmpty: string;
+  locationLockedBadge: string;
   price: string;
   phone: string;
   line: string;
@@ -674,6 +679,18 @@ export function CourtOwnersTable({
                     : null
                 }
               />
+              <LocationDetailsCard
+                values={editForm}
+                copy={{
+                  address: copy.address,
+                  district: copy.district,
+                  province: copy.province,
+                  locationDetailsTitle: copy.locationDetailsTitle,
+                  locationDetailsHelper: copy.locationDetailsHelper,
+                  locationDetailsEmpty: copy.locationDetailsEmpty,
+                  locationLockedBadge: copy.locationLockedBadge,
+                }}
+              />
 
               <CourtFormFields
                 values={editForm}
@@ -685,6 +702,10 @@ export function CourtOwnersTable({
                   address: copy.address,
                   district: copy.district,
                   province: copy.province,
+                  locationDetailsTitle: copy.locationDetailsTitle,
+                  locationDetailsHelper: copy.locationDetailsHelper,
+                  locationDetailsEmpty: copy.locationDetailsEmpty,
+                  locationLockedBadge: copy.locationLockedBadge,
                   price: copy.price,
                   openingHours: "",
                   phone: copy.phone,

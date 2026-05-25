@@ -7,6 +7,7 @@ import { LineQrUploader } from "@/components/line-qr-uploader";
 import {
   CourtFormFields,
   CourtFormValues,
+  LocationDetailsCard,
 } from "@/components/admin/court-form-fields";
 import { showToast } from "@/components/toaster";
 import {
@@ -104,6 +105,10 @@ type CourtEditFormProps = {
     address: string;
     district: string;
     province: string;
+    locationDetailsTitle: string;
+    locationDetailsHelper: string;
+    locationDetailsEmpty: string;
+    locationLockedBadge: string;
     price: string;
     openingHours: string;
     phone: string;
@@ -608,6 +613,18 @@ export function CourtEditForm({
               }
             : null
         }
+      />
+      <LocationDetailsCard
+        values={form}
+        copy={{
+          address: copy.address,
+          district: copy.district,
+          province: copy.province,
+          locationDetailsTitle: copy.locationDetailsTitle,
+          locationDetailsHelper: copy.locationDetailsHelper,
+          locationDetailsEmpty: copy.locationDetailsEmpty,
+          locationLockedBadge: copy.locationLockedBadge,
+        }}
       />
       <div className="space-y-2">
         <label className="text-sm font-semibold text-slate-700">

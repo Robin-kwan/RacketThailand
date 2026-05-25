@@ -426,9 +426,12 @@
     "placeSearchHelper": "พิมพ์ชื่อสนามหรือสถานที่ แล้วเลือกผลลัพธ์ที่ถูกต้องเพื่อให้ระบบกรอกข้อมูลให้อัตโนมัติ",
     "placeSearchNoResults": "ยังไม่พบผลลัพธ์ ลองสะกดอีกแบบ",
     "placeAlreadyRegistered": "สถานที่นี้มีอยู่ในระบบแล้วในชื่อ",
-    "placeExistingCourtLinkFallback": "สนามที่มีอยู่แล้ว",
-    "locationMissing": "ต้องระบุตำแหน่ง กรุณาใช้ช่องค้นหา Google Maps เพื่อดึงข้อมูล",
-    "submit": "เพิ่มสนาม",
+    "placeExistingCourtLinkFallback": "สนามที่มีอยู่แล้ว",    "locationDetailsTitle": "ข้อมูลตำแหน่งจาก Google Maps",
+    "locationDetailsHelper": "ข้อมูลส่วนนี้ถูกล็อกไว้ตามสถานที่ที่เลือกจากแผนที่ หากต้องการเปลี่ยนตำแหน่ง ให้ค้นหาและเลือกผลลัพธ์ใหม่ด้านบน",
+    "locationDetailsEmpty": "เลือกสถานที่จาก Google Maps ด้านบน เพื่อดึงที่อยู่ เขต/อำเภอ จังหวัด และพิกัดเข้ามาอัตโนมัติ",
+    "locationLockedBadge": "ตำแหน่งล็อกไว้",
+    "locationCoordinates": "พิกัดแผนที่",
+    "locationPlaceId": "Google place ID",    "submit": "เพิ่มสนาม",
     "submitting": "กำลังบันทึก",
     "success": "เพิ่มสนามเรียบร้อยแล้ว",
     "error": "ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบข้อมูลอีกครั้ง",
@@ -492,9 +495,12 @@
       "casualPlaysEmpty": "ยังไม่มี casual play ที่กำลังจะมาถึง",
       "courtFallback": "สนามที่ยังไม่ระบุชื่อ",
       "casualPlayFallback": "หาเพื่อนตี",
-      "venueMissing": "ยังไม่ระบุสถานที่",
-      "locationMissing": "ยังไม่ระบุตำแหน่ง",
-      "reportedBy": "ส่งโดย",
+      "venueMissing": "ยังไม่ระบุสถานที่",    "locationDetailsTitle": "ข้อมูลตำแหน่งจาก Google Maps",
+    "locationDetailsHelper": "ข้อมูลส่วนนี้ถูกล็อกไว้ตามสถานที่ที่เลือกจากแผนที่ หากต้องการเปลี่ยนตำแหน่ง ให้ค้นหาและเลือกผลลัพธ์ใหม่ด้านบน",
+    "locationDetailsEmpty": "เลือกสถานที่จาก Google Maps ด้านบน เพื่อดึงที่อยู่ เขต/อำเภอ จังหวัด และพิกัดเข้ามาอัตโนมัติ",
+    "locationLockedBadge": "ตำแหน่งล็อกไว้",
+    "locationCoordinates": "พิกัดแผนที่",
+    "locationPlaceId": "Google place ID",      "reportedBy": "ส่งโดย",
       "submittedOn": "ส่งเมื่อ",
       "viewItem": "ดูรายการ"
     },
@@ -844,3 +850,4 @@
     }
   }
 }
+
