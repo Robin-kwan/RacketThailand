@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { buildLocalizedPath, type Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
+import { buildLocalizedAuthRedirectPath } from "@/lib/auth-redirect";
 
 type VerificationWatcherProps = {
   userId?: string;
@@ -35,7 +36,7 @@ export function VerificationWatcher({
         if (!isActive || redirectedRef.current) return;
         if (payload.verified) {
           redirectedRef.current = true;
-          router.replace(buildLocalizedPath(redirectPath, locale));
+          router.replace(buildLocalizedAuthRedirectPath(redirectPath, locale));
         }
       } catch (error) {
         console.error("Verification check failed:", error);

@@ -442,6 +442,7 @@ export default async function CourtPage({
     lineQr: t("courtPage.lineQr"),
     website: t("courtPage.website"),
     hours: t("courtPage.hours"),
+    availableSports: t("courtPage.availableSports"),
     back: t("courtPage.back"),
     groupsTitle: t("courtPage.groupsTitle"),
     groupsEmpty: t("courtPage.groupsEmpty"),
@@ -456,8 +457,12 @@ export default async function CourtPage({
     shareAction: t("contactActions.share"),
     linkCopiedAction: t("contactActions.linkCopied"),
     edit: t("courtPage.edit"),
+    createGroup: t("header.createGroup"),
     groupScheduleAny: t("groups.detail.scheduleAny"),
     backToGroupFinder: t("courtPage.backToGroupFinder"),
+    mapDirections: t("courtPage.mapDirections"),
+    mapDescription: t("courtPage.mapDescription"),
+    openGoogleMaps: t("courtPage.openGoogleMaps"),
   };
   const fallbackCourtName =
     locale === "th" ? "ยังไม่ระบุชื่อสนาม" : "Unnamed court";
@@ -465,6 +470,11 @@ export default async function CourtPage({
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackGroupPhotoAlt =
     locale === "th" ? "รูปกลุ่ม" : "Group photo";
+  const availableSports = detail.sports.length
+    ? detail.sports
+    : activeSport
+      ? [activeSport]
+      : [];
 
   const canEdit = Boolean(isOwnerViewer || isAdminViewer);
   const canonicalPath = `/courts/${detail.court.id}`;
@@ -551,6 +561,38 @@ export default async function CourtPage({
                   .filter(Boolean)
                   .join(" · ")}
               </p>
+              {availableSports.length > 0 && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500">
+                    {copy.availableSports}
+                  </span>
+                  {availableSports.map((sport) => {
+                    const sportCode = sport.code ?? "";
+                    const isActive = sportCode === activeSportCode;
+                    return (
+                      <Link
+                        key={sport.id ?? sportCode}
+                        href={buildLocalizedPath(
+                          `/courts/${detail.court.id}${
+                            sportCode
+                              ? `?sport=${encodeURIComponent(sportCode)}`
+                              : ""
+                          }`,
+                          locale,
+                        )}
+                        className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                          isActive
+                            ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                        }`}
+                        aria-current={isActive ? "page" : undefined}
+                      >
+                        {getSportDisplayName(sport, locale)}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <ShareButton
@@ -691,6 +733,10 @@ export default async function CourtPage({
             latitude={numericLatitude as number}
             longitude={numericLongitude as number}
             placeId={detail.court.google_place_id}
+            locale={locale}
+            eyebrow={copy.mapDirections}
+            description={copy.mapDescription}
+            openMapsLabel={copy.openGoogleMaps}
           />
         )}
 
@@ -698,9 +744,23 @@ export default async function CourtPage({
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white px-6 py-8"
         >
-          <h2 className="text-lg font-semibold text-slate-900">
-            {copy.groupsTitle}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-900">
+              {copy.groupsTitle}
+            </h2>
+            <Link
+              href={buildLocalizedPath(
+                `/groups/create?${new URLSearchParams({
+                  ...(activeSportCode ? { sport: activeSportCode } : {}),
+                  court: detail.court.id,
+                }).toString()}`,
+                locale,
+              )}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+            >
+              {copy.createGroup}
+            </Link>
+          </div>
           {detail.groups.length === 0 ? (
             <p className="mt-3 text-sm text-slate-600">{copy.groupsEmpty}</p>
           ) : (
@@ -771,7 +831,7 @@ export default async function CourtPage({
                           showSessions
                           className="text-sm text-[var(--foreground)]"
                           titleClassName="text-sm font-medium text-[var(--foreground)] sm:text-base"
-                          imageAspectClass="aspect-square"
+                          imageAspectClass="aspect-[4/3]"
                           description={group.groups?.description ?? null}
                           showDescription
                           showLocation={false}

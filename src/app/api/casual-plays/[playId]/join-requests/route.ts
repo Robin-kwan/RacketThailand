@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isCasualPlayExpired } from "@/lib/casual-play";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { ensureUserProfile } from "@/server/profile";
 
 type RouteParams = { playId: string };
 type RouteParamsInput = Promise<RouteParams>;
@@ -43,6 +44,11 @@ export async function POST(
   if (userError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const adminSupabase = getSupabaseAdminClient();
+  const { error: profileError } = await ensureUserProfile(adminSupabase, user);
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message }, { status: 500 });
+  }
 
   const payload = (await request.json().catch(() => ({}))) as JoinRequestPayload;
   const contactName = normalizeOptionalText(payload.contactName);
@@ -57,7 +63,6 @@ export async function POST(
     );
   }
 
-  const adminSupabase = getSupabaseAdminClient();
   const { data: play, error: playError } = await adminSupabase
     .from("casual_plays")
     .select("id,title,owner_id,play_date,player_amount")

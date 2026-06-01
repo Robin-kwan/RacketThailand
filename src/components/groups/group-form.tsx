@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import { BaseAutocomplete } from "@/components/base-autocomplete";
 import { BaseTextField } from "@/components/base-text-field";
@@ -176,6 +176,24 @@ export function GroupForm({
     () => courtCache[form.sportId] ?? [],
     [courtCache, form.sportId],
   );
+  const selectedCourtIds = useMemo(
+    () =>
+      new Set(
+        courtSessions
+          .map((block) => block.courtId)
+          .filter((courtId): courtId is string => Boolean(courtId)),
+      ),
+    [courtSessions],
+  );
+
+  const getCourtOptionsForBlock = (blockId: string) => {
+    const currentCourtId =
+      courtSessions.find((block) => block.id === blockId)?.courtId ?? "";
+    return courtOptions.filter(
+      (option) =>
+        option.value === currentCourtId || !selectedCourtIds.has(option.value),
+    );
+  };
 
   useEffect(() => {
     if (courtCache[form.sportId]) return;
@@ -487,7 +505,7 @@ export function GroupForm({
         </div>
       </div>
       {lineQrSection}
-      <div className="space-y-3 rounded-2xl border border-dashed border-slate-200 bg-[rgb(var(--foreground-rgb)/0.02)] p-4">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">
             {copy.sessionsLabel}
@@ -509,9 +527,22 @@ export function GroupForm({
             {courtSessions.map((block) => (
               <div
                 key={block.id}
-                className="space-y-3 rounded-2xl border border-slate-200 bg-white/70 p-4"
+                className="relative space-y-4 rounded-2xl border border-slate-200 bg-white p-4"
               >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => removeCourtBlock(block.id)}
+                  className="absolute right-4 top-4 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-rose-500"
+                  aria-label={copy.sessionsRemoveCourt}
+                  title={copy.sessionsRemoveCourt}
+                >
+                  <X
+                    className="h-4 w-4"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                </button>
+                <div className="pr-10">
                   <BaseAutocomplete
                     label={copy.sessionCourt}
                     name={`session-court-${block.id}`}
@@ -519,19 +550,10 @@ export function GroupForm({
                     onChange={(event) =>
                       updateCourtBlock(block.id, event.target.value)
                     }
-                    options={courtOptions}
+                    options={getCourtOptionsForBlock(block.id)}
                     className="flex-1"
                     variant="light"
                   />
-                  <div className="flex items-end justify-end">
-                    <button
-                      type="button"
-                      onClick={() => removeCourtBlock(block.id)}
-                      className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
-                    >
-                      <Trash2 className="h-6 w-6" />
-                    </button>
-                  </div>
                 </div>
                 <div className="space-y-3">
                   <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
@@ -540,6 +562,7 @@ export function GroupForm({
                   {block.slots.map((slot) => {
                     const startInputId = `session-${block.id}-${slot.id}-start`;
                     const endInputId = `session-${block.id}-${slot.id}-end`;
+                    const canRemoveSlot = block.slots.length > 1;
                     return (
                       <div
                         key={slot.id}
@@ -602,14 +625,16 @@ export function GroupForm({
                           }
                         />
                         <div className="flex items-end justify-end">
-                          <button
-                            type="button"
-                            onClick={() => removeSessionSlot(block.id, slot.id)}
-                            className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
-                            aria-label={copy.scheduleRemove}
-                          >
-                            <Trash2 className="h-6 w-6" />
-                          </button>
+                          {canRemoveSlot && (
+                            <button
+                              type="button"
+                              onClick={() => removeSessionSlot(block.id, slot.id)}
+                              className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
+                              aria-label={copy.scheduleRemove}
+                            >
+                              <Trash2 className="h-6 w-6" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );

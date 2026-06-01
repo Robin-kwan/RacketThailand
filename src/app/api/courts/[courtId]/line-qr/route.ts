@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { validateLineQrFile } from "@/lib/image-upload";
 import { requireCourtAccess } from "@/server/courtAccess";
 
 const COURT_LINE_QR_BUCKET =
@@ -47,6 +48,10 @@ export async function POST(
       { error: "LINE QR image is required." },
       { status: 400 },
     );
+  }
+  const validationError = validateLineQrFile(file);
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   const ext = file.name.split(".").pop() || "png";

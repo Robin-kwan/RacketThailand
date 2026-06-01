@@ -44,9 +44,8 @@ export function proxy(request: NextRequest) {
   }
 
   if (AUTH_BLOCKED_PATHS.has(path) && hasSupabaseSession(request)) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/";
-    return NextResponse.redirect(redirectUrl);
+    const redirectTo = sanitizeAuthRedirectPath(query.get("redirectTo"));
+    return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
   return NextResponse.next();
@@ -79,4 +78,22 @@ function buildRecoveryRedirectUrl(request: NextRequest) {
   const redirectUrl = request.nextUrl.clone();
   redirectUrl.pathname = "/auth/reset";
   return redirectUrl;
+}
+
+function sanitizeAuthRedirectPath(candidate?: string | null) {
+  if (!candidate) return "/";
+  try {
+    const decoded = decodeURIComponent(candidate);
+    if (!decoded.startsWith("/") || decoded.startsWith("//")) {
+      return "/";
+    }
+    const parsed = new URL(decoded, "https://racketthailand.local");
+    const path = parsed.pathname.replace(/\/+$/, "") || "/";
+    if (AUTH_BLOCKED_PATHS.has(path) || path.startsWith("/auth/")) {
+      return "/";
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return "/";
+  }
 }

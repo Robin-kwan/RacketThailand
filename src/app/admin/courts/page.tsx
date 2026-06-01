@@ -149,6 +149,8 @@ export default async function AdminCourtsPage({
     photos: t("admin.photos"),
     primaryPhoto: t("admin.primaryPhoto"),
     makePrimaryPhoto: t("admin.makePrimaryPhoto"),
+    photoUploadHelper: t("admin.photoUploadHelper"),
+    photoProcessError: t("admin.photoProcessError"),
     submit: t("admin.submit"),
     submitting: t("admin.submitting"),
     success: t("admin.success"),

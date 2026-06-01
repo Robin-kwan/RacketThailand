@@ -61,6 +61,8 @@ type CourtFormProps = {
     photos: string;
     primaryPhoto: string;
     makePrimaryPhoto: string;
+    photoUploadHelper: string;
+    photoProcessError: string;
     submit: string;
     submitting: string;
     success: string;
@@ -395,6 +397,8 @@ export function CourtAdminForm({
               value={images}
               primaryLabel={copy.primaryPhoto}
               makePrimaryLabel={copy.makePrimaryPhoto}
+              helperText={copy.photoUploadHelper}
+              processErrorLabel={copy.photoProcessError}
               onChange={setImages}
             />
           </div>

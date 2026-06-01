@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   CourtFormFields,
   LocationDetailsCard,
@@ -482,17 +483,24 @@ export function CourtOwnersTable({
             <label className="text-sm font-semibold text-slate-700">
               {copy.sportFilter}
             </label>
-            <select
-              value={sportFilter}
-              onChange={(event) => setSportFilter(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-            >
-              {sportOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={sportFilter}
+                onChange={(event) => setSportFilter(event.target.value)}
+                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-3 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              >
+                {sportOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                strokeWidth={1.8}
+                aria-hidden
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">
@@ -584,22 +592,29 @@ export function CourtOwnersTable({
                         {row.managerName ?? copy.unassigned}
                       </td>
                       <td className="px-4 py-4">
-                        <select
-                          value={draftValue}
-                          onChange={(event) =>
-                            handleAssignmentChange(row.id, event.target.value)
-                          }
-                          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-400"
-                        >
-                          {assignmentOptions.map((option) => (
-                            <option
-                              key={`${row.id}-${option.value}`}
-                              value={option.value}
-                            >
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={draftValue}
+                            onChange={(event) =>
+                              handleAssignmentChange(row.id, event.target.value)
+                            }
+                            className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-3 py-2.5 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                          >
+                            {assignmentOptions.map((option) => (
+                              <option
+                                key={`${row.id}-${option.value}`}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                            strokeWidth={1.8}
+                            aria-hidden
+                          />
+                        </div>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex justify-end gap-2">

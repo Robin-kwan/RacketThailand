@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { requireGroupAccess } from "@/server/groupAccess";
 
 type CourtGroupPayload = {
   courtId: string;
@@ -8,15 +8,6 @@ type CourtGroupPayload = {
 };
 
 export async function POST(request: Request) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const payload = (await request.json()) as CourtGroupPayload;
   if (!payload.courtId || !payload.groupId) {
     return NextResponse.json(
@@ -25,7 +16,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: inserted, error: insertError } = await supabase
+  const { error: accessError } = await requireGroupAccess(payload.groupId);
+  if (accessError === "UNAUTHORIZED") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (accessError === "FORBIDDEN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const adminSupabase = getSupabaseAdminClient();
+  const { data: inserted, error: insertError } = await adminSupabase
     .from("court_groups")
     .insert({
       court_id: payload.courtId,
@@ -50,12 +50,12 @@ export async function POST(request: Request) {
   }
 
   const [{ data: court }, { data: group }] = await Promise.all([
-    supabase
+    adminSupabase
       .from("courts")
       .select("id,name,created_by")
       .eq("id", payload.courtId)
       .single(),
-    supabase
+    adminSupabase
       .from("groups")
       .select("name")
       .eq("id", payload.groupId)
@@ -67,7 +67,6 @@ export async function POST(request: Request) {
       group?.name && court.name
         ? `${group.name} requested verification for ${court.name}`
         : "New group verification request";
-    const adminSupabase = getSupabaseAdminClient();
     try {
       await adminSupabase.from("notifications").insert({
         recipient_id: court.created_by,

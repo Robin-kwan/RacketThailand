@@ -13,6 +13,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchSportIdsByCourtIds } from "@/server/courtSports";
@@ -41,7 +42,10 @@ export default async function CreateCasualPlayPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(buildLocalizedPath("/login", locale));
+    const redirectTo = resolved?.sport
+      ? `/casual-plays/create?sport=${encodeURIComponent(resolved.sport)}`
+      : "/casual-plays/create";
+    redirect(buildAuthPagePath("/login", locale, redirectTo));
   }
 
   const [sportsRes, courtsRes] = await Promise.all([
@@ -160,10 +164,7 @@ export default async function CreateCasualPlayPage({
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
-            Community · Casual plays
-          </p>
-          <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h1>
           <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.75)]">

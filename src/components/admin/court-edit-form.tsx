@@ -23,6 +23,7 @@ import {
   createAlwaysOpenSchedule,
   type OpeningHoursEntry,
 } from "@/lib/opening-hours";
+import { PHOTO_UPLOAD_ACCEPT, optimizePhotoFile } from "@/lib/image-upload";
 
 type SportOption = {
   id: string;
@@ -515,29 +516,48 @@ export function CourtEditForm({
     );
   };
 
-  const handleAddPhotos = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddPhotos = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (uploading) return;
     const files = event.target.files;
     if (!files) return;
-    updatePhotos((prev) => {
-      const next = [...prev];
-      Array.from(files).forEach((file) => {
-        if (next.length >= 8) return;
-        const id = `local-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2)}`;
-        const previewUrl = URL.createObjectURL(file);
-        next.push({
-          id,
-          image_url: previewUrl,
-          is_primary: false,
-          status: "new",
-          file,
+    setUploading(true);
+    try {
+      const optimizedFiles: File[] = [];
+      for (const file of Array.from(files).slice(0, Math.max(8 - photos.length, 0))) {
+        try {
+          optimizedFiles.push(await optimizePhotoFile(file));
+        } catch (error) {
+          showToast({
+            variant: "error",
+            message: error instanceof Error ? error.message : copy.error,
+          });
+        }
+      }
+
+      if (optimizedFiles.length > 0) {
+        updatePhotos((prev) => {
+          const next = [...prev];
+          optimizedFiles.forEach((file) => {
+            if (next.length >= 8) return;
+            const id = `local-${Date.now()}-${Math.random()
+              .toString(36)
+              .slice(2)}`;
+            const previewUrl = URL.createObjectURL(file);
+            next.push({
+              id,
+              image_url: previewUrl,
+              is_primary: false,
+              status: "new",
+              file,
+            });
+          });
+          return next;
         });
-      });
-      return next;
-    });
-    event.target.value = "";
+      }
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
   };
 
   const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
@@ -661,7 +681,7 @@ export function CourtEditForm({
                       strokeWidth={1.8}
                       aria-hidden
                     />
-                    Working...
+                    {copy.submitting}
                   </span>
                 )}
               </div>
@@ -700,7 +720,7 @@ export function CourtEditForm({
                     />
                     <input
                       type="file"
-                      accept="image/*"
+                      accept={PHOTO_UPLOAD_ACCEPT}
                       multiple
                       className="hidden"
                       onChange={handleAddPhotos}

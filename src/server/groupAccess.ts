@@ -1,4 +1,5 @@
 import { type User } from "@supabase/supabase-js";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type RequireGroupAccessResult = {
@@ -20,7 +21,8 @@ export async function requireGroupAccess(
     return { supabase, user: null, error: "UNAUTHORIZED" };
   }
 
-  const { data: profile } = await supabase
+  const adminSupabase = getSupabaseAdminClient();
+  const { data: profile } = await adminSupabase
     .from("profiles")
     .select("status")
     .eq("id", user.id)
@@ -30,7 +32,7 @@ export async function requireGroupAccess(
     return { supabase, user, error: null };
   }
 
-  const { data: group } = await supabase
+  const { data: group } = await adminSupabase
     .from("groups")
     .select("owner_id")
     .eq("id", groupId)

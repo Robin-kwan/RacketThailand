@@ -150,7 +150,7 @@ function FeatureCarousel({
               surface: "sport_feature_carousel",
               cta: ctaHref,
             }}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
+            className="inline-flex items-center gap-2 [background-color:transparent] text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
           >
             {ctaLabel}
             <ChevronRight
@@ -262,7 +262,7 @@ function CasualPlayPreviewSection({
               cta: "open_casual_plays",
               sport: sportCode,
             }}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
+            className="inline-flex items-center gap-2 [background-color:transparent] text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
           >
             {ctaLabel}
             <ChevronRight

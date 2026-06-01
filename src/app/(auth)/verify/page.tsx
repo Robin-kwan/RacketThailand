@@ -3,10 +3,14 @@ import { redirect } from "next/navigation";
 import { ResendVerificationButton } from "@/components/auth/resend-verification-button";
 import { BaseCard } from "@/components/base-card";
 import {
-  buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import {
+  buildAuthPagePath,
+  buildLocalizedAuthRedirectPath,
+  sanitizeAuthRedirectPath,
+} from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { VerificationWatcher } from "@/components/auth/verification-watcher";
 
@@ -14,6 +18,7 @@ type SearchParams = {
   lang?: string;
   email?: string;
   userId?: string;
+  redirectTo?: string;
 };
 
 type SearchParamInput = Promise<SearchParams> | undefined;
@@ -32,13 +37,14 @@ export default async function VerifyPage({
 }) {
   const resolvedParams = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedParams?.lang);
+  const redirectTo = sanitizeAuthRedirectPath(resolvedParams?.redirectTo);
   const t = await getTranslator(locale);
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user?.email_confirmed_at) {
-    redirect(buildLocalizedPath("/", locale));
+    redirect(buildLocalizedAuthRedirectPath(redirectTo, locale));
   }
   const email = resolvedParams?.email
     ? decodeURIComponent(resolvedParams.email)
@@ -63,7 +69,11 @@ export default async function VerifyPage({
             {t("auth.pendingDescription", { email: email || t("header.brand") })}
           </p>
           <div className="mt-6 flex flex-col gap-4 text-left text-[var(--foreground)]">
-            <VerificationWatcher userId={userId} locale={locale} />
+            <VerificationWatcher
+              userId={userId}
+              locale={locale}
+              redirectPath={redirectTo}
+            />
             {!userId && (
               <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
                 {t("auth.pendingMissingUserId")}
@@ -79,7 +89,7 @@ export default async function VerifyPage({
             )}
           </div>
           <Link
-            href={buildLocalizedPath("/login", locale)}
+            href={buildAuthPagePath("/login", locale, redirectTo)}
             className="mt-8 inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-slate-500"
           >
             {t("auth.pendingBack")}

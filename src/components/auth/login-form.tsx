@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Chrome } from "lucide-react";
 import {
   createSupabaseBrowserClient,
   setAuthStorageMode,
@@ -11,6 +10,10 @@ import {
 import { showToast } from "@/components/toaster";
 import type { Locale } from "@/lib/i18n";
 import { buildLocalizedPath } from "@/lib/i18n";
+import {
+  buildAuthPagePath,
+  buildLocalizedAuthRedirectPath,
+} from "@/lib/auth-redirect";
 
 type LoginCopy = {
   emailLabel: string;
@@ -23,6 +26,7 @@ type LoginCopy = {
   passwordToggleShow: string;
   passwordToggleHide: string;
   googleButton: string;
+  success: string;
 };
 
 type LoginFormProps = {
@@ -30,6 +34,34 @@ type LoginFormProps = {
   copy: LoginCopy;
   redirectTo?: string;
 };
+
+function GoogleIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      aria-hidden
+      focusable="false"
+    >
+      <path
+        fill="#4285F4"
+        d="M23.49 12.27c0-.82-.07-1.42-.23-2.05H12v3.87h6.61c-.13.96-.85 2.41-2.45 3.39l-.02.13 3.56 2.4.25.02c2.29-1.84 3.54-4.55 3.54-7.76z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c3.27 0 6.02-.94 8.03-2.57l-3.83-2.95c-1.03.62-2.4 1.06-4.2 1.06-3.2 0-5.92-1.84-6.89-4.39l-.14.01-3.7 2.48-.05.12C3.2 20.47 7.27 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.11 14.15A6.01 6.01 0 0 1 4.78 12c0-.75.12-1.48.31-2.15l-.01-.14-3.75-2.52-.12.05A10.23 10.23 0 0 0 0 12c0 1.71.47 3.32 1.28 4.76l3.83-2.61z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.46c2.27 0 3.8.85 4.67 1.57l3.41-2.89C17.99 2.45 15.27 1.5 12 1.5c-4.73 0-8.8 2.53-10.72 6.24l3.82 2.61C6.08 7.3 8.8 5.46 12 5.46z"
+      />
+    </svg>
+  );
+}
 
 export function LoginForm({
   locale,
@@ -81,9 +113,9 @@ export function LoginForm({
         params.set("userId", loginData.user.id);
       }
       await supabase.auth.signOut();
-      router.replace(
-        buildLocalizedPath(`/verify?${params.toString()}`, locale),
-      );
+      const verifyPath = buildAuthPagePath("/verify", locale, redirectTo);
+      const joiner = verifyPath.includes("?") ? "&" : "?";
+      router.replace(`${verifyPath}${joiner}${params.toString()}`);
       return;
     }
 
@@ -95,8 +127,8 @@ export function LoginForm({
       console.error("Profile ensure failed", apiError);
     }
 
-    showToast({ variant: "success", message: "Signed in successfully." });
-    const target = buildLocalizedPath(redirectTo, locale);
+    showToast({ variant: "success", message: copy.success });
+    const target = buildLocalizedAuthRedirectPath(redirectTo, locale);
     router.replace(target);
     router.refresh();
   };
@@ -104,7 +136,7 @@ export function LoginForm({
   const handleGoogleLogin = async () => {
     if (typeof window === "undefined") return;
     setGoogleLoading(true);
-    const redirectPath = buildLocalizedPath(redirectTo, locale);
+    const redirectPath = buildLocalizedAuthRedirectPath(redirectTo, locale);
     const baseUrl =
       typeof window !== "undefined"
         ? window.location.origin
@@ -208,11 +240,7 @@ export function LoginForm({
           className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed"
         >
           <span className="flex h-6 w-6 items-center justify-center">
-            <Chrome
-              className="h-5 w-5"
-              strokeWidth={1.8}
-              aria-hidden
-            />
+            <GoogleIcon />
           </span>
           <span>
             {googleLoading ? `${copy.googleButton}...` : copy.googleButton}

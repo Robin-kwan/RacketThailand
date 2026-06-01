@@ -604,11 +604,8 @@ export default async function GroupDetailPage({
           as="section"
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
-            {locale === "th" ? "กลุ่ม" : "Group"} · {group.sports?.name ?? "RacketThailand"}
-          </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
+            <h1 className="text-xl font-semibold text-[var(--foreground)]">
               {group.name ?? fallbackGroupName}
             </h1>
             <div className="flex flex-wrap items-center gap-2">

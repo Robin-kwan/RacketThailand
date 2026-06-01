@@ -27,6 +27,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import {
   buildCanonicalUrl,
   buildLocaleAlternates,
@@ -454,7 +455,11 @@ export default async function CasualPlayDetailPage({
     sportCode ? `/${sportCode}/casual-plays` : "/",
     locale,
   );
-  const loginHref = buildLocalizedPath("/login", locale);
+  const loginHref = buildAuthPagePath(
+    "/login",
+    locale,
+    `/casual-plays/${play.id}`,
+  );
 
   return (
     <div className="rt-page">
@@ -467,10 +472,6 @@ export default async function CasualPlayDetailPage({
           as="section"
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
-            {locale === "th" ? "หาเพื่อนตี" : "Casual play"} ·{" "}
-            {play.sports?.name ?? "RacketThailand"}
-          </p>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-xl font-semibold text-[var(--foreground)]">
               {shareTitle}

@@ -12,6 +12,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import {
   buildCanonicalUrl,
   buildLocaleAlternates,
@@ -269,7 +270,11 @@ export default async function CommunityPostPage({
             </h2>
             {!isAuthenticated && (
               <Link
-                href={buildLocalizedPath("/login", locale)}
+                href={buildAuthPagePath(
+                  "/login",
+                  locale,
+                  `/${sport}/board/${post.id}`,
+                )}
                 className="text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
               >
                 {copy.loginPrompt}

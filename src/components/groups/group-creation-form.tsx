@@ -22,6 +22,10 @@ type GroupCreationCopy = GroupFormCopy & {
   submitting: string;
   success: string;
   error: string;
+  primaryPhoto: string;
+  makePrimaryPhoto: string;
+  photoUploadHelper: string;
+  photoProcessError: string;
 };
 
 type GroupCreationFormProps = {
@@ -31,6 +35,7 @@ type GroupCreationFormProps = {
   dayOptions: Option[];
   locale: Locale;
   defaultSportId?: string;
+  defaultCourtId?: string;
 };
 
 const GROUP_BUCKET =
@@ -42,6 +47,7 @@ export function GroupCreationForm({
   dayOptions,
   locale,
   defaultSportId,
+  defaultCourtId,
 }: GroupCreationFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -51,23 +57,46 @@ export function GroupCreationForm({
   const [submitting, setSubmitting] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
-  const initialValues: GroupFormValues = useMemo(
-    () => ({
-      sportId:
+  const initialValues: GroupFormValues = useMemo(() => {
+    const sportId =
         defaultSportId && sports.some((sport) => sport.value === defaultSportId)
           ? defaultSportId
-          : sports[0]?.value ?? "",
+          : sports[0]?.value ?? "";
+    const hasDefaultCourt =
+      Boolean(defaultCourtId) &&
+      Boolean(
+        sportId &&
+          courts[sportId]?.some((court) => court.value === defaultCourtId),
+      );
+
+    return {
+      sportId,
       name: "",
       description: "",
-      sessions: [],
+      sessions:
+        hasDefaultCourt && defaultCourtId
+          ? [
+              {
+                id: `court-${defaultCourtId}`,
+                courtId: defaultCourtId,
+                slots: [
+                  {
+                    id: `slot-${defaultCourtId}`,
+                    day: "sunday",
+                    start: "",
+                    end: "",
+                  },
+                ],
+              },
+            ]
+          : [],
       playFormat: "double",
       playerAmount: "",
       allowWalkIn: true,
       phone: "",
       lineId: "",
-    }),
-    [defaultSportId, sports],
-  );
+    };
+  }, [courts, defaultCourtId, defaultSportId, sports]);
 
   const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
     if (lineQrPreview?.startsWith("blob:")) {
@@ -190,6 +219,10 @@ export function GroupCreationForm({
           label={copy.photos}
           limit={8}
           value={images}
+          primaryLabel={copy.primaryPhoto}
+          makePrimaryLabel={copy.makePrimaryPhoto}
+          helperText={copy.photoUploadHelper}
+          processErrorLabel={copy.photoProcessError}
           onChange={setImages}
         />
       }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SPORT_META } from "@/data/sportMeta";
 import { CourtRequestList } from "@/components/court-request-list";
 import { BaseCard } from "@/components/base-card";
@@ -9,6 +10,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
@@ -61,7 +63,7 @@ export default async function DashboardPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return null;
+    redirect(buildAuthPagePath("/login", locale, "/dashboard"));
   }
 
   const { data: profile } = await supabase
@@ -275,10 +277,7 @@ export default async function DashboardPage({
           as="section"
           className="rounded-[32px] border border-[var(--rt-primary-border)] p-8"
         >
-          <p className="text-xs font-semibold uppercase rt-text-muted tracking-[0.3em]">
-            {locale === "th" ? "แดชบอร์ด · คำขอใช้สนาม" : "Dashboard · Courts"}
-          </p>
-          <h2 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
+          <h2 className="text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h2>
           <p className="mt-2 text-sm rt-text-muted">{copy.subtitle}</p>

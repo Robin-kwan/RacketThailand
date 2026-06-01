@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BaseImageCard } from "@/components/base-image-card";
+import {
+  PHOTO_ORIGINAL_MAX_MB,
+  PHOTO_UPLOAD_ACCEPT,
+  optimizePhotoFile,
+} from "@/lib/image-upload";
 
 type MultiImageInputProps = {
   label: string;
@@ -11,8 +16,10 @@ type MultiImageInputProps = {
   value?: File[];
   cardHeightClass?: string;
   variant?: "light" | "dark";
-  primaryLabel?: string;
-  makePrimaryLabel?: string;
+  primaryLabel: string;
+  makePrimaryLabel: string;
+  helperText: string;
+  processErrorLabel: string;
   onChange(images: File[]): void;
 };
 
@@ -36,20 +43,23 @@ const VARIANT_CLASSNAMES = {
 export function MultiImageInput({
   label,
   limit = 8,
-  accept = "image/png,image/jpeg,image/webp",
-  maxSizeMB = 2,
+  accept = PHOTO_UPLOAD_ACCEPT,
+  maxSizeMB = PHOTO_ORIGINAL_MAX_MB,
   removable = true,
   value,
   cardHeightClass = "h-40",
   variant = "light",
-  primaryLabel = "Primary",
-  makePrimaryLabel = "Make primary",
+  primaryLabel,
+  makePrimaryLabel,
+  helperText,
+  processErrorLabel,
   onChange,
 }: MultiImageInputProps) {
   const [internalFiles, setInternalFiles] = useState<File[]>([]);
   const files = value ?? internalFiles;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   const fileId = (file: File) => `${file.name}-${file.lastModified}`;
 
@@ -80,19 +90,34 @@ export function MultiImageInput({
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const incoming = Array.from(event.target.files ?? []);
     if (incoming.length === 0) return;
     const availableSlots = Math.max(limit - files.length, 0);
-    const maxBytes = maxSizeMB * 1024 * 1024;
-    const validFiles = incoming.filter((file) => file.size <= maxBytes);
-    if (validFiles.length !== incoming.length) {
-      setError(`Each image must be under ${maxSizeMB}MB.`);
-    } else {
-      setError(null);
+    if (availableSlots === 0) {
+      event.target.value = "";
+      return;
     }
-    const merged = [...files, ...validFiles.slice(0, availableSlots)];
-    updateFiles(merged);
+
+    setProcessing(true);
+    const optimizedFiles: File[] = [];
+    const errors: string[] = [];
+
+    for (const file of incoming.slice(0, availableSlots)) {
+      try {
+        optimizedFiles.push(
+          await optimizePhotoFile(file, { maxOriginalMB: maxSizeMB }),
+        );
+      } catch (error) {
+        errors.push(error instanceof Error ? error.message : processErrorLabel);
+      }
+    }
+
+    setError(errors[0] ?? null);
+    if (optimizedFiles.length > 0) {
+      updateFiles([...files, ...optimizedFiles]);
+    }
+    setProcessing(false);
     if (event.target.value) {
       event.target.value = "";
     }
@@ -129,6 +154,9 @@ export function MultiImageInput({
         onChange={handleFileChange}
       />
       {error && <p className={`text-xs ${styles.error}`}>{error}</p>}
+      <p className={`text-xs ${styles.helper}`}>
+        {helperText}
+      </p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {previews.map((preview) => (
           <BaseImageCard
@@ -162,9 +190,10 @@ export function MultiImageInput({
           <button
             type="button"
             onClick={handleAddClick}
-            className={`flex ${cardHeightClass} items-center justify-center rounded-2xl border border-dashed text-3xl ${styles.addButton}`}
+            disabled={processing}
+            className={`flex ${cardHeightClass} items-center justify-center rounded-2xl border border-dashed text-3xl disabled:cursor-wait disabled:opacity-60 ${styles.addButton}`}
           >
-            +
+            {processing ? "..." : "+"}
           </button>
         )}
       </div>

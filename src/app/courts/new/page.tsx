@@ -11,6 +11,7 @@ import {
 } from "@/lib/i18n";
 import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { getAllowPublicCourtPublish } from "@/lib/court-submission-policy";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
@@ -83,7 +84,10 @@ export default async function NewCourtPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(buildLocalizedPath("/login", locale));
+    const redirectTo = resolved?.sport
+      ? `/courts/new?sport=${encodeURIComponent(resolved.sport)}`
+      : "/courts/new";
+    redirect(buildAuthPagePath("/login", locale, redirectTo));
   }
 
   const { data: sports } = await supabaseSelect<{
@@ -135,6 +139,8 @@ export default async function NewCourtPage({
     photos: t("admin.photos"),
     primaryPhoto: t("admin.primaryPhoto"),
     makePrimaryPhoto: t("admin.makePrimaryPhoto"),
+    photoUploadHelper: t("admin.photoUploadHelper"),
+    photoProcessError: t("admin.photoProcessError"),
     submit: allowPublicCourtPublish
       ? t("courtSubmission.submit")
       : t("courtSubmission.submitRequest"),
@@ -155,10 +161,7 @@ export default async function NewCourtPage({
           as="section"
           className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.13)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--foreground-rgb)/0.52)]">
-            {locale === "th" ? "ชุมชน · สนาม" : "Community · Courts"}
-          </p>
-          <h1 className="mt-4 text-xl font-semibold tracking-tight text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
             {t("courtSubmission.title")}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-[rgb(var(--foreground-rgb)/0.72)]">

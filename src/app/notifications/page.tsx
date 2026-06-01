@@ -6,10 +6,10 @@ import {
   type NotificationsPageCopy,
 } from "@/components/notifications/notifications-page-content";
 import {
-  buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -134,7 +134,7 @@ export default async function NotificationsPage({
             <p className="mt-2">
               {copy.loginPrompt}{" "}
               <Link
-                href={buildLocalizedPath("/login", locale)}
+                href={buildAuthPagePath("/login", locale, "/notifications")}
                 className="font-semibold text-[var(--rt-primary)]"
               >
                 {t("header.login")}

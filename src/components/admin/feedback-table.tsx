@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ChevronDown } from "lucide-react";
 import { showToast } from "@/components/toaster";
 
 export type AdminFeedbackRow = {
@@ -26,6 +27,8 @@ export type FeedbackTableCopy = {
   };
   sortBy: string;
   sortByDate: string;
+  newest: string;
+  oldest: string;
   sortByStatus: string;
   statusPending: string;
   statusInReview: string;
@@ -38,6 +41,7 @@ export type FeedbackTableCopy = {
   priorityLabel: string;
   markRead: string;
   markUnread: string;
+  mark: string;
   checked: string;
   unchecked: string;
   changeStatus: string;
@@ -153,15 +157,22 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
         <span className="text-xs font-semibold text-slate-700">
           {copy.sortBy}
         </span>
-        <select
-          value={sortType}
-          onChange={(e) => setSortType(e.target.value as SortType)}
-          className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-900 transition hover:border-slate-400"
-        >
-          <option value="date-desc">{copy.sortByDate} (Newest)</option>
-          <option value="date-asc">{copy.sortByDate} (Oldest)</option>
-          <option value="status">{copy.sortByStatus}</option>
-        </select>
+        <span className="relative inline-flex">
+          <select
+            value={sortType}
+            onChange={(e) => setSortType(e.target.value as SortType)}
+            className="cursor-pointer appearance-none rounded border border-slate-300 bg-white px-3 py-1.5 pr-9 text-xs font-medium text-slate-900 transition hover:border-slate-400"
+          >
+            <option value="date-desc">{copy.sortByDate} ({copy.newest})</option>
+            <option value="date-asc">{copy.sortByDate} ({copy.oldest})</option>
+            <option value="status">{copy.sortByStatus}</option>
+          </select>
+          <ChevronDown
+            className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500"
+            strokeWidth={1.8}
+            aria-hidden
+          />
+        </span>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -211,16 +222,23 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
                     {isPending && pendingId === row.id ? (
                       <span className="text-xs text-slate-500 font-medium">{copy.updating}</span>
                     ) : (
-                      <select
-                        value={row.status || "open"}
-                        onChange={(e) => updateStatus(row.id, e.target.value)}
-                        className={`text-xs font-medium rounded border px-2.5 py-1.5 transition appearance-none cursor-pointer ${getStatusSelectClass(row.status)}`}
-                      >
-                        <option value="open">{copy.statusPending}</option>
-                        <option value="in_review">{copy.statusInReview}</option>
-                        <option value="resolved">{copy.statusResolved}</option>
-                        <option value="dismissed">{copy.statusDismissed}</option>
-                      </select>
+                      <span className="relative inline-flex">
+                        <select
+                          value={row.status || "open"}
+                          onChange={(e) => updateStatus(row.id, e.target.value)}
+                          className={`cursor-pointer appearance-none rounded border px-2.5 py-1.5 pr-8 text-xs font-medium transition ${getStatusSelectClass(row.status)}`}
+                        >
+                          <option value="open">{copy.statusPending}</option>
+                          <option value="in_review">{copy.statusInReview}</option>
+                          <option value="resolved">{copy.statusResolved}</option>
+                          <option value="dismissed">{copy.statusDismissed}</option>
+                        </select>
+                        <ChevronDown
+                          className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-current opacity-65"
+                          strokeWidth={1.8}
+                          aria-hidden
+                        />
+                      </span>
                     )}
                   </td>
                   <td className="px-5 py-4 text-right">
@@ -236,10 +254,10 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
                       aria-pressed={row.checked}
                     >
                       {isPending && pendingId === row.id
-                        ? "…"
+                        ? "..."
                         : row.checked
                           ? "✓"
-                          : "Mark"}
+                          : copy.mark}
                     </button>
                   </td>
                 </tr>
