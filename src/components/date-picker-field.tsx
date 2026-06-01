@@ -232,7 +232,7 @@ export function DatePickerField({
           variant="light"
         />
         {open && (
-          <div className="absolute left-0 top-full z-30 mt-3 w-[min(26rem,calc(100vw-3rem))] min-w-full rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)]">
+          <div className="fixed inset-x-3 bottom-4 z-50 max-h-[min(400px,calc(100dvh-2rem))] min-w-0 overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(26rem,calc(100vw-3rem))] sm:min-w-full">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"

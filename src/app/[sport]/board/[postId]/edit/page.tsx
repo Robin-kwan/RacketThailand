@@ -6,6 +6,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { fetchCommunityPostDetail } from "@/server/communityBoard";
@@ -57,7 +58,9 @@ export default async function EditCommunityPostPage({
     user?.id && user.email && !user.is_anonymous,
   );
   if (!isAuthenticated || !user) {
-    redirect(buildLocalizedPath("/login", locale));
+    redirect(
+      buildAuthPagePath("/login", locale, `/${sport}/board/${postId}/edit`),
+    );
   }
   const { data: profile } = await supabase
     .from("profiles")

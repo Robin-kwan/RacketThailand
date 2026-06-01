@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 
 type NotificationMetadata = Record<string, string | null | undefined>;
@@ -29,6 +29,7 @@ export type NotificationCopy = {
   casualPlayJoinRequest: string;
   casualPlayJoinAccepted: string;
   casualPlayJoinRejected: string;
+  deleteNotification: string;
 };
 
 type NotificationsMenuProps = {
@@ -53,6 +54,7 @@ export function NotificationsMenu({
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(() => new Set());
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const unreadCount = useMemo(
@@ -103,6 +105,25 @@ export function NotificationsMenu({
         item.id === id ? { ...item, read_at: new Date().toISOString() } : item,
       ),
     );
+  };
+
+  const deleteNotification = async (id: string) => {
+    setDeletingIds((prev) => new Set(prev).add(id));
+    const previousNotifications = notifications;
+    setNotifications((prev) => prev.filter((item) => item.id !== id));
+
+    const response = await fetch(`/api/notifications/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      setNotifications(previousNotifications);
+    }
+    setDeletingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
   const markAllRead = async () => {
@@ -194,7 +215,7 @@ export function NotificationsMenu({
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-3 w-80 rounded-3xl border border-slate-200 bg-white p-4 text-sm">
+        <div className="fixed inset-x-3 top-20 z-50 max-h-[min(400px,calc(100dvh-6rem))] overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 text-sm sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:w-80">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-900">
               {copy.title}
@@ -212,7 +233,7 @@ export function NotificationsMenu({
           ) : notifications.length === 0 ? (
             <p className="py-6 text-center text-slate-500">{copy.empty}</p>
           ) : (
-            <ul className="flex max-h-72 flex-col gap-3 overflow-y-auto pr-1">
+            <ul className="flex max-h-[min(312px,calc(100dvh-12rem))] flex-col gap-3 overflow-y-auto pr-1 sm:max-h-72">
               {notifications.map((notification) => {
                 const notificationLink = buildNotificationHref(notification);
                 return (
@@ -224,9 +245,25 @@ export function NotificationsMenu({
                         : "border-slate-200 bg-slate-50"
                     }`}
                   >
-                    <p className="text-sm text-slate-900">
-                      {formatMessage(notification)}
-                    </p>
+                    <div className="flex items-start gap-2">
+                      <p className="min-w-0 flex-1 text-sm text-slate-900">
+                        {formatMessage(notification)}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => deleteNotification(notification.id)}
+                        disabled={deletingIds.has(notification.id)}
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-wait disabled:opacity-50"
+                        aria-label={copy.deleteNotification}
+                        title={copy.deleteNotification}
+                      >
+                        <X
+                          className="h-3.5 w-3.5"
+                          strokeWidth={2}
+                          aria-hidden
+                        />
+                      </button>
+                    </div>
                     <p className="text-xs text-slate-400">
                       {new Date(notification.created_at).toLocaleString()}
                     </p>

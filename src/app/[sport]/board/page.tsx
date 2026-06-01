@@ -10,6 +10,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { SPORT_META } from "@/data/sportMeta";
 import { fetchCommunityPosts } from "@/server/communityBoard";
@@ -242,7 +243,11 @@ export default async function CommunityBoardPage({
             <p>
               {copy.loginPrompt}{" "}
               <Link
-                href={buildLocalizedPath("/login", locale)}
+                href={buildAuthPagePath(
+                  "/login",
+                  locale,
+                  `/${sport.code}/board`,
+                )}
                 className="font-semibold text-[var(--rt-primary)]"
               >
                 {t("header.login")}

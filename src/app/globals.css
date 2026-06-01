@@ -190,6 +190,15 @@ summary,
   cursor: pointer;
 }
 
+button[class^="border"]:not(:disabled):not(:hover):not([class^="bg-"]):not([class*=" bg-"]),
+button[class*=" border"]:not(:disabled):not(:hover):not([class^="bg-"]):not([class*=" bg-"]),
+a[class^="border"]:not(:hover):not([class^="bg-"]):not([class*=" bg-"]),
+a[class*=" border"]:not(:hover):not([class^="bg-"]):not([class*=" bg-"]),
+button[class*="bg-transparent"]:not(:disabled):not(:hover),
+a[class*="bg-transparent"]:not(:hover) {
+  background-color: #ffffff;
+}
+
 .rt-btn-primary {
   background-color: rgb(var(--rt-primary-rgb));
   border: 1px solid rgb(var(--rt-primary-border-rgb));

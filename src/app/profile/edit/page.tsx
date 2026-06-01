@@ -3,10 +3,10 @@ import { ProfileForm } from "@/components/profile/profile-form";
 import { BaseCard } from "@/components/base-card";
 import { SPORT_META } from "@/data/sportMeta";
 import {
-  buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { buildProfileDefaults } from "@/server/profile";
 
@@ -82,7 +82,7 @@ export default async function ProfileEditPage({
     .order("code");
 
   if (!user || !profile) {
-    redirect(buildLocalizedPath("/login", locale));
+    redirect(buildAuthPagePath("/login", locale, "/profile/edit"));
   }
 
   const copy = {

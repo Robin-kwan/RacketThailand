@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { ensureUserProfile } from "@/server/profile";
 
 type RouteContext = {
   params: Promise<{ postId: string }>;
@@ -13,6 +15,13 @@ export async function POST(request: Request, context: RouteContext) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { error: profileError } = await ensureUserProfile(
+    getSupabaseAdminClient(),
+    user,
+  );
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
   const { data: existing } = await supabase

@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { validateOptimizedPhotoFile } from "@/lib/image-upload";
 import { requireCourtAccess } from "@/server/courtAccess";
 
 const COURT_BUCKET =
@@ -35,6 +36,10 @@ export async function POST(
       { error: "Court photo is required." },
       { status: 400 },
     );
+  }
+  const validationError = validateOptimizedPhotoFile(file);
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   const ext = file.name.split(".").pop() || "jpg";

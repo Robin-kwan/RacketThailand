@@ -3,14 +3,19 @@ import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/auth/signup-form";
 import { BaseCard } from "@/components/base-card";
 import {
-  buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import {
+  buildAuthPagePath,
+  buildLocalizedAuthRedirectPath,
+  sanitizeAuthRedirectPath,
+} from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type SearchParams = {
   lang?: string;
+  redirectTo?: string;
 };
 
 type SearchParamInput = Promise<SearchParams> | undefined;
@@ -29,12 +34,13 @@ export default async function SignupPage({
 }) {
   const resolvedParams = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedParams?.lang);
+  const redirectTo = sanitizeAuthRedirectPath(resolvedParams?.redirectTo);
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user && !user.is_anonymous) {
-    redirect(buildLocalizedPath("/", locale));
+    redirect(buildLocalizedAuthRedirectPath(redirectTo, locale));
   }
   const t = await getTranslator(locale);
   const formCopy = {
@@ -48,6 +54,10 @@ export default async function SignupPage({
     passwordToggleShow: t("auth.passwordShow"),
     passwordToggleHide: t("auth.passwordHide"),
     passwordRequirements: t("auth.passwordRequirements"),
+    passwordMismatch: t("auth.passwordMismatch"),
+    passwordWeak: t("auth.passwordWeak"),
+    emailExists: t("auth.emailExists"),
+    namePlaceholder: t("auth.namePlaceholder"),
   };
 
   if (!t) {
@@ -67,11 +77,11 @@ export default async function SignupPage({
           <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             {t("auth.signupSubtitle")}
           </p>
-          <SignupForm locale={locale} copy={formCopy} />
+          <SignupForm locale={locale} copy={formCopy} redirectTo={redirectTo} />
           <p className="mt-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             {t("auth.switchToLogin")}{" "}
             <Link
-              href={buildLocalizedPath("/login", locale)}
+              href={buildAuthPagePath("/login", locale, redirectTo)}
               className="font-semibold text-[var(--rt-primary)]"
             >
               {t("header.login")}

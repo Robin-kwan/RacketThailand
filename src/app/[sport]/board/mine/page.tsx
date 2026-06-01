@@ -9,6 +9,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { fetchCommunityPostsByAuthor } from "@/server/communityBoard";
@@ -55,7 +56,13 @@ export default async function MyCommunityPostsPage({
   );
 
   if (!isAuthenticated || !user) {
-    redirect(buildLocalizedPath("/login", locale));
+    redirect(
+      buildAuthPagePath(
+        "/login",
+        locale,
+        `/${resolvedParams.sport}/board/mine`,
+      ),
+    );
   }
 
   const { sport, posts } = await fetchCommunityPostsByAuthor(

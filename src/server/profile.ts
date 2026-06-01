@@ -30,6 +30,18 @@ export function buildProfileDefaults(user: SupabaseUser) {
   };
 }
 
+function buildUniqueFallbackUsername(user: SupabaseUser) {
+  const email = user.email ?? "";
+  const baseUsername =
+    email.split("@")[0] || `player_${user.id.slice(0, 6)}`;
+  const normalizedUsername = baseUsername
+    .replace(/[^a-zA-Z0-9_]/g, "")
+    .toLowerCase()
+    .slice(0, 20);
+
+  return `${normalizedUsername || "player"}_${user.id.slice(0, 8)}`;
+}
+
 export async function ensureUserProfile(
   supabase: SupabaseClient,
   user: SupabaseUser,
@@ -56,6 +68,18 @@ export async function ensureUserProfile(
 
   const defaults = buildProfileDefaults(user);
   const { error: insertError } = await supabase.from("profiles").insert(defaults);
+
+  if (insertError?.code === "23505") {
+    const { error: retryError } = await supabase.from("profiles").insert({
+      ...defaults,
+      username: buildUniqueFallbackUsername(user),
+    });
+
+    return {
+      created: !retryError,
+      error: retryError,
+    };
+  }
 
   return {
     created: !insertError,

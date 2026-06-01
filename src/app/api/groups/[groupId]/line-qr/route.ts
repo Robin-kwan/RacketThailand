@@ -3,6 +3,7 @@ import "server-only";
 import { Buffer } from "node:buffer";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { validateLineQrFile } from "@/lib/image-upload";
 import { requireGroupAccess } from "@/server/groupAccess";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
 
@@ -45,7 +46,7 @@ export async function POST(
   options: { params: RouteParamsInput },
 ) {
   const resolved = await resolveParams(options.params);
-  const { supabase, error } = await requireGroupAccess(resolved.groupId);
+  const { error } = await requireGroupAccess(resolved.groupId);
 
   if (error === "UNAUTHORIZED") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -62,6 +63,10 @@ export async function POST(
       { error: "LINE QR image is required." },
       { status: 400 },
     );
+  }
+  const validationError = validateLineQrFile(file);
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   const ext = file.name.split(".").pop() || "png";
@@ -88,7 +93,7 @@ export async function POST(
     data: { publicUrl },
   } = adminClient.storage.from(GROUP_LINE_QR_BUCKET).getPublicUrl(filePath);
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await adminClient
     .from("groups")
     .update({ line_qr_url: publicUrl, updated_at: new Date().toISOString() })
     .eq("id", resolved.groupId);
@@ -108,7 +113,7 @@ export async function DELETE(
   options: { params: RouteParamsInput },
 ) {
   const resolved = await resolveParams(options.params);
-  const { supabase, error } = await requireGroupAccess(resolved.groupId);
+  const { error } = await requireGroupAccess(resolved.groupId);
 
   if (error === "UNAUTHORIZED") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -117,7 +122,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { data: group, error: fetchError } = await supabase
+  const { data: group, error: fetchError } = await adminClient
     .from("groups")
     .select("line_qr_url")
     .eq("id", resolved.groupId)
@@ -137,7 +142,7 @@ export async function DELETE(
     await adminClient.storage.from(GROUP_LINE_QR_BUCKET).remove([storagePath]);
   }
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await adminClient
     .from("groups")
     .update({ line_qr_url: null, updated_at: new Date().toISOString() })
     .eq("id", resolved.groupId);
@@ -157,7 +162,7 @@ export async function GET(
   options: { params: RouteParamsInput },
 ) {
   const resolved = await resolveParams(options.params);
-  const { supabase, error } = await requireGroupAccess(resolved.groupId);
+  const { error } = await requireGroupAccess(resolved.groupId);
 
   if (error === "UNAUTHORIZED") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -166,7 +171,7 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { data, error: fetchError } = await supabase
+  const { data, error: fetchError } = await adminClient
     .from("groups")
     .select("line_qr_url")
     .eq("id", resolved.groupId)

@@ -14,6 +14,7 @@ import {
 import { BaseImageCard } from "@/components/base-image-card";
 import { LineQrUploader } from "@/components/line-qr-uploader";
 import { type PlayFormat } from "@/lib/play-format";
+import { PHOTO_UPLOAD_ACCEPT, optimizePhotoFile } from "@/lib/image-upload";
 
 type SportOption = Option;
 
@@ -36,6 +37,10 @@ type GroupEditCopy = GroupFormCopy & {
   submitting: string;
   success: string;
   error: string;
+  working: string;
+  photoAlt: string;
+  primaryPhoto: string;
+  makePrimaryPhoto: string;
 };
 
 type GroupRecord = {
@@ -172,29 +177,48 @@ export function GroupEditForm({
     );
   };
 
-  const handleAddPhotos = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddPhotos = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (uploading) return;
     const files = event.target.files;
     if (!files || photos.length >= 8) return;
-    updatePhotos((prev) => {
-      const next = [...prev];
-      Array.from(files).forEach((file) => {
-        if (next.length >= 8) return;
-        const id = `local-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2)}`;
-        const previewUrl = URL.createObjectURL(file);
-        next.push({
-          id,
-          image_url: previewUrl,
-          is_primary: false,
-          status: "new",
-          file,
+    setUploading(true);
+    try {
+      const optimizedFiles: File[] = [];
+      for (const file of Array.from(files).slice(0, Math.max(8 - photos.length, 0))) {
+        try {
+          optimizedFiles.push(await optimizePhotoFile(file));
+        } catch (error) {
+          showToast({
+            variant: "error",
+            message: error instanceof Error ? error.message : copy.error,
+          });
+        }
+      }
+
+      if (optimizedFiles.length > 0) {
+        updatePhotos((prev) => {
+          const next = [...prev];
+          optimizedFiles.forEach((file) => {
+            if (next.length >= 8) return;
+            const id = `local-${Date.now()}-${Math.random()
+              .toString(36)
+              .slice(2)}`;
+            const previewUrl = URL.createObjectURL(file);
+            next.push({
+              id,
+              image_url: previewUrl,
+              is_primary: false,
+              status: "new",
+              file,
+            });
+          });
+          return next;
         });
-      });
-      return next;
-    });
-    event.target.value = "";
+      }
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
   };
 
   const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
@@ -454,7 +478,7 @@ export function GroupEditForm({
                   strokeWidth={1.8}
                   aria-hidden
                 />
-                Working...
+                {copy.working}
               </span>
             )}
           </div>
@@ -466,7 +490,7 @@ export function GroupEditForm({
                 <BaseImageCard
                   key={photo.id}
                   imageUrl={photo.image_url ?? undefined}
-                  alt="Group photo"
+                  alt={copy.photoAlt}
                   onRemove={() => handleRemovePhoto(photo.id)}
                   disabled={uploading || submitting}
                   heightClass="h-40"
@@ -477,7 +501,7 @@ export function GroupEditForm({
                       className={`font-semibold ${photo.is_primary ? "text-emerald-300" : "text-slate-200"}`}
                       disabled={photo.is_primary || uploading || submitting}
                     >
-                      {photo.is_primary ? "Primary" : "Make primary"}
+                      {photo.is_primary ? copy.primaryPhoto : copy.makePrimaryPhoto}
                     </button>
                   }
                 />
@@ -491,7 +515,7 @@ export function GroupEditForm({
                 />
                 <input
                   type="file"
-                  accept="image/*"
+                  accept={PHOTO_UPLOAD_ACCEPT}
                   multiple
                   className="hidden"
                   onChange={handleAddPhotos}

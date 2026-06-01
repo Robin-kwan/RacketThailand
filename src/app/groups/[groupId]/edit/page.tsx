@@ -9,6 +9,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -50,7 +51,9 @@ export default async function EditGroupPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect(buildLocalizedPath("/login", locale));
+    redirect(
+      buildAuthPagePath("/login", locale, `/groups/${resolvedParams.groupId}/edit`),
+    );
   }
 
   const { data: profile } = await supabase
@@ -266,6 +269,10 @@ export default async function EditGroupPage({
     submitting: t("groups.edit.submitting"),
     success: t("groups.edit.success"),
     error: t("groups.edit.error"),
+    working: t("groups.edit.working"),
+    photoAlt: t("groups.edit.photoAlt"),
+    primaryPhoto: t("groups.form.primaryPhoto"),
+    makePrimaryPhoto: t("groups.form.makePrimaryPhoto"),
     deleteSubmit: t("groups.edit.deleteSubmit"),
     deleting: t("groups.edit.deleting"),
     deleteSuccess: t("groups.edit.deleteSuccess"),
@@ -306,10 +313,7 @@ export default async function EditGroupPage({
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.6)]">
-            Groups · Edit
-          </p>
-          <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("groups.edit.title")}
           </h1>
           <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">

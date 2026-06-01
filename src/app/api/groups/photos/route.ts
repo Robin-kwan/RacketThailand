@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { requireGroupAccess } from "@/server/groupAccess";
 
 type PhotoPayload = {
   groupId: string;
@@ -8,15 +9,6 @@ type PhotoPayload = {
 };
 
 export async function POST(request: Request) {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const payload = (await request.json()) as PhotoPayload;
   if (!payload.groupId || !payload.imageUrl) {
     return NextResponse.json(
@@ -25,7 +17,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: insertedPhoto, error: insertError } = await supabase
+  const { error: accessError } = await requireGroupAccess(payload.groupId);
+  if (accessError === "UNAUTHORIZED") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (accessError === "FORBIDDEN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const adminSupabase = getSupabaseAdminClient();
+  const { data: insertedPhoto, error: insertError } = await adminSupabase
     .from("group_photos")
     .insert({
       group_id: payload.groupId,
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   if (payload.isPrimary && insertedPhoto) {
-    await supabase
+    await adminSupabase
       .from("group_photos")
       .update({ is_primary: false })
       .eq("group_id", payload.groupId)

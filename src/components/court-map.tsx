@@ -7,6 +7,10 @@ type CourtMapProps = {
   latitude: number;
   longitude: number;
   placeId?: string | null;
+  locale: "th" | "en";
+  eyebrow: string;
+  description: string;
+  openMapsLabel: string;
 };
 
 export function CourtMap({
@@ -14,12 +18,16 @@ export function CourtMap({
   latitude,
   longitude,
   placeId,
+  locale,
+  eyebrow,
+  description,
+  openMapsLabel,
 }: CourtMapProps) {
   const normalizedPlaceId = placeId?.trim() || null;
   const mapUrl = useMemo(() => {
     const query = `${latitude},${longitude}`;
-    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed&hl=en`;
-  }, [latitude, longitude]);
+    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed&hl=${locale}`;
+  }, [latitude, locale, longitude]);
 
   const mapsUrl = useMemo(() => {
     if (normalizedPlaceId) {
@@ -41,12 +49,10 @@ export function CourtMap({
     <section className="space-y-4 rounded-[32px] bg-white/90 p-6">
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase text-slate-400">
-          Map & Directions
+          {eyebrow}
         </p>
         <h2 className="text-xl font-semibold text-slate-900">{name}</h2>
-        <p className="text-sm text-slate-600">
-          View this court on the map and get directions instantly.
-        </p>
+        <p className="text-sm text-slate-600">{description}</p>
       </header>
       <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100">
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-transparent via-transparent to-white/15" />
@@ -66,7 +72,7 @@ export function CourtMap({
           rel="noreferrer"
           className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
         >
-          Open in Google Maps
+          {openMapsLabel}
         </a>
       </div>
     </section>

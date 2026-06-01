@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const GROUP_BUCKET =
@@ -20,14 +21,15 @@ async function requirePhotoPermission(photoId: string) {
     return { supabase, user: null, error: "UNAUTHORIZED" as const };
   }
 
-  const { data: profile } = await supabase
+  const adminSupabase = getSupabaseAdminClient();
+  const { data: profile } = await adminSupabase
     .from("profiles")
     .select("status")
     .eq("id", user.id)
     .single();
   const isAdmin = profile?.status === "admin";
 
-  const { data: photo } = await supabase
+  const { data: photo } = await adminSupabase
     .from("group_photos")
     .select("id,group_id,image_url")
     .eq("id", photoId)
@@ -39,7 +41,7 @@ async function requirePhotoPermission(photoId: string) {
   }
 
   if (!isAdmin) {
-    const { data: group } = await supabase
+    const { data: group } = await adminSupabase
       .from("groups")
       .select("owner_id")
       .eq("id", typedPhoto.group_id)
@@ -70,7 +72,7 @@ export async function DELETE(
   { params }: { params: Promise<{ photoId: string }> },
 ) {
   const resolvedParams = await params;
-  const { supabase, error, photo } = await requirePhotoPermission(
+  const { error, photo } = await requirePhotoPermission(
     resolvedParams.photoId,
   );
   if (error === "UNAUTHORIZED") {
@@ -83,7 +85,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const { error: deleteError } = await supabase
+  const adminSupabase = getSupabaseAdminClient();
+  const { error: deleteError } = await adminSupabase
     .from("group_photos")
     .delete()
     .eq("id", resolvedParams.photoId);
@@ -96,7 +99,7 @@ export async function DELETE(
 
   const path = extractStoragePath(photo?.image_url ?? null);
   if (path) {
-    await supabase.storage.from(GROUP_BUCKET).remove([path]);
+    await adminSupabase.storage.from(GROUP_BUCKET).remove([path]);
   }
 
   return NextResponse.json({ ok: true });
@@ -114,7 +117,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   }
 
-  const { supabase, error, photo } = await requirePhotoPermission(
+  const { error, photo } = await requirePhotoPermission(
     resolvedParams.photoId,
   );
   if (error === "UNAUTHORIZED") {
@@ -127,7 +130,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const { error: resetError } = await supabase
+  const adminSupabase = getSupabaseAdminClient();
+  const { error: resetError } = await adminSupabase
     .from("group_photos")
     .update({ is_primary: false })
     .eq("group_id", photo.group_id);
@@ -138,7 +142,7 @@ export async function PATCH(
     );
   }
 
-  await supabase
+  await adminSupabase
     .from("group_photos")
     .update({ is_primary: true })
     .eq("id", resolvedParams.photoId);

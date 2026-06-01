@@ -9,6 +9,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
@@ -47,7 +48,9 @@ export default async function EditCourtPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect(buildLocalizedPath("/login", locale));
+    redirect(
+      buildAuthPagePath("/login", locale, `/courts/${resolvedParams.courtId}/edit`),
+    );
   }
 
   const { data: profile } = await supabase
@@ -176,6 +179,8 @@ export default async function EditCourtPage({
     photos: t("admin.photos"),
     primaryPhoto: t("admin.primaryPhoto"),
     makePrimaryPhoto: t("admin.makePrimaryPhoto"),
+    photoUploadHelper: t("admin.photoUploadHelper"),
+    photoProcessError: t("admin.photoProcessError"),
     locationMissing: t("admin.locationMissing"),
     deleteSubmit: t("admin.deleteSubmit"),
     deleting: t("admin.deleting"),
@@ -211,10 +216,7 @@ export default async function EditCourtPage({
           />
         </div>
         <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
-          <p className="text-xs font-semibold uppercase text-slate-400">
-            Courts · Edit
-          </p>
-          <h1 className="mt-3 text-xl font-semibold text-slate-900">
+          <h1 className="text-xl font-semibold text-slate-900">
             {copy.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>

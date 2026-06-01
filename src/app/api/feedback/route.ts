@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { ensureUserProfile } from "@/server/profile";
 
 type FeedbackPayload = {
   subject?: string;
@@ -21,6 +22,11 @@ export async function POST(request: Request) {
 
   if (userError || !user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  const adminSupabase = getSupabaseAdminClient();
+  const { error: profileError } = await ensureUserProfile(adminSupabase, user);
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
   let payload: FeedbackPayload;
@@ -85,10 +91,9 @@ export async function POST(request: Request) {
           reporterEmail: user.email ?? null,
           type,
         },
-      }));
+    }));
     if (notificationPayload.length > 0) {
       try {
-        const adminSupabase = getSupabaseAdminClient();
         await adminSupabase.from("notifications").insert(notificationPayload);
       } catch {
         // Ignore notification failures so feedback submission still succeeds

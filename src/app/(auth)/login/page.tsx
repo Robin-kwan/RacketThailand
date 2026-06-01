@@ -3,14 +3,19 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { BaseCard } from "@/components/base-card";
 import {
-  buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import {
+  buildAuthPagePath,
+  buildLocalizedAuthRedirectPath,
+  sanitizeAuthRedirectPath,
+} from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type SearchParams = {
   lang?: string;
+  redirectTo?: string;
 };
 
 type SearchParamInput = Promise<SearchParams> | undefined;
@@ -29,12 +34,13 @@ export default async function LoginPage({
 }) {
   const resolvedParams = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedParams?.lang);
+  const redirectTo = sanitizeAuthRedirectPath(resolvedParams?.redirectTo);
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user && !user.is_anonymous) {
-    redirect(buildLocalizedPath("/", locale));
+    redirect(buildLocalizedAuthRedirectPath(redirectTo, locale));
   }
   const t = await getTranslator(locale);
   const formCopy = {
@@ -48,6 +54,7 @@ export default async function LoginPage({
     passwordToggleShow: t("auth.passwordShow"),
     passwordToggleHide: t("auth.passwordHide"),
     googleButton: t("auth.googleButton"),
+    success: t("auth.loginSuccess"),
   };
 
   return (
@@ -60,11 +67,11 @@ export default async function LoginPage({
           <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("auth.loginTitle")}
           </h1>
-          <LoginForm locale={locale} copy={formCopy} />
+          <LoginForm locale={locale} copy={formCopy} redirectTo={redirectTo} />
           <p className="mt-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             {t("auth.switchToSignup")}{" "}
             <Link
-              href={buildLocalizedPath("/signup", locale)}
+              href={buildAuthPagePath("/signup", locale, redirectTo)}
               className="font-semibold text-[var(--rt-primary)]"
             >
               {t("header.signup")}

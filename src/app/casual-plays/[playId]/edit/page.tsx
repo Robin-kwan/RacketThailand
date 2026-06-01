@@ -14,6 +14,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
@@ -78,7 +79,13 @@ export default async function EditCasualPlayPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(buildLocalizedPath("/login", locale));
+    redirect(
+      buildAuthPagePath(
+        "/login",
+        locale,
+        `/casual-plays/${resolvedParams.playId}/edit`,
+      ),
+    );
   }
 
   const { data: playRows } = await supabaseSelect<CasualPlayEditRow>(
@@ -264,10 +271,7 @@ export default async function EditCasualPlayPage({
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white p-8"
         >
-          <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.55)]">
-            Casual plays · Edit
-          </p>
-          <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
           </h1>
           <p className="mt-2 text-sm text-[rgb(var(--foreground-rgb)/0.75)]">

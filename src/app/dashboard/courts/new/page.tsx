@@ -6,6 +6,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
@@ -36,7 +37,10 @@ export default async function DashboardAddCourtPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect(buildLocalizedPath("/login", locale));
+    const redirectTo = resolved?.sport
+      ? `/dashboard/courts/new?sport=${encodeURIComponent(resolved.sport)}`
+      : "/dashboard/courts/new";
+    redirect(buildAuthPagePath("/login", locale, redirectTo));
   }
   const { data: profile } = await supabase
     .from("profiles")
@@ -100,6 +104,8 @@ export default async function DashboardAddCourtPage({
     photos: t("admin.photos"),
     primaryPhoto: t("admin.primaryPhoto"),
     makePrimaryPhoto: t("admin.makePrimaryPhoto"),
+    photoUploadHelper: t("admin.photoUploadHelper"),
+    photoProcessError: t("admin.photoProcessError"),
     submit: t("admin.submit"),
     submitting: t("admin.submitting"),
     success: t("admin.success"),
@@ -111,10 +117,7 @@ export default async function DashboardAddCourtPage({
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
       <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
-        <p className="text-xs font-semibold uppercase text-slate-400">
-          Dashboard · Courts
-        </p>
-        <h1 className="mt-3 text-xl font-semibold text-slate-900">
+        <h1 className="text-xl font-semibold text-slate-900">
           {copy.title}
         </h1>
         <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>

@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
-import { buildLocalizedPath } from "@/lib/i18n";
+import {
+  buildAuthPagePath,
+  buildLocalizedAuthRedirectPath,
+} from "@/lib/auth-redirect";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { showToast } from "@/components/toaster";
 
@@ -18,14 +21,23 @@ type SignupCopy = {
   passwordToggleShow: string;
   passwordToggleHide: string;
   passwordRequirements: string;
+  passwordMismatch: string;
+  passwordWeak: string;
+  emailExists: string;
+  namePlaceholder: string;
 };
 
 type SignupFormProps = {
   locale: Locale;
   copy: SignupCopy;
+  redirectTo?: string;
 };
 
-export function SignupForm({ locale, copy }: SignupFormProps) {
+export function SignupForm({
+  locale,
+  copy,
+  redirectTo = "/",
+}: SignupFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [submitting, setSubmitting] = useState(false);
@@ -50,19 +62,23 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
     const confirm = String(formData.get("confirmPassword") ?? "");
 
     if (password !== confirm) {
-      showToast({ variant: "error", message: "Passwords do not match." });
+      showToast({ variant: "error", message: copy.passwordMismatch });
       return;
     }
     if (!passwordPattern.test(password)) {
       showToast({
         variant: "error",
-        message:
-          "Password must include lowercase, uppercase, digit, and symbol (min 8 characters).",
+        message: copy.passwordWeak,
       });
       return;
     }
 
     setSubmitting(true);
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set(
+      "next",
+      buildLocalizedAuthRedirectPath(redirectTo, locale),
+    );
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -70,6 +86,7 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
         data: {
           full_name: name,
         },
+        emailRedirectTo: callbackUrl.toString(),
       },
     });
     setSubmitting(false);
@@ -81,8 +98,7 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
       if (alreadyRegistered || message.includes("registered")) {
         showToast({
           variant: "error",
-          message:
-            "An account with this email already exists. Try signing in or request a password reset.",
+          message: copy.emailExists,
         });
       } else {
         showToast({ variant: "error", message: signUpError.message });
@@ -94,8 +110,7 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
     if (Array.isArray(identities) && identities.length === 0) {
       showToast({
         variant: "error",
-        message:
-          "This email is already registered. Please sign in or request a password reset.",
+        message: copy.emailExists,
       });
       return;
     }
@@ -107,9 +122,9 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
     if (signUpData?.user?.id) {
       params.set("userId", signUpData.user.id);
     }
-    router.replace(
-      buildLocalizedPath(`/verify?${params.toString()}`, locale),
-    );
+    const verifyPath = buildAuthPagePath("/verify", locale, redirectTo);
+    const joiner = verifyPath.includes("?") ? "&" : "?";
+    router.replace(`${verifyPath}${joiner}${params.toString()}`);
   };
 
   if (!isMounted) {
@@ -134,7 +149,7 @@ export function SignupForm({ locale, copy }: SignupFormProps) {
           type="text"
           name="name"
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
-          placeholder="Jane Doe"
+          placeholder={copy.namePlaceholder}
           required
         />
       </div>
