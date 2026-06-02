@@ -174,7 +174,7 @@ export default async function Landing({
                   cta: `open_${sport.code}`,
                   sport: sport.code,
                 }}
-                className="group overflow-hidden rounded-[26px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white transition duration-300 hover:-translate-y-1 hover:border-[rgb(var(--rt-primary-border-rgb))] hover:shadow-[0_18px_50px_rgb(var(--foreground-rgb)/0.14)]"
+                className="group overflow-hidden rounded-[26px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white transition-[transform,border-color,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-[rgb(var(--rt-primary-border-rgb))] hover:shadow-[0_18px_50px_rgb(var(--foreground-rgb)/0.14)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 <article className="relative h-52 w-full overflow-hidden md:h-64">
                   <Image
@@ -183,7 +183,7 @@ export default async function Landing({
                     fill
                     sizes="(max-width: 768px) calc(100vw - 3rem), (max-width: 1200px) calc((100vw - 5rem - 3rem) / 2), 340px"
                     quality={60}
-                    className="object-cover"
+                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.035] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                     priority={sport.code === "badminton"}
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />

@@ -41,8 +41,6 @@ export type GroupRecord = {
 export type GroupFilterOptions = {
   search?: string;
   day?: string;
-  startTime?: string;
-  endTime?: string;
   playFormat?: string;
   allowWalkIn?: string;
   limit?: number;
@@ -104,14 +102,6 @@ async function fetchGroupIdsByCourtIds(
   if (filters.day) {
     params.day = `eq.${filters.day}`;
   }
-  if (filters.startTime && filters.endTime) {
-    params.start_time = `lte.${filters.endTime}`;
-    params.end_time = `gte.${filters.startTime}`;
-  } else if (filters.startTime) {
-    params.end_time = `gte.${filters.startTime}`;
-  } else if (filters.endTime) {
-    params.start_time = `lte.${filters.endTime}`;
-  }
 
   const { data } = await supabaseSelect<{ group_id: string }>(
     "group_sessions",
@@ -132,10 +122,7 @@ export async function fetchGroupsBySport(
     return { sport: null, groups: [], count: 0 };
   }
 
-  const hasSessionFilter =
-    Boolean(filters.day) ||
-    Boolean(filters.startTime) ||
-    Boolean(filters.endTime);
+  const hasSessionFilter = Boolean(filters.day);
   const sessionRelation = hasSessionFilter
     ? "group_sessions!inner"
     : "group_sessions";
@@ -176,14 +163,6 @@ export async function fetchGroupsBySport(
   }
   if (filters.day) {
     params["group_sessions.day"] = `eq.${filters.day}`;
-  }
-  if (filters.startTime && filters.endTime) {
-    params["group_sessions.start_time"] = `lte.${filters.endTime}`;
-    params["group_sessions.end_time"] = `gte.${filters.startTime}`;
-  } else if (filters.startTime) {
-    params["group_sessions.end_time"] = `gte.${filters.startTime}`;
-  } else if (filters.endTime) {
-    params["group_sessions.start_time"] = `lte.${filters.endTime}`;
   }
 
   const groupsRes = await supabaseSelect<GroupRecord>("groups", params);

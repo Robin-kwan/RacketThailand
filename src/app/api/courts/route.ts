@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   const limit = Number(searchParams.get("limit") ?? "12");
   const locale = normalizeLocale(searchParams.get("lang"));
   const filters: CourtFilterOptions = {
-    search: searchParams.get("q") ?? undefined,
+    search: searchParams.get("search") ?? undefined,
     province: searchParams.get("province") ?? undefined,
     limit: Number.isFinite(limit) && limit > 0 ? limit : 12,
     offset:

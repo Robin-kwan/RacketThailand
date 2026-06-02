@@ -15,8 +15,46 @@ import { fetchGroupsBySport } from "@/server/groupFinder";
 
 type Params = { sport: string };
 type ParamsInput = Promise<Params>;
-type SearchParams = { lang?: string };
+type SearchParams = {
+  lang?: string;
+  search?: string;
+  day?: string;
+  playFormat?: string;
+  allowWalkIn?: string;
+};
 type SearchParamsInput = Promise<SearchParams> | undefined;
+
+function sanitizeQueryParam(value?: string) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function buildFinderPath(
+  basePath: string,
+  query: Record<string, string | undefined>,
+) {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  const queryString = params.toString();
+  return queryString ? `${basePath}?${queryString}` : basePath;
+}
+
+const DAY_KEYS = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+] as const;
+
+type DayKey = (typeof DAY_KEYS)[number];
+
+function isDayKey(value: string): value is DayKey {
+  return DAY_KEYS.includes(value as DayKey);
+}
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
   return params;
@@ -49,7 +87,29 @@ export async function generateMetadata({
       },
     };
   }
-  const canonicalPath = `/${resolvedParams.sport}/group-finder`;
+  const t = await getTranslator(locale);
+  const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
+  const dayFilter = sanitizeQueryParam(resolvedSearch?.day);
+  const playFormatFilter = sanitizeQueryParam(resolvedSearch?.playFormat);
+  const walkInFilter = sanitizeQueryParam(resolvedSearch?.allowWalkIn);
+  const hasFreeTextSearch = Boolean(searchQuery);
+  const stableQuery = hasFreeTextSearch
+    ? {}
+    : {
+        day: isDayKey(dayFilter) ? dayFilter : undefined,
+        playFormat:
+          playFormatFilter === "single" || playFormatFilter === "double"
+            ? playFormatFilter
+            : undefined,
+        allowWalkIn:
+          walkInFilter === "true" || walkInFilter === "false"
+            ? walkInFilter
+            : undefined,
+      };
+  const canonicalPath = buildFinderPath(
+    `/${resolvedParams.sport}/group-finder`,
+    stableQuery,
+  );
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
   const title =
@@ -61,23 +121,57 @@ export async function generateMetadata({
       ? `ค้นหากลุ่ม${meta.name[locale]} ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย`
       : `Find active ${meta.name[locale]} groups in Thailand with schedules, contacts, and nearby map context.`;
 
+  const validDayFilter = isDayKey(dayFilter) ? dayFilter : "";
+  const filterParts = [
+    validDayFilter ? t(`groups.days.${validDayFilter}`) : "",
+    playFormatFilter === "single" ? t("groups.form.playFormatSingle") : "",
+    playFormatFilter === "double" ? t("groups.form.playFormatDouble") : "",
+    walkInFilter === "true" ? t("groups.detail.walkInsWelcome") : "",
+    walkInFilter === "false" ? t("groups.detail.walkInsClosed") : "",
+  ].filter(Boolean);
+  const filterSummary = filterParts.join(locale === "th" ? " • " : " • ");
+  const filteredTitle = searchQuery
+    ? locale === "th"
+      ? `ผลการค้นหากลุ่ม${meta.name[locale]} "${searchQuery}" | RacketThailand`
+      : `${meta.name[locale]} groups matching "${searchQuery}" | RacketThailand`
+    : filterSummary
+      ? locale === "th"
+        ? `กลุ่ม${meta.name[locale]}: ${filterSummary} | RacketThailand`
+        : `${meta.name[locale]} groups: ${filterSummary} | RacketThailand`
+      : title;
+  const filteredDescription = searchQuery
+    ? locale === "th"
+      ? `ดูผลการค้นหากลุ่ม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ`
+      : `Browse ${meta.name[locale]} group results matching "${searchQuery}" with schedules and contact details.`
+    : filterSummary
+      ? locale === "th"
+        ? `ค้นหากลุ่ม${meta.name[locale]}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ`
+        : `Find ${meta.name[locale]} groups filtered by ${filterSummary}, with schedules and contact details.`
+      : description;
+
   return {
-    title,
-    description,
+    title: filteredTitle,
+    description: filteredDescription,
+    robots: hasFreeTextSearch
+      ? {
+          index: false,
+          follow: true,
+        }
+      : undefined,
     alternates: {
       canonical,
       languages: alternates,
     },
     openGraph: {
-      title,
-      description,
+      title: filteredTitle,
+      description: filteredDescription,
       url: canonical,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
+      title: filteredTitle,
+      description: filteredDescription,
     },
   };
 }
@@ -98,23 +192,22 @@ export default async function GroupFinderPage({
     notFound();
   }
 
+  const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
+  const dayFilter = sanitizeQueryParam(resolvedSearch?.day);
+  const playFormatFilter = sanitizeQueryParam(resolvedSearch?.playFormat);
+  const walkInFilter = sanitizeQueryParam(resolvedSearch?.allowWalkIn);
   const groupData = await fetchGroupsBySport(resolvedParams.sport, {
+    search: searchQuery || undefined,
+    day: isDayKey(dayFilter) ? dayFilter : undefined,
+    playFormat: playFormatFilter || undefined,
+    allowWalkIn: walkInFilter || undefined,
     limit: 12,
   }, locale);
   if (!groupData.sport) {
     notFound();
   }
 
-  const dayKeys = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-  ] as const;
-  const dayLabels = dayKeys.reduce<Record<string, string>>(
+  const dayLabels = DAY_KEYS.reduce<Record<string, string>>(
     (acc, day) => {
       acc[day] = t(`groups.days.${day}`);
       return acc;
@@ -134,9 +227,6 @@ export default async function GroupFinderPage({
     scheduleAnytime: t("groupFinder.scheduleAnytime"),
     dayFilterLabel: t("groupFinder.dayFilterLabel"),
     anyDayLabel: t("groupFinder.anyDayLabel"),
-    startTimeLabel: t("groupFinder.startTimeLabel"),
-    endTimeLabel: t("groupFinder.endTimeLabel"),
-    anyTimeLabel: t("groupFinder.anyTimeLabel"),
     playFormatFilterLabel: t("groupFinder.playFormatFilterLabel"),
     anyPlayFormatLabel: t("groupFinder.anyPlayFormatLabel"),
     playFormatSingle: t("groups.form.playFormatSingle"),
@@ -218,6 +308,10 @@ export default async function GroupFinderPage({
           copy={copy}
           dayLabels={dayLabels}
           initialGroups={groupData.groups}
+          initialSearch={searchQuery}
+          initialDay={isDayKey(dayFilter) ? dayFilter : ""}
+          initialPlayFormat={playFormatFilter}
+          initialAllowWalkIn={walkInFilter}
         />
       </main>
     </div>

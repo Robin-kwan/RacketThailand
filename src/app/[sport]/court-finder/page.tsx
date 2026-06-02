@@ -12,11 +12,84 @@ import {
 } from "@/lib/i18n";
 import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { fetchCourtsBySport } from "@/server/courtFinder";
+import {
+  localizeThailandLocation,
+  resolveThailandLocationIds,
+} from "@/server/thailand-location";
 
 type Params = { sport: string };
 type ParamsInput = Promise<Params>;
-type SearchParams = { lang?: string };
+type SearchParams = {
+  lang?: string;
+  search?: string;
+  province?: string;
+};
 type SearchParamsInput = Promise<SearchParams> | undefined;
+
+function sanitizeQueryParam(value?: string) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function buildFinderPath(
+  basePath: string,
+  query: Record<string, string | undefined>,
+) {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  const queryString = params.toString();
+  return queryString ? `${basePath}?${queryString}` : basePath;
+}
+
+function slugifyLocationName(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function resolveProvinceFilter(value: string, locale: "th" | "en") {
+  const provinceId = Number(value);
+  if (Number.isFinite(provinceId)) {
+    const [localized, english] = await Promise.all([
+      localizeThailandLocation(
+        { province_id: provinceId },
+        locale,
+      ),
+      localizeThailandLocation(
+        { province_id: provinceId },
+        "en",
+      ),
+    ]);
+    const label = localized.province ?? value;
+    return {
+      label,
+      queryValue: slugifyLocationName(english.province ?? label) || value,
+    };
+  }
+
+  const resolved = await resolveThailandLocationIds({ province: value });
+  if (resolved.provinceId) {
+    const label =
+      locale === "en"
+        ? (resolved.provinceNameEn ?? resolved.provinceNameTh ?? value)
+        : (resolved.provinceNameTh ?? resolved.provinceNameEn ?? value);
+    return {
+      label,
+      queryValue:
+        slugifyLocationName(resolved.provinceNameEn ?? label) || value,
+    };
+  }
+
+  return {
+    label: value,
+    queryValue: value,
+  };
+}
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
   return params;
@@ -49,7 +122,17 @@ export async function generateMetadata({
       },
     };
   }
-  const canonicalPath = `/${resolvedParams.sport}/court-finder`;
+  const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
+  const provinceFilter = sanitizeQueryParam(resolvedSearch?.province);
+  const provinceInfo = provinceFilter
+    ? await resolveProvinceFilter(provinceFilter, locale)
+    : null;
+  const provinceLabel = provinceInfo?.label ?? "";
+  const hasFreeTextSearch = Boolean(searchQuery);
+  const canonicalPath = buildFinderPath(
+    `/${resolvedParams.sport}/court-finder`,
+    hasFreeTextSearch ? {} : { province: provinceInfo?.queryValue },
+  );
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
   const title =
@@ -61,23 +144,48 @@ export async function generateMetadata({
       ? `ค้นหาสนาม${meta.name[locale]} พร้อมพิกัด แผนที่ และข้อมูลติดต่อจากทั่วประเทศไทย`
       : `Browse ${meta.name[locale]} courts in Thailand with map location, contacts, and live community updates.`;
 
+  const filteredTitle = searchQuery
+    ? locale === "th"
+      ? `ผลการค้นหาสนาม${meta.name[locale]} "${searchQuery}" | RacketThailand`
+      : `${meta.name[locale]} courts matching "${searchQuery}" | RacketThailand`
+    : provinceLabel
+      ? locale === "th"
+        ? `สนาม${meta.name[locale]}ใน${provinceLabel} | RacketThailand`
+        : `${meta.name[locale]} courts in ${provinceLabel} | RacketThailand`
+      : title;
+  const filteredDescription = searchQuery
+    ? locale === "th"
+      ? `ดูผลการค้นหาสนาม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมพิกัด แผนที่ และข้อมูลติดต่อ`
+      : `Browse ${meta.name[locale]} court results matching "${searchQuery}" with map locations and contact details.`
+    : provinceLabel
+      ? locale === "th"
+        ? `ค้นหาสนาม${meta.name[locale]}ใน${provinceLabel} พร้อมพิกัด แผนที่ และข้อมูลติดต่อ`
+        : `Find ${meta.name[locale]} courts in ${provinceLabel} with map locations, contact details, and community context.`
+      : description;
+
   return {
-    title,
-    description,
+    title: filteredTitle,
+    description: filteredDescription,
+    robots: hasFreeTextSearch
+      ? {
+          index: false,
+          follow: true,
+        }
+      : undefined,
     alternates: {
       canonical,
       languages: alternates,
     },
     openGraph: {
-      title,
-      description,
+      title: filteredTitle,
+      description: filteredDescription,
       url: canonical,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
+      title: filteredTitle,
+      description: filteredDescription,
     },
   };
 }
@@ -98,7 +206,14 @@ export default async function CourtFinderPage({
     notFound();
   }
 
+  const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
+  const provinceFilter = sanitizeQueryParam(resolvedSearch?.province);
+  const provinceInfo = provinceFilter
+    ? await resolveProvinceFilter(provinceFilter, locale)
+    : null;
   const courtData = await fetchCourtsBySport(resolvedParams.sport, {
+    search: searchQuery || undefined,
+    province: provinceFilter || undefined,
     limit: 12,
   }, locale);
   if (!courtData.sport) {
@@ -170,6 +285,8 @@ export default async function CourtFinderPage({
           initialCourts={courtData.courts}
           provinces={courtData.provinces}
           total={courtData.count}
+          initialSearch={searchQuery}
+          initialProvince={provinceInfo?.queryValue ?? provinceFilter}
         />
       </main>
     </div>

@@ -11,7 +11,10 @@ import {
   buildLocalizedPath,
   type Locale,
 } from "@/lib/i18n";
-import { getThailandTodayDateString } from "@/lib/casual-play";
+import {
+  getMaxCasualPlayDateString,
+  getThailandTodayDateString,
+} from "@/lib/casual-play";
 
 type CasualPlayFinderCopy = {
   searchPlaceholder: string;
@@ -42,6 +45,7 @@ type CasualPlayFinderProps = {
 const PAGE_SIZE = 12;
 const EARTH_RADIUS_KM = 6371;
 const TODAY_DATE = getThailandTodayDateString();
+const MAX_PLAY_DATE = getMaxCasualPlayDateString();
 
 type LocationState = { latitude: number; longitude: number };
 
@@ -280,6 +284,7 @@ export function CasualPlayFinder({
               type="date"
               value={dateFilter}
               min={TODAY_DATE}
+              max={MAX_PLAY_DATE}
               onChange={(event) => {
                 setDateFilter(event.target.value);
                 track("finder_filter_used", {

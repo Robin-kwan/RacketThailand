@@ -74,7 +74,7 @@ function SessionList({
 }) {
   if (!sessions || sessions.length === 0) {
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-xs text-slate-500 sm:text-sm">
         {scheduleAnytime}
       </p>
     );
@@ -84,7 +84,7 @@ function SessionList({
   const courtConnector = locale === "th" ? " ที่ " : " @ ";
 
   return (
-    <div className="space-y-1 text-sm text-slate-600">
+    <div className="space-y-1 text-xs leading-snug text-slate-600 sm:text-sm">
       <ul className="space-y-1">
         {visible.map((session, index) => {
           const dayLabel = dayLabels[session.day] ?? session.day;
@@ -224,7 +224,7 @@ export function GroupCard({
       <div className="flex flex-1 flex-col gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
         <div className="text-left">
           <p
-            className={`line-clamp-2 text-sm font-medium text-slate-900 sm:text-xl ${titleClassName ?? ""}`}
+            className={`line-clamp-2 text-sm font-semibold leading-snug text-slate-900 sm:text-base ${titleClassName ?? ""}`}
           >
             {name || fallbackGroupName}
             {verifiedText && (
@@ -250,7 +250,7 @@ export function GroupCard({
         </div>
         {showDescription && description && (
           <p
-            className="line-clamp-2 break-all text-xs text-slate-600 sm:text-sm"
+            className="line-clamp-2 break-all text-xs leading-snug text-slate-600"
             title={description}
           >
             {description}

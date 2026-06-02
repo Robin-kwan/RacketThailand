@@ -58,8 +58,26 @@ export function addMonthsToDateString(value: string, months: number) {
   return buildDateString(targetYear, targetMonth, targetDay);
 }
 
+export function addDaysToDateString(value: string, days: number) {
+  const [yearRaw, monthRaw, dayRaw] = value.split("-").map(Number);
+  if (
+    !Number.isFinite(yearRaw) ||
+    !Number.isFinite(monthRaw) ||
+    !Number.isFinite(dayRaw)
+  ) {
+    return value;
+  }
+
+  const date = new Date(Date.UTC(yearRaw, monthRaw - 1, dayRaw + days, 12));
+  return buildDateString(
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDate(),
+  );
+}
+
 export function getMaxCasualPlayDateString(now = new Date()) {
-  return addMonthsToDateString(getThailandTodayDateString(now), 1);
+  return addDaysToDateString(getThailandTodayDateString(now), 7);
 }
 
 export function isCasualPlayDateAllowed(playDate: string, now = new Date()) {

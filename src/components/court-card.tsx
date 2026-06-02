@@ -58,19 +58,19 @@ export function CourtCard({
       <div className="flex flex-1 flex-col gap-1.5 px-3 py-2 sm:gap-2 sm:px-5 sm:py-3">
         <div className="space-y-0.5">
           <h3
-            className={`line-clamp-2 text-sm font-medium text-slate-900 sm:text-xl ${titleClassName ?? ""}`}
+            className={`line-clamp-2 text-sm font-semibold leading-snug text-slate-900 sm:text-base ${titleClassName ?? ""}`}
           >
             {name || "Court"}
           </h3>
           {location ? (
-            <p className="line-clamp-2 text-xs text-slate-600 sm:text-sm" title={location}>
+            <p className="line-clamp-2 text-xs leading-snug text-slate-600" title={location}>
               {location}
             </p>
           ) : null}
         </div>
 
         {showDetails && details.length > 0 && (
-          <ul className="space-y-1 text-xs text-slate-600 sm:space-y-2 sm:text-sm">
+          <ul className="space-y-1 text-xs leading-snug text-slate-600 sm:space-y-1.5">
             {details.map((detail, index) => (
               <li key={`${name}-detail-${index}`} className="line-clamp-2" title={detail}>
                 {detail}

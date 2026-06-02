@@ -164,6 +164,8 @@ export default async function CommunityBoardPage({
     submit: t("community.submit"),
     success: t("community.success"),
     error: t("community.error"),
+    composerPrompt: t("community.composerPrompt"),
+    cancel: t("community.cancel"),
   };
   const redirectTarget = buildLocalizedPath(`/${sport.code}/board`, locale);
 
@@ -218,22 +220,14 @@ export default async function CommunityBoardPage({
         {isAuthenticated ? (
           <BaseCard
             as="section"
-            className="rounded-[32px] border border-slate-200 bg-white p-6"
+            className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_12px_45px_rgb(var(--foreground-rgb)/0.06)]"
           >
-            <h2 className="text-xl font-semibold text-[var(--foreground)]">
-              {copy.createHeading}
-            </h2>
-            <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
-              {copy.subtitle}
-            </p>
-            <div className="mt-4">
-              <CommunityPostForm
-                sportCode={sport.code}
-                categories={localizedCategories}
-                copy={formCopy}
-                redirectTo={redirectTarget}
-              />
-            </div>
+            <CommunityPostForm
+              sportCode={sport.code}
+              categories={localizedCategories}
+              copy={formCopy}
+              redirectTo={redirectTarget}
+            />
           </BaseCard>
         ) : (
           <BaseCard

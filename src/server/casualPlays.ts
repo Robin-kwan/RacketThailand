@@ -1,5 +1,8 @@
 import type { Locale } from "@/lib/i18n";
-import { getThailandTodayDateString } from "@/lib/casual-play";
+import {
+  getMaxCasualPlayDateString,
+  getThailandTodayDateString,
+} from "@/lib/casual-play";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchSportRow } from "@/server/courtFinder";
 import { localizeThailandLocation } from "@/server/thailand-location";
@@ -134,7 +137,11 @@ export async function fetchCasualPlaysBySport(
   }
 
   const today = getThailandTodayDateString();
-  if (filters.playDate && filters.playDate < today) {
+  const maxDate = getMaxCasualPlayDateString();
+  if (
+    filters.playDate &&
+    (filters.playDate < today || filters.playDate > maxDate)
+  ) {
     return { sport: sportRow, plays: [], count: 0 };
   }
 
@@ -142,7 +149,9 @@ export async function fetchCasualPlaysBySport(
     select:
       "id,title,description,play_date,start_time,end_time,updated_at,play_format,player_amount,phone,line_id,court_id,venue_name,location_note,courts(id,name,province,province_id,district,district_id,latitude:lat,longitude:lng)",
     sport_id: `eq.${sportRow.id}`,
-    play_date: filters.playDate ? `eq.${filters.playDate}` : `gte.${today}`,
+    ...(filters.playDate
+      ? { play_date: `eq.${filters.playDate}` }
+      : { and: `(play_date.gte.${today},play_date.lte.${maxDate})` }),
     order: "play_date.asc,start_time.asc,updated_at.desc.nullslast",
   };
 
