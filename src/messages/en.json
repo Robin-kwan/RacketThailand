@@ -23,6 +23,15 @@
     "share": "Share",
     "linkCopied": "Link copied"
   },
+  "forms": {
+    "noOptionsFound": "No matches found",
+    "lineQrUploader": {
+      "replace": "Replace image",
+      "remove": "Remove QR code",
+      "upload": "Upload LINE QR image",
+      "formatHint": "PNG, JPG, or WebP"
+    }
+  },
   "landing": {
     "heroTitle": "Pick your sport and get started",
     "heroDescription": "Pick your sport to browse verified venues, see active groups, and contact organizers—every portal shares the same account.",
@@ -425,6 +434,15 @@
     "longitude": "Longitude",
     "price": "Pricing notes",
     "openingHours": "Opening hours",
+    "openingHoursEditor": {
+      "addHours": "Add hours",
+      "alwaysOpen": "24 hrs",
+      "closed": "Closed",
+      "openTime": "Open time",
+      "closeTime": "Close time",
+      "remove": "Remove"
+    },
+    "openingHoursRequired": "Please add at least one opening hour range.",
     "phone": "Phone number",
     "line": "LINE ID",
     "lineQr": "LINE QR code (optional)",
@@ -461,6 +479,9 @@
     "makePrimaryPhoto": "Make primary",
     "photoUploadHelper": "Large photos are resized before upload. Original files can be up to 20MB.",
     "photoProcessError": "Could not process image.",
+    "courtPhotoUploadError": "Failed to upload court photo.",
+    "lineQrUploadError": "Failed to upload LINE QR image.",
+    "noChanges": "No changes to save.",
     "panelTitle": "Admin panel",
     "panelSubtitle": "Manage courts, owners, and upcoming sport data sources.",
     "portalLabel": "Admin portal",

@@ -532,6 +532,7 @@ export function GroupEditForm({
           previewUrl={lineQrPreview}
           onChange={handleLineQrChange}
           disabled={uploading || submitting}
+          {...copy.lineQrUploader}
         />
       }
       onSubmit={handleSubmit}

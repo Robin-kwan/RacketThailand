@@ -232,6 +232,7 @@ export function GroupCreationForm({
           previewUrl={lineQrPreview}
           onChange={handleLineQrChange}
           disabled={submitting}
+          {...copy.lineQrUploader}
         />
       }
       onSubmit={handleSubmit}

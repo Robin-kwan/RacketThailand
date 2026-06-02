@@ -10,6 +10,7 @@ import {
   normalizeLocale,
 } from "@/lib/i18n";
 import { buildAuthPagePath } from "@/lib/auth-redirect";
+import { buildLineQrUploaderCopy } from "@/lib/line-qr-uploader-copy";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -246,6 +247,7 @@ export default async function EditGroupPage({
     sessionsRemoveCourt: t("groups.form.sessionsRemoveCourt"),
     sessionsEmpty: t("groups.form.sessionsEmpty"),
     sessionCourt: t("groups.form.sessionCourt"),
+    noOptionsFound: t("forms.noOptionsFound"),
     scheduleLabel: t("groups.form.scheduleLabel"),
     scheduleRemove: t("groups.form.scheduleRemove"),
     scheduleDay: t("groups.form.scheduleDay"),
@@ -264,6 +266,7 @@ export default async function EditGroupPage({
     lineLabel: t("groups.form.lineLabel"),
     linePlaceholder: t("groups.form.linePlaceholder"),
     lineQrLabel: t("groups.form.lineQrLabel"),
+    lineQrUploader: buildLineQrUploaderCopy(t),
     photos: t("groups.form.photos"),
     submit: t("groups.edit.submit"),
     submitting: t("groups.edit.submitting"),

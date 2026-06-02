@@ -10,6 +10,8 @@ import {
   normalizeLocale,
 } from "@/lib/i18n";
 import { buildAuthPagePath } from "@/lib/auth-redirect";
+import { buildOpeningHoursEditorCopy } from "@/lib/opening-hours-editor-copy";
+import { buildLineQrUploaderCopy } from "@/lib/line-qr-uploader-copy";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
@@ -163,9 +165,12 @@ export default async function EditCourtPage({
     locationLockedBadge: t("admin.locationLockedBadge"),
     price: t("admin.price"),
     openingHours: t("admin.openingHours"),
+    openingHoursEditor: buildOpeningHoursEditorCopy(t),
+    openingHoursRequired: t("admin.openingHoursRequired"),
     phone: t("admin.phone"),
     line: t("admin.line"),
     lineQr: t("admin.lineQr"),
+    lineQrUploader: buildLineQrUploaderCopy(t),
     website: t("admin.website"),
     placeSearch: t("admin.placeSearch"),
     placeSearchHelper: t("admin.placeSearchHelper"),
@@ -179,6 +184,8 @@ export default async function EditCourtPage({
     photos: t("admin.photos"),
     primaryPhoto: t("admin.primaryPhoto"),
     makePrimaryPhoto: t("admin.makePrimaryPhoto"),
+    courtPhotoUploadError: t("admin.courtPhotoUploadError"),
+    noChanges: t("admin.noChanges"),
     photoUploadHelper: t("admin.photoUploadHelper"),
     photoProcessError: t("admin.photoProcessError"),
     locationMissing: t("admin.locationMissing"),

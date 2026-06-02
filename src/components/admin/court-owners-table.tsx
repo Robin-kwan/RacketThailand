@@ -673,6 +673,7 @@ export function CourtOwnersTable({
             <form className="mt-6 space-y-5" onSubmit={handleSaveCourt}>
               <PlaceSearchField
                 label={copy.placeSearch}
+                placeholder={copy.placeSearch}
                 helper={copy.placeSearchHelper}
                 noResults={copy.placeSearchNoResults}
                 duplicateLabel={copy.placeAlreadyRegistered}
