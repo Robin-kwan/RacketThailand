@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { LoaderCircle, Plus } from "lucide-react";
 import { BaseImageCard } from "@/components/base-image-card";
-import { LineQrUploader } from "@/components/line-qr-uploader";
+import {
+  LineQrUploader,
+  type LineQrUploaderCopy,
+} from "@/components/line-qr-uploader";
 import {
   CourtFormFields,
   CourtFormValues,
@@ -17,6 +20,7 @@ import {
 } from "@/components/admin/place-search-field";
 import {
   OpeningHoursEditor,
+  type OpeningHoursEditorCopy,
 } from "@/components/admin/opening-hours-editor";
 import {
   ensureAllDays,
@@ -112,9 +116,12 @@ type CourtEditFormProps = {
     locationLockedBadge: string;
     price: string;
     openingHours: string;
+    openingHoursEditor?: OpeningHoursEditorCopy;
+    openingHoursRequired?: string;
     phone: string;
     line: string;
     lineQr: string;
+    lineQrUploader?: LineQrUploaderCopy;
     website: string;
     placeSearch: string;
     placeSearchHelper: string;
@@ -128,6 +135,8 @@ type CourtEditFormProps = {
     photos: string;
     primaryPhoto: string;
     makePrimaryPhoto: string;
+    courtPhotoUploadError?: string;
+    noChanges?: string;
     locationMissing: string;
   };
 };
@@ -280,7 +289,9 @@ export function CourtEditForm({
     if (normalizedStructured.length === 0) {
       showToast({
         variant: "error",
-        message: "Please add at least one opening hour range.",
+        message:
+          copy.openingHoursRequired ??
+          "Please add at least one opening hour range.",
       });
       setSubmitting(false);
       return;
@@ -320,7 +331,7 @@ export function CourtEditForm({
       setSubmitting(false);
       showToast({
         variant: "info",
-        message: "No changes to save.",
+        message: copy.noChanges ?? "No changes to save.",
       });
       return;
     }
@@ -391,7 +402,11 @@ export function CourtEditForm({
       });
       const uploadData = await uploadResponse.json().catch(() => null);
       if (!uploadResponse.ok || !uploadData?.photo) {
-        throw new Error(uploadData?.error ?? "Failed to upload court photo.");
+        throw new Error(
+          uploadData?.error ??
+            copy.courtPhotoUploadError ??
+            "Failed to upload court photo.",
+        );
       }
       uploadedMap.set(photo.id, {
         id: uploadData.photo.id,
@@ -613,6 +628,7 @@ export function CourtEditForm({
     <form className="space-y-5" onSubmit={handleSubmit}>
       <PlaceSearchField
         label={copy.placeSearch}
+        placeholder={copy.placeSearch}
         helper={copy.placeSearchHelper}
         noResults={copy.placeSearchNoResults}
         duplicateLabel={copy.placeAlreadyRegistered}
@@ -653,6 +669,7 @@ export function CourtEditForm({
         <OpeningHoursEditor
           value={openingHours}
           onChange={(next) => setOpeningHours(next)}
+          copy={copy.openingHoursEditor}
         />
       </div>
       <CourtFormFields
@@ -668,6 +685,7 @@ export function CourtEditForm({
               previewUrl={lineQrPreview}
               onChange={handleLineQrChange}
               disabled={submitting || uploading}
+              {...copy.lineQrUploader}
             />
             <div className="space-y-3">
               <div className="flex items-center justify-between">

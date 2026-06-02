@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { track } from "@vercel/analytics";
 import { MultiImageInput } from "@/components/multi-image-input";
-import { LineQrUploader } from "@/components/line-qr-uploader";
+import {
+  LineQrUploader,
+  type LineQrUploaderCopy,
+} from "@/components/line-qr-uploader";
 import { showToast } from "@/components/toaster";
 import {
   CourtFormFields,
@@ -18,6 +21,7 @@ import {
 } from "@/components/admin/place-search-field";
 import {
   OpeningHoursEditor,
+  type OpeningHoursEditorCopy,
 } from "@/components/admin/opening-hours-editor";
 import {
   createAlwaysOpenSchedule,
@@ -49,9 +53,12 @@ type CourtFormProps = {
     locationLockedBadge: string;
     price: string;
     openingHours: string;
+    openingHoursEditor?: OpeningHoursEditorCopy;
+    openingHoursRequired?: string;
     phone: string;
     line: string;
     lineQr: string;
+    lineQrUploader?: LineQrUploaderCopy;
     website: string;
     placeSearch: string;
     placeSearchHelper: string;
@@ -63,6 +70,8 @@ type CourtFormProps = {
     makePrimaryPhoto: string;
     photoUploadHelper: string;
     photoProcessError: string;
+    courtPhotoUploadError?: string;
+    lineQrUploadError?: string;
     submit: string;
     submitting: string;
     success: string;
@@ -168,7 +177,9 @@ export function CourtAdminForm({
     if (parsedHours.length === 0) {
       showToast({
         variant: "error",
-        message: "Please add at least one opening hour range.",
+        message:
+          copy.openingHoursRequired ??
+          "Please add at least one opening hour range.",
       });
       setSubmitting(false);
       return;
@@ -219,7 +230,10 @@ export function CourtAdminForm({
         if (!uploadResponse.ok) {
           showToast({
             variant: "error",
-            message: uploadData?.error ?? "Failed to upload court photo.",
+            message:
+              uploadData?.error ??
+              copy.courtPhotoUploadError ??
+              "Failed to upload court photo.",
           });
           continue;
         }
@@ -237,7 +251,10 @@ export function CourtAdminForm({
       if (!qrResponse.ok) {
         showToast({
           variant: "error",
-          message: qrData?.error ?? "Failed to upload LINE QR image.",
+          message:
+            qrData?.error ??
+            copy.lineQrUploadError ??
+            "Failed to upload LINE QR image.",
         });
       }
     }
@@ -336,6 +353,7 @@ export function CourtAdminForm({
     <form className="space-y-5" onSubmit={handleSubmit}>
       <PlaceSearchField
         label={copy.placeSearch}
+        placeholder={copy.placeSearch}
         helper={copy.placeSearchHelper}
         noResults={copy.placeSearchNoResults}
         duplicateLabel={copy.placeAlreadyRegistered}
@@ -375,6 +393,7 @@ export function CourtAdminForm({
         <OpeningHoursEditor
           value={openingHours}
           onChange={setOpeningHours}
+          copy={copy.openingHoursEditor}
         />
       </div>
 
@@ -390,6 +409,7 @@ export function CourtAdminForm({
               label={copy.lineQr}
               previewUrl={lineQrPreview}
               onChange={handleLineQrChange}
+              {...copy.lineQrUploader}
             />
             <MultiImageInput
               label={copy.photos}

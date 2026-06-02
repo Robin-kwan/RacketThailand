@@ -14,6 +14,8 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { buildOpeningHoursEditorCopy } from "@/lib/opening-hours-editor-copy";
+import { buildLineQrUploaderCopy } from "@/lib/line-qr-uploader-copy";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
 import { fetchSportIdsByCourtIds } from "@/server/courtSports";
@@ -137,9 +139,12 @@ export default async function AdminCourtsPage({
     locationLockedBadge: t("admin.locationLockedBadge"),
     price: t("admin.price"),
     openingHours: t("admin.openingHours"),
+    openingHoursEditor: buildOpeningHoursEditorCopy(t),
+    openingHoursRequired: t("admin.openingHoursRequired"),
     phone: t("admin.phone"),
     line: t("admin.line"),
     lineQr: t("admin.lineQr"),
+    lineQrUploader: buildLineQrUploaderCopy(t),
     website: t("admin.website"),
     placeSearch: t("admin.placeSearch"),
     placeSearchHelper: t("admin.placeSearchHelper"),
@@ -151,6 +156,8 @@ export default async function AdminCourtsPage({
     makePrimaryPhoto: t("admin.makePrimaryPhoto"),
     photoUploadHelper: t("admin.photoUploadHelper"),
     photoProcessError: t("admin.photoProcessError"),
+    courtPhotoUploadError: t("admin.courtPhotoUploadError"),
+    lineQrUploadError: t("admin.lineQrUploadError"),
     submit: t("admin.submit"),
     submitting: t("admin.submitting"),
     success: t("admin.success"),

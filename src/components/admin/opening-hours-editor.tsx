@@ -19,9 +19,20 @@ import {
 type OpeningHoursEditorProps = {
   value: OpeningHoursEntry[] | null;
   onChange: (entries: OpeningHoursEntry[]) => void;
+  copy?: OpeningHoursEditorCopy;
 };
 
-const DAY_LABELS: Record<string, string> = {
+export type OpeningHoursEditorCopy = {
+  dayLabels?: Partial<Record<string, string>>;
+  addHours?: string;
+  alwaysOpen?: string;
+  closed?: string;
+  openTime?: string;
+  closeTime?: string;
+  remove?: string;
+};
+
+const DEFAULT_DAY_LABELS: Record<string, string> = {
   monday: "Monday",
   tuesday: "Tuesday",
   wednesday: "Wednesday",
@@ -29,6 +40,16 @@ const DAY_LABELS: Record<string, string> = {
   friday: "Friday",
   saturday: "Saturday",
   sunday: "Sunday",
+};
+
+const DEFAULT_COPY: Required<OpeningHoursEditorCopy> = {
+  dayLabels: DEFAULT_DAY_LABELS,
+  addHours: "Add hours",
+  alwaysOpen: "24 hrs",
+  closed: "Closed",
+  openTime: "Open time",
+  closeTime: "Close time",
+  remove: "Remove",
 };
 
 const DEFAULT_RANGE = { open: "09:00", close: "18:00" };
@@ -51,7 +72,16 @@ const normalizeRangeOrder = (
 export function OpeningHoursEditor({
   value,
   onChange,
+  copy,
 }: OpeningHoursEditorProps) {
+  const labels = {
+    ...DEFAULT_COPY,
+    ...copy,
+    dayLabels: {
+      ...DEFAULT_DAY_LABELS,
+      ...copy?.dayLabels,
+    },
+  };
   const entries =
     ensureAllDays(value && value.length > 0 ? value : createAlwaysOpenSchedule());
 
@@ -103,15 +133,15 @@ export function OpeningHoursEditor({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="divide-y divide-slate-200">
       {entries.map((entry) => (
         <div
           key={entry.day}
-          className="rounded-2xl border border-slate-200 bg-white/80 p-4"
+          className="py-4 first:pt-0 last:pb-0"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h4 className="text-base font-semibold text-slate-900">
-              {DAY_LABELS[entry.day] ?? entry.day}
+              {labels.dayLabels[entry.day] ?? entry.day}
             </h4>
             <div className="flex flex-wrap gap-2">
               <button
@@ -119,36 +149,36 @@ export function OpeningHoursEditor({
                 onClick={() => addRange(entry.day)}
                 className="flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-500"
               >
-                <Plus className="h-3 w-3" /> Add hours
+                <Plus className="h-3 w-3" /> {labels.addHours}
               </button>
               <button
                 type="button"
                 onClick={() => set24Hours(entry.day)}
                 className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-500"
               >
-                24 hrs
+                {labels.alwaysOpen}
               </button>
               <button
                 type="button"
                 onClick={() => markClosed(entry.day)}
                 className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-500"
               >
-                Closed
+                {labels.closed}
               </button>
             </div>
           </div>
           {entry.ranges.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-500">Closed</p>
+            <p className="mt-3 text-sm text-slate-500">{labels.closed}</p>
           ) : (
             <div className="mt-3 space-y-3">
               {entry.ranges.map((range, index) => (
                 <div
                   key={`${entry.day}-${index}`}
-                  className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2"
+                  className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 sm:flex sm:items-center sm:gap-3"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:w-auto sm:grid-cols-[minmax(7rem,1fr)_auto_minmax(7rem,1fr)]">
                     <BaseSelect
-                      label="Open time"
+                      label={labels.openTime}
                       labelHidden
                       name={`${entry.day}-open-${index}`}
                       value={range.open}
@@ -169,13 +199,13 @@ export function OpeningHoursEditor({
                               )
                           : TIME_OPTIONS
                       }
-                      className="flex-1 min-w-[6rem]"
+                      className="min-w-0 [&_select]:px-3 [&_select]:pr-9"
                       required
                       variant="light"
                     />
                     <span className="text-sm text-slate-500">–</span>
                     <BaseSelect
-                      label="Close time"
+                      label={labels.closeTime}
                       labelHidden
                       name={`${entry.day}-close-${index}`}
                       value={range.close ?? ""}
@@ -199,7 +229,7 @@ export function OpeningHoursEditor({
                             )
                           : CLOSE_TIME_OPTIONS
                       }
-                      className="flex-1 min-w-[6rem]"
+                      className="min-w-0 [&_select]:px-3 [&_select]:pr-9"
                       required
                       variant="light"
                     />
@@ -207,10 +237,10 @@ export function OpeningHoursEditor({
                   <button
                     type="button"
                     onClick={() => removeRange(entry.day, index)}
-                    className="ml-auto flex items-center gap-1 text-xs font-semibold text-rose-500 hover:text-rose-600"
+                    className="justify-self-end flex items-center gap-1 text-xs font-semibold text-rose-500 hover:text-rose-600 sm:ml-auto"
                   >
                     <Trash2 className="h-3 w-3" />
-                    Remove
+                    {labels.remove}
                   </button>
                 </div>
               ))}

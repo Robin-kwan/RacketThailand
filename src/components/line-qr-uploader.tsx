@@ -7,7 +7,14 @@ import {
   validateLineQrFile,
 } from "@/lib/image-upload";
 
-type LineQrUploaderProps = {
+export type LineQrUploaderCopy = {
+  replaceLabel?: string;
+  removeLabel?: string;
+  uploadLabel?: string;
+  formatHint?: string;
+};
+
+type LineQrUploaderProps = LineQrUploaderCopy & {
   label: string;
   previewUrl?: string | null;
   onChange: (file: File | null, previewUrl: string | null) => void;
@@ -21,6 +28,10 @@ export function LineQrUploader({
   onChange,
   disabled = false,
   helperText,
+  replaceLabel = "Replace image",
+  removeLabel = "Remove QR code",
+  uploadLabel = "Upload LINE QR image",
+  formatHint = "PNG, JPG, or WebP",
 }: LineQrUploaderProps) {
   const isControlled = typeof controlledPreview !== "undefined";
   const [localPreview, setLocalPreview] = useState<string | null>(
@@ -103,7 +114,7 @@ export function LineQrUploader({
                   onChange={handleFileChange}
                   disabled={disabled}
                 />
-                Replace image
+                {replaceLabel}
               </label>
               <button
                 type="button"
@@ -111,7 +122,7 @@ export function LineQrUploader({
                 disabled={disabled}
                 className="text-xs font-semibold text-rose-500 hover:text-rose-400"
               >
-                Remove QR code
+                {removeLabel}
               </button>
             </div>
           </div>
@@ -124,9 +135,9 @@ export function LineQrUploader({
               onChange={handleFileChange}
               disabled={disabled}
             />
-            <span>Upload LINE QR image</span>
+            <span>{uploadLabel}</span>
             <p className="text-xs font-normal text-[rgb(var(--foreground-rgb)/0.6)]">
-              PNG, JPG, or WebP
+              {formatHint}
             </p>
           </label>
         )}

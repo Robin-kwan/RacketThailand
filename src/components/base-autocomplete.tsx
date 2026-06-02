@@ -23,6 +23,7 @@ type BaseAutocompleteProps = {
   options: Option[];
   placeholder?: string;
   helperText?: string;
+  noResultsText?: string;
   onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
   className?: string;
   variant?: AutocompleteVariant;
@@ -71,6 +72,7 @@ export function BaseAutocomplete({
   options,
   placeholder,
   helperText,
+  noResultsText = "No matches found",
   onChange,
   className = "",
   variant = "dark",
@@ -176,7 +178,7 @@ export function BaseAutocomplete({
                   variant === "dark" ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                No matches found
+                {noResultsText}
               </p>
             ) : (
               filteredOptions.map((option) => (

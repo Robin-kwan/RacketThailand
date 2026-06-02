@@ -23,6 +23,15 @@
     "share": "แชร์",
     "linkCopied": "คัดลอกลิงก์แล้ว"
   },
+  "forms": {
+    "noOptionsFound": "ไม่พบรายการที่ตรงกัน",
+    "lineQrUploader": {
+      "replace": "เปลี่ยนรูป",
+      "remove": "ลบคิวอาร์โค้ด",
+      "upload": "อัปโหลดคิวอาร์โค้ด LINE",
+      "formatHint": "PNG, JPG หรือ WebP"
+    }
+  },
   "landing": {
     "heroTitle": "เลือกกีฬาและเริ่มต้นได้เลย",
     "heroDescription": "เลือกกีฬาที่คุณเล่น เพื่อดูสนามที่ยืนยันแล้ว กลุ่มที่เปิดรับสมาชิก และช่องทางติดต่อ",
@@ -425,6 +434,15 @@
     "longitude": "ลองจิจูด",
     "price": "ข้อมูลราคา",
     "openingHours": "เวลาเปิด-ปิด",
+    "openingHoursEditor": {
+      "addHours": "เพิ่มรอบ",
+      "alwaysOpen": "24 ชั่วโมง",
+      "closed": "ปิด",
+      "openTime": "เวลาเปิด",
+      "closeTime": "เวลาปิด",
+      "remove": "ลบ"
+    },
+    "openingHoursRequired": "กรุณาเพิ่มเวลาเปิด-ปิดอย่างน้อย 1 รอบ",
     "phone": "เบอร์โทร",
     "line": "LINE",
     "lineQr": "คิวอาร์โค้ด LINE (ไม่บังคับ)",
@@ -461,6 +479,9 @@
     "makePrimaryPhoto": "ทำให้เป็นรูปหลัก",
     "photoUploadHelper": "รูปขนาดใหญ่จะถูกย่อก่อนอัปโหลด ไฟล์ต้นฉบับอัปโหลดได้สูงสุด 20MB",
     "photoProcessError": "ไม่สามารถประมวลผลรูปภาพได้",
+    "courtPhotoUploadError": "ไม่สามารถอัปโหลดรูปสนามได้",
+    "lineQrUploadError": "ไม่สามารถอัปโหลดคิวอาร์โค้ด LINE ได้",
+    "noChanges": "ยังไม่มีการเปลี่ยนแปลงให้บันทึก",
     "panelTitle": "ศูนย์จัดการผู้ดูแล",
     "panelSubtitle": "จัดการข้อมูลสนาม เจ้าของสนาม และระบบของแต่ละกีฬา",
     "portalLabel": "พอร์ทัลผู้ดูแล",

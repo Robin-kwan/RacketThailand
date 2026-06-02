@@ -19,6 +19,7 @@ import {
   DEFAULT_PLAY_FORMAT,
   type PlayFormat,
 } from "@/lib/play-format";
+import type { LineQrUploaderCopy } from "@/components/line-qr-uploader";
 
 export type Option = {
   value: string;
@@ -75,6 +76,7 @@ export type GroupFormCopy = {
   sessionsRemoveCourt: string;
   sessionsEmpty: string;
   sessionCourt: string;
+  noOptionsFound: string;
   scheduleLabel: string;
   scheduleDay: string;
   scheduleStart: string;
@@ -93,6 +95,7 @@ export type GroupFormCopy = {
   lineLabel: string;
   linePlaceholder: string;
   lineQrLabel: string;
+  lineQrUploader?: LineQrUploaderCopy;
 };
 
 type SubmitPayload = {
@@ -552,6 +555,7 @@ export function GroupForm({
                     }
                     options={getCourtOptionsForBlock(block.id)}
                     className="flex-1"
+                    noResultsText={copy.noOptionsFound}
                     variant="light"
                   />
                 </div>
