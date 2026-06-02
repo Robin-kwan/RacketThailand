@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchCourtIdsBySportId } from "@/server/courtSports";
 import { fetchSportRow } from "@/server/courtFinder";
@@ -49,16 +50,14 @@ export type GroupFilterOptions = {
 };
 
 function buildSearchClause(query: string) {
-  const sanitized = query.replace(/[%*]/g, "").trim();
-  if (!sanitized) return undefined;
-  const term = `*${sanitized}*`;
+  const term = buildPostgrestIlikeTerm(query);
+  if (!term) return undefined;
   return `(name.ilike.${term},description.ilike.${term})`;
 }
 
 function buildCourtLocationSearchClause(query: string) {
-  const sanitized = query.replace(/[%*]/g, "").trim();
-  if (!sanitized) return undefined;
-  const term = `*${sanitized}*`;
+  const term = buildPostgrestIlikeTerm(query);
+  if (!term) return undefined;
   return `(name.ilike.${term},address.ilike.${term},district.ilike.${term},province.ilike.${term})`;
 }
 

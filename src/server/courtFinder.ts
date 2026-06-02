@@ -1,6 +1,7 @@
 import type { Locale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
 import {
   fetchCourtIdsBySportId,
   fetchSportIdsByCourtId,
@@ -63,9 +64,8 @@ export async function fetchSportRow(code: string) {
 }
 
 function buildSearchClause(query: string) {
-  const sanitized = query.replace(/[%*]/g, "").trim();
-  if (!sanitized) return undefined;
-  const term = `*${sanitized}*`;
+  const term = buildPostgrestIlikeTerm(query);
+  if (!term) return undefined;
   return `(name.ilike.${term},description.ilike.${term},district.ilike.${term},province.ilike.${term},address.ilike.${term})`;
 }
 
