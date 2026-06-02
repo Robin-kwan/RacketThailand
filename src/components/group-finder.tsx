@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { track } from "@vercel/analytics";
 import type { GroupRecord } from "@/server/groupFinder";
@@ -23,9 +24,6 @@ type GroupFinderCopy = {
   scheduleAnytime: string;
   dayFilterLabel: string;
   anyDayLabel: string;
-  startTimeLabel: string;
-  endTimeLabel: string;
-  anyTimeLabel: string;
   playFormatFilterLabel: string;
   anyPlayFormatLabel: string;
   playFormatSingle: string;
@@ -57,20 +55,14 @@ type GroupFinderProps = {
   copy: GroupFinderCopy;
   dayLabels: Record<string, string>;
   initialGroups: GroupRecord[];
+  initialSearch?: string;
+  initialDay?: string;
+  initialPlayFormat?: string;
+  initialAllowWalkIn?: string;
 };
 
 const PAGE_SIZE = 12;
 type LocationState = { latitude: number; longitude: number };
-
-const TIME_VALUES = Array.from({ length: 48 }, (_, index) => {
-  const hours = Math.floor(index / 2)
-    .toString()
-    .padStart(2, "0");
-  const minutes = index % 2 === 0 ? "00" : "30";
-  return `${hours}:${minutes}`;
-});
-
-const MINUTES_IN_DAY = 24 * 60;
 
 const parseCoordinate = (value?: number | string | null) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -81,90 +73,6 @@ const parseCoordinate = (value?: number | string | null) => {
   return null;
 };
 
-function formatTimeFilterLabel(value: string, locale: Locale) {
-  const [hours, minutes] = value.split(":").map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
-    return value;
-  }
-  const formatter = new Intl.DateTimeFormat(
-    locale === "th" ? "th-TH" : "en-US",
-    { hour: "numeric", minute: "2-digit" },
-  );
-  const date = new Date();
-  date.setHours(hours, minutes, 0, 0);
-  return formatter.format(date);
-}
-
-function timeStringToMinutes(value?: string | null) {
-  if (!value) return null;
-  const [hours, minutes] = value.split(":").map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
-    return null;
-  }
-  return hours * 60 + minutes;
-}
-
-function normalizeEndMinutes(
-  startMinutes: number | null,
-  endMinutes: number | null,
-) {
-  if (endMinutes === null || startMinutes === null) {
-    return endMinutes;
-  }
-  if (endMinutes <= startMinutes) {
-    return endMinutes + MINUTES_IN_DAY;
-  }
-  return endMinutes;
-}
-
-function adjustRangeForFilter(
-  startMinutes: number | null,
-  endMinutes: number | null,
-) {
-  if (startMinutes !== null && endMinutes !== null && endMinutes <= startMinutes) {
-    return {
-      start: startMinutes,
-      end: endMinutes + MINUTES_IN_DAY,
-    };
-  }
-  return { start: startMinutes, end: endMinutes };
-}
-
-function filterGroupsByTime(
-  groups: GroupRecord[],
-  startTime: string,
-  endTime: string,
-) {
-  const filterStartMinutes = timeStringToMinutes(startTime);
-  const filterEndMinutesRaw = timeStringToMinutes(endTime);
-  const { start: filterStart, end: filterEnd } = adjustRangeForFilter(
-    filterStartMinutes,
-    filterEndMinutesRaw,
-  );
-  if (filterStart === null && filterEnd === null) {
-    return groups;
-  }
-  return groups.filter((group) => {
-    const sessions = group.group_sessions;
-    if (!sessions || sessions.length === 0) {
-      return false;
-    }
-    return sessions.some((session) => {
-      const sessionStart = timeStringToMinutes(session.start_time);
-      const sessionEndRaw = timeStringToMinutes(session.end_time);
-      if (sessionStart === null || sessionEndRaw === null) {
-        return false;
-      }
-      const sessionEnd = normalizeEndMinutes(sessionStart, sessionEndRaw);
-      const matchesStart =
-        filterStart === null || sessionEnd === null || sessionEnd >= filterStart;
-      const matchesEnd =
-        filterEnd === null || sessionStart <= filterEnd;
-      return matchesStart && matchesEnd;
-    });
-  });
-}
-
 export function GroupFinder({
   sportCode,
   locale,
@@ -172,14 +80,17 @@ export function GroupFinder({
   copy,
   dayLabels,
   initialGroups,
+  initialSearch = "",
+  initialDay = "",
+  initialPlayFormat = "",
+  initialAllowWalkIn = "",
 }: GroupFinderProps) {
-  const [search, setSearch] = useState("");
+  const pathname = usePathname();
+  const [search, setSearch] = useState(initialSearch);
   const debouncedSearch = useDebounce(search);
-  const [dayFilter, setDayFilter] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [playFormatFilter, setPlayFormatFilter] = useState("");
-  const [walkInFilter, setWalkInFilter] = useState("");
+  const [dayFilter, setDayFilter] = useState(initialDay);
+  const [playFormatFilter, setPlayFormatFilter] = useState(initialPlayFormat);
+  const [walkInFilter, setWalkInFilter] = useState(initialAllowWalkIn);
   const [serverGroups, setServerGroups] = useState(initialGroups);
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationState | null>(null);
@@ -200,6 +111,35 @@ export function GroupFinder({
   );
   const distanceUnit = locale === "th" ? "กม." : "km";
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const entries = [
+      ["search", debouncedSearch],
+      ["day", dayFilter],
+      ["playFormat", playFormatFilter],
+      ["allowWalkIn", walkInFilter],
+    ] as const;
+    entries.forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", nextUrl);
+    }
+  }, [
+    dayFilter,
+    debouncedSearch,
+    pathname,
+    playFormatFilter,
+    walkInFilter,
+  ]);
+
+  useEffect(() => {
     setServerGroups(initialGroups);
   }, [initialGroups]);
 
@@ -212,7 +152,7 @@ export function GroupFinder({
         lang: locale,
         limit: PAGE_SIZE.toString(),
       });
-      if (debouncedSearch) params.set("q", debouncedSearch);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (dayFilter) params.set("day", dayFilter);
       if (playFormatFilter) params.set("playFormat", playFormatFilter);
       if (walkInFilter) params.set("allowWalkIn", walkInFilter);
@@ -245,8 +185,6 @@ export function GroupFinder({
     });
     setSearch("");
     setDayFilter("");
-    setStartTime("");
-    setEndTime("");
     setPlayFormatFilter("");
     setWalkInFilter("");
     setPrioritizeNearby(false);
@@ -264,16 +202,6 @@ export function GroupFinder({
     [copy.anyDayLabel, dayLabels],
   );
 
-  const timeOptions = useMemo(
-    () => [
-      { value: "", label: copy.anyTimeLabel },
-      ...TIME_VALUES.map((value) => ({
-        value,
-        label: formatTimeFilterLabel(value, locale),
-      })),
-    ],
-    [copy.anyTimeLabel, locale],
-  );
   const playFormatOptions = useMemo(
     () => [
       { value: "", label: copy.anyPlayFormatLabel },
@@ -294,31 +222,7 @@ export function GroupFinder({
     ],
     [copy.anyWalkInLabel, copy.walkInsWelcome, copy.walkInsClosed],
   );
-  const endTimeOptions = useMemo(() => {
-    if (!startTime) return timeOptions;
-    const startMinutes = timeStringToMinutes(startTime);
-    if (startMinutes === null) {
-      return timeOptions;
-    }
-    return [
-      { value: "", label: copy.anyTimeLabel },
-      ...TIME_VALUES.filter((time) => {
-        const optionMinutes = timeStringToMinutes(time);
-        if (optionMinutes === null) return false;
-        const normalizedOption =
-          optionMinutes === 0 ? MINUTES_IN_DAY : optionMinutes;
-        return normalizedOption > startMinutes;
-      }).map((value) => ({
-        value,
-        label: formatTimeFilterLabel(value, locale),
-      })),
-    ];
-  }, [copy.anyTimeLabel, startTime, locale, timeOptions]);
-
-  const filteredGroups = useMemo(
-    () => filterGroupsByTime(serverGroups, startTime, endTime),
-    [serverGroups, startTime, endTime],
-  );
+  const filteredGroups = serverGroups;
   const count = filteredGroups.length;
   const countSummary =
     locale === "th"
@@ -475,38 +379,6 @@ export function GroupFinder({
             options={dayOptions}
             variant="light"
           />
-          <BaseSelect
-            label={copy.startTimeLabel}
-            name="startTime"
-            value={startTime}
-            onChange={(event) => {
-              setStartTime(event.target.value);
-              track("finder_filter_used", {
-                surface: "group_finder",
-                sport: sportCode,
-                cta: "start_time",
-              });
-            }}
-            options={timeOptions}
-            variant="light"
-          />
-          <BaseSelect
-            label={copy.endTimeLabel}
-            name="endTime"
-            value={endTime}
-            onChange={(event) => {
-              setEndTime(event.target.value);
-              track("finder_filter_used", {
-                surface: "group_finder",
-                sport: sportCode,
-                cta: "end_time",
-              });
-            }}
-            options={endTimeOptions}
-            variant="light"
-          />
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <BaseSelect
             label={copy.playFormatFilterLabel}
             name="playFormatFilter"
@@ -698,7 +570,7 @@ export function GroupFinder({
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:grid-cols-3">
           {displayedGroups.map((entry) => {
             const { group, distanceKm } = entry;
             const primaryPhoto =

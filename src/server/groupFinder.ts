@@ -1,5 +1,7 @@
 import type { Locale } from "@/lib/i18n";
+import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { fetchCourtIdsBySportId } from "@/server/courtSports";
 import { fetchSportRow } from "@/server/courtFinder";
 import { localizeThailandLocation } from "@/server/thailand-location";
 
@@ -41,8 +43,6 @@ export type GroupRecord = {
 export type GroupFilterOptions = {
   search?: string;
   day?: string;
-  startTime?: string;
-  endTime?: string;
   playFormat?: string;
   allowWalkIn?: string;
   limit?: number;
@@ -50,16 +50,14 @@ export type GroupFilterOptions = {
 };
 
 function buildSearchClause(query: string) {
-  const sanitized = query.replace(/[%*]/g, "").trim();
-  if (!sanitized) return undefined;
-  const term = `*${sanitized}*`;
+  const term = buildPostgrestIlikeTerm(query);
+  if (!term) return undefined;
   return `(name.ilike.${term},description.ilike.${term})`;
 }
 
 function buildCourtLocationSearchClause(query: string) {
-  const sanitized = query.replace(/[%*]/g, "").trim();
-  if (!sanitized) return undefined;
-  const term = `*${sanitized}*`;
+  const term = buildPostgrestIlikeTerm(query);
+  if (!term) return undefined;
   return `(name.ilike.${term},address.ilike.${term},district.ilike.${term},province.ilike.${term})`;
 }
 
@@ -71,12 +69,16 @@ async function fetchCourtIdsByLocationSearch(
   if (!locationClause) {
     return [];
   }
+  const sportCourtIds = await fetchCourtIdsBySportId(sportId);
+  if (sportCourtIds.length === 0) {
+    return [];
+  }
 
   const { data } = await supabaseSelect<{ id: string }>(
     "courts",
     {
       select: "id",
-      sport_id: `eq.${sportId}`,
+      id: `in.(${sportCourtIds.join(",")})`,
       is_active: "eq.true",
       or: locationClause,
       limit: "100",
@@ -104,14 +106,6 @@ async function fetchGroupIdsByCourtIds(
   if (filters.day) {
     params.day = `eq.${filters.day}`;
   }
-  if (filters.startTime && filters.endTime) {
-    params.start_time = `lte.${filters.endTime}`;
-    params.end_time = `gte.${filters.startTime}`;
-  } else if (filters.startTime) {
-    params.end_time = `gte.${filters.startTime}`;
-  } else if (filters.endTime) {
-    params.start_time = `lte.${filters.endTime}`;
-  }
 
   const { data } = await supabaseSelect<{ group_id: string }>(
     "group_sessions",
@@ -132,10 +126,7 @@ export async function fetchGroupsBySport(
     return { sport: null, groups: [], count: 0 };
   }
 
-  const hasSessionFilter =
-    Boolean(filters.day) ||
-    Boolean(filters.startTime) ||
-    Boolean(filters.endTime);
+  const hasSessionFilter = Boolean(filters.day);
   const sessionRelation = hasSessionFilter
     ? "group_sessions!inner"
     : "group_sessions";
@@ -176,14 +167,6 @@ export async function fetchGroupsBySport(
   }
   if (filters.day) {
     params["group_sessions.day"] = `eq.${filters.day}`;
-  }
-  if (filters.startTime && filters.endTime) {
-    params["group_sessions.start_time"] = `lte.${filters.endTime}`;
-    params["group_sessions.end_time"] = `gte.${filters.startTime}`;
-  } else if (filters.startTime) {
-    params["group_sessions.end_time"] = `gte.${filters.startTime}`;
-  } else if (filters.endTime) {
-    params["group_sessions.start_time"] = `lte.${filters.endTime}`;
   }
 
   const groupsRes = await supabaseSelect<GroupRecord>("groups", params);

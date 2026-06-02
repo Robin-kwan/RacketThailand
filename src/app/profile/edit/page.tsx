@@ -113,42 +113,25 @@ export default async function ProfileEditPage({
 
   return (
     <div className="rt-page">
-      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:flex-row md:px-10">
+      <main className="mx-auto flex w-full max-w-3xl flex-col px-6 pb-20 pt-10 md:px-10">
         <BaseCard
           as="section"
-          className="flex-1 rounded-[32px] border border-slate-200 bg-white p-8"
+          className="rounded-[36px] border border-slate-200 bg-white p-6 shadow-[0_18px_70px_rgb(var(--foreground-rgb)/0.08)] md:p-8"
         >
-          <h1 className="text-xl font-semibold text-[var(--foreground)]">
-            {copy.title}
-          </h1>
-          <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
-            {copy.subtitle}
-          </p>
+          <div className="border-b border-slate-100 pb-6">
+            <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+              {copy.title}
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[rgb(var(--foreground-rgb)/0.68)]">
+              {copy.subtitle}
+            </p>
+          </div>
           <ProfileForm
             userId={user.id}
             initialProfile={profile}
             sports={sports}
             copy={copy}
           />
-        </BaseCard>
-        <BaseCard
-          as="aside"
-          className="flex flex-1 flex-col gap-4 rounded-[32px] border border-slate-200 bg-white p-8"
-        >
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.6)]">
-              {t("header.brand")}
-            </p>
-            <h2 className="text-xl font-semibold text-[var(--foreground)]">
-              {t("profile.sidebarTitle")}
-            </h2>
-            <p className="text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
-              {t("profile.sidebarDescription")}
-            </p>
-          </div>
-          <div className="rounded-3xl border border-dashed border-[rgb(var(--foreground-rgb)/0.2)] bg-[rgb(var(--foreground-rgb)/0.05)] p-6 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
-            <p>{t("profile.sidebarHint")}</p>
-          </div>
         </BaseCard>
       </main>
     </div>

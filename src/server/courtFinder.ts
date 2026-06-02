@@ -1,11 +1,15 @@
 import type { Locale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
 import {
   fetchCourtIdsBySportId,
   fetchSportIdsByCourtId,
 } from "@/server/courtSports";
-import { localizeThailandLocation } from "@/server/thailand-location";
+import {
+  localizeThailandLocation,
+  resolveThailandLocationIds,
+} from "@/server/thailand-location";
 
 export type CourtRecord = {
   id: string;
@@ -60,10 +64,19 @@ export async function fetchSportRow(code: string) {
 }
 
 function buildSearchClause(query: string) {
-  const sanitized = query.replace(/[%*]/g, "").trim();
-  if (!sanitized) return undefined;
-  const term = `*${sanitized}*`;
+  const term = buildPostgrestIlikeTerm(query);
+  if (!term) return undefined;
   return `(name.ilike.${term},description.ilike.${term},district.ilike.${term},province.ilike.${term},address.ilike.${term})`;
+}
+
+function slugifyLocationName(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function applySportFilter(
@@ -123,10 +136,16 @@ export async function fetchCourtFilters(
         },
         locale,
       );
+      const english = await localizeThailandLocation(
+        {
+          province_id: row.province_id,
+          province: row.province,
+        },
+        "en",
+      );
       const value =
-        row.province_id != null
-          ? String(row.province_id)
-          : (row.province ?? "").trim();
+        slugifyLocationName(english.province ?? row.province ?? "") ||
+        (row.province ?? "").trim();
       return {
         value,
         label: localized.province ?? value,
@@ -168,7 +187,14 @@ export async function fetchCourtsBySport(
     if (Number.isFinite(provinceId)) {
       params.province_id = `eq.${provinceId}`;
     } else {
-      params.province = `eq.${provinceFilter}`;
+      const resolved = await resolveThailandLocationIds({
+        province: provinceFilter,
+      });
+      if (resolved.provinceId) {
+        params.province_id = `eq.${resolved.provinceId}`;
+      } else {
+        params.province = `eq.${provinceFilter}`;
+      }
     }
   }
   const searchClause = filters.search

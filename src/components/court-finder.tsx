@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
 import type { CourtProvinceOption, CourtRecord } from "@/server/courtFinder";
@@ -39,6 +40,8 @@ type CourtFinderProps = {
   initialCourts: CourtRecord[];
   provinces: CourtProvinceOption[];
   total: number;
+  initialSearch?: string;
+  initialProvince?: string;
 };
 
 const PAGE_SIZE = 12;
@@ -81,10 +84,13 @@ export function CourtFinder({
   initialCourts,
   provinces,
   total,
+  initialSearch = "",
+  initialProvince = "",
 }: CourtFinderProps) {
-  const [search, setSearch] = useState("");
+  const pathname = usePathname();
+  const [search, setSearch] = useState(initialSearch);
   const debouncedSearch = useDebounce(search);
-  const [province, setProvince] = useState<string>("");
+  const [province, setProvince] = useState<string>(initialProvince);
   const [courts, setCourts] = useState(initialCourts);
   const [availableProvinces, setAvailableProvinces] =
     useState<CourtProvinceOption[]>(provinces);
@@ -126,6 +132,26 @@ export function CourtFinder({
     locale === "th" ? "กำลังโหลดสนามเพิ่มเติม..." : "Loading more courts...";
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (debouncedSearch) {
+      params.set("search", debouncedSearch);
+    } else {
+      params.delete("search");
+    }
+    if (province) {
+      params.set("province", province);
+    } else {
+      params.delete("province");
+    }
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", nextUrl);
+    }
+  }, [debouncedSearch, pathname, province]);
+
+  useEffect(() => {
     let isActive = true;
     const load = async () => {
       setLoading(true);
@@ -135,7 +161,7 @@ export function CourtFinder({
         limit: PAGE_SIZE.toString(),
         page: "1",
       });
-      if (debouncedSearch) params.set("q", debouncedSearch);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (province) params.set("province", province);
       const response = await fetch(`/api/courts?${params.toString()}`, {
         cache: "no-store",
@@ -168,7 +194,7 @@ export function CourtFinder({
         limit: PAGE_SIZE.toString(),
         page: nextPage.toString(),
       });
-      if (debouncedSearch) params.set("q", debouncedSearch);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (province) params.set("province", province);
       const response = await fetch(`/api/courts?${params.toString()}`, {
         cache: "no-store",
@@ -487,7 +513,7 @@ export function CourtFinder({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:grid-cols-3">
             {displayedCourts.map(({ court, distanceKm }) => {
               const photo =
                 court.court_photos?.find((p) => p.is_primary)?.image_url ??

@@ -37,10 +37,8 @@ export async function GET(request: Request) {
 
   const limit = Number(searchParams.get("limit") ?? "12");
   const offset = Number(searchParams.get("offset") ?? "0");
-  const search = searchParams.get("q") ?? undefined;
+  const search = searchParams.get("search") ?? undefined;
   const day = searchParams.get("day") ?? undefined;
-  const startTime = searchParams.get("start") ?? undefined;
-  const endTime = searchParams.get("end") ?? undefined;
   const playFormat = searchParams.get("playFormat") ?? undefined;
   const allowWalkIn = searchParams.get("allowWalkIn") ?? undefined;
   const locale = normalizeLocale(searchParams.get("lang"));
@@ -51,8 +49,6 @@ export async function GET(request: Request) {
       offset: Number.isFinite(offset) && offset > 0 ? offset : 0,
       search,
       day,
-      startTime,
-      endTime,
       playFormat,
       allowWalkIn,
     }, locale);

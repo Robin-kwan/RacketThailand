@@ -18,6 +18,7 @@ import { useHeaderConfig } from "@/components/header-context";
 import { NotificationsMenu } from "@/components/notifications-menu";
 import type { NotificationCopy } from "@/components/notifications-menu";
 import { SiteHeaderMobileMenu } from "@/components/site-header-mobile-menu";
+import { SportBallMark } from "@/components/sport-ball-mark";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type HeaderUser = {
@@ -69,6 +70,17 @@ function deriveSportLabel(pathname: string, locale: Locale) {
   return undefined;
 }
 
+function deriveSportSlugFromLabel(label: string | undefined, locale: Locale) {
+  if (!label) return undefined;
+  const normalizedLabel = label.trim().toLowerCase();
+  if (!normalizedLabel) return undefined;
+  return Object.entries(SPORT_META).find(([, sport]) => {
+    const localizedName = sport.name[locale].trim().toLowerCase();
+    const englishName = sport.name.en.trim().toLowerCase();
+    return normalizedLabel === localizedName || normalizedLabel === englishName;
+  })?.[0];
+}
+
 export function SiteHeader({
   user,
   isAdmin = false,
@@ -86,12 +98,14 @@ export function SiteHeader({
     () => pathname.split("/").filter(Boolean),
     [pathname],
   );
-  const derivedSportSlug = segments[0];
+  const derivedSportSlug = SPORT_META[segments[0]] ? segments[0] : undefined;
+  const labelSportSlug = deriveSportSlugFromLabel(customSubLabel, locale);
   const activeSportSlug = overrideSportSlug ?? derivedSportSlug;
-  const activeSport = activeSportSlug ? SPORT_META[activeSportSlug] : undefined;
+  const resolvedSportSlug = activeSportSlug ?? labelSportSlug;
+  const activeSport = resolvedSportSlug ? SPORT_META[resolvedSportSlug] : undefined;
   const navLinks = useMemo<HeaderNavLink[]>(() => {
-    if (!activeSport || !activeSportSlug) return [];
-    const basePath = `/${activeSportSlug}`;
+    if (!activeSport || !resolvedSportSlug) return [];
+    const basePath = `/${resolvedSportSlug}`;
     const definitions = [
       {
         label: labels.sportHome ?? labels.brand,
@@ -116,7 +130,7 @@ export function SiteHeader({
     }));
   }, [
     activeSport,
-    activeSportSlug,
+    resolvedSportSlug,
     labels.sportHome,
     labels.brand,
     labels.courtFinder,
@@ -206,8 +220,14 @@ export function SiteHeader({
           <div className="flex w-full items-center justify-between gap-4 md:w-auto md:gap-6">
             <Link
               href={buildLocalizedPath("/", locale)}
-              className="flex items-center gap-4"
+              className="flex items-center gap-3"
             >
+              <SportBallMark
+                sportCode={resolvedSportSlug}
+                label={autoSubLabel}
+                accent={activeSport?.accent}
+                compact
+              />
               <div className="text-left">
                 <p className="text-lg font-semibold text-white">
                   {labels.brand}
@@ -419,6 +439,11 @@ export function SiteHeader({
           language: labels.language,
         }}
         subLabel={resolvedSubLabel}
+        sportMark={{
+          code: resolvedSportSlug,
+          label: autoSubLabel,
+          accent: activeSport?.accent,
+        }}
         notificationCopy={notificationCopy}
         isAuthenticated={isAuthenticated}
         isAdmin={isAdmin}
