@@ -6,6 +6,7 @@ import { Check, X } from "lucide-react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { NotificationsMenu } from "@/components/notifications-menu";
 import type { NotificationCopy } from "@/components/notifications-menu";
+import { SportBallMark } from "@/components/sport-ball-mark";
 
 export type MenuLink = {
   label: string;
@@ -45,6 +46,11 @@ export type MobileNavDrawerProps = {
   locale: Locale;
   labels: MobileMenuLabels;
   subLabel: string;
+  sportMark?: {
+    code?: string;
+    label?: string;
+    accent?: string;
+  };
   notificationCopy: NotificationCopy;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -72,6 +78,7 @@ export function SiteHeaderMobileMenu({
   onLocaleSelect,
   onLogout,
   subLabel,
+  sportMark,
 }: MobileNavDrawerProps) {
   if (!isOpen) {
     return null;
@@ -89,14 +96,23 @@ export function SiteHeaderMobileMenu({
         ref={mobileMenuRef}
         className="relative ml-auto flex h-full w-80 flex-col gap-6 border-l border-slate-200 bg-white p-6 text-slate-900"
       >
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <SportBallMark
+              sportCode={sportMark?.code}
+              label={sportMark?.label}
+              accent={sportMark?.accent}
+              compact
+              variant="drawer"
+            />
+            <div>
             <p className="text-sm font-semibold text-slate-700">
               {labels.brand}
             </p>
             <p className="text-xs font-semibold uppercase text-slate-400">
               {subLabel}
             </p>
+            </div>
           </div>
           <button
             type="button"

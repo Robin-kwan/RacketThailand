@@ -4,6 +4,7 @@ import {
   getThailandTodayDateString,
 } from "@/lib/casual-play";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { fetchCourtIdsBySportId } from "@/server/courtSports";
 import { fetchSportRow } from "@/server/courtFinder";
 import { localizeThailandLocation } from "@/server/thailand-location";
 
@@ -64,12 +65,16 @@ async function fetchCourtIdsByLocationSearch(
   if (!locationClause) {
     return [];
   }
+  const sportCourtIds = await fetchCourtIdsBySportId(sportId);
+  if (sportCourtIds.length === 0) {
+    return [];
+  }
 
   const { data } = await supabaseSelect<{ id: string }>(
     "courts",
     {
       select: "id",
-      sport_id: `eq.${sportId}`,
+      id: `in.(${sportCourtIds.join(",")})`,
       is_active: "eq.true",
       or: locationClause,
       limit: "100",
