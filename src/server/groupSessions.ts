@@ -44,3 +44,31 @@ export async function ensureCourtGroupLinks(
       },
     );
 }
+
+export async function syncCourtGroupLinks(
+  supabase: SupabaseClient,
+  groupId: string,
+  courtIds: string[],
+  ownerId?: string,
+) {
+  const uniqueCourtIds = Array.from(
+    new Set(
+      courtIds
+        .filter((courtId) => typeof courtId === "string" && courtId.trim())
+        .map((courtId) => courtId.trim()),
+    ),
+  );
+
+  if (uniqueCourtIds.length === 0) {
+    await supabase.from("court_groups").delete().eq("group_id", groupId);
+    return;
+  }
+
+  await supabase
+    .from("court_groups")
+    .delete()
+    .eq("group_id", groupId)
+    .not("court_id", "in", `(${uniqueCourtIds.join(",")})`);
+
+  await ensureCourtGroupLinks(supabase, groupId, uniqueCourtIds, ownerId);
+}

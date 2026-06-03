@@ -138,6 +138,7 @@ export default async function CreateGroupPage({
     sessionCourt: t("groups.form.sessionCourt"),
     noOptionsFound: t("forms.noOptionsFound"),
     scheduleLabel: t("groups.form.scheduleLabel"),
+    scheduleOptionalEmpty: t("groups.form.scheduleOptionalEmpty"),
     scheduleRemove: t("groups.form.scheduleRemove"),
     scheduleDay: t("groups.form.scheduleDay"),
     scheduleStart: t("groups.form.scheduleStart"),

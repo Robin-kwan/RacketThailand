@@ -817,6 +817,7 @@
       "sessionsEmpty": "Add the courts, days, and times you host this group.",
       "sessionCourt": "Court",
       "scheduleLabel": "Weekly schedule",
+      "scheduleOptionalEmpty": "No fixed weekly schedule yet. Add a session only if the group has regular booking times.",
       "scheduleAdd": "Add day & time",
       "scheduleRemove": "Remove slot",
       "scheduleDay": "Day",

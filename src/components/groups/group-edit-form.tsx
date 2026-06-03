@@ -271,6 +271,7 @@ export function GroupEditForm({
     name: string;
     description: string;
     playFormat: PlayFormat;
+    courtIds: string[];
     playerAmount?: string;
     allowWalkIn: boolean;
     phone?: string;
@@ -294,6 +295,7 @@ export function GroupEditForm({
         name: payload.name,
         description: payload.description,
         playFormat: payload.playFormat,
+        courtIds: payload.courtIds,
         sessions: payload.sessions,
         playerAmount: payload.playerAmount,
         allowWalkIn: payload.allowWalkIn,

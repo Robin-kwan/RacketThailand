@@ -53,6 +53,16 @@ const normalizeSessions = (blocks: CourtSessionBlock[]) =>
       (session) =>
         session.courtId && session.day && session.start && session.end,
     );
+
+const normalizeCourtIds = (blocks: CourtSessionBlock[]) =>
+  Array.from(
+    new Set(
+      blocks
+        .map((block) => block.courtId.trim())
+        .filter(Boolean),
+    ),
+  );
+
 export type GroupFormValues = {
   sportId: string;
   name: string;
@@ -78,6 +88,7 @@ export type GroupFormCopy = {
   sessionCourt: string;
   noOptionsFound: string;
   scheduleLabel: string;
+  scheduleOptionalEmpty: string;
   scheduleDay: string;
   scheduleStart: string;
   scheduleEnd: string;
@@ -102,6 +113,7 @@ type SubmitPayload = {
   sportId: string;
   name: string;
   description: string;
+  courtIds: string[];
   sessions: { courtId: string; day: string; start: string; end: string }[];
   playFormat: PlayFormat;
   playerAmount?: string;
@@ -254,7 +266,7 @@ export function GroupForm({
           ? crypto.randomUUID()
           : `court-${Date.now()}-${Math.random()}`,
         courtId: "",
-        slots: [{ ...createSlot() }],
+        slots: [],
       },
     ]);
   };
@@ -330,18 +342,20 @@ export function GroupForm({
 
   const removeSessionSlot = (blockId: string, slotId: string) => {
     setCourtSessions((prev) =>
-      prev
-        .map((block) =>
-          block.id === blockId
-            ? { ...block, slots: block.slots.filter((slot) => slot.id !== slotId) }
-            : block,
-        )
-        .filter((block) => block.slots.length > 0),
+      prev.map((block) =>
+        block.id === blockId
+          ? { ...block, slots: block.slots.filter((slot) => slot.id !== slotId) }
+          : block,
+      ),
     );
   };
 
   const serializedSessions = useMemo(
     () => normalizeSessions(courtSessions),
+    [courtSessions],
+  );
+  const serializedCourtIds = useMemo(
+    () => normalizeCourtIds(courtSessions),
     [courtSessions],
   );
 
@@ -356,6 +370,7 @@ export function GroupForm({
         allowWalkIn: initialValues.allowWalkIn !== false,
         phone: initialValues.phone ?? "",
         lineId: initialValues.lineId ?? "",
+        courtIds: normalizeCourtIds(initialValues.sessions),
         sessions: normalizeSessions(initialValues.sessions),
       }),
     [initialValues],
@@ -372,9 +387,10 @@ export function GroupForm({
         allowWalkIn: form.allowWalkIn,
         phone: form.phone,
         lineId: form.lineId,
+        courtIds: serializedCourtIds,
         sessions: serializedSessions,
       }),
-    [form, serializedSessions],
+    [form, serializedCourtIds, serializedSessions],
   );
 
   const hasChanges = currentSnapshot !== initialSnapshot || externalDirty;
@@ -390,6 +406,7 @@ export function GroupForm({
       allowWalkIn: form.allowWalkIn,
       phone: form.phone,
       lineId: form.lineId,
+      courtIds: serializedCourtIds,
       sessions: serializedSessions,
     });
   };
@@ -563,10 +580,14 @@ export function GroupForm({
                   <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                     {copy.sessionsTitle ?? copy.scheduleLabel}
                   </p>
+                  {block.slots.length === 0 && (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
+                      {copy.scheduleOptionalEmpty}
+                    </p>
+                  )}
                   {block.slots.map((slot) => {
                     const startInputId = `session-${block.id}-${slot.id}-start`;
                     const endInputId = `session-${block.id}-${slot.id}-end`;
-                    const canRemoveSlot = block.slots.length > 1;
                     return (
                       <div
                         key={slot.id}
@@ -629,16 +650,14 @@ export function GroupForm({
                           }
                         />
                         <div className="flex items-end justify-end">
-                          {canRemoveSlot && (
-                            <button
-                              type="button"
-                              onClick={() => removeSessionSlot(block.id, slot.id)}
-                              className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
-                              aria-label={copy.scheduleRemove}
-                            >
-                              <Trash2 className="h-6 w-6" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeSessionSlot(block.id, slot.id)}
+                            className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
+                            aria-label={copy.scheduleRemove}
+                          >
+                            <Trash2 className="h-6 w-6" />
+                          </button>
                         </div>
                       </div>
                     );

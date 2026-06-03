@@ -79,14 +79,7 @@ export function GroupCreationForm({
               {
                 id: `court-${defaultCourtId}`,
                 courtId: defaultCourtId,
-                slots: [
-                  {
-                    id: `slot-${defaultCourtId}`,
-                    day: "sunday",
-                    start: "",
-                    end: "",
-                  },
-                ],
+                slots: [],
               },
             ]
           : [],
@@ -111,6 +104,7 @@ export function GroupCreationForm({
     name: string;
     description: string;
     playFormat: PlayFormat;
+    courtIds: string[];
     playerAmount?: string;
     allowWalkIn: boolean;
     phone?: string;

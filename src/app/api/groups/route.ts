@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizeLocale } from "@/lib/i18n";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { ensureCourtGroupLinks } from "@/server/groupSessions";
+import { syncCourtGroupLinks } from "@/server/groupSessions";
 import { fetchGroupsBySport } from "@/server/groupFinder";
 import { ensureUserProfile } from "@/server/profile";
 
@@ -17,6 +17,7 @@ type GroupPayload = {
   sportId: string;
   name: string;
   description?: string;
+  courtIds?: string[];
   sessions?: SessionPayload[];
   playFormat?: string | null;
   playerAmount?: number | string;
@@ -71,6 +72,18 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
+}
+
+function normalizeCourtIds(courtIds?: unknown) {
+  if (!Array.isArray(courtIds)) return [];
+  return Array.from(
+    new Set(
+      courtIds
+        .filter((courtId): courtId is string => typeof courtId === "string")
+        .map((courtId) => courtId.trim())
+        .filter(Boolean),
+    ),
+  );
 }
 
 function normalizeSessions(sessions?: SessionPayload[]) {
@@ -135,6 +148,12 @@ export async function POST(request: Request) {
   }
 
   const normalizedSessions = normalizeSessions(payload.sessions);
+  const linkedCourtIds = Array.from(
+    new Set([
+      ...normalizeCourtIds(payload.courtIds),
+      ...normalizedSessions.map((session) => session.courtId),
+    ]),
+  );
   const normalizedPlayerAmount = normalizePlayerAmount(
     payload.playerAmount,
   );
@@ -197,13 +216,9 @@ export async function POST(request: Request) {
       );
     }
 
-    await ensureCourtGroupLinks(
-      adminSupabase,
-      groupId,
-      normalizedSessions.map((session) => session.courtId),
-      user.id,
-    );
   }
+
+  await syncCourtGroupLinks(adminSupabase, groupId, linkedCourtIds, user.id);
 
   return NextResponse.json({ ok: true, groupId });
 }

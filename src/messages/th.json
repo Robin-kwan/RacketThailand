@@ -817,6 +817,7 @@
       "sessionsEmpty": "ระบุสนาม วัน และเวลาที่กลุ่มนี้เล่นเป็นประจำ",
       "sessionCourt": "สนาม",
       "scheduleLabel": "ตารางเล่นประจำ",
+      "scheduleOptionalEmpty": "ยังไม่มีตารางเล่นประจำ เพิ่มวันเวลาเล่นเฉพาะกรณีที่กลุ่มมีเวลาจองประจำ",
       "scheduleAdd": "เพิ่มวันและเวลา",
       "scheduleRemove": "ลบช่วงเวลา",
       "scheduleDay": "วัน",
