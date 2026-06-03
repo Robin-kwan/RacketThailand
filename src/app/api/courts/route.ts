@@ -53,6 +53,8 @@ export async function GET(request: Request) {
 
   const page = Number(searchParams.get("page") ?? "1");
   const limit = Number(searchParams.get("limit") ?? "12");
+  const nearbyLat = Number(searchParams.get("nearbyLat"));
+  const nearbyLng = Number(searchParams.get("nearbyLng"));
   const locale = normalizeLocale(searchParams.get("lang"));
   const filters: CourtFilterOptions = {
     search: searchParams.get("search") ?? undefined,
@@ -60,6 +62,14 @@ export async function GET(request: Request) {
     limit: Number.isFinite(limit) && limit > 0 ? limit : 12,
     offset:
       Number.isFinite(page) && page > 1 ? (page - 1) * (limit || 12) : 0,
+    includeProvinces: searchParams.get("includeProvinces") !== "false",
+    nearby:
+      Number.isFinite(nearbyLat) && Number.isFinite(nearbyLng)
+        ? {
+            latitude: nearbyLat,
+            longitude: nearbyLng,
+          }
+        : undefined,
   };
 
   try {
