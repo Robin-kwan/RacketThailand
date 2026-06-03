@@ -126,12 +126,39 @@ export default async function Landing({
   const isAuthenticated = Boolean(user);
   return (
     <div className="rt-page">
-      <main className="mx-auto mt-8 flex w-full max-w-screen-xl flex-col items-center gap-6 px-6 pb-6 text-center text-[var(--foreground)] md:px-10">
-        <header className="relative w-full max-w-4xl overflow-hidden">
-          <div className="relative flex flex-col items-center">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-[var(--foreground)]">
+      <main className="mx-auto mt-6 flex w-full max-w-screen-xl flex-col items-center gap-12 px-6 pb-10 text-center text-[var(--foreground)] md:px-10">
+        <header className="relative w-full max-w-4xl overflow-hidden rounded-[38px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white px-7 py-10 shadow-[0_14px_48px_rgb(var(--foreground-rgb)/0.08)] md:px-12">
+          <div className="relative flex flex-col items-center gap-5">
+            <h1 className="text-xl font-semibold leading-tight tracking-tight text-[var(--foreground)]">
               {t("landing.heroTitle")}
             </h1>
+            <p className="max-w-3xl text-sm text-[rgb(var(--foreground-rgb)/0.75)] md:text-lg">
+              {t("landing.heroDescription")}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <TrackedLink
+                href={buildLocalizedPath("/courts/new", locale)}
+                eventName="landing_cta_click"
+                eventPayload={{
+                  surface: "landing_hero",
+                  cta: "add_court",
+                }}
+                className="rounded-full bg-[var(--rt-primary)] px-6 py-3 text-sm font-semibold text-[var(--rt-primary-text)] transition hover:bg-[var(--rt-primary-soft)]"
+              >
+                {t("courtSubmission.submit")}
+              </TrackedLink>
+              <TrackedLink
+                href={buildLocalizedPath("/groups/create", locale)}
+                eventName="landing_cta_click"
+                eventPayload={{
+                  surface: "landing_hero",
+                  cta: "create_group",
+                }}
+                className="rounded-full border border-[rgb(var(--foreground-rgb)/0.18)] bg-white px-6 py-3 text-sm font-semibold text-[rgb(var(--foreground-rgb)/0.8)] transition hover:border-[rgb(var(--foreground-rgb)/0.38)]"
+              >
+                {t("header.createGroup")}
+              </TrackedLink>
+            </div>
           </div>
         </header>
 

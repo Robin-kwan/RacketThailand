@@ -176,12 +176,16 @@ export function GroupForm({
   const [courtSessions, setCourtSessions] = useState<CourtSessionBlock[]>(
     initialValues.sessions,
   );
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const sportOptions = useMemo(
     () =>
-      sports.map((sport) => ({
-        value: sport.value,
-        label: sport.label,
-      })),
+      [
+        { value: "", label: "", disabled: true, hidden: true },
+        ...sports.map((sport) => ({
+          value: sport.value,
+          label: sport.label,
+        })),
+      ],
     [sports],
   );
   const [courtCache, setCourtCache] = useState<Record<string, Option[]>>(courts);
@@ -377,6 +381,7 @@ export function GroupForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitAttempted(true);
     await onSubmit({
       sportId: form.sportId,
       name: form.name,
@@ -392,7 +397,12 @@ export function GroupForm({
   };
 
   return (
-    <form className="space-y-5 text-[var(--foreground)]" onSubmit={handleSubmit}>
+    <form
+      className="space-y-5 text-[var(--foreground)]"
+      data-validation-visible={submitAttempted ? "true" : undefined}
+      onInvalidCapture={() => setSubmitAttempted(true)}
+      onSubmit={handleSubmit}
+    >
       <BaseSelect
         label={copy.sport}
         name="sportId"
@@ -653,6 +663,7 @@ export function GroupForm({
       <button
         type="submit"
         disabled={submitting || !hasChanges}
+        onClick={() => setSubmitAttempted(true)}
         className="rt-btn-primary w-full px-6 py-3 text-base"
       >
         {submitting ? `${submittingLabel}...` : submitLabel}

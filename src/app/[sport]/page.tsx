@@ -463,7 +463,7 @@ export default async function SportPage({
                 cta: "open_court_finder",
                 sport: sport.code,
               }}
-              className="rounded-full bg-[var(--rt-primary)] px-6 py-3 text-sm font-semibold uppercase text-[var(--rt-primary-text)]"
+              className="rounded-full bg-[var(--rt-primary)] px-6 py-3 text-sm font-semibold text-[var(--rt-primary-text)]"
             >
               {t("courtFinder.cta")}
             </TrackedLink>
@@ -475,7 +475,7 @@ export default async function SportPage({
                 cta: "open_group_finder",
                 sport: sport.code,
               }}
-              className="rounded-full border border-[rgb(var(--rt-primary-rgb)/0.45)] bg-white px-6 py-3 text-sm font-semibold uppercase text-[var(--rt-primary)] hover:border-[rgb(var(--rt-primary-rgb)/0.75)]"
+              className="rounded-full border border-[rgb(var(--rt-primary-rgb)/0.45)] bg-white px-6 py-3 text-sm font-semibold text-[var(--rt-primary)] hover:border-[rgb(var(--rt-primary-rgb)/0.75)]"
             >
               {t("sport.groupFinderCta")}
             </TrackedLink>
@@ -487,7 +487,7 @@ export default async function SportPage({
                 cta: "open_casual_plays",
                 sport: sport.code,
               }}
-              className="rounded-full border border-emerald-300 bg-emerald-50 px-6 py-3 text-sm font-semibold uppercase text-emerald-800 hover:border-emerald-500"
+              className="rounded-full border border-emerald-300 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-800 hover:border-emerald-500"
             >
               {t("sport.casualPlaysCta")}
             </TrackedLink>
@@ -499,7 +499,7 @@ export default async function SportPage({
                 cta: "open_board",
                 sport: sport.code,
               }}
-              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.18)] bg-white px-6 py-3 text-sm font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.75)] hover:border-[rgb(var(--foreground-rgb)/0.35)] hover:text-[var(--foreground)]"
+              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.18)] bg-white px-6 py-3 text-sm font-semibold text-[rgb(var(--foreground-rgb)/0.75)] hover:border-[rgb(var(--foreground-rgb)/0.35)] hover:text-[var(--foreground)]"
             >
               {boardCta}
             </TrackedLink>

@@ -610,7 +610,7 @@ export function GroupFinder({
               `/groups/create?sport=${encodeURIComponent(sportCode)}`,
               locale,
             )}
-            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
             onClick={() =>
               track("empty_state_cta_click", {
                 surface: "group_finder",
@@ -623,7 +623,7 @@ export function GroupFinder({
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5">
           {displayedGroups.map((entry) => {
             const { group, distanceKm } = entry;
             const primaryPhoto =
@@ -643,6 +643,7 @@ export function GroupFinder({
                 name={group.name ?? fallbackGroupName}
                 imageUrl={primaryPhoto}
                 imageAlt={group.name ?? fallbackGroupPhotoAlt}
+                description={group.description}
                 sessions={group.group_sessions ?? []}
                 playFormat={group.play_format ?? null}
                 allowWalkIn={group.allow_walk_in ?? null}
@@ -650,7 +651,7 @@ export function GroupFinder({
                 scheduleAnytime={copy.scheduleAnytime}
                 locale={locale}
                 showSessions={false}
-                showDescription={false}
+                showDescription
                 showLocation={false}
                 distanceLabel={distanceLabel}
                 courtSportCode={sportCode}

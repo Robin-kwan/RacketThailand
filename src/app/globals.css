@@ -88,6 +88,46 @@ input[type="time"] {
   -moz-appearance: textfield;
 }
 
+input:user-invalid,
+select:user-invalid,
+textarea:user-invalid,
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"],
+form[data-validation-visible="true"] input:invalid,
+form[data-validation-visible="true"] select:invalid,
+form[data-validation-visible="true"] textarea:invalid,
+[data-invalid="true"] {
+  border-color: #f43f5e !important;
+  background-color: #fff1f2 !important;
+  box-shadow: 0 0 0 3px rgb(244 63 94 / 0.16) !important;
+}
+
+input:user-invalid:focus,
+select:user-invalid:focus,
+textarea:user-invalid:focus,
+input:user-invalid:focus-visible,
+select:user-invalid:focus-visible,
+textarea:user-invalid:focus-visible,
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus,
+input[aria-invalid="true"]:focus-visible,
+select[aria-invalid="true"]:focus-visible,
+textarea[aria-invalid="true"]:focus-visible,
+form[data-validation-visible="true"] input:invalid:focus,
+form[data-validation-visible="true"] select:invalid:focus,
+form[data-validation-visible="true"] textarea:invalid:focus,
+form[data-validation-visible="true"] input:invalid:focus-visible,
+form[data-validation-visible="true"] select:invalid:focus-visible,
+form[data-validation-visible="true"] textarea:invalid:focus-visible,
+[data-invalid="true"]:focus,
+[data-invalid="true"]:focus-visible {
+  border-color: #f43f5e !important;
+  background-color: #fff1f2 !important;
+  box-shadow: 0 0 0 3px rgb(244 63 94 / 0.16) !important;
+}
+
 .rt-page {
   color: var(--foreground);
 }

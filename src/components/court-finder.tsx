@@ -580,7 +580,7 @@ export function CourtFinder({
               `/courts/new?sport=${encodeURIComponent(sportCode)}`,
               locale,
             )}
-            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
             onClick={() =>
               track("empty_state_cta_click", {
                 surface: "court_finder",
@@ -594,7 +594,7 @@ export function CourtFinder({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5">
             {displayedCourts.map(({ court, distanceKm }) => {
               const photo =
                 court.court_photos?.find((p) => p.is_primary)?.image_url ??

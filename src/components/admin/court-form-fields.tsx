@@ -76,6 +76,7 @@ type CourtFormFieldsProps = {
   copy: CourtFormCopy;
   onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   onSportIdsChange?: (sportIds: string[]) => void;
+  sportInvalid?: boolean;
   extras?: ReactNode;
 };
 
@@ -211,6 +212,7 @@ export function CourtFormFields({
   copy,
   onChange,
   onSportIdsChange,
+  sportInvalid = false,
   extras,
 }: CourtFormFieldsProps) {
   const selectedSportIds =
@@ -241,7 +243,11 @@ export function CourtFormFields({
             {copy.selectSport}
           </span>
           <details className="group relative">
-            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-900 shadow-sm outline-none transition hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-emerald-300">
+            <summary
+              className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-900 shadow-sm outline-none transition hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-emerald-300"
+              aria-invalid={sportInvalid}
+              data-invalid={sportInvalid ? "true" : undefined}
+            >
               <span className="line-clamp-2">
                 {selectedLabels.length > 0
                   ? selectedLabels.join(", ")

@@ -77,6 +77,8 @@ type FeedbackRow = {
   created_at: string | null;
 };
 
+const FINDER_PREVIEW_LIMIT = "12";
+
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   month: "short",
   day: "numeric",
@@ -258,7 +260,7 @@ export async function buildSportPagePayload(
         "id,name,description,address,district,province,district_id,province_id,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
       is_active: "eq.true",
       order: "created_at.desc",
-      limit: "4",
+      limit: FINDER_PREVIEW_LIMIT,
     };
     if (multiSportCourtIds.length > 0) {
       courtParams.id = `in.(${multiSportCourtIds.join(",")})`;
@@ -272,8 +274,8 @@ export async function buildSportPagePayload(
       select:
         "id,name,description,created_at,allow_walk_in,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(id,name))",
       sport_id: `eq.${sportId}`,
-      order: "created_at.desc",
-      limit: "4",
+      order: "updated_at.desc.nullslast",
+      limit: FINDER_PREVIEW_LIMIT,
     });
 
     const postsPromise = supabaseSelect<PostRow>("posts", {

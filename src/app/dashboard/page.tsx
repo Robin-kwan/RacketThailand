@@ -185,7 +185,7 @@ export default async function DashboardPage({
             {canAddCourts && (
               <Link
                 href={buildLocalizedPath("/dashboard/courts/new", locale)}
-                className="text-xs font-semibold uppercase rt-text-muted hover:text-[var(--foreground)]"
+                className="text-xs font-semibold rt-text-muted hover:text-[var(--foreground)]"
               >
                 {copy.addCourtCta}
               </Link>
@@ -230,7 +230,7 @@ export default async function DashboardPage({
             </h2>
             <Link
               href={buildLocalizedPath("/groups/create", locale)}
-              className="text-xs font-semibold uppercase rt-text-muted hover:text-[var(--foreground)]"
+              className="text-xs font-semibold rt-text-muted hover:text-[var(--foreground)]"
             >
               {t("groups.form.submit")}
             </Link>

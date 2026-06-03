@@ -255,6 +255,7 @@
     "successPending": "Court request submitted. A moderator will review it before publishing.",
     "error": "Unable to publish this court right now.",
     "back": "Back to home",
+    "backToCourtFinder": "Back to court finder",
     "submitRequest": "Submit request"
   },
   "groupFinder": {

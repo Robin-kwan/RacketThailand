@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { buildLocalizedPath, normalizeLocale } from "@/lib/i18n";
+import { BaseTextField } from "@/components/base-text-field";
 import type { MapCoordinates } from "@/lib/google-maps";
 import type { PlaceDetailsPayload } from "@/lib/google-places";
 
@@ -39,6 +40,8 @@ type PlaceSearchFieldProps = {
   initialQuery?: string;
   selectedCoordinates?: MapCoordinates | null;
   currentCourtId?: string;
+  invalid?: boolean;
+  invalidMessage?: string;
 };
 
 const SEARCH_DELAY = 300;
@@ -55,6 +58,8 @@ export function PlaceSearchField({
   initialQuery,
   selectedCoordinates,
   currentCourtId,
+  invalid = false,
+  invalidMessage,
 }: PlaceSearchFieldProps) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -194,7 +199,7 @@ export function PlaceSearchField({
     <div className="space-y-2">
       <label className="text-sm font-semibold text-slate-700">{label}</label>
       <div className="relative">
-        <input
+        <BaseTextField
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -203,7 +208,9 @@ export function PlaceSearchField({
           }}
           onBlur={handleBlur}
           placeholder={placeholder}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          aria-invalid={invalid}
+          data-invalid={invalid ? "true" : undefined}
+          variant="light"
         />
         {(searching || resolving) && (
           <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
@@ -239,7 +246,9 @@ export function PlaceSearchField({
           </div>
         )}
       </div>
-      <p className="text-xs text-slate-400">{helper}</p>
+      <p className={`text-xs ${invalid ? "font-medium text-rose-600" : "text-slate-400"}`}>
+        {invalid ? (invalidMessage ?? helper) : helper}
+      </p>
       {existingCourt && (
         <p className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
           {duplicateLabel}{" "}
