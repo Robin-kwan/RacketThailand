@@ -26,6 +26,19 @@ export type GroupSessionRecord = {
   } | null;
 };
 
+export type GroupCourtLinkRecord = {
+  courts?: {
+    id: string;
+    name: string | null;
+    province: string | null;
+    province_id?: number | null;
+    latitude: number | null;
+    longitude: number | null;
+    district?: string | null;
+    district_id?: number | null;
+  } | null;
+};
+
 export type GroupRecord = {
   id: string;
   name: string | null;
@@ -38,6 +51,7 @@ export type GroupRecord = {
   line_id?: string | null;
   group_photos?: GroupPhoto[] | null;
   group_sessions?: GroupSessionRecord[] | null;
+  court_groups?: GroupCourtLinkRecord[] | null;
 };
 
 export type GroupFilterOptions = {
@@ -133,7 +147,7 @@ export async function fetchGroupsBySport(
 
   const params: Record<string, string> = {
     select:
-      `id,name,description,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),${sessionRelation}(day,start_time,end_time,court_id,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))`,
+      `id,name,description,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),${sessionRelation}(day,start_time,end_time,court_id,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id)),court_groups(courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))`,
       sport_id: `eq.${sportRow.id}`,
       order: "updated_at.desc.nullslast",
   };
@@ -190,6 +204,28 @@ export async function fetchGroupsBySport(
                   ...session,
                   courts: {
                     ...session.courts,
+                    district: localized.district,
+                    province: localized.province,
+                  },
+                };
+              }),
+            ),
+      court_groups:
+        group.court_groups == null
+          ? group.court_groups
+          : await Promise.all(
+              group.court_groups.map(async (link) => {
+                if (!link.courts) {
+                  return link;
+                }
+                const localized = await localizeThailandLocation(
+                  link.courts,
+                  locale,
+                );
+                return {
+                  ...link,
+                  courts: {
+                    ...link.courts,
                     district: localized.district,
                     province: localized.province,
                   },
