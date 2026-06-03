@@ -191,7 +191,7 @@ export default async function Landing({
                     <p className="text-xl font-semibold tracking-tight">
                       {sport.name[locale]}
                     </p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.22em] text-white/75">
+                    <p className="mt-1 text-xs uppercase text-white/75">
                       {t("landing.cardCta")}
                     </p>
                   </div>
