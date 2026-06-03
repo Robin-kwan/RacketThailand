@@ -118,7 +118,7 @@ export function CourtSubmissionRequests({
                   </div>
                   <Link
                     href={buildLocalizedPath(`/courts/${court.id}`, locale)}
-                    className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:border-slate-500"
+                    className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-500"
                   >
                     {copy.view}
                   </Link>

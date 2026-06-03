@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
 import type { GroupRecord } from "@/server/groupFinder";
 import {
@@ -63,6 +63,12 @@ type GroupFinderProps = {
 
 const PAGE_SIZE = 12;
 type LocationState = { latitude: number; longitude: number };
+type NearbyCandidateCourt = {
+  id: string;
+  name: string | null | undefined;
+  latitude: number | string | null | undefined;
+  longitude: number | string | null | undefined;
+};
 
 const parseCoordinate = (value?: number | string | null) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -97,6 +103,7 @@ export function GroupFinder({
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
+  const hasSkippedInitialLoadRef = useRef(false);
   const fallbackGroupName =
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackGroupPhotoAlt =
@@ -146,6 +153,19 @@ export function GroupFinder({
   useEffect(() => {
     let isActive = true;
     const load = async () => {
+      if (
+        !hasSkippedInitialLoadRef.current &&
+        !prioritizeNearby &&
+        !userLocation &&
+        debouncedSearch === initialSearch &&
+        dayFilter === initialDay &&
+        playFormatFilter === initialPlayFormat &&
+        walkInFilter === initialAllowWalkIn
+      ) {
+        hasSkippedInitialLoadRef.current = true;
+        return;
+      }
+      hasSkippedInitialLoadRef.current = true;
       setLoading(true);
       const params = new URLSearchParams({
         sport: sportCode,
@@ -175,6 +195,12 @@ export function GroupFinder({
     dayFilter,
     playFormatFilter,
     walkInFilter,
+    initialAllowWalkIn,
+    initialDay,
+    initialPlayFormat,
+    initialSearch,
+    prioritizeNearby,
+    userLocation,
   ]);
 
   const handleReset = () => {
@@ -276,12 +302,24 @@ export function GroupFinder({
           const lng = parseCoordinate(session.courts?.longitude);
           return lat !== null && lng !== null;
         }) ?? [];
-      return { group, sessionsWithCoords };
+      const linkedCourtsWithCoords =
+        group.court_groups
+          ?.map((link) => link.courts)
+          .filter((court) => {
+            const lat = parseCoordinate(court?.latitude);
+            const lng = parseCoordinate(court?.longitude);
+            return Boolean(court?.id) && lat !== null && lng !== null;
+          }) ?? [];
+      return { group, sessionsWithCoords, linkedCourtsWithCoords };
     });
   }, [filteredGroups]);
 
   const groupsWithDistance = useMemo(() => {
-    return groupsWithLocation.map(({ group, sessionsWithCoords }) => {
+    return groupsWithLocation.map(({
+      group,
+      sessionsWithCoords,
+      linkedCourtsWithCoords,
+    }) => {
       if (!userLocation) {
         return {
           group,
@@ -289,12 +327,27 @@ export function GroupFinder({
           nearestCourt: null as NearbyMapCourt | null,
         };
       }
+      const candidateCourts: NearbyCandidateCourt[] = [];
+      const seenCourtIds = new Set<string>();
+      sessionsWithCoords.forEach((session) => {
+        if (session.courts?.id && !seenCourtIds.has(session.courts.id)) {
+          seenCourtIds.add(session.courts.id);
+          candidateCourts.push(session.courts);
+        }
+      });
+      linkedCourtsWithCoords.forEach((court) => {
+        if (court?.id && !seenCourtIds.has(court.id)) {
+          seenCourtIds.add(court.id);
+          candidateCourts.push(court);
+        }
+      });
+
       let bestDistance = Number.POSITIVE_INFINITY;
       let bestCourt: NearbyMapCourt | null = null;
-      sessionsWithCoords.forEach((session) => {
-        const lat = parseCoordinate(session.courts?.latitude);
-        const lng = parseCoordinate(session.courts?.longitude);
-        const courtId = session.courts?.id;
+      candidateCourts.forEach((court) => {
+        const lat = parseCoordinate(court.latitude);
+        const lng = parseCoordinate(court.longitude);
+        const courtId = court.id;
         if (lat === null || lng === null || !courtId) return;
         const distance = haversineDistance(userLocation, {
           latitude: lat,
@@ -304,7 +357,7 @@ export function GroupFinder({
           bestDistance = distance;
           bestCourt = {
             id: courtId,
-            name: session.courts?.name ?? (locale === "th" ? "สนาม" : "Court"),
+            name: court.name ?? (locale === "th" ? "สนาม" : "Court"),
             latitude: lat,
             longitude: lng,
             href: buildCourtHref(courtId),
@@ -557,7 +610,7 @@ export function GroupFinder({
               `/groups/create?sport=${encodeURIComponent(sportCode)}`,
               locale,
             )}
-            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
             onClick={() =>
               track("empty_state_cta_click", {
                 surface: "group_finder",
@@ -570,7 +623,7 @@ export function GroupFinder({
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5">
           {displayedGroups.map((entry) => {
             const { group, distanceKm } = entry;
             const primaryPhoto =
@@ -590,6 +643,7 @@ export function GroupFinder({
                 name={group.name ?? fallbackGroupName}
                 imageUrl={primaryPhoto}
                 imageAlt={group.name ?? fallbackGroupPhotoAlt}
+                description={group.description}
                 sessions={group.group_sessions ?? []}
                 playFormat={group.play_format ?? null}
                 allowWalkIn={group.allow_walk_in ?? null}
@@ -597,7 +651,7 @@ export function GroupFinder({
                 scheduleAnytime={copy.scheduleAnytime}
                 locale={locale}
                 showSessions={false}
-                showDescription={false}
+                showDescription
                 showLocation={false}
                 distanceLabel={distanceLabel}
                 courtSportCode={sportCode}

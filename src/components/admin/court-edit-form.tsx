@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LoaderCircle, Plus } from "lucide-react";
 import { BaseImageCard } from "@/components/base-image-card";
 import {
@@ -27,6 +28,7 @@ import {
   createAlwaysOpenSchedule,
   type OpeningHoursEntry,
 } from "@/lib/opening-hours";
+import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { PHOTO_UPLOAD_ACCEPT, optimizePhotoFile } from "@/lib/image-upload";
 
 type SportOption = {
@@ -101,6 +103,7 @@ type CourtEditFormProps = {
   court: CourtRecord;
   sports: SportOption[];
   existingPhotos: ExistingPhoto[];
+  locale: Locale;
   copy: {
     title: string;
     subtitle: string;
@@ -145,8 +148,10 @@ export function CourtEditForm({
   court,
   sports,
   existingPhotos,
+  locale,
   copy,
 }: CourtEditFormProps) {
+  const router = useRouter();
   const initialSportIds =
     court.sportIds && court.sportIds.length > 0
       ? court.sportIds
@@ -366,6 +371,7 @@ export function CourtEditForm({
         await handleLineQrUpdate();
       }
       showToast({ variant: "success", message: copy.success });
+      router.push(buildLocalizedPath(`/courts/${court.id}`, locale));
     } catch (error) {
       console.error(error);
       showToast({

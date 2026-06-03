@@ -127,6 +127,11 @@ type GroupSessionRow = {
   } | null;
 };
 
+type GroupCourtLinkRow = {
+  court_id: string;
+  courts: GroupSessionRow["courts"];
+};
+
 type GroupMetadataRow = {
   id: string;
   name: string | null;
@@ -379,7 +384,12 @@ export default async function GroupDetailPage({
   );
   const displayGroup = { ...group, line_qr_url: resolvedLineQrUrl };
 
-  const [{ data: owners }, { data: photoRows }, { data: sessionRows }] =
+  const [
+    { data: owners },
+    { data: photoRows },
+    { data: sessionRows },
+    { data: linkedCourtRows },
+  ] =
     await Promise.all([
       group.owner_id
         ? supabaseSelect<OwnerProfile>("profiles", {
@@ -398,6 +408,12 @@ export default async function GroupDetailPage({
           "id,court_id,day,start_time,end_time,courts(id,name,district,district_id,province,province_id)",
         group_id: `eq.${group.id}`,
         order: "day.asc,start_time.asc",
+      }),
+      supabaseSelect<GroupCourtLinkRow>("court_groups", {
+        select:
+          "court_id,courts(id,name,district,district_id,province,province_id)",
+        group_id: `eq.${group.id}`,
+        order: "created_at.asc",
       }),
     ]);
 
@@ -447,9 +463,28 @@ export default async function GroupDetailPage({
       };
     }),
   );
+  const localizedLinkedCourtRows = await Promise.all(
+    (linkedCourtRows ?? []).map(async (link) => {
+      if (!link.courts) {
+        return link;
+      }
+      const localized = await localizeThailandLocation(link.courts, locale);
+      return {
+        ...link,
+        courts: {
+          ...link.courts,
+          district: localized.district,
+          province: localized.province,
+        },
+      };
+    }),
+  );
 
   const sessionCourtIds = Array.from(
-    new Set(localizedSessionRows.map((session) => session.court_id).filter(Boolean)),
+    new Set([
+      ...localizedSessionRows.map((session) => session.court_id),
+      ...localizedLinkedCourtRows.map((link) => link.court_id),
+    ].filter(Boolean)),
   ) as string[];
 
   let courtPhotos: { court_id: string; image_url: string | null; is_primary: boolean | null }[] = [];
@@ -496,6 +531,14 @@ export default async function GroupDetailPage({
           photoUrl: courtPhotoMap.get(key) ?? null,
         });
       }
+    });
+    localizedLinkedCourtRows.forEach((link) => {
+      if (map.has(link.court_id)) return;
+      map.set(link.court_id, {
+        court: link.courts,
+        sessions: [],
+        photoUrl: courtPhotoMap.get(link.court_id) ?? null,
+      });
     });
     return Array.from(map.values());
   })();

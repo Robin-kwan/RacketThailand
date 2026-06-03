@@ -125,6 +125,13 @@ export default async function EditGroupPage({
     order: "day.asc,start_time.asc",
   });
 
+  const { data: courtGroupRows } = await supabaseSelect<{
+    court_id: string;
+  }>("court_groups", {
+    select: "court_id",
+    group_id: `eq.${group.id}`,
+  });
+
   const { data: photoRows } = await supabaseSelect<{
     id: string;
     image_url: string | null;
@@ -184,9 +191,24 @@ export default async function EditGroupPage({
     }, new Map<string, { id: string; courtId: string; slots: { id: string; day: string; start: string; end: string }[] }>()) ??
     new Map();
 
-  const groupedArray = Array.from(groupedSessions.values());
   const sportCourtOptions = courtOptions[group.sport_id] ?? [];
   const fallbackCourtId = sportCourtOptions[0]?.value ?? "";
+  const linkedCourtIds = Array.from(
+    new Set([
+      ...((courtGroupRows ?? []).map((row) => row.court_id)),
+      ...Array.from(groupedSessions.keys()),
+    ]),
+  );
+  const groupedArray =
+    linkedCourtIds.length > 0
+      ? linkedCourtIds.map((courtId) => (
+          groupedSessions.get(courtId) ?? {
+            id: courtId,
+            courtId,
+            slots: [],
+          }
+        ))
+      : [];
   const sanitizedSessions =
     groupedArray.length > 0
       ? groupedArray.map((block) => {
@@ -249,6 +271,7 @@ export default async function EditGroupPage({
     sessionCourt: t("groups.form.sessionCourt"),
     noOptionsFound: t("forms.noOptionsFound"),
     scheduleLabel: t("groups.form.scheduleLabel"),
+    scheduleOptionalEmpty: t("groups.form.scheduleOptionalEmpty"),
     scheduleRemove: t("groups.form.scheduleRemove"),
     scheduleDay: t("groups.form.scheduleDay"),
     scheduleStart: t("groups.form.scheduleStart"),
@@ -329,6 +352,7 @@ export default async function EditGroupPage({
               courts={courtOptions}
               dayOptions={dayOptions}
               existingPhotos={photoRows ?? []}
+              locale={locale}
               copy={copy}
             />
           </div>

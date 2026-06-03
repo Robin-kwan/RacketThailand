@@ -131,7 +131,7 @@ export function CasualPlayJoinRequestForm({
           <p>{copy.loginPrompt}</p>
           <Link
             href={loginHref}
-            className="mt-3 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--rt-primary-text)]"
+            className="mt-3 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold text-[var(--rt-primary-text)]"
           >
             {copy.loginCta}
           </Link>
@@ -144,7 +144,7 @@ export function CasualPlayJoinRequestForm({
               {status === "rejected" && (
                 <button
                   type="button"
-                  className="mt-3 rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:border-slate-500"
+                  className="mt-3 rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-500"
                   onClick={() => setShowForm(true)}
                 >
                   {copy.sendAgain}

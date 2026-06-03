@@ -222,7 +222,7 @@ export function NotificationsMenu({
             </p>
             <button
               type="button"
-              className="text-xs font-semibold uppercase text-slate-500 hover:text-slate-700"
+              className="text-xs font-semibold text-slate-500 hover:text-slate-700"
               onClick={handleReadAllClick}
             >
               {copy.markAll}

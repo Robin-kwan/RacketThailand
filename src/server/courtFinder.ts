@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
 import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
@@ -52,6 +53,17 @@ export type CourtFilterOptions = {
   province?: string;
   limit?: number;
   offset?: number;
+  includeProvinces?: boolean;
+  nearby?: {
+    latitude: number;
+    longitude: number;
+  };
+};
+
+type NearbyCourtIdRow = {
+  court_id: string;
+  distance_km: number;
+  total_count: number;
 };
 
 export async function fetchSportRow(code: string) {
@@ -92,6 +104,57 @@ function applySportFilter(
   if (searchClause) {
     params.or = searchClause;
   }
+}
+
+async function resolveProvinceFilter(province?: string) {
+  const provinceFilter = province?.trim();
+  if (!provinceFilter) {
+    return { provinceId: null as number | null, provinceText: null as string | null };
+  }
+
+  const provinceId = Number(provinceFilter);
+  if (Number.isFinite(provinceId)) {
+    return { provinceId, provinceText: null };
+  }
+
+  const resolved = await resolveThailandLocationIds({
+    province: provinceFilter,
+  });
+  if (resolved.provinceId) {
+    return { provinceId: resolved.provinceId, provinceText: null };
+  }
+
+  return { provinceId: null, provinceText: provinceFilter };
+}
+
+async function fetchNearbyCourtIds(
+  sportCode: string,
+  filters: CourtFilterOptions,
+) {
+  if (!filters.nearby) {
+    return null;
+  }
+
+  const { provinceId, provinceText } = await resolveProvinceFilter(
+    filters.province,
+  );
+  const adminClient = getSupabaseAdminClient();
+  const { data, error } = await adminClient.rpc("search_nearby_court_ids", {
+    p_sport_code: sportCode,
+    p_lat: filters.nearby.latitude,
+    p_lng: filters.nearby.longitude,
+    p_search: filters.search?.trim() || null,
+    p_province_id: provinceId,
+    p_province: provinceText,
+    p_limit: filters.limit ?? 12,
+    p_offset: filters.offset ?? 0,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as NearbyCourtIdRow[];
 }
 
 export async function fetchCourtFilters(
@@ -168,6 +231,53 @@ export async function fetchCourtsBySport(
     return { courts: [], count: 0, provinces: [], sport: null };
   }
 
+  const nearbyRows = await fetchNearbyCourtIds(sportCode, filters);
+  if (nearbyRows) {
+    const courtIds = nearbyRows.map((row) => row.court_id);
+    const [courtsRes, provinces] = await Promise.all([
+      courtIds.length > 0
+        ? supabaseSelect<CourtRecord>(
+            "courts",
+            {
+              select:
+                "id,name,description,address,district,province,district_id,province_id,price_note,phone,line_id,website_url,google_place_id,created_at,updated_at,is_active,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
+              id: `in.(${courtIds.join(",")})`,
+            },
+            { preferCount: false },
+          )
+        : Promise.resolve({ data: [] as CourtRecord[] }),
+      filters.includeProvinces === false
+        ? Promise.resolve([])
+        : fetchCourtFilters(sportRow.id, locale),
+    ]);
+
+    const orderById = new Map(courtIds.map((id, index) => [id, index]));
+    const localizedCourts = await Promise.all(
+      (courtsRes.data ?? [])
+        .slice()
+        .sort(
+          (a, b) =>
+            (orderById.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+            (orderById.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+        )
+        .map(async (court) => {
+          const localized = await localizeThailandLocation(court, locale);
+          return {
+            ...court,
+            district: localized.district,
+            province: localized.province,
+          };
+        }),
+    );
+
+    return {
+      sport: sportRow,
+      courts: localizedCourts,
+      count: nearbyRows[0]?.total_count ?? 0,
+      provinces,
+    };
+  }
+
   const params: Record<string, string> = {
     select:
       "id,name,description,address,district,province,district_id,province_id,price_note,phone,line_id,website_url,google_place_id,created_at,updated_at,is_active,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
@@ -181,21 +291,13 @@ export async function fetchCourtsBySport(
   if (filters.offset) {
     params.offset = String(filters.offset);
   }
-  const provinceFilter = filters.province?.trim();
-  if (provinceFilter) {
-    const provinceId = Number(provinceFilter);
-    if (Number.isFinite(provinceId)) {
-      params.province_id = `eq.${provinceId}`;
-    } else {
-      const resolved = await resolveThailandLocationIds({
-        province: provinceFilter,
-      });
-      if (resolved.provinceId) {
-        params.province_id = `eq.${resolved.provinceId}`;
-      } else {
-        params.province = `eq.${provinceFilter}`;
-      }
-    }
+  const { provinceId, provinceText } = await resolveProvinceFilter(
+    filters.province,
+  );
+  if (provinceId) {
+    params.province_id = `eq.${provinceId}`;
+  } else if (provinceText) {
+    params.province = `eq.${provinceText}`;
   }
   const searchClause = filters.search
     ? buildSearchClause(filters.search)
@@ -205,7 +307,9 @@ export async function fetchCourtsBySport(
 
   const [courtsRes, provinces] = await Promise.all([
     supabaseSelect<CourtRecord>("courts", params),
-    fetchCourtFilters(sportRow.id, locale),
+    filters.includeProvinces === false
+      ? Promise.resolve([])
+      : fetchCourtFilters(sportRow.id, locale),
   ]);
 
   const localizedCourts = await Promise.all(

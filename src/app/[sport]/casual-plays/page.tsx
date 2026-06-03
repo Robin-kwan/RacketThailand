@@ -173,7 +173,7 @@ export default async function CasualPlayFinderPage({
                 cta: "create_casual_play",
                 sport: resolvedParams.sport,
               }}
-              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
             >
               {copy.createCta}
             </TrackedLink>

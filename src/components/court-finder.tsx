@@ -103,7 +103,9 @@ export function CourtFinder({
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
+  const [allowAutoLoadMore, setAllowAutoLoadMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const lastLoadedRequestKeyRef = useRef<string | null>(null);
   const buildCourtHref = useCallback(
     (courtId: string) =>
       buildLocalizedPath(
@@ -131,6 +133,30 @@ export function CourtFinder({
   const loadingMoreLabel =
     locale === "th" ? "กำลังโหลดสนามเพิ่มเติม..." : "Loading more courts...";
 
+  const courtListRequestQuery = useMemo(() => {
+    const params = new URLSearchParams({
+      sport: sportCode,
+      lang: locale,
+      limit: PAGE_SIZE.toString(),
+      page: "1",
+    });
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (province) params.set("province", province);
+    if (prioritizeNearby && userLocation) {
+      params.set("nearbyLat", String(userLocation.latitude));
+      params.set("nearbyLng", String(userLocation.longitude));
+      params.set("includeProvinces", "false");
+    }
+    return params.toString();
+  }, [
+    debouncedSearch,
+    locale,
+    prioritizeNearby,
+    province,
+    sportCode,
+    userLocation,
+  ]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -154,16 +180,16 @@ export function CourtFinder({
   useEffect(() => {
     let isActive = true;
     const load = async () => {
+      if (lastLoadedRequestKeyRef.current === null) {
+        lastLoadedRequestKeyRef.current = courtListRequestQuery;
+        return;
+      }
+      if (lastLoadedRequestKeyRef.current === courtListRequestQuery) {
+        return;
+      }
+      lastLoadedRequestKeyRef.current = courtListRequestQuery;
       setLoading(true);
-      const params = new URLSearchParams({
-        sport: sportCode,
-        lang: locale,
-        limit: PAGE_SIZE.toString(),
-        page: "1",
-      });
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      if (province) params.set("province", province);
-      const response = await fetch(`/api/courts?${params.toString()}`, {
+      const response = await fetch(`/api/courts?${courtListRequestQuery}`, {
         cache: "no-store",
       });
       const data = await response.json();
@@ -181,7 +207,7 @@ export function CourtFinder({
     return () => {
       isActive = false;
     };
-  }, [sportCode, locale, debouncedSearch, province]);
+  }, [courtListRequestQuery]);
 
   const loadMoreCourts = useCallback(async () => {
     if (loading || loadingMore || !hasMore) return;
@@ -193,9 +219,14 @@ export function CourtFinder({
         lang: locale,
         limit: PAGE_SIZE.toString(),
         page: nextPage.toString(),
+        includeProvinces: "false",
       });
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (province) params.set("province", province);
+      if (prioritizeNearby && userLocation) {
+        params.set("nearbyLat", String(userLocation.latitude));
+        params.set("nearbyLng", String(userLocation.longitude));
+      }
       const response = await fetch(`/api/courts?${params.toString()}`, {
         cache: "no-store",
       });
@@ -225,13 +256,15 @@ export function CourtFinder({
     loadingMore,
     page,
     province,
+    prioritizeNearby,
     sportCode,
     locale,
+    userLocation,
   ]);
 
   useEffect(() => {
     const target = sentinelRef.current;
-    if (!target || !hasMore) return undefined;
+    if (!target || !hasMore || !allowAutoLoadMore) return undefined;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -244,7 +277,7 @@ export function CourtFinder({
     );
     observer.observe(target);
     return () => observer.disconnect();
-  }, [hasMore, loadMoreCourts]);
+  }, [allowAutoLoadMore, hasMore, loadMoreCourts]);
 
   const handleReset = () => {
     track("finder_filter_used", {
@@ -256,7 +289,28 @@ export function CourtFinder({
     setProvince("");
   };
 
-  const handleRequestNearby = () => {
+  const requestCurrentLocation = useCallback(
+    () =>
+      new Promise<LocationState>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+          },
+          reject,
+          {
+            enableHighAccuracy: false,
+            maximumAge: 5 * 60 * 1000,
+            timeout: 8000,
+          },
+        );
+      }),
+    [],
+  );
+
+  const handleRequestNearby = async () => {
     track("finder_filter_used", {
       surface: "court_finder",
       sport: sportCode,
@@ -268,31 +322,58 @@ export function CourtFinder({
     }
     setLocatingNearby(true);
     setNearbyStatus(copy.nearbyFinding);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-        setPrioritizeNearby(true);
-        setNearbyStatus(copy.nearbyActive);
-        setLocatingNearby(false);
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setNearbyStatus(copy.nearbyDenied);
-        } else {
-          setNearbyStatus(copy.nearbyUnsupported);
-        }
-        setLocatingNearby(false);
-      },
-    );
+    try {
+      const location = await requestCurrentLocation();
+      setUserLocation(location);
+      setPrioritizeNearby(true);
+      setNearbyStatus(copy.nearbyActive);
+    } catch (error) {
+      const errorCode =
+        typeof error === "object" && error !== null && "code" in error
+          ? Number((error as { code?: number }).code)
+          : null;
+      if (errorCode === 1) {
+        setNearbyStatus(copy.nearbyDenied);
+      } else {
+        setNearbyStatus(copy.nearbyUnsupported);
+      }
+    } finally {
+      setLocatingNearby(false);
+    }
   };
 
   const handleClearNearby = () => {
     setPrioritizeNearby(false);
     setNearbyStatus(null);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || allowAutoLoadMore) return undefined;
+    if (window.scrollY > 0) {
+      setAllowAutoLoadMore(true);
+      return undefined;
+    }
+
+    const enableAutoLoadMore = () => setAllowAutoLoadMore(true);
+    window.addEventListener("scroll", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+    window.addEventListener("wheel", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+    window.addEventListener("touchmove", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", enableAutoLoadMore);
+      window.removeEventListener("wheel", enableAutoLoadMore);
+      window.removeEventListener("touchmove", enableAutoLoadMore);
+    };
+  }, [allowAutoLoadMore]);
 
   const courtsWithDistance = useMemo(() => {
     return courts.map((court) => {
@@ -499,7 +580,7 @@ export function CourtFinder({
               `/courts/new?sport=${encodeURIComponent(sportCode)}`,
               locale,
             )}
-            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
             onClick={() =>
               track("empty_state_cta_click", {
                 surface: "court_finder",
@@ -513,7 +594,7 @@ export function CourtFinder({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5">
             {displayedCourts.map(({ court, distanceKm }) => {
               const photo =
                 court.court_photos?.find((p) => p.is_primary)?.image_url ??

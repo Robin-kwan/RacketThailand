@@ -275,7 +275,7 @@ export default async function AdminPanel({
                     </div>
                     <Link
                       href={buildLocalizedPath(`/courts/${court.id}`, locale)}
-                      className="text-xs font-semibold uppercase tracking-wide text-slate-500 underline-offset-4 hover:underline"
+                      className="text-xs font-semibold text-slate-500 underline-offset-4 hover:underline"
                     >
                       {t("admin.sections.viewItem")}
                     </Link>

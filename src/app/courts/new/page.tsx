@@ -107,14 +107,19 @@ export default async function NewCourtPage({
       label: SPORT_META[sport.code]?.name[locale] ?? sport.name ?? sport.code,
     })) ?? [];
   const requestedSport = resolved?.sport?.trim().toLowerCase();
-  const defaultSportId =
+  const sourceSport =
     requestedSport && sports
       ? sports.find(
           (sport) =>
             sport.code.toLowerCase() === requestedSport ||
             sport.id.toLowerCase() === requestedSport,
-        )?.id
+        )
       : undefined;
+  const defaultSportId = sourceSport?.id;
+  const backHref = buildLocalizedPath(
+    sourceSport ? `/${sourceSport.code}/court-finder` : "/",
+    locale,
+  );
 
   const copy = {
     selectSport: t("admin.selectSport"),
@@ -161,8 +166,10 @@ export default async function NewCourtPage({
   return (
     <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <BaseBackLink href={buildLocalizedPath("/", locale)}>
-          {t("courtSubmission.back")}
+        <BaseBackLink href={backHref}>
+          {sourceSport
+            ? t("courtSubmission.backToCourtFinder")
+            : t("courtSubmission.back")}
         </BaseBackLink>
         <BaseCard
           as="section"
@@ -180,6 +187,7 @@ export default async function NewCourtPage({
             <CourtAdminForm
               sports={sportOptions}
               defaultSportId={defaultSportId}
+              preselectFirstSport={Boolean(defaultSportId)}
               submitEndpoint="/api/courts"
               analyticsSurface="public_court_form"
               copy={copy}

@@ -12,8 +12,6 @@ import {
   TimePickerField,
   createClosingTimeOptions,
   createTimeOptions,
-  getOpeningTimeOptions,
-  isClosingTimeAfterStart,
 } from "@/components/time-picker-field";
 import {
   DEFAULT_PLAY_FORMAT,
@@ -53,6 +51,16 @@ const normalizeSessions = (blocks: CourtSessionBlock[]) =>
       (session) =>
         session.courtId && session.day && session.start && session.end,
     );
+
+const normalizeCourtIds = (blocks: CourtSessionBlock[]) =>
+  Array.from(
+    new Set(
+      blocks
+        .map((block) => block.courtId.trim())
+        .filter(Boolean),
+    ),
+  );
+
 export type GroupFormValues = {
   sportId: string;
   name: string;
@@ -78,6 +86,7 @@ export type GroupFormCopy = {
   sessionCourt: string;
   noOptionsFound: string;
   scheduleLabel: string;
+  scheduleOptionalEmpty: string;
   scheduleDay: string;
   scheduleStart: string;
   scheduleEnd: string;
@@ -102,6 +111,7 @@ type SubmitPayload = {
   sportId: string;
   name: string;
   description: string;
+  courtIds: string[];
   sessions: { courtId: string; day: string; start: string; end: string }[];
   playFormat: PlayFormat;
   playerAmount?: string;
@@ -166,12 +176,16 @@ export function GroupForm({
   const [courtSessions, setCourtSessions] = useState<CourtSessionBlock[]>(
     initialValues.sessions,
   );
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const sportOptions = useMemo(
     () =>
-      sports.map((sport) => ({
-        value: sport.value,
-        label: sport.label,
-      })),
+      [
+        { value: "", label: "", disabled: true, hidden: true },
+        ...sports.map((sport) => ({
+          value: sport.value,
+          label: sport.label,
+        })),
+      ],
     [sports],
   );
   const [courtCache, setCourtCache] = useState<Record<string, Option[]>>(courts);
@@ -254,7 +268,7 @@ export function GroupForm({
           ? crypto.randomUUID()
           : `court-${Date.now()}-${Math.random()}`,
         courtId: "",
-        slots: [{ ...createSlot() }],
+        slots: [],
       },
     ]);
   };
@@ -302,24 +316,6 @@ export function GroupForm({
                   [field]: value,
                 };
 
-                if (
-                  field === "start" &&
-                  slot.end &&
-                  value &&
-                  !isClosingTimeAfterStart(slot.end, value)
-                ) {
-                  nextSlot.end = "";
-                }
-
-                if (
-                  field === "end" &&
-                  slot.start &&
-                  value &&
-                  !isClosingTimeAfterStart(value, slot.start)
-                ) {
-                  nextSlot.end = "";
-                }
-
                 return nextSlot;
               }),
             }
@@ -330,18 +326,20 @@ export function GroupForm({
 
   const removeSessionSlot = (blockId: string, slotId: string) => {
     setCourtSessions((prev) =>
-      prev
-        .map((block) =>
-          block.id === blockId
-            ? { ...block, slots: block.slots.filter((slot) => slot.id !== slotId) }
-            : block,
-        )
-        .filter((block) => block.slots.length > 0),
+      prev.map((block) =>
+        block.id === blockId
+          ? { ...block, slots: block.slots.filter((slot) => slot.id !== slotId) }
+          : block,
+      ),
     );
   };
 
   const serializedSessions = useMemo(
     () => normalizeSessions(courtSessions),
+    [courtSessions],
+  );
+  const serializedCourtIds = useMemo(
+    () => normalizeCourtIds(courtSessions),
     [courtSessions],
   );
 
@@ -356,6 +354,7 @@ export function GroupForm({
         allowWalkIn: initialValues.allowWalkIn !== false,
         phone: initialValues.phone ?? "",
         lineId: initialValues.lineId ?? "",
+        courtIds: normalizeCourtIds(initialValues.sessions),
         sessions: normalizeSessions(initialValues.sessions),
       }),
     [initialValues],
@@ -372,15 +371,17 @@ export function GroupForm({
         allowWalkIn: form.allowWalkIn,
         phone: form.phone,
         lineId: form.lineId,
+        courtIds: serializedCourtIds,
         sessions: serializedSessions,
       }),
-    [form, serializedSessions],
+    [form, serializedCourtIds, serializedSessions],
   );
 
   const hasChanges = currentSnapshot !== initialSnapshot || externalDirty;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitAttempted(true);
     await onSubmit({
       sportId: form.sportId,
       name: form.name,
@@ -390,12 +391,18 @@ export function GroupForm({
       allowWalkIn: form.allowWalkIn,
       phone: form.phone,
       lineId: form.lineId,
+      courtIds: serializedCourtIds,
       sessions: serializedSessions,
     });
   };
 
   return (
-    <form className="space-y-5 text-[var(--foreground)]" onSubmit={handleSubmit}>
+    <form
+      className="space-y-5 text-[var(--foreground)]"
+      data-validation-visible={submitAttempted ? "true" : undefined}
+      onInvalidCapture={() => setSubmitAttempted(true)}
+      onSubmit={handleSubmit}
+    >
       <BaseSelect
         label={copy.sport}
         name="sportId"
@@ -563,10 +570,14 @@ export function GroupForm({
                   <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                     {copy.sessionsTitle ?? copy.scheduleLabel}
                   </p>
+                  {block.slots.length === 0 && (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
+                      {copy.scheduleOptionalEmpty}
+                    </p>
+                  )}
                   {block.slots.map((slot) => {
                     const startInputId = `session-${block.id}-${slot.id}-start`;
                     const endInputId = `session-${block.id}-${slot.id}-end`;
-                    const canRemoveSlot = block.slots.length > 1;
                     return (
                       <div
                         key={slot.id}
@@ -601,14 +612,7 @@ export function GroupForm({
                           id={startInputId}
                           label={copy.scheduleStart}
                           value={slot.start}
-                          options={
-                            slot.end
-                              ? getOpeningTimeOptions({
-                                  closeTime: slot.end,
-                                  options: GROUP_TIME_OPTIONS,
-                                })
-                              : GROUP_TIME_OPTIONS
-                          }
+                          options={GROUP_TIME_OPTIONS}
                           onChange={(next) =>
                             updateSessionSlot(
                               block.id,
@@ -624,21 +628,20 @@ export function GroupForm({
                           value={slot.end}
                           options={GROUP_CLOSING_TIME_OPTIONS}
                           startTime={slot.start}
+                          allowOvernight
                           onChange={(next) =>
                             updateSessionSlot(block.id, slot.id, "end", next)
                           }
                         />
                         <div className="flex items-end justify-end">
-                          {canRemoveSlot && (
-                            <button
-                              type="button"
-                              onClick={() => removeSessionSlot(block.id, slot.id)}
-                              className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
-                              aria-label={copy.scheduleRemove}
-                            >
-                              <Trash2 className="h-6 w-6" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeSessionSlot(block.id, slot.id)}
+                            className="flex h-12 w-12 items-center justify-center text-rose-500 transition hover:text-rose-400"
+                            aria-label={copy.scheduleRemove}
+                          >
+                            <Trash2 className="h-6 w-6" />
+                          </button>
                         </div>
                       </div>
                     );
@@ -660,6 +663,7 @@ export function GroupForm({
       <button
         type="submit"
         disabled={submitting || !hasChanges}
+        onClick={() => setSubmitAttempted(true)}
         className="rt-btn-primary w-full px-6 py-3 text-base"
       >
         {submitting ? `${submittingLabel}...` : submitLabel}

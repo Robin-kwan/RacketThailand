@@ -38,6 +38,7 @@ type SportOption = {
 type CourtFormProps = {
   sports: SportOption[];
   defaultSportId?: string;
+  preselectFirstSport?: boolean;
   submitEndpoint?: string;
   analyticsSurface?: string;
   copy: {
@@ -84,6 +85,7 @@ type CourtFormProps = {
 export function CourtAdminForm({
   sports,
   defaultSportId,
+  preselectFirstSport = true,
   submitEndpoint = "/api/admin/courts",
   analyticsSurface,
   copy,
@@ -92,7 +94,9 @@ export function CourtAdminForm({
   const initialSportId =
     defaultSportId && sports.some((sport) => sport.id === defaultSportId)
       ? defaultSportId
-      : sports[0]?.id ?? "";
+      : preselectFirstSport
+        ? sports[0]?.id ?? ""
+        : "";
   const [form, setForm] = useState<CourtFormValues>({
     sportId: initialSportId,
     sportIds: initialSportId ? [initialSportId] : [],
@@ -112,6 +116,7 @@ export function CourtAdminForm({
     googlePlaceId: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [duplicateCourt, setDuplicateCourt] = useState<ExistingCourt | null>(
     null,
   );
@@ -121,6 +126,10 @@ export function CourtAdminForm({
   const [openingHours, setOpeningHours] = useState<OpeningHoursEntry[]>(
     createAlwaysOpenSchedule(),
   );
+  const isLocationMissing = !form.latitude ||
+    !form.longitude ||
+    !form.provinceId ||
+    !form.districtId;
 
   const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
     if (lineQrPreview?.startsWith("blob:")) {
@@ -149,9 +158,18 @@ export function CourtAdminForm({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitAttempted(true);
     setSubmitting(true);
 
-    if (!form.latitude || !form.longitude || !form.provinceId || !form.districtId) {
+    if (form.sportIds.length === 0) {
+      showToast({
+        variant: "error",
+        message: copy.selectSport,
+      });
+      setSubmitting(false);
+      return;
+    }
+    if (isLocationMissing) {
       showToast({
         variant: "error",
         message: copy.locationMissing,
@@ -289,8 +307,8 @@ export function CourtAdminForm({
     }
     setForm((prev) => ({
       ...prev,
-      sportId: sports[0]?.id ?? "",
-      sportIds: sports[0]?.id ? [sports[0].id] : [],
+      sportId: initialSportId,
+      sportIds: initialSportId ? [initialSportId] : [],
       name: "",
       description: "",
       address: "",
@@ -350,7 +368,12 @@ export function CourtAdminForm({
   };
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form
+      className="space-y-5"
+      data-validation-visible={submitAttempted ? "true" : undefined}
+      onInvalidCapture={() => setSubmitAttempted(true)}
+      onSubmit={handleSubmit}
+    >
       <PlaceSearchField
         label={copy.placeSearch}
         placeholder={copy.placeSearch}
@@ -360,6 +383,8 @@ export function CourtAdminForm({
         duplicateLinkLabel={copy.placeExistingCourtLinkFallback}
         onResolve={handlePlaceResolution}
         onDuplicateCourtChange={setDuplicateCourt}
+        invalid={submitAttempted && isLocationMissing}
+        invalidMessage={copy.locationMissing}
         initialQuery={
           form.googlePlaceId
             ? [form.name, form.address].filter(Boolean).join(" · ")
@@ -403,6 +428,7 @@ export function CourtAdminForm({
         copy={copy}
         onChange={handleChange}
         onSportIdsChange={handleSportIdsChange}
+        sportInvalid={submitAttempted && form.sportIds.length === 0}
         extras={
           <div className="space-y-4">
             <LineQrUploader
@@ -428,6 +454,7 @@ export function CourtAdminForm({
       <button
         type="submit"
         disabled={submitting}
+        onClick={() => setSubmitAttempted(true)}
         className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {submitting ? `${copy.submitting}...` : copy.submit}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureCourtGroupLinks } from "@/server/groupSessions";
+import { syncCourtGroupLinks } from "@/server/groupSessions";
 import { requireGroupAccess } from "@/server/groupAccess";
 import { deleteGroupWithAssets } from "@/server/adminDeletion";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
@@ -24,6 +24,7 @@ type PatchGroupPayload = {
   sportId?: string;
   name?: string;
   description?: string;
+  courtIds?: string[];
   sessions?: SessionPayload[];
   playFormat?: string | null;
   playerAmount?: number | string | null;
@@ -70,6 +71,18 @@ function normalizeContact(value?: string | null) {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function normalizeCourtIds(courtIds?: unknown) {
+  if (!Array.isArray(courtIds)) return [];
+  return Array.from(
+    new Set(
+      courtIds
+        .filter((courtId): courtId is string => typeof courtId === "string")
+        .map((courtId) => courtId.trim())
+        .filter(Boolean),
+    ),
+  );
 }
 
 function normalizePlayFormat(value?: string | null) {
@@ -138,11 +151,18 @@ export async function PATCH(
   }
 
   const normalizedSessions = normalizeSessions(payload.sessions);
+  const linkedCourtIds = Array.from(
+    new Set([
+      ...normalizeCourtIds(payload.courtIds),
+      ...normalizedSessions.map((session) => session.courtId),
+    ]),
+  );
   const adminSupabase = getSupabaseAdminClient();
   const hasSessionPayload = Array.isArray(payload.sessions);
+  const hasCourtPayload = Array.isArray(payload.courtIds);
   const shouldUpdateGroup = Object.keys(update).length > 0;
 
-  if (!shouldUpdateGroup && !hasSessionPayload) {
+  if (!shouldUpdateGroup && !hasSessionPayload && !hasCourtPayload) {
     return NextResponse.json(
       { error: "No changes submitted." },
       { status: 400 },
@@ -194,13 +214,16 @@ export async function PATCH(
         );
       }
 
-      await ensureCourtGroupLinks(
-        adminSupabase,
-        resolved.groupId,
-        normalizedSessions.map((session) => session.courtId),
-        user.id,
-      );
     }
+  }
+
+  if (hasCourtPayload || hasSessionPayload) {
+    await syncCourtGroupLinks(
+      adminSupabase,
+      resolved.groupId,
+      linkedCourtIds,
+      user.id,
+    );
   }
 
   return NextResponse.json({ ok: true });

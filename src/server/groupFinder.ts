@@ -1,5 +1,9 @@
 import type { Locale } from "@/lib/i18n";
 import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
+import {
+  isScheduleDay,
+  weeklyRangeOverlapsDay,
+} from "@/lib/schedule-normalization";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchCourtIdsBySportId } from "@/server/courtSports";
 import { fetchSportRow } from "@/server/courtFinder";
@@ -26,6 +30,19 @@ export type GroupSessionRecord = {
   } | null;
 };
 
+export type GroupCourtLinkRecord = {
+  courts?: {
+    id: string;
+    name: string | null;
+    province: string | null;
+    province_id?: number | null;
+    latitude: number | null;
+    longitude: number | null;
+    district?: string | null;
+    district_id?: number | null;
+  } | null;
+};
+
 export type GroupRecord = {
   id: string;
   name: string | null;
@@ -38,6 +55,7 @@ export type GroupRecord = {
   line_id?: string | null;
   group_photos?: GroupPhoto[] | null;
   group_sessions?: GroupSessionRecord[] | null;
+  court_groups?: GroupCourtLinkRecord[] | null;
 };
 
 export type GroupFilterOptions = {
@@ -47,6 +65,13 @@ export type GroupFilterOptions = {
   allowWalkIn?: string;
   limit?: number;
   offset?: number;
+};
+
+type GroupSessionFilterRow = {
+  group_id: string;
+  day: string | null;
+  start_time: string | null;
+  end_time: string | null;
 };
 
 function buildSearchClause(query: string) {
@@ -98,22 +123,66 @@ async function fetchGroupIdsByCourtIds(
   }
 
   const params: Record<string, string> = {
-    select: "group_id",
+    select: "group_id,day,start_time,end_time",
     court_id: `in.(${courtIds.join(",")})`,
     limit: "500",
   };
 
-  if (filters.day) {
-    params.day = `eq.${filters.day}`;
-  }
-
-  const { data } = await supabaseSelect<{ group_id: string }>(
+  const { data } = await supabaseSelect<GroupSessionFilterRow>(
     "group_sessions",
     params,
     { preferCount: false },
   );
 
-  return Array.from(new Set(data?.map((session) => session.group_id) ?? []));
+  const matchingSessions = filters.day
+    ? (data ?? []).filter((session) =>
+        sessionOverlapsDay(session, filters.day as string),
+      )
+    : (data ?? []);
+
+  return Array.from(
+    new Set(matchingSessions.map((session) => session.group_id)),
+  );
+}
+
+function sessionOverlapsDay(
+  session: Pick<GroupSessionFilterRow, "day" | "start_time" | "end_time">,
+  day: string,
+) {
+  if (!session.day) return false;
+  if (!session.start_time || !session.end_time) {
+    return session.day === day;
+  }
+  return weeklyRangeOverlapsDay(
+    {
+      day: session.day,
+      startTime: session.start_time,
+      endTime: session.end_time,
+    },
+    day,
+  );
+}
+
+async function fetchGroupIdsByNormalizedDay(sportId: string, day: string) {
+  if (!isScheduleDay(day)) return [];
+
+  const { data } = await supabaseSelect<GroupSessionFilterRow>(
+    "group_sessions",
+    {
+      select: "group_id,day,start_time,end_time,groups!inner(sport_id)",
+      "groups.sport_id": `eq.${sportId}`,
+      limit: "5000",
+    },
+    { preferCount: false },
+  );
+
+  return Array.from(
+    new Set(
+      (data ?? [])
+        .filter((session) => sessionOverlapsDay(session, day))
+        .map((session) => session.group_id),
+    ),
+  );
 }
 
 export async function fetchGroupsBySport(
@@ -126,14 +195,13 @@ export async function fetchGroupsBySport(
     return { sport: null, groups: [], count: 0 };
   }
 
-  const hasSessionFilter = Boolean(filters.day);
-  const sessionRelation = hasSessionFilter
-    ? "group_sessions!inner"
-    : "group_sessions";
+  const dayGroupIds = filters.day
+    ? await fetchGroupIdsByNormalizedDay(sportRow.id, filters.day)
+    : null;
 
   const params: Record<string, string> = {
     select:
-      `id,name,description,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),${sessionRelation}(day,start_time,end_time,court_id,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))`,
+      "id,name,description,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,court_id,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id)),court_groups(courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))",
       sport_id: `eq.${sportRow.id}`,
       order: "updated_at.desc.nullslast",
   };
@@ -165,20 +233,31 @@ export async function fetchGroupsBySport(
   if (filters.allowWalkIn === "true" || filters.allowWalkIn === "false") {
     params.allow_walk_in = `eq.${filters.allowWalkIn}`;
   }
-  if (filters.day) {
-    params["group_sessions.day"] = `eq.${filters.day}`;
+  if (dayGroupIds) {
+    params.id =
+      dayGroupIds.length > 0
+        ? `in.(${dayGroupIds.join(",")})`
+        : "eq.00000000-0000-0000-0000-000000000000";
   }
 
   const groupsRes = await supabaseSelect<GroupRecord>("groups", params);
 
   const localizedGroups = await Promise.all(
-    (groupsRes.data ?? []).map(async (group) => ({
-      ...group,
-      group_sessions:
-        group.group_sessions == null
-          ? group.group_sessions
-          : await Promise.all(
-              group.group_sessions.map(async (session) => {
+    (groupsRes.data ?? []).map(async (group) => {
+      const displaySessions =
+        filters.day && group.group_sessions
+          ? group.group_sessions.filter((session) =>
+              sessionOverlapsDay(session, filters.day as string),
+            )
+          : group.group_sessions;
+
+      return {
+        ...group,
+        group_sessions:
+          displaySessions == null
+            ? displaySessions
+            : await Promise.all(
+                displaySessions.map(async (session) => {
                 if (!session.courts) {
                   return session;
                 }
@@ -194,9 +273,32 @@ export async function fetchGroupsBySport(
                     province: localized.province,
                   },
                 };
-              }),
-            ),
-    })),
+                }),
+              ),
+        court_groups:
+          group.court_groups == null
+            ? group.court_groups
+            : await Promise.all(
+                group.court_groups.map(async (link) => {
+                if (!link.courts) {
+                  return link;
+                }
+                const localized = await localizeThailandLocation(
+                  link.courts,
+                  locale,
+                );
+                return {
+                  ...link,
+                  courts: {
+                    ...link.courts,
+                    district: localized.district,
+                    province: localized.province,
+                  },
+                };
+                }),
+              ),
+      };
+    }),
   );
 
   return {

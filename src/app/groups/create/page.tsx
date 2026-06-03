@@ -138,6 +138,7 @@ export default async function CreateGroupPage({
     sessionCourt: t("groups.form.sessionCourt"),
     noOptionsFound: t("forms.noOptionsFound"),
     scheduleLabel: t("groups.form.scheduleLabel"),
+    scheduleOptionalEmpty: t("groups.form.scheduleOptionalEmpty"),
     scheduleRemove: t("groups.form.scheduleRemove"),
     scheduleDay: t("groups.form.scheduleDay"),
     scheduleStart: t("groups.form.scheduleStart"),
@@ -166,8 +167,13 @@ export default async function CreateGroupPage({
     photoUploadHelper: t("groups.form.photoUploadHelper"),
     photoProcessError: t("groups.form.photoProcessError"),
   };
-  const sourceSport = resolved?.sport
-    ? sportsRes.data?.find((sport) => sport.code === resolved.sport)
+  const requestedSport = resolved?.sport?.trim().toLowerCase();
+  const sourceSport = requestedSport
+    ? sportsRes.data?.find(
+        (sport) =>
+          sport.code.toLowerCase() === requestedSport ||
+          sport.id.toLowerCase() === requestedSport,
+      )
     : null;
   const defaultSportId = sourceSport?.id;
   const defaultCourtId =
@@ -176,9 +182,8 @@ export default async function CreateGroupPage({
     courts[defaultSportId]?.some((court) => court.value === resolved.court)
       ? resolved.court
       : undefined;
-  const primarySportSlug = sourceSport?.code ?? sportsRes.data?.[0]?.code ?? null;
   const backHref = buildLocalizedPath(
-    primarySportSlug ? `/${primarySportSlug}/group-finder` : "/",
+    sourceSport ? `/${sourceSport.code}/group-finder` : "/",
     locale,
   );
 
@@ -209,6 +214,7 @@ export default async function CreateGroupPage({
                 dayOptions={dayOptions}
                 locale={locale}
                 defaultSportId={defaultSportId}
+                preselectFirstSport={Boolean(defaultSportId)}
                 defaultCourtId={defaultCourtId}
               />
             </div>

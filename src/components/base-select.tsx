@@ -6,6 +6,8 @@ import { ChevronDown } from "lucide-react";
 type Option = {
   value: string;
   label: string;
+  disabled?: boolean;
+  hidden?: boolean;
 };
 
 type SelectVariant = "light" | "dark";
@@ -86,7 +88,12 @@ export function BaseSelect({
           className={`${variantStyles.select} appearance-none ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
         >
           {options.map((option) => (
-            <option key={`${name}-${option.value}`} value={option.value}>
+            <option
+              key={`${name}-${option.value}`}
+              value={option.value}
+              disabled={option.disabled}
+              hidden={option.hidden}
+            >
               {option.label}
             </option>
           ))}

@@ -85,7 +85,7 @@ export function SiteHeaderMobileMenu({
   }
 
   return (
-    <div className="fixed inset-0 z-[999] flex md:hidden">
+    <div className="fixed inset-0 z-[999] flex min-[1000px]:hidden">
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"

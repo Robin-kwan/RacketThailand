@@ -35,6 +35,7 @@ type GroupCreationFormProps = {
   dayOptions: Option[];
   locale: Locale;
   defaultSportId?: string;
+  preselectFirstSport?: boolean;
   defaultCourtId?: string;
 };
 
@@ -47,6 +48,7 @@ export function GroupCreationForm({
   dayOptions,
   locale,
   defaultSportId,
+  preselectFirstSport = true,
   defaultCourtId,
 }: GroupCreationFormProps) {
   const router = useRouter();
@@ -61,7 +63,9 @@ export function GroupCreationForm({
     const sportId =
         defaultSportId && sports.some((sport) => sport.value === defaultSportId)
           ? defaultSportId
-          : sports[0]?.value ?? "";
+          : preselectFirstSport
+            ? sports[0]?.value ?? ""
+            : "";
     const hasDefaultCourt =
       Boolean(defaultCourtId) &&
       Boolean(
@@ -79,14 +83,7 @@ export function GroupCreationForm({
               {
                 id: `court-${defaultCourtId}`,
                 courtId: defaultCourtId,
-                slots: [
-                  {
-                    id: `slot-${defaultCourtId}`,
-                    day: "sunday",
-                    start: "",
-                    end: "",
-                  },
-                ],
+                slots: [],
               },
             ]
           : [],
@@ -96,7 +93,7 @@ export function GroupCreationForm({
       phone: "",
       lineId: "",
     };
-  }, [courts, defaultCourtId, defaultSportId, sports]);
+  }, [courts, defaultCourtId, defaultSportId, preselectFirstSport, sports]);
 
   const handleLineQrChange = (file: File | null, previewUrl: string | null) => {
     if (lineQrPreview?.startsWith("blob:")) {
@@ -111,6 +108,7 @@ export function GroupCreationForm({
     name: string;
     description: string;
     playFormat: PlayFormat;
+    courtIds: string[];
     playerAmount?: string;
     allowWalkIn: boolean;
     phone?: string;
