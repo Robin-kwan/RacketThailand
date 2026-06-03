@@ -231,6 +231,7 @@ export default async function EditCourtPage({
             <CourtEditForm
               court={formCourt}
               sports={sportOptions}
+              locale={locale}
               copy={copy}
               existingPhotos={photoRows ?? []}
             />

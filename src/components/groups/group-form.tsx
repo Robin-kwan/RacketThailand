@@ -12,8 +12,6 @@ import {
   TimePickerField,
   createClosingTimeOptions,
   createTimeOptions,
-  getOpeningTimeOptions,
-  isClosingTimeAfterStart,
 } from "@/components/time-picker-field";
 import {
   DEFAULT_PLAY_FORMAT,
@@ -314,24 +312,6 @@ export function GroupForm({
                   [field]: value,
                 };
 
-                if (
-                  field === "start" &&
-                  slot.end &&
-                  value &&
-                  !isClosingTimeAfterStart(slot.end, value)
-                ) {
-                  nextSlot.end = "";
-                }
-
-                if (
-                  field === "end" &&
-                  slot.start &&
-                  value &&
-                  !isClosingTimeAfterStart(value, slot.start)
-                ) {
-                  nextSlot.end = "";
-                }
-
                 return nextSlot;
               }),
             }
@@ -622,14 +602,7 @@ export function GroupForm({
                           id={startInputId}
                           label={copy.scheduleStart}
                           value={slot.start}
-                          options={
-                            slot.end
-                              ? getOpeningTimeOptions({
-                                  closeTime: slot.end,
-                                  options: GROUP_TIME_OPTIONS,
-                                })
-                              : GROUP_TIME_OPTIONS
-                          }
+                          options={GROUP_TIME_OPTIONS}
                           onChange={(next) =>
                             updateSessionSlot(
                               block.id,
@@ -645,6 +618,7 @@ export function GroupForm({
                           value={slot.end}
                           options={GROUP_CLOSING_TIME_OPTIONS}
                           startTime={slot.start}
+                          allowOvernight
                           onChange={(next) =>
                             updateSessionSlot(block.id, slot.id, "end", next)
                           }

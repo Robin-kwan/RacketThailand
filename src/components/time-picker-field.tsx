@@ -3,13 +3,14 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { BaseTextField } from "@/components/base-text-field";
+import { END_OF_DAY_TIME } from "@/lib/time-range";
+
+export { END_OF_DAY_TIME } from "@/lib/time-range";
 
 export type TimePickerOption = {
   value: string;
   label: string;
 };
-
-export const END_OF_DAY_TIME = "00:00";
 
 type CreateTimeOptionsInput = {
   minuteStep?: number;
@@ -101,11 +102,13 @@ export function getOpeningTimeOptions({
 export function getClosingTimeOptions({
   startTime,
   options = createClosingTimeOptions(),
+  allowOvernight = false,
 }: {
   startTime?: string;
   options?: TimePickerOption[];
+  allowOvernight?: boolean;
 }) {
-  if (!startTime) return options;
+  if (!startTime || allowOvernight) return options;
   return filterTimeOptionsWithFallback(options, (option) =>
     isClosingTimeAfterStart(option.value, startTime),
   );
@@ -124,6 +127,7 @@ export type TimePickerFieldProps = {
   min?: string;
   max?: string;
   allowClear?: boolean;
+  labelHidden?: boolean;
   clearLabel?: string;
   className?: string;
 };
@@ -150,6 +154,7 @@ export function TimePickerField({
   min,
   max,
   allowClear = false,
+  labelHidden = false,
   clearLabel = "Clear",
   className,
 }: TimePickerFieldProps) {
@@ -220,7 +225,11 @@ export function TimePickerField({
   return (
     <div className={rootClassName} ref={containerRef}>
       <label
-        className="text-sm font-semibold text-[var(--foreground)]"
+        className={
+          labelHidden
+            ? "sr-only"
+            : "text-sm font-semibold text-[var(--foreground)]"
+        }
         htmlFor={resolvedId}
       >
         {label}
@@ -313,11 +322,13 @@ export function TimePickerField({
 type ClosingTimePickerFieldProps = Omit<TimePickerFieldProps, "options" | "min"> & {
   startTime?: string;
   options?: TimePickerOption[];
+  allowOvernight?: boolean;
 };
 
 export function ClosingTimePickerField({
   startTime,
   options,
+  allowOvernight = false,
   minuteStep = 30,
   ...props
 }: ClosingTimePickerFieldProps) {
@@ -325,9 +336,10 @@ export function ClosingTimePickerField({
     () =>
       getClosingTimeOptions({
         startTime,
+        allowOvernight,
         options: options ?? createClosingTimeOptions({ minuteStep }),
       }),
-    [minuteStep, options, startTime],
+    [allowOvernight, minuteStep, options, startTime],
   );
 
   return (

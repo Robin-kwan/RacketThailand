@@ -103,8 +103,9 @@ export function CourtFinder({
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
+  const [allowAutoLoadMore, setAllowAutoLoadMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const hasSkippedInitialLoadRef = useRef(false);
+  const lastLoadedRequestKeyRef = useRef<string | null>(null);
   const buildCourtHref = useCallback(
     (courtId: string) =>
       buildLocalizedPath(
@@ -132,6 +133,30 @@ export function CourtFinder({
   const loadingMoreLabel =
     locale === "th" ? "กำลังโหลดสนามเพิ่มเติม..." : "Loading more courts...";
 
+  const courtListRequestQuery = useMemo(() => {
+    const params = new URLSearchParams({
+      sport: sportCode,
+      lang: locale,
+      limit: PAGE_SIZE.toString(),
+      page: "1",
+    });
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (province) params.set("province", province);
+    if (prioritizeNearby && userLocation) {
+      params.set("nearbyLat", String(userLocation.latitude));
+      params.set("nearbyLng", String(userLocation.longitude));
+      params.set("includeProvinces", "false");
+    }
+    return params.toString();
+  }, [
+    debouncedSearch,
+    locale,
+    prioritizeNearby,
+    province,
+    sportCode,
+    userLocation,
+  ]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -155,32 +180,16 @@ export function CourtFinder({
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      if (
-        !hasSkippedInitialLoadRef.current &&
-        !prioritizeNearby &&
-        !userLocation &&
-        debouncedSearch === initialSearch &&
-        province === initialProvince
-      ) {
-        hasSkippedInitialLoadRef.current = true;
+      if (lastLoadedRequestKeyRef.current === null) {
+        lastLoadedRequestKeyRef.current = courtListRequestQuery;
         return;
       }
-      hasSkippedInitialLoadRef.current = true;
-      setLoading(true);
-      const params = new URLSearchParams({
-        sport: sportCode,
-        lang: locale,
-        limit: PAGE_SIZE.toString(),
-        page: "1",
-      });
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      if (province) params.set("province", province);
-      if (prioritizeNearby && userLocation) {
-        params.set("nearbyLat", String(userLocation.latitude));
-        params.set("nearbyLng", String(userLocation.longitude));
-        params.set("includeProvinces", "false");
+      if (lastLoadedRequestKeyRef.current === courtListRequestQuery) {
+        return;
       }
-      const response = await fetch(`/api/courts?${params.toString()}`, {
+      lastLoadedRequestKeyRef.current = courtListRequestQuery;
+      setLoading(true);
+      const response = await fetch(`/api/courts?${courtListRequestQuery}`, {
         cache: "no-store",
       });
       const data = await response.json();
@@ -198,16 +207,7 @@ export function CourtFinder({
     return () => {
       isActive = false;
     };
-  }, [
-    sportCode,
-    locale,
-    debouncedSearch,
-    initialProvince,
-    initialSearch,
-    province,
-    prioritizeNearby,
-    userLocation,
-  ]);
+  }, [courtListRequestQuery]);
 
   const loadMoreCourts = useCallback(async () => {
     if (loading || loadingMore || !hasMore) return;
@@ -264,7 +264,7 @@ export function CourtFinder({
 
   useEffect(() => {
     const target = sentinelRef.current;
-    if (!target || !hasMore) return undefined;
+    if (!target || !hasMore || !allowAutoLoadMore) return undefined;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -277,7 +277,7 @@ export function CourtFinder({
     );
     observer.observe(target);
     return () => observer.disconnect();
-  }, [hasMore, loadMoreCourts]);
+  }, [allowAutoLoadMore, hasMore, loadMoreCourts]);
 
   const handleReset = () => {
     track("finder_filter_used", {
@@ -346,6 +346,34 @@ export function CourtFinder({
     setPrioritizeNearby(false);
     setNearbyStatus(null);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || allowAutoLoadMore) return undefined;
+    if (window.scrollY > 0) {
+      setAllowAutoLoadMore(true);
+      return undefined;
+    }
+
+    const enableAutoLoadMore = () => setAllowAutoLoadMore(true);
+    window.addEventListener("scroll", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+    window.addEventListener("wheel", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+    window.addEventListener("touchmove", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", enableAutoLoadMore);
+      window.removeEventListener("wheel", enableAutoLoadMore);
+      window.removeEventListener("touchmove", enableAutoLoadMore);
+    };
+  }, [allowAutoLoadMore]);
 
   const courtsWithDistance = useMemo(() => {
     return courts.map((court) => {

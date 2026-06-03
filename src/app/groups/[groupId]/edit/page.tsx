@@ -352,6 +352,7 @@ export default async function EditGroupPage({
               courts={courtOptions}
               dayOptions={dayOptions}
               existingPhotos={photoRows ?? []}
+              locale={locale}
               copy={copy}
             />
           </div>

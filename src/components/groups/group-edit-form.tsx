@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, Plus } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { showToast } from "@/components/toaster";
 import {
   GroupForm,
@@ -63,6 +64,7 @@ type GroupEditFormProps = {
   courts: Record<string, CourtOption[]>;
   dayOptions: Option[];
   existingPhotos: ExistingPhoto[];
+  locale: Locale;
   copy: GroupEditCopy;
 };
 
@@ -74,6 +76,7 @@ export function GroupEditForm({
   courts,
   dayOptions,
   existingPhotos,
+  locale,
   copy,
 }: GroupEditFormProps) {
   const router = useRouter();
@@ -328,7 +331,7 @@ export function GroupEditForm({
         await handlePhotoOperations(primaryChanged);
       }
       showToast({ variant: "success", message: copy.success });
-      router.refresh();
+      router.push(buildLocalizedPath(`/groups/${group.id}`, locale));
     } catch (error) {
       console.error(error);
       showToast({

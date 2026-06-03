@@ -216,8 +216,8 @@ export function SiteHeader({
     <>
       <header className={headerClass}>
       <div className="relative z-20 mx-auto flex w-full max-w-screen-xl flex-col gap-2">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex w-full items-center justify-between gap-4 md:w-auto md:gap-6">
+        <div className="flex flex-col gap-2 min-[1000px]:flex-row min-[1000px]:items-center min-[1000px]:justify-between">
+          <div className="flex w-full items-center justify-between gap-4 min-[1000px]:w-auto min-[1000px]:gap-6">
             <Link
               href={buildLocalizedPath("/", locale)}
               className="flex items-center gap-3"
@@ -242,7 +242,7 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 md:hidden"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 min-[1000px]:hidden"
               aria-label="Open navigation menu"
             >
               <Menu
@@ -253,7 +253,7 @@ export function SiteHeader({
             </button>
           </div>
           {navLinks.length > 0 && (
-            <nav className="hidden flex-wrap items-center gap-6 text-sm font-semibold text-white md:flex">
+            <nav className="hidden flex-wrap items-center gap-6 text-sm font-semibold text-white min-[1000px]:flex">
               {navLinks.map((link) => {
                 const isLinkActive =
                   pathname === link.path ||
@@ -273,7 +273,7 @@ export function SiteHeader({
               })}
             </nav>
           )}
-          <div className="hidden flex-wrap items-center justify-end gap-2 md:flex">
+          <div className="hidden flex-wrap items-center justify-end gap-2 min-[1000px]:flex">
             {isAuthenticated && (
               <NotificationsMenu locale={locale} copy={notificationCopy} />
             )}
@@ -370,7 +370,7 @@ export function SiteHeader({
                 )}
               </div>
             ) : (
-              <div className="hidden items-center gap-2 md:flex">
+              <div className="hidden items-center gap-2 min-[1000px]:flex">
                 <Link
                   href={buildLocalizedPath("/login", locale)}
                   className="rounded-full border border-emerald-100/75 bg-white px-4 py-2 font-semibold text-emerald-900 hover:border-emerald-300"
@@ -379,7 +379,7 @@ export function SiteHeader({
                 </Link>
               </div>
             )}
-            <div className="relative hidden md:block" ref={localeMenuRef}>
+            <div className="relative hidden min-[1000px]:block" ref={localeMenuRef}>
               <button
                 type="button"
                 onClick={() => setLocaleMenuOpen((prev) => !prev)}

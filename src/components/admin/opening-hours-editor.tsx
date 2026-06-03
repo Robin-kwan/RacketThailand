@@ -1,13 +1,11 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { BaseSelect } from "@/components/base-select";
 import {
+  ClosingTimePickerField,
   createClosingTimeOptions,
   createTimeOptions,
-  filterTimeOptionsWithFallback,
-  isClosingTimeAfterStart,
-  isOpeningTimeBeforeClose,
+  TimePickerField,
 } from "@/components/time-picker-field";
 import {
   ensureAllDays,
@@ -57,18 +55,6 @@ const DEFAULT_RANGE = { open: "09:00", close: "18:00" };
 const TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
 const CLOSE_TIME_OPTIONS = createClosingTimeOptions({ minuteStep: 30 });
 
-const normalizeRangeOrder = (
-  range: OpeningHoursRange,
-  changedField: "open" | "close",
-): OpeningHoursRange => {
-  if (!range.close) return range;
-  if (isClosingTimeAfterStart(range.close, range.open)) return range;
-  if (changedField === "open") {
-    return { ...range, close: range.open };
-  }
-  return { ...range, open: range.close };
-};
-
 export function OpeningHoursEditor({
   value,
   onChange,
@@ -112,7 +98,7 @@ export function OpeningHoursEditor({
         ...range,
         [field]: value || null,
       } as OpeningHoursRange;
-      return normalizeRangeOrder(updated, field);
+      return updated;
     });
     updateDay(day, next);
   };
@@ -177,61 +163,37 @@ export function OpeningHoursEditor({
                   className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 sm:flex sm:items-center sm:gap-3"
                 >
                   <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:w-auto sm:grid-cols-[minmax(7rem,1fr)_auto_minmax(7rem,1fr)]">
-                    <BaseSelect
+                    <TimePickerField
                       label={labels.openTime}
                       labelHidden
-                      name={`${entry.day}-open-${index}`}
+                      id={`${entry.day}-open-${index}`}
                       value={range.open}
-                      onChange={(event) =>
-                        updateRange(entry.day, index, "open", event.target.value)
+                      onChange={(next) =>
+                        updateRange(entry.day, index, "open", next)
                       }
-                      options={
-                        range.close
-                          ? range.close === "00:00"
-                            ? TIME_OPTIONS
-                            : filterTimeOptionsWithFallback(
-                                TIME_OPTIONS,
-                                (option) =>
-                                  isOpeningTimeBeforeClose(
-                                    option.value,
-                                    range.close as string,
-                                  ),
-                              )
-                          : TIME_OPTIONS
-                      }
-                      className="min-w-0 [&_select]:px-3 [&_select]:pr-9"
+                      options={TIME_OPTIONS}
+                      className="min-w-0 space-y-0"
                       required
-                      variant="light"
                     />
                     <span className="text-sm text-slate-500">–</span>
-                    <BaseSelect
+                    <ClosingTimePickerField
                       label={labels.closeTime}
                       labelHidden
-                      name={`${entry.day}-close-${index}`}
+                      id={`${entry.day}-close-${index}`}
                       value={range.close ?? ""}
-                      onChange={(event) =>
+                      onChange={(next) =>
                         updateRange(
                           entry.day,
                           index,
                           "close",
-                          event.target.value,
+                          next,
                         )
                       }
-                      options={
-                        range.open
-                          ? filterTimeOptionsWithFallback(
-                              CLOSE_TIME_OPTIONS,
-                              (option) =>
-                                isClosingTimeAfterStart(
-                                  option.value,
-                                  range.open,
-                                ),
-                            )
-                          : CLOSE_TIME_OPTIONS
-                      }
-                      className="min-w-0 [&_select]:px-3 [&_select]:pr-9"
+                      options={CLOSE_TIME_OPTIONS}
+                      startTime={range.open}
+                      allowOvernight
+                      className="min-w-0 space-y-0"
                       required
-                      variant="light"
                     />
                   </div>
                   <button

@@ -11,6 +11,7 @@ import {
   normalizePlayFormat,
   type PlayFormat,
 } from "@/lib/play-format";
+import { formatSimpleTimeRange } from "@/lib/time-range";
 
 type SessionCourt = { id?: string | null; name?: string | null } | null;
 
@@ -48,13 +49,6 @@ type GroupCardProps = {
   badge?: ReactNode;
 };
 
-function formatTime(value?: string | null) {
-  if (!value) return null;
-  const [hours, minutes] = value.split(":");
-  if (!hours || !minutes) return value;
-  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-}
-
 function SessionList({
   sessions,
   dayLabels,
@@ -88,10 +82,13 @@ function SessionList({
       <ul className="space-y-1">
         {visible.map((session, index) => {
           const dayLabel = dayLabels[session.day] ?? session.day;
-          const start = formatTime(session.start_time);
-          const end = formatTime(session.end_time);
           const timeRange =
-            start && end ? `${start} – ${end}` : scheduleAnytime;
+            session.start_time && session.end_time
+              ? formatSimpleTimeRange(
+                  session.start_time,
+                  session.end_time,
+                )
+              : scheduleAnytime;
           const courtName = session.courts?.name ?? null;
           const courtId = session.courts?.id ?? null;
           const courtHref =
