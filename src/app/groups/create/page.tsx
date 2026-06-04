@@ -190,7 +190,9 @@ export default async function CreateGroupPage({
   return (
     <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <BaseBackLink href={backHref}>{t("groups.detail.back")}</BaseBackLink>
+        <BaseBackLink href={backHref}>
+          {sourceSport ? t("groups.detail.back") : t("courtSubmission.back")}
+        </BaseBackLink>
         <BaseCard
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white p-8"

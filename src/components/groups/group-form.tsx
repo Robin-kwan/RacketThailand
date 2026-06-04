@@ -141,8 +141,8 @@ const createSlot = (): SessionSlot => ({
     ? crypto.randomUUID()
     : `slot-${Date.now()}-${Math.random()}`,
   day: "sunday",
-  start: "",
-  end: "",
+  start: "00:00",
+  end: "00:00",
 });
 
 const GROUP_TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
@@ -537,12 +537,12 @@ export function GroupForm({
             {courtSessions.map((block) => (
               <div
                 key={block.id}
-                className="relative space-y-4 rounded-2xl border border-slate-200 bg-white p-4"
+                className="relative space-y-4 rounded-2xl border border-slate-200 bg-white p-4 pt-11"
               >
                 <button
                   type="button"
                   onClick={() => removeCourtBlock(block.id)}
-                  className="absolute right-4 top-4 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-rose-500"
+                  className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-slate-400 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 hover:text-rose-500"
                   aria-label={copy.sessionsRemoveCourt}
                   title={copy.sessionsRemoveCourt}
                 >
@@ -552,7 +552,7 @@ export function GroupForm({
                     aria-hidden
                   />
                 </button>
-                <div className="pr-10">
+                <div>
                   <BaseAutocomplete
                     label={copy.sessionCourt}
                     name={`session-court-${block.id}`}
@@ -581,9 +581,9 @@ export function GroupForm({
                     return (
                       <div
                         key={slot.id}
-                        className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]"
+                        className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                       >
-                        <div className="space-y-1">
+                        <div className="col-span-2 space-y-1 sm:col-span-1">
                           <label
                             className="text-xs font-semibold text-[rgb(var(--foreground-rgb)/0.65)]"
                             htmlFor={`schedule-day-${slot.id}`}
@@ -613,6 +613,7 @@ export function GroupForm({
                           label={copy.scheduleStart}
                           value={slot.start}
                           options={GROUP_TIME_OPTIONS}
+                          className="min-w-0"
                           onChange={(next) =>
                             updateSessionSlot(
                               block.id,
@@ -629,11 +630,12 @@ export function GroupForm({
                           options={GROUP_CLOSING_TIME_OPTIONS}
                           startTime={slot.start}
                           allowOvernight
+                          className="min-w-0"
                           onChange={(next) =>
                             updateSessionSlot(block.id, slot.id, "end", next)
                           }
                         />
-                        <div className="flex items-end justify-end">
+                        <div className="col-span-2 flex items-end justify-end sm:col-span-1">
                           <button
                             type="button"
                             onClick={() => removeSessionSlot(block.id, slot.id)}
