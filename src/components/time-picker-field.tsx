@@ -254,6 +254,7 @@ export function TimePickerField({
             }
           }}
           variant="light"
+          className="min-w-0 px-3 text-center tabular-nums sm:px-4 sm:text-left"
         />
         {open && (
           <div className="fixed inset-x-3 bottom-4 z-50 flex max-h-[min(400px,calc(100dvh-2rem))] min-w-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(24rem,calc(100vw-3rem))] sm:min-w-full">
