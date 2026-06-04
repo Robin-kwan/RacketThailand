@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { BaseTextField } from "@/components/base-text-field";
 import { END_OF_DAY_TIME } from "@/lib/time-range";
 
 export { END_OF_DAY_TIME } from "@/lib/time-range";
@@ -147,12 +146,9 @@ export function TimePickerField({
   value,
   onChange,
   placeholder,
-  required = false,
   disabled = false,
   options,
   minuteStep = 30,
-  min,
-  max,
   allowClear = false,
   labelHidden = false,
   clearLabel = "Clear",
@@ -216,10 +212,6 @@ export function TimePickerField({
     setOpen(false);
   };
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.value);
-  };
-
   const rootClassName = className ? `space-y-2 ${className}` : "space-y-2";
 
   return (
@@ -235,27 +227,25 @@ export function TimePickerField({
         {label}
       </label>
       <div className="relative">
-        <BaseTextField
+        <button
           id={resolvedId}
-          type="time"
-          step={minuteStep * 60}
-          min={min}
-          max={max}
-          value={value ?? ""}
+          type="button"
           disabled={disabled}
-          required={required}
-          placeholder={placeholder}
+          aria-expanded={open}
+          aria-haspopup="listbox"
           onClick={() => setOpen(true)}
           onFocus={() => setOpen(true)}
-          onChange={handleInputChange}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               setOpen(false);
             }
           }}
-          variant="light"
-          className="min-w-0 px-3 text-center tabular-nums sm:px-4 sm:text-left"
-        />
+          className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <span className={displayValue ? "" : "text-slate-500"}>
+            {displayValue || placeholder || ""}
+          </span>
+        </button>
         {open && (
           <div className="fixed inset-x-3 bottom-4 z-50 flex max-h-[min(400px,calc(100dvh-2rem))] min-w-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(24rem,calc(100vw-3rem))] sm:min-w-full">
             <div className="border-b border-slate-100 px-4 py-3">

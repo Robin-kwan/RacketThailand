@@ -581,9 +581,9 @@ export function GroupForm({
                     return (
                       <div
                         key={slot.id}
-                        className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                        className="flex flex-col gap-3 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end"
                       >
-                        <div className="col-span-2 space-y-1 sm:col-span-1">
+                        <div className="space-y-1">
                           <label
                             className="text-xs font-semibold text-[rgb(var(--foreground-rgb)/0.65)]"
                             htmlFor={`schedule-day-${slot.id}`}
@@ -635,7 +635,7 @@ export function GroupForm({
                             updateSessionSlot(block.id, slot.id, "end", next)
                           }
                         />
-                        <div className="col-span-2 flex items-end justify-end sm:col-span-1">
+                        <div className="flex items-end justify-end">
                           <button
                             type="button"
                             onClick={() => removeSessionSlot(block.id, slot.id)}
