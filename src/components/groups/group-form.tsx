@@ -581,7 +581,7 @@ export function GroupForm({
                     return (
                       <div
                         key={slot.id}
-                        className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                        className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                       >
                         <div className="col-span-2 space-y-1 sm:col-span-1">
                           <label
