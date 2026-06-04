@@ -854,6 +854,7 @@
     },
     "detail": {
       "owner": "Group owner",
+      "createdBy": "Added by",
       "meeting": "Weekly schedule",
       "court": "Base court",
       "members": "Members",

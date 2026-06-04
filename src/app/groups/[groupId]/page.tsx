@@ -592,7 +592,7 @@ export default async function GroupDetailPage({
   };
 
   const copy = {
-    owner: t("groups.detail.owner"),
+    createdBy: t("groups.detail.createdBy"),
     scheduleAny: t("groups.detail.scheduleAny"),
     edit: t("groups.detail.edit"),
     sessionsTitle: t("groups.detail.sessionsTitle"),
@@ -621,6 +621,7 @@ export default async function GroupDetailPage({
   const canEdit = Boolean(isGroupOwner || isAdminViewer);
   const sportName = group.sports?.name ?? undefined;
   const playFormatLabel = getPlayFormatLabel(group.play_format, locale);
+  const ownerName = owner?.display_name ?? owner?.username ?? null;
   const shareTitle = group.name ?? fallbackGroupName;
   const shareText =
     group.description ??
@@ -683,6 +684,16 @@ export default async function GroupDetailPage({
                 {playFormatLabel}
               </p>
             </div>
+            {ownerName && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                  {copy.createdBy}
+                </p>
+                <p className="text-base font-semibold text-[var(--foreground)]">
+                  {ownerName}
+                </p>
+              </div>
+            )}
             {typeof group.player_amount === "number" &&
               Number.isFinite(group.player_amount) && (
                 <div>
