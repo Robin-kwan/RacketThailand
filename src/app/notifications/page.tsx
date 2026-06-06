@@ -116,7 +116,7 @@ export default async function NotificationsPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isAuthenticated = Boolean(user?.id && user.email && !user.is_anonymous);
+  const isAuthenticated = Boolean(user?.id && !user.is_anonymous);
 
   return (
     <div className="rt-page">

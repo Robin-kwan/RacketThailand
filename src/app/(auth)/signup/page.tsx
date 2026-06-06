@@ -58,6 +58,8 @@ export default async function SignupPage({
     passwordWeak: t("auth.passwordWeak"),
     emailExists: t("auth.emailExists"),
     namePlaceholder: t("auth.namePlaceholder"),
+    googleButton: t("auth.signupGoogleButton"),
+    lineButton: t("auth.signupLineButton"),
   };
 
   if (!t) {

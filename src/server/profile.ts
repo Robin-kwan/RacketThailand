@@ -6,6 +6,20 @@ type SupabaseUser = {
   user_metadata?: Record<string, unknown> | null;
 };
 
+function getStringMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+  keys: string[],
+) {
+  for (const key of keys) {
+    const value = metadata?.[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
 export function buildProfileDefaults(user: SupabaseUser) {
   const email = user.email ?? "";
   const baseUsername =
@@ -14,10 +28,18 @@ export function buildProfileDefaults(user: SupabaseUser) {
     .replace(/[^a-zA-Z0-9_]/g, "")
     .toLowerCase();
   const displayName =
-    user.user_metadata?.full_name ||
+    getStringMetadata(user.user_metadata, [
+      "full_name",
+      "name",
+      "user_name",
+      "preferred_username",
+    ]) ||
     email ||
     `Player ${user.id.slice(0, 6).toUpperCase()}`;
-  const avatarUrl = user.user_metadata?.avatar_url ?? null;
+  const avatarUrl = getStringMetadata(user.user_metadata, [
+    "avatar_url",
+    "picture",
+  ]);
 
   return {
     id: user.id,

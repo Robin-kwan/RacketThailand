@@ -180,6 +180,9 @@
       "errorWeak": "ใช้รหัสผ่านอย่างน้อย 8 ตัวอักษรที่มีตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ ตัวเลข และอักขระพิเศษ"
     },
     "googleButton": "เข้าสู่ระบบด้วย Google",
+    "lineButton": "เข้าสู่ระบบด้วย LINE",
+    "signupGoogleButton": "สมัครสมาชิกด้วย Google",
+    "signupLineButton": "สมัครสมาชิกด้วย LINE",
     "loginButton": "เข้าสู่ระบบ",
     "loginSuccess": "เข้าสู่ระบบเรียบร้อยแล้ว",
     "signupButton": "สร้างบัญชี",

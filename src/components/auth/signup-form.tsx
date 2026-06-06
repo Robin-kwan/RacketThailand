@@ -9,6 +9,10 @@ import {
 } from "@/lib/auth-redirect";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { showToast } from "@/components/toaster";
+import {
+  OAuthButtons,
+  type AuthOAuthProvider,
+} from "@/components/auth/oauth-buttons";
 
 type SignupCopy = {
   nameLabel: string;
@@ -25,6 +29,8 @@ type SignupCopy = {
   passwordWeak: string;
   emailExists: string;
   namePlaceholder: string;
+  googleButton: string;
+  lineButton: string;
 };
 
 type SignupFormProps = {
@@ -44,6 +50,8 @@ export function SignupForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [oauthLoading, setOauthLoading] =
+    useState<AuthOAuthProvider | null>(null);
   const passwordPattern =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
@@ -127,6 +135,37 @@ export function SignupForm({
     router.replace(`${verifyPath}${joiner}${params.toString()}`);
   };
 
+  const handleOAuthLogin = async (provider: AuthOAuthProvider) => {
+    if (typeof window === "undefined") return;
+    setOauthLoading(provider);
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    callbackUrl.searchParams.set(
+      "next",
+      buildLocalizedAuthRedirectPath(redirectTo, locale),
+    );
+    type SupabaseOAuthProvider = Parameters<
+      typeof supabase.auth.signInWithOAuth
+    >[0]["provider"];
+    const providerId =
+      provider === "line" ? "custom:line" : provider;
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      // auth-js types in this repo list built-ins only, but Supabase custom
+      // providers are addressed with "custom:*" identifiers.
+      provider: providerId as SupabaseOAuthProvider,
+      options: {
+        redirectTo: callbackUrl.toString(),
+        ...(provider === "line"
+          ? { scopes: "openid profile email" }
+          : {}),
+      },
+    });
+
+    if (oauthError) {
+      setOauthLoading(null);
+      showToast({ variant: "error", message: oauthError.message });
+    }
+  };
+
   if (!isMounted) {
     return (
       <div className="mt-8 space-y-4">
@@ -140,7 +179,16 @@ export function SignupForm({
   }
 
   return (
-    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+    <>
+      <div className="mt-8">
+        <OAuthButtons
+          copy={copy}
+          disabled={submitting}
+          loadingProvider={oauthLoading}
+          onProviderClick={handleOAuthLogin}
+        />
+      </div>
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <label className="block text-sm font-medium text-slate-700">
           {copy.nameLabel}
@@ -223,6 +271,7 @@ export function SignupForm({
       </button>
       <p className="text-sm text-slate-500">{copy.agreeTerms}</p>
       <p className="text-sm text-slate-500">{copy.verifyNotice}</p>
-    </form>
+      </form>
+    </>
   );
 }

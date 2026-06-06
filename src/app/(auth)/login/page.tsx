@@ -54,6 +54,7 @@ export default async function LoginPage({
     passwordToggleShow: t("auth.passwordShow"),
     passwordToggleHide: t("auth.passwordHide"),
     googleButton: t("auth.googleButton"),
+    lineButton: t("auth.lineButton"),
     success: t("auth.loginSuccess"),
   };
 
