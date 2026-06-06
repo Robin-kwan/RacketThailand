@@ -51,9 +51,7 @@ export default async function MyCommunityPostsPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isAuthenticated = Boolean(
-    user?.id && user.email && !user.is_anonymous,
-  );
+  const isAuthenticated = Boolean(user?.id && !user.is_anonymous);
 
   if (!isAuthenticated || !user) {
     redirect(

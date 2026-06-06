@@ -135,9 +135,7 @@ export default async function CommunityPostPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const isAuthenticated = Boolean(
-    user?.id && user.email && !user.is_anonymous,
-  );
+  const isAuthenticated = Boolean(user?.id && !user.is_anonymous);
   const { data: viewerProfile } = isAuthenticated && user
     ? await supabase
         .from("profiles")
