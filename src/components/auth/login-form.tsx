@@ -133,7 +133,7 @@ export function LoginForm({
       options: {
         redirectTo: callbackUrl.toString(),
         ...(provider === "line"
-          ? { scopes: "openid profile email" }
+          ? { scopes: "openid profile" }
           : {}),
       },
     });
