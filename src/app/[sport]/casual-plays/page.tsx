@@ -62,10 +62,22 @@ export async function generateMetadata({
     locale === "th"
       ? `ค้นหาโพสต์หาเพื่อนตี${meta.name[locale]} พร้อมวัน เวลา สนาม และข้อมูลติดต่อ`
       : `Find one-off ${meta.name[locale]} sessions with date, court, and organizer contact details.`;
+  const playData = await fetchCasualPlaysBySport(
+    resolvedParams.sport,
+    { limit: 1 },
+    locale,
+  );
+  const hasActivePlays = (playData.count ?? 0) > 0;
 
   return {
     title,
     description,
+    robots: hasActivePlays
+      ? undefined
+      : {
+          index: false,
+          follow: true,
+        },
     alternates: {
       canonical,
       languages: alternates,

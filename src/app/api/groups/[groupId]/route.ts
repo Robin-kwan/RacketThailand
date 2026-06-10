@@ -31,6 +31,7 @@ type PatchGroupPayload = {
   allowWalkIn?: boolean | null;
   phone?: string | null;
   lineId?: string | null;
+  websiteUrl?: string | null;
   lineQrUrl?: string | null;
 };
 
@@ -138,6 +139,25 @@ export async function PATCH(
   }
   if (payload.lineId !== undefined) {
     update.line_id = normalizeContact(payload.lineId);
+  }
+  if (payload.websiteUrl !== undefined) {
+    update.website_url = normalizeContact(payload.websiteUrl);
+  }
+  if (
+    payload.phone !== undefined &&
+    payload.lineId !== undefined &&
+    payload.websiteUrl !== undefined &&
+    !normalizeContact(payload.phone) &&
+    !normalizeContact(payload.lineId) &&
+    !normalizeContact(payload.websiteUrl)
+  ) {
+    return NextResponse.json(
+      {
+        code: "CONTACT_REQUIRED",
+        error: "Add at least one contact method.",
+      },
+      { status: 400 },
+    );
   }
   if (payload.lineQrUrl !== undefined) {
     if (

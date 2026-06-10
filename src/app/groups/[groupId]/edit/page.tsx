@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { OwnershipAssignmentPanel } from "@/components/admin/ownership-assignment-panel";
 import { GroupEditForm } from "@/components/groups/group-edit-form";
 import { BaseCard } from "@/components/base-card";
 import { BaseBackLink } from "@/components/base-back-link";
@@ -33,6 +34,24 @@ async function resolveSearchParams(
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
   return searchParams;
+}
+
+function formatProfileOption(profile: {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+}) {
+  const username = profile.username?.trim();
+  const displayName = profile.display_name?.trim();
+  return {
+    id: profile.id,
+    username,
+    displayName,
+    label:
+      username && displayName
+        ? `${username} - ${displayName}`
+        : username ?? displayName ?? profile.id.slice(0, 8),
+  };
 }
 
 export default async function EditGroupPage({
@@ -73,12 +92,13 @@ export default async function EditGroupPage({
     player_amount: number | null;
     phone: string | null;
     line_id: string | null;
+    website_url: string | null;
     line_qr_url: string | null;
     play_format: "single" | "double" | null;
     allow_walk_in: boolean | null;
   }>("groups", {
     select:
-      "id,sport_id,name,description,owner_id,player_amount,phone,line_id,line_qr_url,play_format,allow_walk_in",
+      "id,sport_id,name,description,owner_id,player_amount,phone,line_id,website_url,line_qr_url,play_format,allow_walk_in",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -141,6 +161,18 @@ export default async function EditGroupPage({
     group_id: `eq.${group.id}`,
     order: "is_primary.desc,created_at.asc",
   });
+
+  const { data: ownerRows } = group.owner_id
+    ? await supabaseSelect<{
+        id: string;
+        username: string | null;
+        display_name: string | null;
+      }>("profiles", {
+        select: "id,username,display_name",
+        id: `eq.${group.owner_id}`,
+        limit: "1",
+      })
+    : { data: [] };
 
   const sportOptions =
     sports?.map((sport) => ({
@@ -242,6 +274,7 @@ export default async function EditGroupPage({
     allowWalkIn: group.allow_walk_in !== false,
     phone: group.phone ?? "",
     lineId: group.line_id ?? "",
+    websiteUrl: group.website_url ?? "",
     lineQrUrl: resolvedLineQrUrl ?? null,
   };
 
@@ -284,10 +317,16 @@ export default async function EditGroupPage({
     playerAmountHelp: t("groups.form.playerAmountHelp"),
     allowWalkInLabel: t("groups.form.allowWalkInLabel"),
     allowWalkInHelp: t("groups.form.allowWalkInHelp"),
+    contactTitle: t("groups.form.contactTitle"),
+    contactHelp: t("groups.form.contactHelp"),
+    contactRequirementLabel: t("groups.form.contactRequirementLabel"),
     phoneLabel: t("groups.form.phoneLabel"),
     phonePlaceholder: t("groups.form.phonePlaceholder"),
     lineLabel: t("groups.form.lineLabel"),
     linePlaceholder: t("groups.form.linePlaceholder"),
+    websiteLabel: t("groups.form.websiteLabel"),
+    websitePlaceholder: t("groups.form.websitePlaceholder"),
+    contactRequired: t("groups.form.contactRequired"),
     lineQrLabel: t("groups.form.lineQrLabel"),
     lineQrUploader: buildLineQrUploaderCopy(t),
     photos: t("groups.form.photos"),
@@ -310,6 +349,22 @@ export default async function EditGroupPage({
     currentSportSlug ? `/${currentSportSlug}/group-finder` : "/",
     locale,
   );
+  const ownerProfile = ownerRows?.[0] ? formatProfileOption(ownerRows[0]) : null;
+  const ownershipCopy = {
+    title: t("admin.ownership.groupTitle"),
+    subtitle: t("admin.ownership.subtitle"),
+    currentLabel: t("admin.ownership.currentLabel"),
+    searchLabel: t("admin.ownership.searchLabel"),
+    searchPlaceholder: t("admin.ownership.searchPlaceholder"),
+    searching: t("admin.ownership.searching"),
+    noResults: t("admin.ownership.noResults"),
+    save: t("admin.ownership.save"),
+    saving: t("admin.ownership.saving"),
+    success: t("admin.ownership.success"),
+    error: t("admin.ownership.error"),
+    unchanged: t("admin.ownership.unchanged"),
+    unassigned: t("admin.ownership.unassigned"),
+  };
 
   return (
     <div className="rt-page">
@@ -357,6 +412,14 @@ export default async function EditGroupPage({
             />
           </div>
         </BaseCard>
+        {isAdmin && (
+          <OwnershipAssignmentPanel
+            entityType="group"
+            entityId={group.id}
+            currentProfile={ownerProfile}
+            copy={ownershipCopy}
+          />
+        )}
       </main>
     </div>
   );

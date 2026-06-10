@@ -55,6 +55,7 @@ type GroupRecord = {
   allowWalkIn?: boolean | null;
   phone?: string | null;
   lineId?: string | null;
+  websiteUrl?: string | null;
   lineQrUrl?: string | null;
 };
 
@@ -127,6 +128,7 @@ export function GroupEditForm({
     allowWalkIn: group.allowWalkIn !== false,
     phone: group.phone ?? "",
     lineId: group.lineId ?? "",
+    websiteUrl: group.websiteUrl ?? "",
   };
 
   const formStateKey = useMemo(
@@ -279,6 +281,7 @@ export function GroupEditForm({
     allowWalkIn: boolean;
     phone?: string;
     lineId?: string;
+    websiteUrl?: string;
     sessions: { courtId: string; day: string; start: string; end: string }[];
   }) => {
     setSubmitting(true);
@@ -304,6 +307,7 @@ export function GroupEditForm({
         allowWalkIn: payload.allowWalkIn,
         phone: payload.phone,
         lineId: payload.lineId,
+        websiteUrl: payload.websiteUrl,
       }),
     });
     const data = await response.json().catch(() => ({}));
@@ -312,7 +316,10 @@ export function GroupEditForm({
       setSubmitting(false);
       showToast({
         variant: "error",
-        message: data?.error ?? copy.error,
+        message:
+          data?.code === "CONTACT_REQUIRED"
+            ? copy.contactRequired
+            : data?.error ?? copy.error,
       });
       return;
     }

@@ -39,6 +39,7 @@ type GroupManagementRow = {
   player_amount: number | null;
   phone: string | null;
   line_id: string | null;
+  website_url: string | null;
   updated_at: string | null;
   sports?: {
     code: string | null;
@@ -70,10 +71,13 @@ function formatTime(value: string | null) {
   return value?.slice(0, 5) ?? "";
 }
 
-function buildContact(row: Pick<GroupManagementRow, "phone" | "line_id">) {
+function buildContact(
+  row: Pick<GroupManagementRow, "phone" | "line_id" | "website_url">,
+) {
   return [
     row.phone ? `Phone: ${row.phone}` : null,
     row.line_id ? `LINE: ${row.line_id}` : null,
+    row.website_url ? "Website" : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -93,7 +97,7 @@ export default async function AdminGroupsPage({
   const [groupsRes, profilesRes] = await Promise.all([
     supabaseSelect<GroupManagementRow>("groups", {
       select:
-        "id,name,description,owner_id,play_format,player_amount,phone,line_id,updated_at,sports(code,name),group_photos(id),group_sessions(day,start_time,end_time,courts(name,province))",
+        "id,name,description,owner_id,play_format,player_amount,phone,line_id,website_url,updated_at,sports(code,name),group_photos(id),group_sessions(day,start_time,end_time,courts(name,province))",
       order: "updated_at.desc.nullslast",
       limit: "100",
     }),

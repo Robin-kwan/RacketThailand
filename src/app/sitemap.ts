@@ -21,6 +21,15 @@ type CommunityPostEntity = MinimalEntity & {
   } | null;
 };
 
+type SportEntity = {
+  id: string;
+  code: string | null;
+};
+
+type CasualPlayEntity = MinimalEntity & {
+  sport_id?: string | null;
+};
+
 function toSitemapDate(value?: string | null) {
   if (!value) return undefined;
   const date = new Date(value);
@@ -81,17 +90,39 @@ async function fetchEntities<T extends MinimalEntity>(
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const today = getThailandTodayDateString();
-  const [courts, groups, casualPlays, communityPosts] = await Promise.all([
+  const [courts, groups, casualPlays, communityPosts, sports] = await Promise.all([
     fetchEntities("courts", 1000, { is_active: "eq.true" }),
     fetchEntities("groups"),
-    fetchEntities("casual_plays", 1000, { play_date: `gte.${today}` }),
+    fetchEntities<CasualPlayEntity>(
+      "casual_plays",
+      1000,
+      { play_date: `gte.${today}` },
+      "id,created_at,updated_at,sport_id",
+    ),
     fetchEntities<CommunityPostEntity>(
       "community_posts",
       1000,
       { status: "eq.published" },
       "id,created_at,updated_at,sports(code)",
     ),
+    supabaseSelect<SportEntity>("sports", {
+      select: "id,code",
+    })
+      .then((result) => result.data ?? [])
+      .catch(() => [] as SportEntity[]),
   ]);
+  const sportCodeById = new Map(
+    sports
+      .filter((sport) => sport.code)
+      .map((sport) => [sport.id, sport.code as string]),
+  );
+  const sportsWithUpcomingCasualPlays = new Set(
+    casualPlays
+      .map((play) => play.sport_id ? sportCodeById.get(play.sport_id) : null)
+      .filter((code): code is string =>
+        Boolean(code && SUPPORTED_SPORTS.some((sport) => sport === code)),
+      ),
+  );
 
   const staticRoutes = [
     ...buildLocalizedSitemapEntries({
@@ -125,7 +156,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       }),
     ),
-    ...SUPPORTED_SPORTS.flatMap((code) =>
+    ...SUPPORTED_SPORTS.filter((code) =>
+      sportsWithUpcomingCasualPlays.has(code),
+    ).flatMap((code) =>
       buildLocalizedSitemapEntries({
         path: `/${code}/casual-plays`,
         changeFrequency: "daily",

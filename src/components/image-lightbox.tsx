@@ -8,12 +8,16 @@ import { X } from "lucide-react";
 type ImageLightboxProps = {
   images: { id: string; src: string; alt?: string }[];
   initialIndex?: number;
+  unoptimized?: boolean;
+  variant?: "gallery" | "compact";
   onClose?: () => void;
 };
 
 export function ImageLightbox({
   images,
   initialIndex = 0,
+  unoptimized = false,
+  variant = "gallery",
   onClose,
 }: ImageLightboxProps) {
   const [visible, setVisible] = useState(true);
@@ -64,7 +68,11 @@ export function ImageLightbox({
         />
       </button>
       <div
-        className="relative h-[70vh] w-full max-w-4xl"
+        className={
+          variant === "compact"
+            ? "relative aspect-square w-[min(82vw,420px)] rounded-3xl bg-white p-4"
+            : "relative h-[70vh] w-full max-w-4xl"
+        }
         onClick={(event) => event.stopPropagation()}
       >
         <Image
@@ -72,7 +80,8 @@ export function ImageLightbox({
           alt={image.alt ?? "Court photo"}
           fill
           sizes="100vw"
-          className="object-contain"
+          className={variant === "compact" ? "object-contain p-4" : "object-contain"}
+          unoptimized={unoptimized}
         />
       </div>
     </div>,

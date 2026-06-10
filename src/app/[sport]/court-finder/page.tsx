@@ -10,7 +10,11 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
-import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import {
+  buildAbsoluteUrl,
+  buildCanonicalUrl,
+  buildLocaleAlternates,
+} from "@/lib/seo";
 import { fetchCourtsBySport } from "@/server/courtFinder";
 import {
   localizeThailandLocation,
@@ -162,11 +166,22 @@ export async function generateMetadata({
         ? `ค้นหาสนาม${meta.name[locale]}ใน${provinceLabel} พร้อมพิกัด แผนที่ และข้อมูลติดต่อ`
         : `Find ${meta.name[locale]} courts in ${provinceLabel} with map locations, contact details, and community context.`
       : description;
+  const courtPreview = await fetchCourtsBySport(
+    resolvedParams.sport,
+    {
+      search: searchQuery || undefined,
+      province: provinceFilter || undefined,
+      limit: 1,
+      includeProvinces: false,
+    },
+    locale,
+  );
+  const hasListings = (courtPreview.count ?? 0) > 0;
 
   return {
     title: filteredTitle,
     description: filteredDescription,
-    robots: hasFreeTextSearch
+    robots: hasFreeTextSearch || !hasListings
       ? {
           index: false,
           follow: true,
@@ -240,6 +255,48 @@ export default async function CourtFinderPage({
     openMaps: t("courtFinder.openMaps"),
     addCourtCta: t("courtSubmission.submit"),
   };
+  const canonicalPath = buildFinderPath(
+    `/${resolvedParams.sport}/court-finder`,
+    searchQuery ? {} : { province: provinceInfo?.queryValue },
+  );
+  const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
+  const structuredData =
+    courtData.courts.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "@id": canonicalUrl,
+          url: canonicalUrl,
+          name: copy.title,
+          description: copy.subtitle,
+          mainEntity: {
+            "@type": "ItemList",
+            numberOfItems: courtData.count,
+            itemListElement: courtData.courts.map((court, index) => {
+              const photoUrl =
+                court.court_photos?.find((photo) => photo.is_primary)
+                  ?.image_url ??
+                court.court_photos?.[0]?.image_url ??
+                undefined;
+
+              return {
+                "@type": "ListItem",
+                position: index + 1,
+                url: buildCanonicalUrl(`/courts/${court.id}`, locale),
+                item: {
+                  "@type": "SportsActivityLocation",
+                  name: court.name,
+                  url: buildCanonicalUrl(`/courts/${court.id}`, locale),
+                  address: [court.district, court.province]
+                    .filter(Boolean)
+                    .join(", "),
+                  image: photoUrl ? buildAbsoluteUrl(photoUrl) : undefined,
+                },
+              };
+            }),
+          },
+        }
+      : null;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -288,6 +345,14 @@ export default async function CourtFinderPage({
           initialSearch={searchQuery}
           initialProvince={provinceInfo?.queryValue ?? provinceFilter}
         />
+        {structuredData && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(structuredData),
+            }}
+          />
+        )}
       </main>
     </div>
   );
