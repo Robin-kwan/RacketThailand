@@ -18,13 +18,15 @@ export function buildCanonicalUrl(path: string, locale: Locale) {
 }
 
 export function buildLocaleAlternates(path: string) {
-  return SUPPORTED_LOCALES.reduce<Record<Locale, string>>(
+  const alternates = SUPPORTED_LOCALES.reduce<Record<string, string>>(
     (map, locale) => {
       map[locale] = buildCanonicalUrl(path, locale);
       return map;
     },
-    {} as Record<Locale, string>,
+    {},
   );
+  alternates["x-default"] = buildCanonicalUrl(path, "th");
+  return alternates;
 }
 
 export function truncateMetaDescription(text: string, maxLength = 180) {

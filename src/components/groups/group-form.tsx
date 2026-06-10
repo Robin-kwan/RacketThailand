@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Trash2, X } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import { BaseAutocomplete } from "@/components/base-autocomplete";
@@ -61,6 +61,19 @@ const normalizeCourtIds = (blocks: CourtSessionBlock[]) =>
     ),
   );
 
+const hasContactMethod = (values: {
+  phone: string;
+  lineId: string;
+  websiteUrl: string;
+}) =>
+  Boolean(
+    values.phone.trim() ||
+      values.lineId.trim() ||
+      values.websiteUrl.trim(),
+  );
+
+const CONTACT_FIELD_NAMES = new Set(["phone", "lineId", "websiteUrl"]);
+
 export type GroupFormValues = {
   sportId: string;
   name: string;
@@ -71,6 +84,7 @@ export type GroupFormValues = {
   allowWalkIn?: boolean | null;
   phone?: string | null;
   lineId?: string | null;
+  websiteUrl?: string | null;
 };
 
 export type GroupFormCopy = {
@@ -99,10 +113,16 @@ export type GroupFormCopy = {
   playerAmountHelp: string;
   allowWalkInLabel: string;
   allowWalkInHelp: string;
+  contactTitle: string;
+  contactHelp: string;
+  contactRequirementLabel: string;
   phoneLabel: string;
   phonePlaceholder: string;
   lineLabel: string;
   linePlaceholder: string;
+  websiteLabel: string;
+  websitePlaceholder: string;
+  contactRequired: string;
   lineQrLabel: string;
   lineQrUploader?: LineQrUploaderCopy;
 };
@@ -118,6 +138,7 @@ type SubmitPayload = {
   allowWalkIn: boolean;
   phone?: string;
   lineId?: string;
+  websiteUrl?: string;
 };
 
 type GroupFormProps = {
@@ -172,11 +193,14 @@ export function GroupForm({
     allowWalkIn: initialValues.allowWalkIn !== false,
     phone: initialValues.phone ?? "",
     lineId: initialValues.lineId ?? "",
+    websiteUrl: initialValues.websiteUrl ?? "",
   });
   const [courtSessions, setCourtSessions] = useState<CourtSessionBlock[]>(
     initialValues.sessions,
   );
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [contactErrorVisible, setContactErrorVisible] = useState(false);
+  const firstContactFieldRef = useRef<HTMLInputElement>(null);
   const sportOptions = useMemo(
     () =>
       [
@@ -242,6 +266,16 @@ export function GroupForm({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
+    if (CONTACT_FIELD_NAMES.has(name)) {
+      const nextContactValues = {
+        phone: name === "phone" ? value : form.phone,
+        lineId: name === "lineId" ? value : form.lineId,
+        websiteUrl: name === "websiteUrl" ? value : form.websiteUrl,
+      };
+      if (hasContactMethod(nextContactValues)) {
+        setContactErrorVisible(false);
+      }
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === "sportId") {
       const nextOptions = courtCache[value] ?? [];
@@ -354,6 +388,7 @@ export function GroupForm({
         allowWalkIn: initialValues.allowWalkIn !== false,
         phone: initialValues.phone ?? "",
         lineId: initialValues.lineId ?? "",
+        websiteUrl: initialValues.websiteUrl ?? "",
         courtIds: normalizeCourtIds(initialValues.sessions),
         sessions: normalizeSessions(initialValues.sessions),
       }),
@@ -371,6 +406,7 @@ export function GroupForm({
         allowWalkIn: form.allowWalkIn,
         phone: form.phone,
         lineId: form.lineId,
+        websiteUrl: form.websiteUrl,
         courtIds: serializedCourtIds,
         sessions: serializedSessions,
       }),
@@ -378,10 +414,22 @@ export function GroupForm({
   );
 
   const hasChanges = currentSnapshot !== initialSnapshot || externalDirty;
+  const contactFieldClass = contactErrorVisible
+    ? "border-rose-300 bg-rose-50 focus-visible:border-rose-400 focus-visible:ring-rose-200"
+    : undefined;
+  const contactErrorId = "group-contact-error";
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitAttempted(true);
+    if (!hasContactMethod(form)) {
+      setContactErrorVisible(true);
+      window.requestAnimationFrame(() => {
+        firstContactFieldRef.current?.focus();
+      });
+      return;
+    }
+    setContactErrorVisible(false);
     await onSubmit({
       sportId: form.sportId,
       name: form.name,
@@ -391,6 +439,7 @@ export function GroupForm({
       allowWalkIn: form.allowWalkIn,
       phone: form.phone,
       lineId: form.lineId,
+      websiteUrl: form.websiteUrl,
       courtIds: serializedCourtIds,
       sessions: serializedSessions,
     });
@@ -486,36 +535,83 @@ export function GroupForm({
           </span>
         </span>
       </label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-[var(--foreground)]">
-            {copy.phoneLabel}
-          </label>
-          <BaseTextField
-            type="tel"
-            name="phone"
-            value={form.phone}
-            onChange={updateForm}
-            placeholder={copy.phonePlaceholder}
-            variant="light"
-          />
+      <section className="space-y-4 border-t border-slate-200 pt-6">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-[var(--foreground)]">
+              {copy.contactTitle}
+            </p>
+            <p className="mt-1 text-xs text-[rgb(var(--foreground-rgb)/0.65)]">
+              {copy.contactHelp}
+            </p>
+          </div>
+          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            {copy.contactRequirementLabel}
+          </span>
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-[var(--foreground)]">
-            {copy.lineLabel}
-          </label>
-          <BaseTextField
-            type="text"
-            name="lineId"
-            value={form.lineId}
-            onChange={updateForm}
-            placeholder={copy.linePlaceholder}
-            variant="light"
-          />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-[var(--foreground)]">
+              {copy.phoneLabel}
+            </label>
+            <BaseTextField
+              type="tel"
+              name="phone"
+              value={form.phone}
+              onChange={updateForm}
+              placeholder={copy.phonePlaceholder}
+              variant="light"
+              ref={firstContactFieldRef}
+              className={contactFieldClass}
+              aria-invalid={contactErrorVisible}
+              aria-describedby={contactErrorVisible ? contactErrorId : undefined}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-[var(--foreground)]">
+              {copy.lineLabel}
+            </label>
+            <BaseTextField
+              type="text"
+              name="lineId"
+              value={form.lineId}
+              onChange={updateForm}
+              placeholder={copy.linePlaceholder}
+              variant="light"
+              className={contactFieldClass}
+              aria-invalid={contactErrorVisible}
+              aria-describedby={contactErrorVisible ? contactErrorId : undefined}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-[var(--foreground)]">
+              {copy.websiteLabel}
+            </label>
+            <BaseTextField
+              type="text"
+              name="websiteUrl"
+              value={form.websiteUrl}
+              onChange={updateForm}
+              placeholder={copy.websitePlaceholder}
+              variant="light"
+              className={contactFieldClass}
+              aria-invalid={contactErrorVisible}
+              aria-describedby={contactErrorVisible ? contactErrorId : undefined}
+            />
+          </div>
         </div>
-      </div>
-      {lineQrSection}
-      <div className="space-y-3">
+        {contactErrorVisible && (
+          <p
+            id={contactErrorId}
+            role="alert"
+            className="text-sm font-medium text-rose-600"
+          >
+            {copy.contactRequired}
+          </p>
+        )}
+        {lineQrSection}
+      </section>
+      <div className="space-y-3 border-t border-slate-200 pt-6">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">
             {copy.sessionsLabel}

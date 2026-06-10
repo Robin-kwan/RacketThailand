@@ -25,6 +25,7 @@ import { BaseScheduleList } from "@/components/base-schedule-list";
 import { BaseBackLink } from "@/components/base-back-link";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
+import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
 import { getPlayFormatLabel } from "@/lib/play-format";
 import { localizeThailandLocation } from "@/server/thailand-location";
 
@@ -96,6 +97,7 @@ type GroupRow = {
   allow_walk_in: boolean | null;
   phone: string | null;
   line_id: string | null;
+  website_url: string | null;
   line_qr_url: string | null;
 };
 
@@ -192,6 +194,14 @@ function buildCourtSeoLabel(
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function normalizeExternalHref(value: string) {
+  const trimmed = value.trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
 }
 
 export async function generateMetadata({
@@ -356,7 +366,7 @@ export default async function GroupDetailPage({
 
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
     select:
-      "id,name,description,owner_id,sports(code,name),updated_at,play_format,player_amount,allow_walk_in,phone,line_id,line_qr_url",
+      "id,name,description,owner_id,sports(code,name),updated_at,play_format,player_amount,allow_walk_in,phone,line_id,website_url,line_qr_url",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -559,6 +569,9 @@ export default async function GroupDetailPage({
           SPORT_META[sportCode]?.name?.en
         : undefined,
     image: primaryImage ?? undefined,
+    sameAs: displayGroup.website_url
+      ? [normalizeExternalHref(displayGroup.website_url)]
+      : undefined,
     numberOfMembers: displayGroup.player_amount ?? undefined,
     contactPoint: displayGroup.phone
       ? [
@@ -604,6 +617,7 @@ export default async function GroupDetailPage({
     walkInsClosed: t("groups.detail.walkInsClosed"),
     phone: t("groups.detail.phone"),
     line: t("groups.detail.line"),
+    website: t("groups.detail.website"),
     lineQr: t("groups.detail.lineQr"),
     back: t("groups.detail.back"),
     copyAction: t("contactActions.copy"),
@@ -743,21 +757,32 @@ export default async function GroupDetailPage({
                 />
               </div>
             )}
+            {displayGroup.website_url && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                  {copy.website}
+                </p>
+                <a
+                  href={normalizeExternalHref(displayGroup.website_url)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 block break-all text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4"
+                >
+                  {displayGroup.website_url}
+                </a>
+              </div>
+            )}
             {displayGroup.line_qr_url && (
               <div>
                 <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.lineQr}
                 </p>
-                <div className="relative mt-2 h-32 w-32 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                  <Image
-                    src={displayGroup.line_qr_url}
-                    alt="LINE QR"
-                    fill
-                    sizes="128px"
-                    className="object-contain"
-                    unoptimized
-                  />
-                </div>
+                <LineQrLightboxImage
+                  src={displayGroup.line_qr_url}
+                  alt="LINE QR"
+                  sizes="128px"
+                  className="relative mt-2 h-32 w-32 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                />
               </div>
             )}
           </div>

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
@@ -28,6 +27,7 @@ import { ViewTracker } from "@/components/view-tracker";
 import { GroupCard, type GroupCardSession } from "@/components/group-card";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
+import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
 import type { Locale } from "@/lib/i18n";
 
 function getGroupCover(group: {
@@ -697,15 +697,12 @@ export default async function CourtPage({
               {detail.court.line_qr_url && (
                 <li className="space-y-2">
                   <strong className="text-slate-900">{copy.lineQr}:</strong>
-                  <div className="relative h-36 w-36 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                    <Image
-                      src={detail.court.line_qr_url}
-                      alt="LINE QR"
-                      fill
-                      sizes="144px"
-                      className="object-contain"
-                    />
-                  </div>
+                  <LineQrLightboxImage
+                    src={detail.court.line_qr_url}
+                    alt="LINE QR"
+                    sizes="144px"
+                    className="relative h-36 w-36 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  />
                 </li>
               )}
               {detail.court.website_url && (

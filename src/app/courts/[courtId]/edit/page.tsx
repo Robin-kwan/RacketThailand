@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { CourtEditForm } from "@/components/admin/court-edit-form";
+import { OwnershipAssignmentPanel } from "@/components/admin/ownership-assignment-panel";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { BaseBackLink } from "@/components/base-back-link";
 import { EntityDeleteButton } from "@/components/entity-delete-button";
@@ -31,6 +32,24 @@ async function resolveSearchParams(
 ): Promise<SearchParams | undefined> {
   if (!searchParams) return undefined;
   return searchParams;
+}
+
+function formatProfileOption(profile: {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+}) {
+  const username = profile.username?.trim();
+  const displayName = profile.display_name?.trim();
+  return {
+    id: profile.id,
+    username,
+    displayName,
+    label:
+      username && displayName
+        ? `${username} - ${displayName}`
+        : username ?? displayName ?? profile.id.slice(0, 8),
+  };
 }
 
 export default async function EditCourtPage({
@@ -105,7 +124,8 @@ export default async function EditCourtPage({
     order: "name.asc.nullslast",
   });
 
-  const [{ data: photoRows }, courtSportIds] = await Promise.all([
+  const [{ data: photoRows }, courtSportIds, { data: ownerRows }] =
+    await Promise.all([
     supabaseSelect<{
       id: string;
       image_url: string;
@@ -116,6 +136,17 @@ export default async function EditCourtPage({
       order: "is_primary.desc,created_at.asc",
     }),
     fetchSportIdsByCourtId(court.id),
+    court.created_by
+      ? supabaseSelect<{
+          id: string;
+          username: string | null;
+          display_name: string | null;
+        }>("profiles", {
+          select: "id,username,display_name",
+          id: `eq.${court.created_by}`,
+          limit: "1",
+        })
+      : Promise.resolve({ data: [] }),
   ]);
 
   const primarySportId = courtSportIds[0] ?? "";
@@ -200,6 +231,22 @@ export default async function EditCourtPage({
     currentSportSlug ? `/${currentSportSlug}/court-finder` : "/",
     locale,
   );
+  const ownerProfile = ownerRows?.[0] ? formatProfileOption(ownerRows[0]) : null;
+  const ownershipCopy = {
+    title: t("admin.ownership.courtTitle"),
+    subtitle: t("admin.ownership.subtitle"),
+    currentLabel: t("admin.ownership.currentLabel"),
+    searchLabel: t("admin.ownership.searchLabel"),
+    searchPlaceholder: t("admin.ownership.searchPlaceholder"),
+    searching: t("admin.ownership.searching"),
+    noResults: t("admin.ownership.noResults"),
+    save: t("admin.ownership.save"),
+    saving: t("admin.ownership.saving"),
+    success: t("admin.ownership.success"),
+    error: t("admin.ownership.error"),
+    unchanged: t("admin.ownership.unchanged"),
+    unassigned: t("admin.ownership.unassigned"),
+  };
 
   return (
     <>
@@ -237,6 +284,14 @@ export default async function EditCourtPage({
             />
           </div>
         </section>
+        {isAdmin && (
+          <OwnershipAssignmentPanel
+            entityType="court"
+            entityId={court.id}
+            currentProfile={ownerProfile}
+            copy={ownershipCopy}
+          />
+        )}
       </main>
     </>
   );

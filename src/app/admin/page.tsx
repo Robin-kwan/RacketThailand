@@ -20,6 +20,7 @@ import { requireAdminPageAccess } from "@/server/admin";
 
 type SearchParams = {
   lang?: string;
+  growthWindow?: string;
 };
 
 type SearchParamsInput = Promise<SearchParams> | undefined;
@@ -60,6 +61,50 @@ type CasualPlayRow = {
   } | null;
 };
 
+type RecentCourtRow = {
+  id: string;
+  name: string | null;
+  district: string | null;
+  province: string | null;
+  created_at: string;
+  is_active: boolean | null;
+};
+
+type RecentGroupRow = {
+  id: string;
+  name: string | null;
+  created_at: string;
+};
+
+type GrowthWindowKey = "24h" | "3d" | "7d" | "30d";
+
+const GROWTH_WINDOWS: {
+  key: GrowthWindowKey;
+  milliseconds: number;
+  labelKey: string;
+}[] = [
+  {
+    key: "24h",
+    milliseconds: 24 * 60 * 60 * 1000,
+    labelKey: "admin.growth.windows.twentyFourHours",
+  },
+  {
+    key: "3d",
+    milliseconds: 3 * 24 * 60 * 60 * 1000,
+    labelKey: "admin.growth.windows.threeDays",
+  },
+  {
+    key: "7d",
+    milliseconds: 7 * 24 * 60 * 60 * 1000,
+    labelKey: "admin.growth.windows.sevenDays",
+  },
+  {
+    key: "30d",
+    milliseconds: 30 * 24 * 60 * 60 * 1000,
+    labelKey: "admin.growth.windows.oneMonth",
+  },
+];
+
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,
 ): Promise<SearchParams | undefined> {
@@ -69,6 +114,17 @@ async function resolveSearchParams(
 
 function formatDateTime(value: string, locale: "th" | "en") {
   return new Date(value).toLocaleString(locale === "th" ? "th-TH" : "en-US");
+}
+
+function resolveGrowthWindow(value?: string): (typeof GROWTH_WINDOWS)[number] {
+  return (
+    GROWTH_WINDOWS.find((window) => window.key === value) ??
+    GROWTH_WINDOWS[2]
+  );
+}
+
+function getGrowthCutoffISOString(window: (typeof GROWTH_WINDOWS)[number]) {
+  return new Date(Date.now() - window.milliseconds).toISOString();
 }
 
 function buildMetricCards(t: Awaited<ReturnType<typeof getTranslator>>) {
@@ -92,6 +148,8 @@ export default async function AdminPanel({
   await requireAdminPageAccess(locale);
   const navItems = buildAdminPortalNav(locale, t);
   const today = getThailandTodayDateString();
+  const growthWindow = resolveGrowthWindow(resolved?.growthWindow);
+  const growthCutoff = getGrowthCutoffISOString(growthWindow);
 
   const [
     allowPublicCourtPublish,
@@ -100,6 +158,8 @@ export default async function AdminPanel({
     pendingCourtsRes,
     unreadFeedbackRes,
     upcomingCasualPlaysRes,
+    recentCourtsRes,
+    recentGroupsRes,
   ] = await Promise.all([
     getAllowPublicCourtPublish(),
     supabaseSelect<{ id: string }>("courts", {
@@ -130,6 +190,18 @@ export default async function AdminPanel({
       play_date: `gte.${today}`,
       order: "play_date.asc",
       limit: "4",
+    }),
+    supabaseSelect<RecentCourtRow>("courts", {
+      select: "id,name,district,province,created_at,is_active",
+      created_at: `gte.${growthCutoff}`,
+      order: "created_at.desc",
+      limit: "5",
+    }),
+    supabaseSelect<RecentGroupRow>("groups", {
+      select: "id,name,created_at",
+      created_at: `gte.${growthCutoff}`,
+      order: "created_at.desc",
+      limit: "5",
     }),
   ]);
 
@@ -215,6 +287,164 @@ export default async function AdminPanel({
             </p>
           </div>
         ))}
+      </section>
+
+      <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+              {t("admin.growth.label")}
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">
+              {t("admin.growth.title")}
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {t("admin.growth.subtitle")}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {GROWTH_WINDOWS.map((window) => {
+              const isActive = window.key === growthWindow.key;
+              return (
+                <Link
+                  key={window.key}
+                  href={buildLocalizedPath(
+                    `/admin?growthWindow=${window.key}`,
+                    locale,
+                  )}
+                  className={[
+                    "rounded-full border px-4 py-2 text-sm font-semibold transition",
+                    isActive
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50",
+                  ].join(" ")}
+                >
+                  {t(window.labelKey)}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+              {t("admin.growth.courtsAdded")}
+            </p>
+            <p className="mt-3 text-3xl font-semibold text-slate-950">
+              {(recentCourtsRes.count ?? recentCourtsRes.data.length).toLocaleString(
+                locale === "th" ? "th-TH" : "en-US",
+              )}
+            </p>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+              {t("admin.growth.groupsAdded")}
+            </p>
+            <p className="mt-3 text-3xl font-semibold text-slate-950">
+              {(recentGroupsRes.count ?? recentGroupsRes.data.length).toLocaleString(
+                locale === "th" ? "th-TH" : "en-US",
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold text-slate-900">
+                {t("admin.growth.latestCourts")}
+              </h3>
+              <Link
+                href={buildLocalizedPath("/admin/courts", locale)}
+                className="text-sm font-semibold text-slate-600 underline-offset-4 hover:underline"
+              >
+                {t("admin.growth.viewAll")}
+              </Link>
+            </div>
+            <div className="mt-4 space-y-3">
+              {recentCourtsRes.data.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                  {t("admin.growth.emptyCourts")}
+                </p>
+              ) : (
+                recentCourtsRes.data.map((court) => (
+                  <Link
+                    key={court.id}
+                    href={buildLocalizedPath(`/courts/${court.id}`, locale)}
+                    className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          {court.name ?? t("admin.sections.courtFallback")}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {[court.district, court.province]
+                            .filter(Boolean)
+                            .join(" · ") ||
+                            t("admin.sections.locationMissing")}
+                        </p>
+                      </div>
+                      <span
+                        className={[
+                          "rounded-full px-3 py-1 text-xs font-semibold",
+                          court.is_active
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700",
+                        ].join(" ")}
+                      >
+                        {court.is_active
+                          ? t("admin.management.courts.statusLive")
+                          : t("admin.management.courts.statusPending")}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-xs text-slate-500">
+                      {formatDateTime(court.created_at, locale)}
+                    </p>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold text-slate-900">
+                {t("admin.growth.latestGroups")}
+              </h3>
+              <Link
+                href={buildLocalizedPath("/admin/groups", locale)}
+                className="text-sm font-semibold text-slate-600 underline-offset-4 hover:underline"
+              >
+                {t("admin.growth.viewAll")}
+              </Link>
+            </div>
+            <div className="mt-4 space-y-3">
+              {recentGroupsRes.data.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                  {t("admin.growth.emptyGroups")}
+                </p>
+              ) : (
+                recentGroupsRes.data.map((group) => (
+                  <Link
+                    key={group.id}
+                    href={buildLocalizedPath(`/groups/${group.id}`, locale)}
+                    className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
+                  >
+                    <p className="font-semibold text-slate-900">
+                      {group.name?.trim() ||
+                        t("admin.management.groups.fallback")}
+                    </p>
+                    <p className="mt-3 text-xs text-slate-500">
+                      {formatDateTime(group.created_at, locale)}
+                    </p>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       </section>
 
       <CourtSubmissionPolicyToggle

@@ -92,6 +92,7 @@ export function GroupCreationForm({
       allowWalkIn: true,
       phone: "",
       lineId: "",
+      websiteUrl: "",
     };
   }, [courts, defaultCourtId, defaultSportId, preselectFirstSport, sports]);
 
@@ -113,6 +114,7 @@ export function GroupCreationForm({
     allowWalkIn: boolean;
     phone?: string;
     lineId?: string;
+    websiteUrl?: string;
     sessions: { courtId: string; day: string; start: string; end: string }[];
   }) => {
     setSubmitting(true);
@@ -127,7 +129,13 @@ export function GroupCreationForm({
 
     if (!response.ok) {
       setSubmitting(false);
-      showToast({ variant: "error", message: data?.error || copy.error });
+      showToast({
+        variant: "error",
+        message:
+          data?.code === "CONTACT_REQUIRED"
+            ? copy.contactRequired
+            : data?.error || copy.error,
+      });
       return;
     }
 

@@ -24,6 +24,7 @@ type GroupPayload = {
   allowWalkIn?: boolean | null;
   phone?: string | null;
   lineId?: string | null;
+  websiteUrl?: string | null;
 };
 
 export async function GET(request: Request) {
@@ -160,6 +161,16 @@ export async function POST(request: Request) {
   const normalizedPlayFormat = normalizePlayFormat(payload.playFormat);
   const normalizedPhone = normalizeContact(payload.phone);
   const normalizedLine = normalizeContact(payload.lineId);
+  const normalizedWebsite = normalizeContact(payload.websiteUrl);
+  if (!normalizedPhone && !normalizedLine && !normalizedWebsite) {
+    return NextResponse.json(
+      {
+        code: "CONTACT_REQUIRED",
+        error: "Add at least one contact method.",
+      },
+      { status: 400 },
+    );
+  }
 
   const adminSupabase = getSupabaseAdminClient();
   const { error: profileError } = await ensureUserProfile(adminSupabase, user);
@@ -184,6 +195,7 @@ export async function POST(request: Request) {
       allow_walk_in: payload.allowWalkIn !== false,
       phone: normalizedPhone,
       line_id: normalizedLine,
+      website_url: normalizedWebsite,
     })
     .select("id")
     .single();
