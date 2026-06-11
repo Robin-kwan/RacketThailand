@@ -8,6 +8,7 @@ import type { ReactNode, ElementType } from "react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import {
   getPlayFormatLabel,
+  isPlayFormat,
   normalizePlayFormat,
   type PlayFormat,
 } from "@/lib/play-format";
@@ -181,19 +182,24 @@ export function GroupCard({
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackGroupPhotoAlt =
     locale === "th" ? "รูปกลุ่ม" : "Group photo";
-  const normalizedPlayFormat = normalizePlayFormat(playFormat);
-  const playFormatLabel = getPlayFormatLabel(playFormat, locale);
+  const hasPlayFormat = isPlayFormat(playFormat);
+  const normalizedPlayFormat = hasPlayFormat
+    ? normalizePlayFormat(playFormat)
+    : null;
+  const playFormatLabel = hasPlayFormat
+    ? getPlayFormatLabel(playFormat, locale)
+    : null;
   const playFormatBadgeClass =
     normalizedPlayFormat === "single"
       ? "border-blue-200 bg-blue-50 text-blue-700"
       : "border-emerald-200 bg-emerald-50 text-emerald-700";
-  const playFormatBadge = (
+  const playFormatBadge = playFormatLabel ? (
     <span
       className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:px-3 sm:py-1 sm:text-[11px] ${playFormatBadgeClass}`}
     >
       {playFormatLabel}
     </span>
-  );
+  ) : null;
   const walkInBadge =
     allowWalkIn === true ? (
       <span className="inline-flex shrink-0 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 sm:px-3 sm:py-1 sm:text-[11px]">

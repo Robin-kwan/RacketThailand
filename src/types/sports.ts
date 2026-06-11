@@ -12,6 +12,7 @@ export type SportFeatureCard = {
   badgeLabel?: string | null;
   badgeColor?: string | null;
   href?: string | null;
+  playFormat?: "single" | "double" | null;
   allowWalkIn?: boolean | null;
   sessions?: {
     day: string;

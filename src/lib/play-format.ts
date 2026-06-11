@@ -4,10 +4,12 @@ export type PlayFormat = "single" | "double";
 
 export const DEFAULT_PLAY_FORMAT: PlayFormat = "double";
 
+export function isPlayFormat(value: unknown): value is PlayFormat {
+  return value === "single" || value === "double";
+}
+
 export function normalizePlayFormat(value: unknown): PlayFormat {
-  return value === "single" || value === "double"
-    ? value
-    : DEFAULT_PLAY_FORMAT;
+  return isPlayFormat(value) ? value : DEFAULT_PLAY_FORMAT;
 }
 
 export function getPlayFormatLabel(value: unknown, locale: Locale | string) {
