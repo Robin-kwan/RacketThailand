@@ -308,6 +308,7 @@ export default async function GroupFinderPage({
           copy={copy}
           dayLabels={dayLabels}
           initialGroups={groupData.groups}
+          total={groupData.count}
           initialSearch={searchQuery}
           initialDay={isDayKey(dayFilter) ? dayFilter : ""}
           initialPlayFormat={playFormatFilter}

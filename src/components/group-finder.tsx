@@ -55,6 +55,7 @@ type GroupFinderProps = {
   copy: GroupFinderCopy;
   dayLabels: Record<string, string>;
   initialGroups: GroupRecord[];
+  total: number;
   initialSearch?: string;
   initialDay?: string;
   initialPlayFormat?: string;
@@ -62,6 +63,7 @@ type GroupFinderProps = {
 };
 
 const PAGE_SIZE = 12;
+const NEARBY_CANDIDATE_LIMIT = 300;
 type LocationState = { latitude: number; longitude: number };
 type NearbyCandidateCourt = {
   id: string;
@@ -86,6 +88,7 @@ export function GroupFinder({
   copy,
   dayLabels,
   initialGroups,
+  total,
   initialSearch = "",
   initialDay = "",
   initialPlayFormat = "",
@@ -99,10 +102,16 @@ export function GroupFinder({
   const [walkInFilter, setWalkInFilter] = useState(initialAllowWalkIn);
   const [serverGroups, setServerGroups] = useState(initialGroups);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [count, setCount] = useState(total);
+  const [hasMore, setHasMore] = useState(initialGroups.length < total);
   const [userLocation, setUserLocation] = useState<LocationState | null>(null);
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
+  const [allowAutoLoadMore, setAllowAutoLoadMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const hasSkippedInitialLoadRef = useRef(false);
   const fallbackGroupName =
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
@@ -167,11 +176,18 @@ export function GroupFinder({
       }
       hasSkippedInitialLoadRef.current = true;
       setLoading(true);
+      const isNearbyMode = prioritizeNearby && Boolean(userLocation);
       const params = new URLSearchParams({
         sport: sportCode,
         lang: locale,
-        limit: PAGE_SIZE.toString(),
+        limit: (
+          isNearbyMode ? NEARBY_CANDIDATE_LIMIT : PAGE_SIZE
+        ).toString(),
       });
+      if (isNearbyMode && userLocation) {
+        params.set("nearbyLat", String(userLocation.latitude));
+        params.set("nearbyLng", String(userLocation.longitude));
+      }
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (dayFilter) params.set("day", dayFilter);
       if (playFormatFilter) params.set("playFormat", playFormatFilter);
@@ -181,7 +197,12 @@ export function GroupFinder({
       });
       const data = await response.json();
       if (!isActive) return;
-      setServerGroups(data.groups ?? []);
+      const nextGroups = (data.groups ?? []) as GroupRecord[];
+      const nextCount = data.count ?? nextGroups.length;
+      setServerGroups(nextGroups);
+      setCount(nextCount);
+      setPage(1);
+      setHasMore(!isNearbyMode && nextGroups.length < nextCount);
       setLoading(false);
     };
     load();
@@ -202,6 +223,78 @@ export function GroupFinder({
     prioritizeNearby,
     userLocation,
   ]);
+
+  const loadMoreGroups = useCallback(async () => {
+    if (loading || loadingMore || !hasMore || prioritizeNearby) return;
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({
+        sport: sportCode,
+        lang: locale,
+        limit: PAGE_SIZE.toString(),
+        offset: String((nextPage - 1) * PAGE_SIZE),
+      });
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (dayFilter) params.set("day", dayFilter);
+      if (playFormatFilter) params.set("playFormat", playFormatFilter);
+      if (walkInFilter) params.set("allowWalkIn", walkInFilter);
+
+      const response = await fetch(`/api/groups?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return;
+      }
+
+      const nextGroups = (data.groups ?? []) as GroupRecord[];
+      const nextCount = data.count ?? count;
+      setCount(nextCount);
+      setPage(nextPage);
+      setServerGroups((previous) => {
+        const merged = new Map(previous.map((group) => [group.id, group]));
+        nextGroups.forEach((group) => merged.set(group.id, group));
+        const values = Array.from(merged.values());
+        setHasMore(values.length < nextCount);
+        return values;
+      });
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [
+    count,
+    dayFilter,
+    debouncedSearch,
+    hasMore,
+    loading,
+    loadingMore,
+    locale,
+    page,
+    playFormatFilter,
+    prioritizeNearby,
+    sportCode,
+    walkInFilter,
+  ]);
+
+  useEffect(() => {
+    const target = sentinelRef.current;
+    if (!target || !hasMore || !allowAutoLoadMore || prioritizeNearby) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+        if (firstEntry?.isIntersecting) {
+          void loadMoreGroups();
+        }
+      },
+      { rootMargin: "500px 0px" },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [allowAutoLoadMore, hasMore, loadMoreGroups, prioritizeNearby]);
 
   const handleReset = () => {
     track("finder_filter_used", {
@@ -249,11 +342,12 @@ export function GroupFinder({
     [copy.anyWalkInLabel, copy.walkInsWelcome, copy.walkInsClosed],
   );
   const filteredGroups = serverGroups;
-  const count = filteredGroups.length;
   const countSummary =
     locale === "th"
       ? `${count.toLocaleString("th-TH")} กลุ่ม · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
       : `${count.toLocaleString("en-US")} groups · ${loading ? "loading..." : "live data"}`;
+  const loadingMoreLabel =
+    locale === "th" ? "กำลังโหลดกลุ่มเพิ่ม..." : "Loading more groups...";
 
   const handleRequestNearby = () => {
     track("finder_filter_used", {
@@ -293,6 +387,34 @@ export function GroupFinder({
     setPrioritizeNearby(false);
     setNearbyStatus(null);
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined" || allowAutoLoadMore) return undefined;
+    if (window.scrollY > 0) {
+      setAllowAutoLoadMore(true);
+      return undefined;
+    }
+
+    const enableAutoLoadMore = () => setAllowAutoLoadMore(true);
+    window.addEventListener("scroll", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+    window.addEventListener("wheel", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+    window.addEventListener("touchmove", enableAutoLoadMore, {
+      passive: true,
+      once: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", enableAutoLoadMore);
+      window.removeEventListener("wheel", enableAutoLoadMore);
+      window.removeEventListener("touchmove", enableAutoLoadMore);
+    };
+  }, [allowAutoLoadMore]);
 
   const groupsWithLocation = useMemo(() => {
     return filteredGroups.map((group) => {
@@ -623,42 +745,52 @@ export function GroupFinder({
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5">
-          {displayedGroups.map((entry) => {
-            const { group, distanceKm } = entry;
-            const primaryPhoto =
-              group.group_photos?.find((photo) => photo.is_primary)
-                ?.image_url ??
-              group.group_photos?.[0]?.image_url ??
-              fallbackImage;
-            const groupHref = buildLocalizedPath(`/groups/${group.id}`, locale);
-            const distanceLabel =
-              distanceKm !== null
-                ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
-                : null;
-            return (
-              <GroupCard
-                key={group.id}
-                href={groupHref}
-                name={group.name ?? fallbackGroupName}
-                imageUrl={primaryPhoto}
-                imageAlt={group.name ?? fallbackGroupPhotoAlt}
-                description={group.description}
-                sessions={group.group_sessions ?? []}
-                playFormat={group.play_format ?? null}
-                allowWalkIn={group.allow_walk_in ?? null}
-                dayLabels={dayLabels}
-                scheduleAnytime={copy.scheduleAnytime}
-                locale={locale}
-                showSessions={false}
-                showDescription
-                showLocation={false}
-                distanceLabel={distanceLabel}
-                courtSportCode={sportCode}
-              />
-            );
-          })}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5">
+            {displayedGroups.map((entry) => {
+              const { group, distanceKm } = entry;
+              const primaryPhoto =
+                group.group_photos?.find((photo) => photo.is_primary)
+                  ?.image_url ??
+                group.group_photos?.[0]?.image_url ??
+                fallbackImage;
+              const groupHref = buildLocalizedPath(`/groups/${group.id}`, locale);
+              const distanceLabel =
+                distanceKm !== null
+                  ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
+                  : null;
+              return (
+                <GroupCard
+                  key={group.id}
+                  href={groupHref}
+                  name={group.name ?? fallbackGroupName}
+                  imageUrl={primaryPhoto}
+                  imageAlt={group.name ?? fallbackGroupPhotoAlt}
+                  description={group.description}
+                  sessions={group.group_sessions ?? []}
+                  playFormat={group.play_format ?? null}
+                  allowWalkIn={group.allow_walk_in ?? null}
+                  dayLabels={dayLabels}
+                  scheduleAnytime={copy.scheduleAnytime}
+                  locale={locale}
+                  showSessions={false}
+                  showDescription
+                  showLocation={false}
+                  distanceLabel={distanceLabel}
+                  courtSportCode={sportCode}
+                />
+              );
+            })}
+          </div>
+          {hasMore && !prioritizeNearby && (
+            <div
+              ref={sentinelRef}
+              className="flex min-h-16 items-center justify-center text-sm text-slate-500"
+            >
+              {loadingMore ? loadingMoreLabel : ""}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -187,6 +187,7 @@ function FeatureCarousel({
                         locale={locale}
                         courtSportCode={sportCode}
                         sessions={card.sessions ?? []}
+                        playFormat={card.playFormat ?? null}
                         allowWalkIn={card.allowWalkIn}
                         showSessions={false}
                         description={description}
