@@ -59,6 +59,8 @@ export async function GET(request: Request) {
   const filters: CourtFilterOptions = {
     search: searchParams.get("search") ?? undefined,
     province: searchParams.get("province") ?? undefined,
+    startTime: searchParams.get("startTime") ?? undefined,
+    endTime: searchParams.get("endTime") ?? undefined,
     limit: Number.isFinite(limit) && limit > 0 ? limit : 12,
     offset:
       Number.isFinite(page) && page > 1 ? (page - 1) * (limit || 12) : 0,

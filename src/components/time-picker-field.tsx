@@ -240,11 +240,26 @@ export function TimePickerField({
               setOpen(false);
             }
           }}
-          className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span className={displayValue ? "" : "text-slate-500"}>
+          <span className={`min-w-0 flex-1 ${displayValue ? "" : "text-slate-500"}`}>
             {displayValue || placeholder || ""}
           </span>
+          {allowClear && value ? (
+            <span
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              role="button"
+              tabIndex={-1}
+              aria-label={clearLabel}
+              onClick={(event) => {
+                event.stopPropagation();
+                onChange("");
+                setOpen(false);
+              }}
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+          ) : null}
         </button>
         {open && (
           <div className="fixed inset-x-3 bottom-4 z-50 flex max-h-[min(400px,calc(100dvh-2rem))] min-w-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(24rem,calc(100vw-3rem))] sm:min-w-full">

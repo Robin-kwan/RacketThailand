@@ -88,7 +88,7 @@ export function SiteHeaderMobileMenu({
     <div className="fixed inset-0 z-[999] flex min-[1000px]:hidden">
       <button
         type="button"
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-transparent"
         aria-label="Close menu overlay"
         onClick={onClose}
       />

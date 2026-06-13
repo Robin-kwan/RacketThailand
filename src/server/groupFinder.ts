@@ -2,6 +2,10 @@ import type { Locale } from "@/lib/i18n";
 import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
 import {
   isScheduleDay,
+  SCHEDULE_DAYS,
+  timeToMinutes,
+  weeklyRangeOverlapsTimeWindow,
+  weeklyRangesCoverTimeWindow,
   weeklyRangeOverlapsDay,
 } from "@/lib/schedule-normalization";
 import { supabaseSelect } from "@/lib/supabaseRest";
@@ -61,6 +65,8 @@ export type GroupRecord = {
 export type GroupFilterOptions = {
   search?: string;
   day?: string;
+  startTime?: string;
+  endTime?: string;
   playFormat?: string;
   allowWalkIn?: string;
   limit?: number;
@@ -134,15 +140,16 @@ async function fetchGroupIdsByCourtIds(
     { preferCount: false },
   );
 
-  const matchingSessions = filters.day
-    ? (data ?? []).filter((session) =>
-        sessionOverlapsDay(session, filters.day as string),
-      )
-    : (data ?? []);
+  const sessionsByGroup = new Map<string, GroupSessionFilterRow[]>();
+  (data ?? []).forEach((session) => {
+    const existing = sessionsByGroup.get(session.group_id) ?? [];
+    existing.push(session);
+    sessionsByGroup.set(session.group_id, existing);
+  });
 
-  return Array.from(
-    new Set(matchingSessions.map((session) => session.group_id)),
-  );
+  return Array.from(sessionsByGroup.entries())
+    .filter(([, sessions]) => sessionsMatchScheduleFilters(sessions, filters))
+    .map(([groupId]) => groupId);
 }
 
 function sessionOverlapsDay(
@@ -163,8 +170,112 @@ function sessionOverlapsDay(
   );
 }
 
-async function fetchGroupIdsByNormalizedDay(sportId: string, day: string) {
-  if (!isScheduleDay(day)) return [];
+function resolveTimeWindow(filters: GroupFilterOptions) {
+  const startMinute = timeToMinutes(filters.startTime);
+  const endMinute = timeToMinutes(filters.endTime);
+  if (startMinute === null && endMinute === null) return null;
+  if (startMinute !== null && endMinute !== null) {
+    if (startMinute === endMinute) {
+      return { startMinute: 0, endMinute: 24 * 60 };
+    }
+    if (endMinute > startMinute) {
+      return { startMinute, endMinute };
+    }
+    return { startMinute, endMinute: endMinute + 24 * 60 };
+  }
+  if (startMinute !== null) {
+    return { startMinute, endMinute: startMinute + 1 };
+  }
+  return {
+    startMinute: endMinute === 0 ? 24 * 60 - 1 : (endMinute as number) - 1,
+    endMinute: endMinute === 0 ? 24 * 60 : (endMinute as number),
+  };
+}
+
+function sessionMatchesTimeWindow(
+  session: Pick<GroupSessionFilterRow, "day" | "start_time" | "end_time">,
+  filters: GroupFilterOptions,
+) {
+  const window = resolveTimeWindow(filters);
+  if (!window) return true;
+  if (!session.day || !session.start_time || !session.end_time) return false;
+  const days =
+    filters.day && isScheduleDay(filters.day)
+      ? [filters.day]
+      : SCHEDULE_DAYS;
+  return days.some((day) =>
+    weeklyRangeOverlapsTimeWindow(
+      {
+        day: session.day as string,
+        startTime: session.start_time,
+        endTime: session.end_time,
+      },
+      day,
+      window.startMinute,
+      window.endMinute,
+    ),
+  );
+}
+
+function sessionsCoverTimeWindow(
+  sessions: Pick<GroupSessionFilterRow, "day" | "start_time" | "end_time">[],
+  filters: GroupFilterOptions,
+) {
+  const window = resolveTimeWindow(filters);
+  if (!window) return true;
+  const ranges = sessions
+    .filter((session) => session.day && session.start_time && session.end_time)
+    .map((session) => ({
+      day: session.day as string,
+      startTime: session.start_time,
+      endTime: session.end_time,
+    }));
+  if (ranges.length === 0) return false;
+  const days =
+    filters.day && isScheduleDay(filters.day)
+      ? [filters.day]
+      : SCHEDULE_DAYS;
+  return days.some((day) =>
+    weeklyRangesCoverTimeWindow(
+      ranges,
+      day,
+      window.startMinute,
+      window.endMinute,
+    ),
+  );
+}
+
+function sessionMatchesFilters(
+  session: Pick<GroupSessionFilterRow, "day" | "start_time" | "end_time">,
+  filters: GroupFilterOptions,
+) {
+  if (
+    filters.day &&
+    isScheduleDay(filters.day) &&
+    !sessionOverlapsDay(session, filters.day)
+  ) {
+    return false;
+  }
+  return sessionMatchesTimeWindow(session, filters);
+}
+
+function sessionsMatchScheduleFilters(
+  sessions: Pick<GroupSessionFilterRow, "day" | "start_time" | "end_time">[],
+  filters: GroupFilterOptions,
+) {
+  if (resolveTimeWindow(filters)) {
+    return sessionsCoverTimeWindow(sessions, filters);
+  }
+  return sessions.some((session) => sessionMatchesFilters(session, filters));
+}
+
+async function fetchGroupIdsByScheduleFilters(
+  sportId: string,
+  filters: GroupFilterOptions,
+) {
+  const hasDay = filters.day && isScheduleDay(filters.day);
+  const hasTime = Boolean(resolveTimeWindow(filters));
+  if (!hasDay && !hasTime) return null;
 
   const { data } = await supabaseSelect<GroupSessionFilterRow>(
     "group_sessions",
@@ -176,13 +287,16 @@ async function fetchGroupIdsByNormalizedDay(sportId: string, day: string) {
     { preferCount: false },
   );
 
-  return Array.from(
-    new Set(
-      (data ?? [])
-        .filter((session) => sessionOverlapsDay(session, day))
-        .map((session) => session.group_id),
-    ),
-  );
+  const sessionsByGroup = new Map<string, GroupSessionFilterRow[]>();
+  (data ?? []).forEach((session) => {
+    const existing = sessionsByGroup.get(session.group_id) ?? [];
+    existing.push(session);
+    sessionsByGroup.set(session.group_id, existing);
+  });
+
+  return Array.from(sessionsByGroup.entries())
+    .filter(([, sessions]) => sessionsMatchScheduleFilters(sessions, filters))
+    .map(([groupId]) => groupId);
 }
 
 export async function fetchGroupsBySport(
@@ -195,9 +309,10 @@ export async function fetchGroupsBySport(
     return { sport: null, groups: [], count: 0 };
   }
 
-  const dayGroupIds = filters.day
-    ? await fetchGroupIdsByNormalizedDay(sportRow.id, filters.day)
-    : null;
+  const scheduleGroupIds = await fetchGroupIdsByScheduleFilters(
+    sportRow.id,
+    filters,
+  );
 
   const params: Record<string, string> = {
     select:
@@ -233,10 +348,10 @@ export async function fetchGroupsBySport(
   if (filters.allowWalkIn === "true" || filters.allowWalkIn === "false") {
     params.allow_walk_in = `eq.${filters.allowWalkIn}`;
   }
-  if (dayGroupIds) {
+  if (scheduleGroupIds) {
     params.id =
-      dayGroupIds.length > 0
-        ? `in.(${dayGroupIds.join(",")})`
+      scheduleGroupIds.length > 0
+        ? `in.(${scheduleGroupIds.join(",")})`
         : "eq.00000000-0000-0000-0000-000000000000";
   }
 
@@ -245,9 +360,10 @@ export async function fetchGroupsBySport(
   const localizedGroups = await Promise.all(
     (groupsRes.data ?? []).map(async (group) => {
       const displaySessions =
-        filters.day && group.group_sessions
+        (filters.day || filters.startTime || filters.endTime) &&
+        group.group_sessions
           ? group.group_sessions.filter((session) =>
-              sessionOverlapsDay(session, filters.day as string),
+              sessionMatchesFilters(session, filters),
             )
           : group.group_sessions;
 

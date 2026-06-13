@@ -27,6 +27,8 @@ type SearchParams = {
   lang?: string;
   search?: string;
   province?: string;
+  startTime?: string;
+  endTime?: string;
 };
 type SearchParamsInput = Promise<SearchParams> | undefined;
 
@@ -128,6 +130,8 @@ export async function generateMetadata({
   }
   const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
   const provinceFilter = sanitizeQueryParam(resolvedSearch?.province);
+  const startTimeFilter = sanitizeQueryParam(resolvedSearch?.startTime);
+  const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
   const provinceInfo = provinceFilter
     ? await resolveProvinceFilter(provinceFilter, locale)
     : null;
@@ -135,7 +139,13 @@ export async function generateMetadata({
   const hasFreeTextSearch = Boolean(searchQuery);
   const canonicalPath = buildFinderPath(
     `/${resolvedParams.sport}/court-finder`,
-    hasFreeTextSearch ? {} : { province: provinceInfo?.queryValue },
+    hasFreeTextSearch
+      ? {}
+      : {
+          province: provinceInfo?.queryValue,
+          startTime: startTimeFilter || undefined,
+          endTime: endTimeFilter || undefined,
+        },
   );
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
@@ -171,6 +181,8 @@ export async function generateMetadata({
     {
       search: searchQuery || undefined,
       province: provinceFilter || undefined,
+      startTime: startTimeFilter || undefined,
+      endTime: endTimeFilter || undefined,
       limit: 1,
       includeProvinces: false,
     },
@@ -223,12 +235,16 @@ export default async function CourtFinderPage({
 
   const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
   const provinceFilter = sanitizeQueryParam(resolvedSearch?.province);
+  const startTimeFilter = sanitizeQueryParam(resolvedSearch?.startTime);
+  const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
   const provinceInfo = provinceFilter
     ? await resolveProvinceFilter(provinceFilter, locale)
     : null;
   const courtData = await fetchCourtsBySport(resolvedParams.sport, {
     search: searchQuery || undefined,
     province: provinceFilter || undefined,
+    startTime: startTimeFilter || undefined,
+    endTime: endTimeFilter || undefined,
     limit: 12,
   }, locale);
   if (!courtData.sport) {
@@ -240,6 +256,9 @@ export default async function CourtFinderPage({
     subtitle: t("courtFinder.subtitle"),
     searchPlaceholder: t("courtFinder.searchPlaceholder"),
     provinceLabel: t("courtFinder.provinceLabel"),
+    startTimeLabel: t("courtFinder.startTimeLabel"),
+    endTimeLabel: t("courtFinder.endTimeLabel"),
+    timeClearLabel: t("courtFinder.timeClearLabel"),
     resetFilters: t("courtFinder.reset"),
     emptyTitle: t("courtFinder.emptyTitle"),
     emptyDescription: t("courtFinder.emptyDescription"),
@@ -257,7 +276,13 @@ export default async function CourtFinderPage({
   };
   const canonicalPath = buildFinderPath(
     `/${resolvedParams.sport}/court-finder`,
-    searchQuery ? {} : { province: provinceInfo?.queryValue },
+    searchQuery
+      ? {}
+      : {
+          province: provinceInfo?.queryValue,
+          startTime: startTimeFilter || undefined,
+          endTime: endTimeFilter || undefined,
+        },
   );
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
   const structuredData =
@@ -344,6 +369,8 @@ export default async function CourtFinderPage({
           total={courtData.count}
           initialSearch={searchQuery}
           initialProvince={provinceInfo?.queryValue ?? provinceFilter}
+          initialStartTime={startTimeFilter}
+          initialEndTime={endTimeFilter}
         />
         {structuredData && (
           <script

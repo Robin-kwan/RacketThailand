@@ -96,6 +96,9 @@ type FeatureCarouselProps = {
   emptyCopy: string;
   ctaHref: string;
   ctaLabel: string;
+  secondaryCtaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaName?: string;
   locale: Locale;
   sportCode: string;
   type: "court" | "group";
@@ -108,6 +111,9 @@ function FeatureCarousel({
   emptyCopy,
   ctaHref,
   ctaLabel,
+  secondaryCtaHref,
+  secondaryCtaLabel,
+  secondaryCtaName,
   locale,
   sportCode,
   type,
@@ -143,22 +149,38 @@ function FeatureCarousel({
               {subtitle}
             </p>
           </div>
-          <TrackedLink
-            href={ctaHref}
-            eventName="sport_cta_click"
-            eventPayload={{
-              surface: "sport_feature_carousel",
-              cta: ctaHref,
-            }}
-            className="inline-flex items-center gap-2 [background-color:transparent] text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
-          >
-            {ctaLabel}
-            <ChevronRight
-              className="h-4 w-4"
-              strokeWidth={1.8}
-              aria-hidden
-            />
-          </TrackedLink>
+          <div className="flex flex-wrap items-center gap-3">
+            {secondaryCtaHref && secondaryCtaLabel && (
+              <TrackedLink
+                href={secondaryCtaHref}
+                eventName="sport_cta_click"
+                eventPayload={{
+                  surface: "sport_feature_carousel",
+                  cta: secondaryCtaName ?? secondaryCtaHref,
+                  sport: sportCode,
+                }}
+                className="inline-flex items-center rounded-full border border-[rgb(var(--rt-primary-rgb)/0.2)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--rt-primary)] transition hover:border-[rgb(var(--rt-primary-rgb)/0.42)] hover:bg-[rgb(var(--rt-primary-rgb)/0.06)]"
+              >
+                {secondaryCtaLabel}
+              </TrackedLink>
+            )}
+            <TrackedLink
+              href={ctaHref}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "sport_feature_carousel",
+                cta: ctaHref,
+              }}
+              className="inline-flex items-center gap-2 [background-color:transparent] text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
+            >
+              {ctaLabel}
+              <ChevronRight
+                className="h-4 w-4"
+                strokeWidth={1.8}
+                aria-hidden
+              />
+            </TrackedLink>
+          </div>
         </div>
         {hasCards ? (
           <div className="-mx-6 mt-8 overflow-x-auto pb-4 md:mx-0">
@@ -432,11 +454,14 @@ export default async function SportPage({
           <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-2 lg:max-w-none lg:grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
             {sport.hero.stats.map((stat) => {
               const styles = getStatStyle(stat.key);
-              return (
-                <div
-                  key={stat.key}
-                  className={`rounded-2xl border bg-white px-5 py-4 ${styles.cardBorder}`}
-                >
+              const href =
+                stat.key === "courts"
+                  ? buildLocalizedPath(`/${sport.code}/court-finder`, locale)
+                  : stat.key === "groups"
+                    ? buildLocalizedPath(`/${sport.code}/group-finder`, locale)
+                    : null;
+              const statContent = (
+                <>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.55)]">
@@ -451,6 +476,34 @@ export default async function SportPage({
                     </span>
                   </div>
                   <div className={`mt-4 h-1.5 w-16 rounded-full ${styles.marker}`} />
+                </>
+              );
+
+              if (href) {
+                return (
+                  <TrackedLink
+                    key={stat.key}
+                    href={href}
+                    eventName="sport_cta_click"
+                    eventPayload={{
+                      surface: "sport_stat_card",
+                      cta: `open_${stat.key}`,
+                      sport: sport.code,
+                    }}
+                    className={`group block rounded-2xl border bg-white px-5 py-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-[var(--rt-primary)] focus-visible:ring-offset-2 ${styles.cardBorder}`}
+                    aria-label={`${t(`sport.stats.${stat.key}`)}: ${stat.value}`}
+                  >
+                    {statContent}
+                  </TrackedLink>
+                );
+              }
+
+              return (
+                <div
+                  key={stat.key}
+                  className={`rounded-2xl border bg-white px-5 py-4 ${styles.cardBorder}`}
+                >
+                  {statContent}
                 </div>
               );
             })}
@@ -531,6 +584,12 @@ export default async function SportPage({
           emptyCopy={carouselEmptyCopy}
           ctaHref={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
           ctaLabel={viewAllLabel}
+          secondaryCtaHref={buildLocalizedPath(
+            `/courts/new?sport=${sport.code}`,
+            locale,
+          )}
+          secondaryCtaLabel={t("courtSubmission.submit")}
+          secondaryCtaName="add_court"
           locale={locale}
           sportCode={sport.code}
           type="court"
@@ -546,6 +605,12 @@ export default async function SportPage({
           emptyCopy={carouselEmptyCopy}
           ctaHref={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
           ctaLabel={viewAllLabel}
+          secondaryCtaHref={buildLocalizedPath(
+            `/groups/create?sport=${sport.code}`,
+            locale,
+          )}
+          secondaryCtaLabel={t("header.createGroup")}
+          secondaryCtaName="create_group"
           locale={locale}
           sportCode={sport.code}
           type="group"

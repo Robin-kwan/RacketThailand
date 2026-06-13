@@ -13,6 +13,7 @@ import { buildLocalizedPath } from "@/lib/i18n";
 import {
   buildAuthPagePath,
   buildLocalizedAuthRedirectPath,
+  PENDING_AUTH_REDIRECT_STORAGE_KEY,
 } from "@/lib/auth-redirect";
 import {
   OAuthButtons,
@@ -121,6 +122,10 @@ export function LoginForm({
         : process.env.NEXT_PUBLIC_SITE_URL || "";
     const callbackUrl = new URL("/auth/callback", baseUrl);
     callbackUrl.searchParams.set("next", redirectPath);
+    window.sessionStorage.setItem(
+      PENDING_AUTH_REDIRECT_STORAGE_KEY,
+      redirectPath,
+    );
     type SupabaseOAuthProvider = Parameters<
       typeof supabase.auth.signInWithOAuth
     >[0]["provider"];
@@ -138,6 +143,7 @@ export function LoginForm({
       },
     });
     if (oauthError) {
+      window.sessionStorage.removeItem(PENDING_AUTH_REDIRECT_STORAGE_KEY);
       setOauthLoading(null);
       showToast({ variant: "error", message: oauthError.message });
     }

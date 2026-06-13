@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
+import { sanitizeAuthRedirectPath } from "@/lib/auth-redirect";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { ensureUserProfile } from "@/server/profile";
 
-function sanitizeRedirectPath(
-  candidate: string | null,
-): string {
-  if (!candidate) return "/";
-  return candidate.startsWith("/") ? candidate : "/";
-}
-
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const nextParam = sanitizeRedirectPath(
+  const nextParam = sanitizeAuthRedirectPath(
     requestUrl.searchParams.get("next"),
   );
   const code = requestUrl.searchParams.get("code");
