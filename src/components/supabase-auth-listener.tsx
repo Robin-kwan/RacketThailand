@@ -2,6 +2,10 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import {
+  PENDING_AUTH_REDIRECT_STORAGE_KEY,
+  sanitizeAuthRedirectPath,
+} from "@/lib/auth-redirect";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import type { Session } from "@supabase/supabase-js";
 import { showToast } from "@/components/toaster";
@@ -11,6 +15,11 @@ const EVENTS_TO_HANDLE = new Set([
   "SIGNED_OUT",
   "TOKEN_REFRESHED",
   "USER_UPDATED",
+]);
+
+const SESSION_EVENTS_WITH_REDIRECT = new Set([
+  "INITIAL_SESSION",
+  "SIGNED_IN",
 ]);
 
 type SessionWithAmr = Session & {
@@ -47,6 +56,26 @@ function cleanAuthQueryParams() {
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
+function getCurrentRelativePath() {
+  if (typeof window === "undefined") return "/";
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function consumePendingAuthRedirect() {
+  if (typeof window === "undefined") return null;
+  const pending = window.sessionStorage.getItem(
+    PENDING_AUTH_REDIRECT_STORAGE_KEY,
+  );
+  if (!pending) return null;
+
+  const safePending = sanitizeAuthRedirectPath(pending);
+  window.sessionStorage.removeItem(PENDING_AUTH_REDIRECT_STORAGE_KEY);
+  if (safePending === "/" || safePending === getCurrentRelativePath()) {
+    return null;
+  }
+  return safePending;
+}
+
 export function SupabaseAuthListener() {
   const router = useRouter();
 
@@ -68,6 +97,14 @@ export function SupabaseAuthListener() {
           message: "Reset link verified. Please set a new password.",
         });
         return;
+      }
+
+      if (SESSION_EVENTS_WITH_REDIRECT.has(event) && session) {
+        const pendingRedirect = consumePendingAuthRedirect();
+        if (pendingRedirect) {
+          router.replace(pendingRedirect);
+          return;
+        }
       }
 
       if (event === "SIGNED_IN") {

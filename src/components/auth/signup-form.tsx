@@ -6,6 +6,7 @@ import type { Locale } from "@/lib/i18n";
 import {
   buildAuthPagePath,
   buildLocalizedAuthRedirectPath,
+  PENDING_AUTH_REDIRECT_STORAGE_KEY,
 } from "@/lib/auth-redirect";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { showToast } from "@/components/toaster";
@@ -139,9 +140,11 @@ export function SignupForm({
     if (typeof window === "undefined") return;
     setOauthLoading(provider);
     const callbackUrl = new URL("/auth/callback", window.location.origin);
-    callbackUrl.searchParams.set(
-      "next",
-      buildLocalizedAuthRedirectPath(redirectTo, locale),
+    const redirectPath = buildLocalizedAuthRedirectPath(redirectTo, locale);
+    callbackUrl.searchParams.set("next", redirectPath);
+    window.sessionStorage.setItem(
+      PENDING_AUTH_REDIRECT_STORAGE_KEY,
+      redirectPath,
     );
     type SupabaseOAuthProvider = Parameters<
       typeof supabase.auth.signInWithOAuth
@@ -161,6 +164,7 @@ export function SignupForm({
     });
 
     if (oauthError) {
+      window.sessionStorage.removeItem(PENDING_AUTH_REDIRECT_STORAGE_KEY);
       setOauthLoading(null);
       showToast({ variant: "error", message: oauthError.message });
     }

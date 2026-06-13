@@ -13,10 +13,14 @@ import { BaseSelect } from "@/components/base-select";
 import { NearbyMap } from "@/components/nearby-map";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CourtCard } from "@/components/court-card";
+import { TimePickerField } from "@/components/time-picker-field";
 
 type CourtFinderCopy = {
   searchPlaceholder: string;
   provinceLabel: string;
+  startTimeLabel: string;
+  endTimeLabel: string;
+  timeClearLabel: string;
   resetFilters: string;
   emptyTitle: string;
   emptyDescription: string;
@@ -42,6 +46,8 @@ type CourtFinderProps = {
   total: number;
   initialSearch?: string;
   initialProvince?: string;
+  initialStartTime?: string;
+  initialEndTime?: string;
 };
 
 const PAGE_SIZE = 12;
@@ -86,11 +92,15 @@ export function CourtFinder({
   total,
   initialSearch = "",
   initialProvince = "",
+  initialStartTime = "",
+  initialEndTime = "",
 }: CourtFinderProps) {
   const pathname = usePathname();
   const [search, setSearch] = useState(initialSearch);
   const debouncedSearch = useDebounce(search);
   const [province, setProvince] = useState<string>(initialProvince);
+  const [startTimeFilter, setStartTimeFilter] = useState(initialStartTime);
+  const [endTimeFilter, setEndTimeFilter] = useState(initialEndTime);
   const [courts, setCourts] = useState(initialCourts);
   const [availableProvinces, setAvailableProvinces] =
     useState<CourtProvinceOption[]>(provinces);
@@ -142,6 +152,8 @@ export function CourtFinder({
     });
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (province) params.set("province", province);
+    if (startTimeFilter) params.set("startTime", startTimeFilter);
+    if (endTimeFilter) params.set("endTime", endTimeFilter);
     if (prioritizeNearby && userLocation) {
       params.set("nearbyLat", String(userLocation.latitude));
       params.set("nearbyLng", String(userLocation.longitude));
@@ -154,6 +166,8 @@ export function CourtFinder({
     prioritizeNearby,
     province,
     sportCode,
+    startTimeFilter,
+    endTimeFilter,
     userLocation,
   ]);
 
@@ -170,12 +184,22 @@ export function CourtFinder({
     } else {
       params.delete("province");
     }
+    if (startTimeFilter) {
+      params.set("startTime", startTimeFilter);
+    } else {
+      params.delete("startTime");
+    }
+    if (endTimeFilter) {
+      params.set("endTime", endTimeFilter);
+    } else {
+      params.delete("endTime");
+    }
     const nextQuery = params.toString();
     const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
     if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
       window.history.replaceState(null, "", nextUrl);
     }
-  }, [debouncedSearch, pathname, province]);
+  }, [debouncedSearch, endTimeFilter, pathname, province, startTimeFilter]);
 
   useEffect(() => {
     let isActive = true;
@@ -223,6 +247,8 @@ export function CourtFinder({
       });
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (province) params.set("province", province);
+      if (startTimeFilter) params.set("startTime", startTimeFilter);
+      if (endTimeFilter) params.set("endTime", endTimeFilter);
       if (prioritizeNearby && userLocation) {
         params.set("nearbyLat", String(userLocation.latitude));
         params.set("nearbyLng", String(userLocation.longitude));
@@ -259,6 +285,8 @@ export function CourtFinder({
     prioritizeNearby,
     sportCode,
     locale,
+    startTimeFilter,
+    endTimeFilter,
     userLocation,
   ]);
 
@@ -287,6 +315,8 @@ export function CourtFinder({
     });
     setSearch("");
     setProvince("");
+    setStartTimeFilter("");
+    setEndTimeFilter("");
   };
 
   const requestCurrentLocation = useCallback(
@@ -434,8 +464,8 @@ export function CourtFinder({
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-200 bg-white p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end">
-          <div className="flex-1 space-y-2">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem] md:items-end">
+          <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">
               {copy.searchPlaceholder}
             </label>
@@ -454,7 +484,7 @@ export function CourtFinder({
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             />
           </div>
-          <div className="w-full md:w-64">
+          <div>
             <BaseSelect
               label={copy.provinceLabel}
               name="province"
@@ -471,6 +501,40 @@ export function CourtFinder({
               variant="light"
             />
           </div>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <TimePickerField
+            label={copy.startTimeLabel}
+            value={startTimeFilter}
+            placeholder="--:--"
+            onChange={(value) => {
+              setStartTimeFilter(value);
+              track("finder_filter_used", {
+                surface: "court_finder",
+                sport: sportCode,
+                cta: "start_time",
+              });
+            }}
+            allowClear
+            clearLabel={copy.timeClearLabel}
+            className="min-w-0"
+          />
+          <TimePickerField
+            label={copy.endTimeLabel}
+            value={endTimeFilter}
+            placeholder="--:--"
+            onChange={(value) => {
+              setEndTimeFilter(value);
+              track("finder_filter_used", {
+                surface: "court_finder",
+                sport: sportCode,
+                cta: "end_time",
+              });
+            }}
+            allowClear
+            clearLabel={copy.timeClearLabel}
+            className="min-w-0"
+          />
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
           <p>{countSummary}</p>

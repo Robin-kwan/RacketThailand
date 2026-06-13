@@ -31,7 +31,7 @@ export const SPORT_META: Record<string, SportMeta> = {
     coverImage: "/sports/badminton.png",
     heroHeadline: l("สนามและก๊วนตีแบดในที่เดียว", "Badminton courts & groups in one place."),
     heroDescription: l(
-      "สำรวจสนามแบดที่ยืนยันแล้ว ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และช่องทางติดต่อ",
+      "ค้นหาสนามแบดมินตัน ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด และช่องทางติดต่อ",
       "Explore verified venues, check active groups, and contact organizers directly from the same portal.",
     ),
     closingTitle: l("มีสนามหรือก๊วนตีแบดใหม่?", "Have new badminton courts or groups?"),
@@ -74,7 +74,7 @@ export const SPORT_META: Record<string, SportMeta> = {
       { label: l("ดูสนามพาเดล", "Browse courts"), href: "/padel/court-finder" },
     ],
     landingDescription: l(
-      "สำรวจสนามและกลุ่มพาเดลที่เปิดรอคุณอยู่ในกรุงเทพฯ และต่างจังหวัด",
+      "ค้นหาสนามและกลุ่มพาเดลที่เปิดรอคุณอยู่ในกรุงเทพฯ และต่างจังหวัด",
       "Explore the padel courts and community groups that are already running across Thailand.",
     ),
     landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [

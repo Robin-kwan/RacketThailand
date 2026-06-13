@@ -13,6 +13,7 @@ import { BaseSelect } from "@/components/base-select";
 import { NearbyMap, type NearbyMapCourt } from "@/components/nearby-map";
 import { useDebounce } from "@/hooks/use-debounce";
 import { GroupCard } from "@/components/group-card";
+import { TimePickerField } from "@/components/time-picker-field";
 
 type GroupFinderCopy = {
   searchPlaceholder: string;
@@ -24,6 +25,9 @@ type GroupFinderCopy = {
   scheduleAnytime: string;
   dayFilterLabel: string;
   anyDayLabel: string;
+  startTimeLabel: string;
+  endTimeLabel: string;
+  timeClearLabel: string;
   playFormatFilterLabel: string;
   anyPlayFormatLabel: string;
   playFormatSingle: string;
@@ -58,6 +62,8 @@ type GroupFinderProps = {
   total: number;
   initialSearch?: string;
   initialDay?: string;
+  initialStartTime?: string;
+  initialEndTime?: string;
   initialPlayFormat?: string;
   initialAllowWalkIn?: string;
 };
@@ -91,6 +97,8 @@ export function GroupFinder({
   total,
   initialSearch = "",
   initialDay = "",
+  initialStartTime = "",
+  initialEndTime = "",
   initialPlayFormat = "",
   initialAllowWalkIn = "",
 }: GroupFinderProps) {
@@ -98,6 +106,8 @@ export function GroupFinder({
   const [search, setSearch] = useState(initialSearch);
   const debouncedSearch = useDebounce(search);
   const [dayFilter, setDayFilter] = useState(initialDay);
+  const [startTimeFilter, setStartTimeFilter] = useState(initialStartTime);
+  const [endTimeFilter, setEndTimeFilter] = useState(initialEndTime);
   const [playFormatFilter, setPlayFormatFilter] = useState(initialPlayFormat);
   const [walkInFilter, setWalkInFilter] = useState(initialAllowWalkIn);
   const [serverGroups, setServerGroups] = useState(initialGroups);
@@ -132,6 +142,8 @@ export function GroupFinder({
     const entries = [
       ["search", debouncedSearch],
       ["day", dayFilter],
+      ["startTime", startTimeFilter],
+      ["endTime", endTimeFilter],
       ["playFormat", playFormatFilter],
       ["allowWalkIn", walkInFilter],
     ] as const;
@@ -150,8 +162,10 @@ export function GroupFinder({
   }, [
     dayFilter,
     debouncedSearch,
+    endTimeFilter,
     pathname,
     playFormatFilter,
+    startTimeFilter,
     walkInFilter,
   ]);
 
@@ -168,6 +182,8 @@ export function GroupFinder({
         !userLocation &&
         debouncedSearch === initialSearch &&
         dayFilter === initialDay &&
+        startTimeFilter === initialStartTime &&
+        endTimeFilter === initialEndTime &&
         playFormatFilter === initialPlayFormat &&
         walkInFilter === initialAllowWalkIn
       ) {
@@ -190,6 +206,8 @@ export function GroupFinder({
       }
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (dayFilter) params.set("day", dayFilter);
+      if (startTimeFilter) params.set("startTime", startTimeFilter);
+      if (endTimeFilter) params.set("endTime", endTimeFilter);
       if (playFormatFilter) params.set("playFormat", playFormatFilter);
       if (walkInFilter) params.set("allowWalkIn", walkInFilter);
       const response = await fetch(`/api/groups?${params.toString()}`, {
@@ -216,10 +234,14 @@ export function GroupFinder({
     dayFilter,
     playFormatFilter,
     walkInFilter,
+    startTimeFilter,
+    endTimeFilter,
     initialAllowWalkIn,
     initialDay,
+    initialEndTime,
     initialPlayFormat,
     initialSearch,
+    initialStartTime,
     prioritizeNearby,
     userLocation,
   ]);
@@ -237,6 +259,8 @@ export function GroupFinder({
       });
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (dayFilter) params.set("day", dayFilter);
+      if (startTimeFilter) params.set("startTime", startTimeFilter);
+      if (endTimeFilter) params.set("endTime", endTimeFilter);
       if (playFormatFilter) params.set("playFormat", playFormatFilter);
       if (walkInFilter) params.set("allowWalkIn", walkInFilter);
 
@@ -274,6 +298,8 @@ export function GroupFinder({
     playFormatFilter,
     prioritizeNearby,
     sportCode,
+    startTimeFilter,
+    endTimeFilter,
     walkInFilter,
   ]);
 
@@ -304,6 +330,8 @@ export function GroupFinder({
     });
     setSearch("");
     setDayFilter("");
+    setStartTimeFilter("");
+    setEndTimeFilter("");
     setPlayFormatFilter("");
     setWalkInFilter("");
     setPrioritizeNearby(false);
@@ -519,26 +547,26 @@ export function GroupFinder({
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-200 bg-white p-6">
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-slate-700">
-            {copy.searchPlaceholder}
-          </label>
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              track("finder_filter_used", {
-                surface: "group_finder",
-                sport: sportCode,
-                cta: "search",
-              });
-            }}
-            placeholder={copy.searchPlaceholder}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
-          />
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem] md:items-end">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">
+              {copy.searchPlaceholder}
+            </label>
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                track("finder_filter_used", {
+                  surface: "group_finder",
+                  sport: sportCode,
+                  cta: "search",
+                });
+              }}
+              placeholder={copy.searchPlaceholder}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+            />
+          </div>
           <BaseSelect
             label={copy.dayFilterLabel}
             name="dayFilter"
@@ -554,6 +582,42 @@ export function GroupFinder({
             options={dayOptions}
             variant="light"
           />
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-4">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:col-span-2">
+            <TimePickerField
+              label={copy.startTimeLabel}
+              value={startTimeFilter}
+              placeholder="--:--"
+              onChange={(value) => {
+                setStartTimeFilter(value);
+                track("finder_filter_used", {
+                  surface: "group_finder",
+                  sport: sportCode,
+                  cta: "start_time",
+                });
+              }}
+              allowClear
+              clearLabel={copy.timeClearLabel}
+              className="min-w-0"
+            />
+            <TimePickerField
+              label={copy.endTimeLabel}
+              value={endTimeFilter}
+              placeholder="--:--"
+              onChange={(value) => {
+                setEndTimeFilter(value);
+                track("finder_filter_used", {
+                  surface: "group_finder",
+                  sport: sportCode,
+                  cta: "end_time",
+                });
+              }}
+              allowClear
+              clearLabel={copy.timeClearLabel}
+              className="min-w-0"
+            />
+          </div>
           <BaseSelect
             label={copy.playFormatFilterLabel}
             name="playFormatFilter"

@@ -153,3 +153,103 @@ export function weeklyRangeOverlapsTimeWindow(
       startMinute < segment.endMinute,
   );
 }
+
+function buildRequestedWindowSegments(
+  day: string,
+  startMinute: number,
+  endMinute: number,
+) {
+  const normalizedDay = day.toLowerCase().trim();
+  if (!isScheduleDay(normalizedDay)) return [];
+
+  if (startMinute === endMinute) {
+    return [{ day: normalizedDay, startMinute: 0, endMinute: 24 * 60 }];
+  }
+
+  if (endMinute > 24 * 60) {
+    const nextDayEnd = endMinute - 24 * 60;
+    return [
+      { day: normalizedDay, startMinute, endMinute: 24 * 60 },
+      ...(nextDayEnd > 0
+        ? [
+            {
+              day: getNextScheduleDay(normalizedDay),
+              startMinute: 0,
+              endMinute: nextDayEnd,
+            },
+          ]
+        : []),
+    ];
+  }
+
+  if (endMinute > startMinute) {
+    return [{ day: normalizedDay, startMinute, endMinute }];
+  }
+
+  return [
+    { day: normalizedDay, startMinute, endMinute: 24 * 60 },
+    {
+      day: getNextScheduleDay(normalizedDay),
+      startMinute: 0,
+      endMinute,
+    },
+  ];
+}
+
+function mergeSegments(
+  segments: Pick<NormalizedWeeklyTimeSegment, "startMinute" | "endMinute">[],
+) {
+  const sorted = [...segments].sort(
+    (a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute,
+  );
+  const merged: Pick<NormalizedWeeklyTimeSegment, "startMinute" | "endMinute">[] =
+    [];
+
+  sorted.forEach((segment) => {
+    const last = merged[merged.length - 1];
+    if (!last || segment.startMinute > last.endMinute) {
+      merged.push({ ...segment });
+      return;
+    }
+    last.endMinute = Math.max(last.endMinute, segment.endMinute);
+  });
+
+  return merged;
+}
+
+export function weeklyRangesCoverTimeWindow(
+  ranges: WeeklyTimeRangeInput[],
+  day: string,
+  startMinute: number,
+  endMinute: number,
+) {
+  const requestedSegments = buildRequestedWindowSegments(
+    day,
+    startMinute,
+    endMinute,
+  );
+  if (requestedSegments.length === 0) return false;
+
+  const availableByDay = new Map<
+    ScheduleDay,
+    Pick<NormalizedWeeklyTimeSegment, "startMinute" | "endMinute">[]
+  >();
+
+  normalizeWeeklyTimeRanges(ranges).forEach((segment) => {
+    const existing = availableByDay.get(segment.day) ?? [];
+    existing.push({
+      startMinute: segment.startMinute,
+      endMinute: segment.endMinute,
+    });
+    availableByDay.set(segment.day, existing);
+  });
+
+  return requestedSegments.every((requested) => {
+    const merged = mergeSegments(availableByDay.get(requested.day) ?? []);
+    return merged.some(
+      (available) =>
+        available.startMinute <= requested.startMinute &&
+        available.endMinute >= requested.endMinute,
+    );
+  });
+}

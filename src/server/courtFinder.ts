@@ -11,6 +11,11 @@ import {
   localizeThailandLocation,
   resolveThailandLocationIds,
 } from "@/server/thailand-location";
+import {
+  SCHEDULE_DAYS,
+  timeToMinutes,
+  weeklyRangesCoverTimeWindow,
+} from "@/lib/schedule-normalization";
 
 export type CourtRecord = {
   id: string;
@@ -51,6 +56,8 @@ type SportRow = {
 export type CourtFilterOptions = {
   search?: string;
   province?: string;
+  startTime?: string;
+  endTime?: string;
   limit?: number;
   offset?: number;
   includeProvinces?: boolean;
@@ -65,6 +72,57 @@ type NearbyCourtIdRow = {
   distance_km: number;
   total_count: number;
 };
+
+function resolveTimeWindow(filters: Pick<CourtFilterOptions, "startTime" | "endTime">) {
+  const startMinute = timeToMinutes(filters.startTime);
+  const endMinute = timeToMinutes(filters.endTime);
+  if (startMinute === null && endMinute === null) return null;
+  if (startMinute !== null && endMinute !== null) {
+    if (startMinute === endMinute) {
+      return { startMinute: 0, endMinute: 24 * 60 };
+    }
+    if (endMinute > startMinute) {
+      return { startMinute, endMinute };
+    }
+    return { startMinute, endMinute: endMinute + 24 * 60 };
+  }
+  if (startMinute !== null) {
+    return { startMinute, endMinute: startMinute + 1 };
+  }
+  return {
+    startMinute: endMinute === 0 ? 24 * 60 - 1 : (endMinute as number) - 1,
+    endMinute: endMinute === 0 ? 24 * 60 : (endMinute as number),
+  };
+}
+
+function hasTimeFilter(filters: Pick<CourtFilterOptions, "startTime" | "endTime">) {
+  return Boolean(resolveTimeWindow(filters));
+}
+
+function openingHoursMatchTimeWindow(
+  openingHours: OpeningHoursEntry[] | null | undefined,
+  filters: Pick<CourtFilterOptions, "startTime" | "endTime">,
+) {
+  const window = resolveTimeWindow(filters);
+  if (!window) return true;
+  if (!openingHours || openingHours.length === 0) return false;
+  const ranges = openingHours.flatMap((entry) =>
+    (entry.ranges ?? []).map((range) => ({
+      day: entry.day,
+      startTime: range.open === "Open" && !range.close ? "00:00" : range.open,
+      endTime: range.open === "Open" && !range.close ? "00:00" : range.close,
+    })),
+  );
+
+  return SCHEDULE_DAYS.some((day) =>
+    weeklyRangesCoverTimeWindow(
+      ranges,
+      day,
+      window.startMinute,
+      window.endMinute,
+    ),
+  );
+}
 
 export async function fetchSportRow(code: string) {
   const { data } = await supabaseSelect<SportRow>("sports", {
@@ -146,8 +204,8 @@ async function fetchNearbyCourtIds(
     p_search: filters.search?.trim() || null,
     p_province_id: provinceId,
     p_province: provinceText,
-    p_limit: filters.limit ?? 12,
-    p_offset: filters.offset ?? 0,
+    p_limit: hasTimeFilter(filters) ? 1000 : (filters.limit ?? 12),
+    p_offset: hasTimeFilter(filters) ? 0 : (filters.offset ?? 0),
   });
 
   if (error) {
@@ -155,6 +213,32 @@ async function fetchNearbyCourtIds(
   }
 
   return (data ?? []) as NearbyCourtIdRow[];
+}
+
+async function fetchCourtIdsByOpeningHours(
+  courtIds: string[],
+  filters: CourtFilterOptions,
+) {
+  if (!hasTimeFilter(filters)) return null;
+  if (courtIds.length === 0) return [];
+
+  const { data } = await supabaseSelect<{
+    id: string;
+    opening_hours: OpeningHoursEntry[] | null;
+  }>(
+    "courts",
+    {
+      select: "id,opening_hours",
+      id: `in.(${courtIds.join(",")})`,
+      is_active: "eq.true",
+      limit: "5000",
+    },
+    { preferCount: false },
+  );
+
+  return (data ?? [])
+    .filter((court) => openingHoursMatchTimeWindow(court.opening_hours, filters))
+    .map((court) => court.id);
 }
 
 export async function fetchCourtFilters(
@@ -231,6 +315,14 @@ export async function fetchCourtsBySport(
     return { courts: [], count: 0, provinces: [], sport: null };
   }
 
+  const timeFilterActive = hasTimeFilter(filters);
+  const paginate = <T>(rows: T[]) => {
+    if (!timeFilterActive) return rows;
+    const offset = filters.offset ?? 0;
+    const limit = filters.limit ?? rows.length;
+    return rows.slice(offset, offset + limit);
+  };
+
   const nearbyRows = await fetchNearbyCourtIds(sportCode, filters);
   if (nearbyRows) {
     const courtIds = nearbyRows.map((row) => row.court_id);
@@ -240,7 +332,7 @@ export async function fetchCourtsBySport(
             "courts",
             {
               select:
-                "id,name,description,address,district,province,district_id,province_id,price_note,phone,line_id,website_url,google_place_id,created_at,updated_at,is_active,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
+                "id,name,description,address,district,province,district_id,province_id,price_note,opening_hours,phone,line_id,website_url,google_place_id,created_at,updated_at,is_active,latitude:lat,longitude:lng,court_photos(image_url,is_primary)",
               id: `in.(${courtIds.join(",")})`,
             },
             { preferCount: false },
@@ -254,6 +346,7 @@ export async function fetchCourtsBySport(
     const orderById = new Map(courtIds.map((id, index) => [id, index]));
     const localizedCourts = await Promise.all(
       (courtsRes.data ?? [])
+        .filter((court) => openingHoursMatchTimeWindow(court.opening_hours, filters))
         .slice()
         .sort(
           (a, b) =>
@@ -272,8 +365,8 @@ export async function fetchCourtsBySport(
 
     return {
       sport: sportRow,
-      courts: localizedCourts,
-      count: nearbyRows[0]?.total_count ?? 0,
+      courts: paginate(localizedCourts),
+      count: timeFilterActive ? localizedCourts.length : (nearbyRows[0]?.total_count ?? 0),
       provinces,
     };
   }
@@ -285,10 +378,10 @@ export async function fetchCourtsBySport(
     order: "created_at.desc",
   };
 
-  if (filters.limit) {
+  if (filters.limit && !timeFilterActive) {
     params.limit = String(filters.limit);
   }
-  if (filters.offset) {
+  if (filters.offset && !timeFilterActive) {
     params.offset = String(filters.offset);
   }
   const { provinceId, provinceText } = await resolveProvinceFilter(
@@ -303,7 +396,11 @@ export async function fetchCourtsBySport(
     ? buildSearchClause(filters.search)
     : undefined;
   const courtIds = await fetchCourtIdsBySportId(sportRow.id);
-  applySportFilter(params, courtIds, searchClause);
+  const timeFilteredCourtIds = await fetchCourtIdsByOpeningHours(
+    courtIds,
+    filters,
+  );
+  applySportFilter(params, timeFilteredCourtIds ?? courtIds, searchClause);
 
   const [courtsRes, provinces] = await Promise.all([
     supabaseSelect<CourtRecord>("courts", params),
@@ -325,8 +422,8 @@ export async function fetchCourtsBySport(
 
   return {
     sport: sportRow,
-    courts: localizedCourts,
-    count: courtsRes.count ?? 0,
+    courts: paginate(localizedCourts),
+    count: timeFilterActive ? localizedCourts.length : (courtsRes.count ?? 0),
     provinces,
   };
 }

@@ -19,6 +19,8 @@ type SearchParams = {
   lang?: string;
   search?: string;
   day?: string;
+  startTime?: string;
+  endTime?: string;
   playFormat?: string;
   allowWalkIn?: string;
 };
@@ -90,6 +92,8 @@ export async function generateMetadata({
   const t = await getTranslator(locale);
   const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
   const dayFilter = sanitizeQueryParam(resolvedSearch?.day);
+  const startTimeFilter = sanitizeQueryParam(resolvedSearch?.startTime);
+  const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
   const playFormatFilter = sanitizeQueryParam(resolvedSearch?.playFormat);
   const walkInFilter = sanitizeQueryParam(resolvedSearch?.allowWalkIn);
   const hasFreeTextSearch = Boolean(searchQuery);
@@ -97,6 +101,8 @@ export async function generateMetadata({
     ? {}
     : {
         day: isDayKey(dayFilter) ? dayFilter : undefined,
+        startTime: startTimeFilter || undefined,
+        endTime: endTimeFilter || undefined,
         playFormat:
           playFormatFilter === "single" || playFormatFilter === "double"
             ? playFormatFilter
@@ -128,6 +134,9 @@ export async function generateMetadata({
     playFormatFilter === "double" ? t("groups.form.playFormatDouble") : "",
     walkInFilter === "true" ? t("groups.detail.walkInsWelcome") : "",
     walkInFilter === "false" ? t("groups.detail.walkInsClosed") : "",
+    startTimeFilter && endTimeFilter
+      ? `${startTimeFilter}-${endTimeFilter}`
+      : startTimeFilter || endTimeFilter,
   ].filter(Boolean);
   const filterSummary = filterParts.join(locale === "th" ? " • " : " • ");
   const filteredTitle = searchQuery
@@ -194,11 +203,15 @@ export default async function GroupFinderPage({
 
   const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
   const dayFilter = sanitizeQueryParam(resolvedSearch?.day);
+  const startTimeFilter = sanitizeQueryParam(resolvedSearch?.startTime);
+  const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
   const playFormatFilter = sanitizeQueryParam(resolvedSearch?.playFormat);
   const walkInFilter = sanitizeQueryParam(resolvedSearch?.allowWalkIn);
   const groupData = await fetchGroupsBySport(resolvedParams.sport, {
     search: searchQuery || undefined,
     day: isDayKey(dayFilter) ? dayFilter : undefined,
+    startTime: startTimeFilter || undefined,
+    endTime: endTimeFilter || undefined,
     playFormat: playFormatFilter || undefined,
     allowWalkIn: walkInFilter || undefined,
     limit: 12,
@@ -227,6 +240,9 @@ export default async function GroupFinderPage({
     scheduleAnytime: t("groupFinder.scheduleAnytime"),
     dayFilterLabel: t("groupFinder.dayFilterLabel"),
     anyDayLabel: t("groupFinder.anyDayLabel"),
+    startTimeLabel: t("groupFinder.startTimeLabel"),
+    endTimeLabel: t("groupFinder.endTimeLabel"),
+    timeClearLabel: t("groupFinder.timeClearLabel"),
     playFormatFilterLabel: t("groupFinder.playFormatFilterLabel"),
     anyPlayFormatLabel: t("groupFinder.anyPlayFormatLabel"),
     playFormatSingle: t("groups.form.playFormatSingle"),
@@ -311,6 +327,8 @@ export default async function GroupFinderPage({
           total={groupData.count}
           initialSearch={searchQuery}
           initialDay={isDayKey(dayFilter) ? dayFilter : ""}
+          initialStartTime={startTimeFilter}
+          initialEndTime={endTimeFilter}
           initialPlayFormat={playFormatFilter}
           initialAllowWalkIn={walkInFilter}
         />

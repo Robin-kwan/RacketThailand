@@ -9,6 +9,9 @@ const AUTH_PATHS = new Set([
   "/auth/reset",
 ]);
 
+export const PENDING_AUTH_REDIRECT_STORAGE_KEY =
+  "rt-pending-auth-redirect";
+
 export function sanitizeAuthRedirectPath(candidate?: string | null) {
   if (!candidate) return "/";
 
