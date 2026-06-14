@@ -92,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const today = getThailandTodayDateString();
   const [courts, groups, casualPlays, communityPosts, sports] = await Promise.all([
     fetchEntities("courts", 1000, { is_active: "eq.true" }),
-    fetchEntities("groups"),
+    fetchEntities("groups", 1000, { status: "eq.published" }),
     fetchEntities<CasualPlayEntity>(
       "casual_plays",
       1000,

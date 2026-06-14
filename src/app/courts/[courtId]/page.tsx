@@ -714,7 +714,8 @@ export default async function CourtPage({
                     href={detail.court.website_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-slate-900 underline"
+                    title={detail.court.website_url}
+                    className="inline-block max-w-full truncate align-bottom text-slate-900 underline sm:max-w-[22rem]"
                   >
                     {detail.court.website_url}
                   </a>

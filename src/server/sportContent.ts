@@ -1,5 +1,6 @@
 import { FEATURE_DESCRIPTIONS, getSportMeta } from "@/data/sportMeta";
 import type { Locale } from "@/lib/i18n";
+import { isPublishedGroupStatus } from "@/lib/group-status";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchCourtIdsBySportId } from "@/server/courtSports";
 import { localizeThailandLocation } from "@/server/thailand-location";
@@ -35,6 +36,7 @@ type GroupRow = {
   id: string;
   name: string | null;
   description: string | null;
+  status?: string | null;
   created_at: string | null;
   play_format?: "single" | "double" | null;
   allow_walk_in: boolean | null;
@@ -142,7 +144,9 @@ function mapGroups(
   rows: GroupRow[],
   fallbackImage: string,
 ): SportFeatureCard[] {
-  return rows.map((group) => {
+  return rows
+    .filter((group) => isPublishedGroupStatus(group.status))
+    .map((group) => {
     const imageUrl = pickPrimaryPhoto(group.group_photos, fallbackImage);
     const sessions =
       group.group_sessions?.map((session) => ({
@@ -274,8 +278,9 @@ export async function buildSportPagePayload(
 
     const groupsPromise = supabaseSelect<GroupRow>("groups", {
       select:
-        "id,name,description,created_at,play_format,allow_walk_in,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(id,name))",
+        "id,name,description,status,created_at,play_format,allow_walk_in,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(id,name))",
       sport_id: `eq.${sportId}`,
+      status: "eq.published",
       order: "updated_at.desc.nullslast",
       limit: FINDER_PREVIEW_LIMIT,
     });

@@ -3,13 +3,43 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, LoaderCircle, Pencil, Search, Trash2 } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  LoaderCircle,
+  Pencil,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { showToast } from "@/components/toaster";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 export type AdminResourceDetail = {
   label: string;
   value: string;
+};
+
+export type AdminResourceSortKey = "item" | "details" | "status" | "actions";
+
+export type AdminResourceRowAction = {
+  key: string;
+  label: string;
+  pendingLabel?: string;
+  confirmTitle?: string;
+  confirmMessage?: string;
+  confirmLabel?: string;
+  endpoint: string;
+  method?: "PATCH" | "POST";
+  body?: Record<string, unknown>;
+  tone?: "green" | "yellow" | "slate" | "rose";
+  successMessage?: string;
+  errorMessage?: string;
+  nextStatusLabel?: string;
+  nextStatusTone?: AdminResourceRow["statusTone"];
+  nextActions?: AdminResourceRowAction[];
+  nextSortValues?: Partial<Record<AdminResourceSortKey, string>>;
 };
 
 export type AdminResourceRow = {
@@ -20,6 +50,8 @@ export type AdminResourceRow = {
   details: AdminResourceDetail[];
   statusLabel?: string;
   statusTone?: "green" | "yellow" | "slate" | "rose";
+  statusAction?: AdminResourceRowAction;
+  sortValues?: Partial<Record<AdminResourceSortKey, string>>;
   viewHref: string;
   editHref: string;
   deleteEndpoint: string;
@@ -83,24 +115,82 @@ function buildSearchText(row: AdminResourceRow) {
     .toLowerCase();
 }
 
+function buildSortValue(row: AdminResourceRow, key: AdminResourceSortKey) {
+  const explicitValue = row.sortValues?.[key];
+  if (explicitValue) {
+    return explicitValue;
+  }
+
+  switch (key) {
+    case "item":
+      return [row.title, row.subtitle, ...(row.meta ?? [])]
+        .filter(Boolean)
+        .join(" ");
+    case "details":
+      return row.details
+        .flatMap((detail) => [detail.label, detail.value])
+        .join(" ");
+    case "status":
+      return row.statusLabel ?? "";
+    case "actions":
+      return [
+        row.statusAction?.label,
+        row.viewHref,
+        row.editHref,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    default:
+      return row.title;
+  }
+}
+
 export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
   const router = useRouter();
   const [items, setItems] = useState(rows);
   const [query, setQuery] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminResourceRow | null>(
     null,
   );
+  const [statusTarget, setStatusTarget] = useState<{
+    row: AdminResourceRow;
+    action: AdminResourceRowAction;
+  } | null>(null);
+  const [sortKey, setSortKey] = useState<AdminResourceSortKey>("item");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isPending, startTransition] = useTransition();
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = normalize(query);
-    if (!normalizedQuery) return items;
-    return items.filter((row) => buildSearchText(row).includes(normalizedQuery));
-  }, [items, query]);
+    const matchedItems = normalizedQuery
+      ? items.filter((row) => buildSearchText(row).includes(normalizedQuery))
+      : items;
+
+    return [...matchedItems].sort((left, right) => {
+      const leftValue = buildSortValue(left, sortKey);
+      const rightValue = buildSortValue(right, sortKey);
+      const result = leftValue.localeCompare(rightValue, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
+      return sortDirection === "asc" ? result : result * -1;
+    });
+  }, [items, query, sortDirection, sortKey]);
+
+  const toggleSort = (nextKey: AdminResourceSortKey) => {
+    if (sortKey === nextKey) {
+      setSortDirection((previous) => (previous === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortKey(nextKey);
+    setSortDirection("asc");
+  };
 
   const handleDelete = (row: AdminResourceRow) => {
     setPendingId(row.id);
+    setPendingActionKey("delete");
     startTransition(async () => {
       const response = await fetch(row.deleteEndpoint, {
         method: "DELETE",
@@ -112,6 +202,7 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
           typeof data?.error === "string" ? data.error : copy.error;
         showToast({ variant: "error", message });
         setPendingId(null);
+        setPendingActionKey(null);
         setDeleteTarget(null);
         return;
       }
@@ -119,7 +210,57 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
       setItems((previous) => previous.filter((item) => item.id !== row.id));
       showToast({ variant: "success", message: copy.deleted });
       setPendingId(null);
+      setPendingActionKey(null);
       setDeleteTarget(null);
+      router.refresh();
+    });
+  };
+
+  const handleRowAction = (row: AdminResourceRow, action: AdminResourceRowAction) => {
+    setPendingId(row.id);
+    setPendingActionKey(action.key);
+    startTransition(async () => {
+      const response = await fetch(action.endpoint, {
+        method: action.method ?? "POST",
+        headers: action.body ? { "Content-Type": "application/json" } : undefined,
+        body: action.body ? JSON.stringify(action.body) : undefined,
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message =
+          typeof data?.error === "string"
+            ? data.error
+            : action.errorMessage ?? copy.error;
+        showToast({ variant: "error", message });
+        setPendingId(null);
+        setPendingActionKey(null);
+        setStatusTarget(null);
+        return;
+      }
+
+      setItems((previous) =>
+        previous.map((item) =>
+          item.id === row.id
+            ? {
+                ...item,
+                statusLabel: action.nextStatusLabel ?? item.statusLabel,
+                statusTone: action.nextStatusTone ?? item.statusTone,
+                statusAction: action.nextActions?.[0] ?? item.statusAction,
+                sortValues: action.nextSortValues
+                  ? { ...item.sortValues, ...action.nextSortValues }
+                  : item.sortValues,
+              }
+            : item,
+        ),
+      );
+
+      if (action.successMessage) {
+        showToast({ variant: "success", message: action.successMessage });
+      }
+      setPendingId(null);
+      setPendingActionKey(null);
+      setStatusTarget(null);
       router.refresh();
     });
   };
@@ -163,16 +304,76 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="w-[30%] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    {copy.headers.item}
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("item")}
+                      className="inline-flex items-center gap-1.5 transition hover:text-slate-900"
+                    >
+                      {copy.headers.item}
+                      {sortKey === "item" ? (
+                        sortDirection === "asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5" aria-hidden />
+                      )}
+                    </button>
                   </th>
                   <th className="w-[38%] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    {copy.headers.details}
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("details")}
+                      className="inline-flex items-center gap-1.5 transition hover:text-slate-900"
+                    >
+                      {copy.headers.details}
+                      {sortKey === "details" ? (
+                        sortDirection === "asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5" aria-hidden />
+                      )}
+                    </button>
                   </th>
                   <th className="w-[14%] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    {copy.headers.status}
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("status")}
+                      className="inline-flex items-center gap-1.5 transition hover:text-slate-900"
+                    >
+                      {copy.headers.status}
+                      {sortKey === "status" ? (
+                        sortDirection === "asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5" aria-hidden />
+                      )}
+                    </button>
                   </th>
                   <th className="w-[18%] px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    {copy.headers.actions}
+                    <button
+                      type="button"
+                      onClick={() => toggleSort("actions")}
+                      className="inline-flex items-center gap-1.5 transition hover:text-slate-900"
+                    >
+                      {copy.headers.actions}
+                      {sortKey === "actions" ? (
+                        sortDirection === "asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3.5 w-3.5" aria-hidden />
+                      )}
+                    </button>
                   </th>
                 </tr>
               </thead>
@@ -188,7 +389,8 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
                   </tr>
                 ) : (
                   filteredItems.map((row) => {
-                    const isDeleting = isPending && pendingId === row.id;
+                    const isDeleting =
+                      isPending && pendingId === row.id && pendingActionKey === "delete";
                     return (
                       <tr
                         key={row.id}
@@ -238,11 +440,40 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
                         </td>
                         <td className="px-5 py-4">
                           {row.statusLabel ? (
-                            <span
-                              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getStatusClass(row.statusTone)}`}
-                            >
-                              {row.statusLabel}
-                            </span>
+                            row.statusAction ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setStatusTarget({
+                                    row,
+                                    action: row.statusAction!,
+                                  })
+                                }
+                                disabled={
+                                  isPending &&
+                                  pendingId === row.id &&
+                                  pendingActionKey === row.statusAction.key
+                                }
+                                className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60 ${getStatusClass(row.statusTone)}`}
+                              >
+                                {isPending &&
+                                pendingId === row.id &&
+                                pendingActionKey === row.statusAction.key ? (
+                                  <LoaderCircle
+                                    className="mr-1 h-3.5 w-3.5 animate-spin"
+                                    strokeWidth={1.8}
+                                    aria-hidden
+                                  />
+                                ) : null}
+                                {row.statusLabel}
+                              </button>
+                            ) : (
+                              <span
+                                className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getStatusClass(row.statusTone)}`}
+                              >
+                                {row.statusLabel}
+                              </span>
+                            )
                           ) : (
                             <span className="text-sm text-slate-500">-</span>
                           )}
@@ -322,6 +553,26 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
           }
         }}
         onClose={() => setDeleteTarget(null)}
+      />
+      <ConfirmationDialog
+        open={Boolean(statusTarget)}
+        title={statusTarget?.action.confirmTitle ?? statusTarget?.action.label ?? ""}
+        message={statusTarget?.action.confirmMessage ?? ""}
+        confirmLabel={
+          statusTarget?.action.confirmLabel ?? statusTarget?.action.label ?? ""
+        }
+        cancelLabel={copy.cancel}
+        loading={Boolean(
+          statusTarget &&
+            pendingId === statusTarget.row.id &&
+            pendingActionKey === statusTarget.action.key,
+        )}
+        onConfirm={() => {
+          if (statusTarget) {
+            handleRowAction(statusTarget.row, statusTarget.action);
+          }
+        }}
+        onClose={() => setStatusTarget(null)}
       />
     </div>
   );

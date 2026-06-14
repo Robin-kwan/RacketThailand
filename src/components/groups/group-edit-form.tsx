@@ -15,6 +15,7 @@ import {
 import { BaseImageCard } from "@/components/base-image-card";
 import { LineQrUploader } from "@/components/line-qr-uploader";
 import { type PlayFormat } from "@/lib/play-format";
+import { type GroupStatus } from "@/lib/group-status";
 import { PHOTO_UPLOAD_ACCEPT, optimizePhotoFile } from "@/lib/image-upload";
 
 type SportOption = Option;
@@ -49,6 +50,7 @@ type GroupRecord = {
   sportId: string;
   name: string;
   description: string;
+  status?: GroupStatus | null;
   sessions: GroupFormValues["sessions"];
   playFormat?: PlayFormat | null;
   playerAmount?: string | null;
@@ -66,6 +68,7 @@ type GroupEditFormProps = {
   dayOptions: Option[];
   existingPhotos: ExistingPhoto[];
   locale: Locale;
+  allowStatusEdit?: boolean;
   copy: GroupEditCopy;
 };
 
@@ -78,6 +81,7 @@ export function GroupEditForm({
   dayOptions,
   existingPhotos,
   locale,
+  allowStatusEdit = false,
   copy,
 }: GroupEditFormProps) {
   const router = useRouter();
@@ -122,6 +126,7 @@ export function GroupEditForm({
     sportId: group.sportId,
     name: group.name,
     description: group.description,
+    status: group.status ?? "published",
     sessions: group.sessions,
     playFormat: group.playFormat ?? "double",
     playerAmount: group.playerAmount ?? "",
@@ -275,6 +280,7 @@ export function GroupEditForm({
     sportId: string;
     name: string;
     description: string;
+    status?: GroupStatus;
     playFormat: PlayFormat;
     courtIds: string[];
     playerAmount?: string;
@@ -300,6 +306,7 @@ export function GroupEditForm({
         sportId: payload.sportId,
         name: payload.name,
         description: payload.description,
+        status: payload.status,
         playFormat: payload.playFormat,
         courtIds: payload.courtIds,
         sessions: payload.sessions,
@@ -477,6 +484,19 @@ export function GroupEditForm({
       courts={courts}
       dayOptions={dayOptions}
       copy={copy}
+      statusField={
+        allowStatusEdit
+          ? {
+              label: "Visibility status",
+              helperText:
+                "Draft groups stay hidden from public finder and detail pages until published.",
+              options: [
+                { value: "draft", label: "Draft review" },
+                { value: "published", label: "Published" },
+              ],
+            }
+          : undefined
+      }
       photoSection={
         <div className="space-y-3">
           <div className="flex items-center justify-between">

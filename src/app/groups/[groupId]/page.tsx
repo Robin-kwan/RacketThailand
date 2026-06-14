@@ -13,6 +13,7 @@ import {
   buildLocaleAlternates,
   truncateMetaDescription,
 } from "@/lib/seo";
+import { normalizeGroupStatus } from "@/lib/group-status";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { CourtGallery } from "@/components/court-gallery";
@@ -89,6 +90,7 @@ type GroupRow = {
   id: string;
   name: string | null;
   description: string | null;
+  status: string | null;
   sports: { code: string; name: string | null } | null;
   owner_id: string | null;
   updated_at: string | null;
@@ -138,6 +140,7 @@ type GroupMetadataRow = {
   id: string;
   name: string | null;
   description: string | null;
+  status: string | null;
   sports: { code: string; name: string | null } | null;
   play_format?: "single" | "double" | null;
   group_photos?: { image_url: string | null; is_primary: boolean | null }[] | null;
@@ -216,7 +219,7 @@ export async function generateMetadata({
   const locale = normalizeLocale(resolvedSearch?.lang);
   const { data } = await supabaseSelect<GroupMetadataRow>("groups", {
     select:
-      "id,name,description,play_format,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,district_id,province,province_id))",
+      "id,name,description,status,play_format,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,district_id,province,province_id))",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -255,6 +258,7 @@ export async function generateMetadata({
           : "Group not found | RacketThailand",
     };
   }
+  const groupStatus = normalizeGroupStatus(group.status);
   const sportMeta = group.sports?.code
     ? SPORT_META[group.sports.code]
     : undefined;
@@ -340,6 +344,13 @@ export async function generateMetadata({
       description,
       images: heroImage ? [heroImage] : undefined,
     },
+    robots:
+      groupStatus === "draft"
+        ? {
+            index: false,
+            follow: false,
+          }
+        : undefined,
   };
 }
 
@@ -366,7 +377,7 @@ export default async function GroupDetailPage({
 
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
     select:
-      "id,name,description,owner_id,sports(code,name),updated_at,play_format,player_amount,allow_walk_in,phone,line_id,website_url,line_qr_url",
+      "id,name,description,status,owner_id,sports(code,name),updated_at,play_format,player_amount,allow_walk_in,phone,line_id,website_url,line_qr_url",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -387,6 +398,11 @@ export default async function GroupDetailPage({
         .single()
     : { data: null };
   const isAdminViewer = viewerProfile?.status === "admin";
+  const groupStatus = normalizeGroupStatus(group.status);
+
+  if (groupStatus === "draft" && !isGroupOwner && !isAdminViewer) {
+    notFound();
+  }
 
   const resolvedLineQrUrl = await ensureGroupLineQrUrl(
     group.id,
@@ -658,6 +674,17 @@ export default async function GroupDetailPage({
         <HeaderSubLabel value={sportName} />
         <BaseBackLink href={backHref}>{copy.back}</BaseBackLink>
         <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
+        {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
+          <BaseCard
+            as="section"
+            className="rounded-[28px] border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900"
+          >
+            <p className="font-semibold">Draft preview</p>
+            <p className="mt-1">
+              This group is hidden from the public website until an admin changes it to published.
+            </p>
+          </BaseCard>
+        ) : null}
         <BaseCard
           as="section"
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
@@ -766,7 +793,8 @@ export default async function GroupDetailPage({
                   href={normalizeExternalHref(displayGroup.website_url)}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1 block break-all text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4"
+                  title={displayGroup.website_url}
+                  className="mt-1 block max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[22rem]"
                 >
                   {displayGroup.website_url}
                 </a>

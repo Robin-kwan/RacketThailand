@@ -65,6 +65,7 @@ export default async function CreateGroupPage({
 
     }>("courts", {
       select: "id,name,province",
+      is_active: "eq.true",
       order: "name.asc.nullslast",
     }),
   ]);

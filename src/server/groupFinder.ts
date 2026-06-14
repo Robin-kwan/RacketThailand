@@ -1,5 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
+import { isPublishedGroupStatus } from "@/lib/group-status";
 import {
   isScheduleDay,
   SCHEDULE_DAYS,
@@ -51,6 +52,7 @@ export type GroupRecord = {
   id: string;
   name: string | null;
   description: string | null;
+  status?: string | null;
   updated_at: string | null;
   play_format?: "single" | "double" | null;
   player_amount?: number | null;
@@ -316,8 +318,9 @@ export async function fetchGroupsBySport(
 
   const params: Record<string, string> = {
     select:
-      "id,name,description,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,court_id,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id)),court_groups(courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))",
+      "id,name,description,status,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,court_id,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id)),court_groups(courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))",
       sport_id: `eq.${sportRow.id}`,
+      status: "eq.published",
       order: "updated_at.desc.nullslast",
   };
 
@@ -358,7 +361,9 @@ export async function fetchGroupsBySport(
   const groupsRes = await supabaseSelect<GroupRecord>("groups", params);
 
   const localizedGroups = await Promise.all(
-    (groupsRes.data ?? []).map(async (group) => {
+    (groupsRes.data ?? [])
+      .filter((group) => isPublishedGroupStatus(group.status))
+      .map(async (group) => {
       const displaySessions =
         (filters.day || filters.startTime || filters.endTime) &&
         group.group_sessions

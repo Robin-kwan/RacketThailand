@@ -53,7 +53,8 @@ export function ContactActionValue({
       <div className="mt-1 flex flex-wrap items-center gap-3">
         <a
           href={phoneHref}
-          className="text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4"
+          title={value}
+          className="max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[20rem]"
         >
           {value}
         </a>
@@ -97,12 +98,16 @@ export function ContactActionValue({
           href={lineHref}
           target="_blank"
           rel="noreferrer"
-          className="text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4"
+          title={value}
+          className="max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[20rem]"
         >
           {value}
         </a>
       ) : (
-        <p className="text-base font-semibold text-[var(--foreground)]">
+        <p
+          title={value}
+          className="max-w-full truncate text-base font-semibold text-[var(--foreground)] sm:max-w-[20rem]"
+        >
           {value}
         </p>
       )}

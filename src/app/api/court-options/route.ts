@@ -28,6 +28,7 @@ export async function GET(request: Request) {
     const params: Record<string, string> = {
       select: "id,name,province,province_id",
       order: "name.asc.nullslast",
+      is_active: "eq.true",
     };
     if (courtIds.length > 0) {
       params.id = `in.(${courtIds.join(",")})`;

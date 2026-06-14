@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { normalizeLocale } from "@/lib/i18n";
+import { normalizeGroupStatus } from "@/lib/group-status";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { syncCourtGroupLinks } from "@/server/groupSessions";
@@ -25,6 +26,7 @@ type GroupPayload = {
   phone?: string | null;
   lineId?: string | null;
   websiteUrl?: string | null;
+  status?: string | null;
 };
 
 export async function GET(request: Request) {
@@ -200,6 +202,7 @@ export async function POST(request: Request) {
       phone: normalizedPhone,
       line_id: normalizedLine,
       website_url: normalizedWebsite,
+      status: normalizeGroupStatus(payload.status),
     })
     .select("id")
     .single();

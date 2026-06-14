@@ -31,6 +31,7 @@ type CourtFinderCopy = {
   nearbyUnsupported: string;
   nearbyDenied: string;
   nearbyActive: string;
+  nearbyEmpty: string;
   distanceLabel: string;
   mapHeading: string;
   openMaps: string;
@@ -591,7 +592,7 @@ export function CourtFinder({
                 className="flex w-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500"
                 style={{ aspectRatio: "4 / 3" }}
               >
-                {copy.nearbyUnsupported}
+                {copy.nearbyEmpty}
               </div>
             )}
           </div>

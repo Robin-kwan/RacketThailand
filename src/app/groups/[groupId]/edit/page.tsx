@@ -12,6 +12,7 @@ import {
 } from "@/lib/i18n";
 import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { buildLineQrUploaderCopy } from "@/lib/line-qr-uploader-copy";
+import { normalizeGroupStatus } from "@/lib/group-status";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -88,6 +89,7 @@ export default async function EditGroupPage({
     sport_id: string;
     name: string | null;
     description: string | null;
+    status: string | null;
     owner_id: string | null;
     player_amount: number | null;
     phone: string | null;
@@ -98,7 +100,7 @@ export default async function EditGroupPage({
     allow_walk_in: boolean | null;
   }>("groups", {
     select:
-      "id,sport_id,name,description,owner_id,player_amount,phone,line_id,website_url,line_qr_url,play_format,allow_walk_in",
+      "id,sport_id,name,description,status,owner_id,player_amount,phone,line_id,website_url,line_qr_url,play_format,allow_walk_in",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -130,6 +132,7 @@ export default async function EditGroupPage({
     province: string | null;
   }>("courts", {
     select: "id,name,province",
+    is_active: "eq.true",
     order: "name.asc.nullslast",
   });
 
@@ -265,6 +268,7 @@ export default async function EditGroupPage({
     sportId: group.sport_id,
     name: group.name ?? "",
     description: group.description ?? "",
+    status: normalizeGroupStatus(group.status),
     sessions: sanitizedSessions,
     playFormat: group.play_format ?? "double",
     playerAmount:
@@ -408,6 +412,7 @@ export default async function EditGroupPage({
               dayOptions={dayOptions}
               existingPhotos={photoRows ?? []}
               locale={locale}
+              allowStatusEdit={isAdmin}
               copy={copy}
             />
           </div>

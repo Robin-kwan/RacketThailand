@@ -269,6 +269,7 @@ export default async function CourtFinderPage({
     nearbyUnsupported: t("courtFinder.nearbyUnsupported"),
     nearbyDenied: t("courtFinder.nearbyDenied"),
     nearbyActive: t("courtFinder.nearbyActive"),
+    nearbyEmpty: t("courtFinder.nearbyEmpty"),
     distanceLabel: t("courtFinder.distanceLabel"),
     mapHeading: t("courtFinder.mapHeading"),
     openMaps: t("courtFinder.openMaps"),
