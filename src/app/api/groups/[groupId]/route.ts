@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeGroupStatus } from "@/lib/group-status";
 import { syncCourtGroupLinks } from "@/server/groupSessions";
 import { requireGroupAccess } from "@/server/groupAccess";
 import { deleteGroupWithAssets } from "@/server/adminDeletion";
@@ -33,6 +34,7 @@ type PatchGroupPayload = {
   lineId?: string | null;
   websiteUrl?: string | null;
   lineQrUrl?: string | null;
+  status?: string | null;
 };
 
 function normalizeSessions(sessions?: SessionPayload[]) {
@@ -106,6 +108,20 @@ export async function PATCH(
   }
 
   const payload = (await request.json()) as PatchGroupPayload;
+  const adminSupabase = getSupabaseAdminClient();
+  const { data: existingGroup, error: existingGroupError } = await adminSupabase
+    .from("groups")
+    .select("phone,line_id,website_url,status")
+    .eq("id", resolved.groupId)
+    .single();
+
+  if (existingGroupError || !existingGroup) {
+    return NextResponse.json(
+      { error: existingGroupError?.message ?? "Group not found." },
+      { status: 404 },
+    );
+  }
+
   const update: Record<string, unknown> = {};
   if (payload.sportId) {
     update.sport_id = payload.sportId;
@@ -143,14 +159,23 @@ export async function PATCH(
   if (payload.websiteUrl !== undefined) {
     update.website_url = normalizeContact(payload.websiteUrl);
   }
-  if (
-    payload.phone !== undefined &&
-    payload.lineId !== undefined &&
-    payload.websiteUrl !== undefined &&
-    !normalizeContact(payload.phone) &&
-    !normalizeContact(payload.lineId) &&
-    !normalizeContact(payload.websiteUrl)
-  ) {
+  const nextPhone =
+    payload.phone !== undefined
+      ? normalizeContact(payload.phone)
+      : existingGroup.phone;
+  const nextLine =
+    payload.lineId !== undefined
+      ? normalizeContact(payload.lineId)
+      : existingGroup.line_id;
+  const nextWebsite =
+    payload.websiteUrl !== undefined
+      ? normalizeContact(payload.websiteUrl)
+      : existingGroup.website_url;
+  const nextStatus =
+    payload.status !== undefined
+      ? normalizeGroupStatus(payload.status)
+      : normalizeGroupStatus(existingGroup.status);
+  if (!nextPhone && !nextLine && !nextWebsite && nextStatus === "published") {
     return NextResponse.json(
       {
         code: "CONTACT_REQUIRED",
@@ -158,6 +183,20 @@ export async function PATCH(
       },
       { status: 400 },
     );
+  }
+  if (payload.status !== undefined) {
+    if (!user) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const { data: profile } = await adminSupabase
+      .from("profiles")
+      .select("status")
+      .eq("id", user.id)
+      .single();
+    if (profile?.status !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    update.status = nextStatus;
   }
   if (payload.lineQrUrl !== undefined) {
     if (
@@ -177,7 +216,6 @@ export async function PATCH(
       ...normalizedSessions.map((session) => session.courtId),
     ]),
   );
-  const adminSupabase = getSupabaseAdminClient();
   const hasSessionPayload = Array.isArray(payload.sessions);
   const hasCourtPayload = Array.isArray(payload.courtIds);
   const shouldUpdateGroup = Object.keys(update).length > 0;

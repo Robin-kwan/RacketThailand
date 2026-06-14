@@ -40,6 +40,11 @@ export function buildAdminPortalNav(locale: Locale, t: Translate) {
       label: t("admin.panelFeatures.groups.title"),
     },
     {
+      path: "/admin/group-imports",
+      href: buildLocalizedPath("/admin/group-imports", locale),
+      label: "Group imports",
+    },
+    {
       path: "/admin/casual-plays",
       href: buildLocalizedPath("/admin/casual-plays", locale),
       label: t("admin.panelFeatures.casualPlays.title"),

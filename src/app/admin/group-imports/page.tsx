@@ -2,16 +2,12 @@ import {
   AdminPortalShell,
   buildAdminPortalNav,
 } from "@/components/admin/admin-portal-shell";
-import {
-  AdminResourceTable,
-  type AdminResourceRow,
-} from "@/components/admin/admin-resource-table";
+import { AdminDraftGroupsTable } from "@/components/admin/admin-draft-groups-table";
 import {
   buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
-import { normalizeGroupStatus } from "@/lib/group-status";
 import { getPlayFormatLabel } from "@/lib/play-format";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
@@ -19,7 +15,15 @@ import { requireAdminPageAccess } from "@/server/admin";
 type SearchParams = {
   lang?: string;
 };
+
 type SearchParamsInput = Promise<SearchParams> | undefined;
+
+async function resolveSearchParams(
+  searchParams?: SearchParamsInput,
+): Promise<SearchParams | undefined> {
+  if (!searchParams) return undefined;
+  return searchParams;
+}
 
 type GroupSessionRow = {
   day: string | null;
@@ -31,7 +35,11 @@ type GroupSessionRow = {
   } | null;
 };
 
-type GroupManagementRow = {
+type CourtLinkRow = {
+  court_id: string | null;
+};
+
+type DraftGroupRow = {
   id: string;
   name: string | null;
   description: string | null;
@@ -49,6 +57,7 @@ type GroupManagementRow = {
   } | null;
   group_photos?: { id: string }[] | null;
   group_sessions?: GroupSessionRow[] | null;
+  court_groups?: CourtLinkRow[] | null;
 };
 
 type ProfileRow = {
@@ -56,13 +65,6 @@ type ProfileRow = {
   display_name: string | null;
   username: string | null;
 };
-
-async function resolveSearchParams(
-  searchParams?: SearchParamsInput,
-): Promise<SearchParams | undefined> {
-  if (!searchParams) return undefined;
-  return searchParams;
-}
 
 function formatDate(value: string | null, locale: "th" | "en") {
   if (!value) return "-";
@@ -74,7 +76,7 @@ function formatTime(value: string | null) {
 }
 
 function buildContact(
-  row: Pick<GroupManagementRow, "phone" | "line_id" | "website_url">,
+  row: Pick<DraftGroupRow, "phone" | "line_id" | "website_url">,
 ) {
   return [
     row.phone ? `Phone: ${row.phone}` : null,
@@ -85,7 +87,7 @@ function buildContact(
     .join(" · ");
 }
 
-export default async function AdminGroupsPage({
+export default async function AdminGroupImportsPage({
   searchParams,
 }: {
   searchParams?: SearchParamsInput;
@@ -95,13 +97,13 @@ export default async function AdminGroupsPage({
   const t = await getTranslator(locale);
   await requireAdminPageAccess(locale);
   const navItems = buildAdminPortalNav(locale, t);
-
   const [groupsRes, profilesRes] = await Promise.all([
-    supabaseSelect<GroupManagementRow>("groups", {
+    supabaseSelect<DraftGroupRow>("groups", {
       select:
-        "id,name,description,owner_id,play_format,player_amount,phone,line_id,website_url,status,updated_at,sports(code,name),group_photos(id),group_sessions(day,start_time,end_time,courts(name,province))",
+        "id,name,description,owner_id,play_format,player_amount,phone,line_id,website_url,status,updated_at,sports(code,name),group_photos(id),group_sessions(day,start_time,end_time,courts(name,province)),court_groups(court_id)",
+      status: "eq.draft",
       order: "updated_at.desc.nullslast",
-      limit: "100",
+      limit: "200",
     }),
     supabaseSelect<ProfileRow>("profiles", {
       select: "id,display_name,username",
@@ -127,9 +129,13 @@ export default async function AdminGroupsPage({
     saturday: t("groups.days.saturday"),
   } as Record<string, string>;
 
-  const tableRows: AdminResourceRow[] =
-    groupsRes.data?.map((group) => {
+  const rows =
+    groupsRes.data
+      ?.map((group) => {
       const sessions = group.group_sessions ?? [];
+      const linkedCourts =
+        group.court_groups?.filter((link) => Boolean(link.court_id)).length ?? 0;
+      const missingCourt = sessions.length === 0 && linkedCourts === 0;
       const firstSession = sessions[0];
       const firstSessionLabel = firstSession
         ? [
@@ -140,9 +146,8 @@ export default async function AdminGroupsPage({
             .filter(Boolean)
             .join(" · ")
         : null;
-      const contact = buildContact(group);
       const photoCount = group.group_photos?.length ?? 0;
-      const status = normalizeGroupStatus(group.status);
+      const contact = buildContact(group);
 
       return {
         id: group.id,
@@ -152,6 +157,7 @@ export default async function AdminGroupsPage({
           firstSessionLabel ||
           (group.sports?.name ?? group.sports?.code ?? undefined),
         meta: [group.sports?.name ?? group.sports?.code ?? "Sport"],
+        missingCourt,
         details: [
           {
             label: t("admin.management.common.owner"),
@@ -164,6 +170,16 @@ export default async function AdminGroupsPage({
             value: sessions.length.toLocaleString(
               locale === "th" ? "th-TH" : "en-US",
             ),
+          },
+          {
+            label: "Court link",
+            value: missingCourt
+              ? "Not linked"
+              : linkedCourts > 0
+                ? linkedCourts.toLocaleString(
+                    locale === "th" ? "th-TH" : "en-US",
+                  )
+                : firstSession?.courts?.name ?? "Linked via session",
           },
           {
             label: t("groups.detail.playFormat"),
@@ -193,28 +209,24 @@ export default async function AdminGroupsPage({
             value: formatDate(group.updated_at, locale),
           },
         ],
-        statusLabel:
-          status === "draft"
-            ? "Draft"
-            : sessions.length > 0
-              ? t("admin.management.groups.statusScheduled")
-              : "Published",
-        statusTone:
-          status === "draft"
-            ? "yellow"
-            : sessions.length > 0
-              ? "green"
-              : "slate",
+        statusLabel: "Draft",
         viewHref: buildLocalizedPath(`/groups/${group.id}`, locale),
         editHref: buildLocalizedPath(`/groups/${group.id}/edit`, locale),
+        publishEndpoint: `/api/admin/groups/${group.id}`,
         deleteEndpoint: `/api/admin/groups/${group.id}`,
       };
-    }) ?? [];
+      })
+      .sort((a, b) => {
+        if (a.missingCourt === b.missingCourt) {
+          return 0;
+        }
+        return a.missingCourt ? -1 : 1;
+      }) ?? [];
 
   return (
     <AdminPortalShell
-      activePath="/admin/groups"
-      title={t("admin.management.groups.title")}
+      activePath="/admin/group-imports"
+      title="Draft Groups"
       navItems={navItems}
       copy={{
         navigationLabel: t("admin.navigation"),
@@ -222,47 +234,16 @@ export default async function AdminGroupsPage({
     >
       <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900">
-                {t("admin.management.groups.listTitle")}
-              </h2>
-              <p className="mt-2 text-sm text-slate-600">
-                {t("admin.management.groups.listSubtitle")}
-              </p>
-            </div>
-            <a
-              href={buildLocalizedPath("/admin/group-imports", locale)}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white"
-            >
-              Import Draft Groups
-            </a>
-          </div>
+          <h2 className="text-xl font-semibold text-slate-900">
+            Draft review queue
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Review hidden draft groups here before showing them on the website.
+            Use Display when the row is ready, or Delete when it should not stay
+            in the system.
+          </p>
         </div>
-        <AdminResourceTable
-          rows={tableRows}
-          copy={{
-            searchLabel: t("admin.management.table.search"),
-            searchPlaceholder: t("admin.management.groups.searchPlaceholder"),
-            resultsLabel: t("admin.management.groups.resultsLabel"),
-            headers: {
-              item: t("admin.management.table.item"),
-              details: t("admin.management.table.details"),
-              status: t("admin.management.table.status"),
-              actions: t("admin.management.table.actions"),
-            },
-            view: t("admin.management.table.view"),
-            edit: t("admin.management.table.edit"),
-            delete: t("admin.management.table.delete"),
-            deleting: t("admin.management.table.deleting"),
-            cancel: t("admin.management.table.cancel"),
-            confirmDelete: t("admin.management.groups.confirmDelete"),
-            deleted: t("admin.management.groups.deleted"),
-            empty: t("admin.management.groups.empty"),
-            error: t("admin.management.groups.error"),
-            noDetails: t("admin.management.table.noDetails"),
-          }}
-        />
+        <AdminDraftGroupsTable rows={rows} />
       </section>
     </AdminPortalShell>
   );

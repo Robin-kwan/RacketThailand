@@ -247,6 +247,7 @@
     "nearbyUnsupported": "Location not supported in this browser.",
     "nearbyDenied": "Location access denied. Enable permissions to sort by distance.",
     "nearbyActive": "Sorting results by distance from you.",
+    "nearbyEmpty": "No nearby courts matched this search yet. Try another keyword, clear some filters, or search a wider area.",
     "distanceLabel": "Distance",
     "mapHeading": "Map preview",
     "openMaps": "Get directions"

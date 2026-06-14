@@ -226,6 +226,74 @@ export default async function AdminCourtsPage({
           ? t("admin.management.courts.statusLive")
           : t("admin.management.courts.statusPending"),
         statusTone: court.is_active ? "green" : "yellow",
+        statusAction: {
+          key: "toggle-status",
+          label: court.is_active
+            ? `${t("admin.management.courts.statusLive")} -> ${t("admin.management.courts.statusPending")}`
+            : `${t("admin.management.courts.statusPending")} -> ${t("admin.management.courts.statusLive")}`,
+          pendingLabel: t("admin.feedbackTable.updating"),
+          confirmTitle: t("admin.feedbackTable.changeStatus"),
+          confirmMessage: `${court.name?.trim() || t("admin.sections.courtFallback")}: ${court.is_active ? t("admin.management.courts.statusLive") : t("admin.management.courts.statusPending")} -> ${court.is_active ? t("admin.management.courts.statusPending") : t("admin.management.courts.statusLive")}?`,
+          confirmLabel: court.is_active
+            ? t("admin.management.courts.statusPending")
+            : t("admin.management.courts.statusLive"),
+          endpoint: `/api/admin/courts/${court.id}`,
+          method: "PATCH",
+          body: { is_active: !court.is_active },
+          successMessage: `${t("admin.feedbackTable.changeStatus")}: ${court.is_active ? t("admin.management.courts.statusPending") : t("admin.management.courts.statusLive")}`,
+          errorMessage: t("admin.feedbackTable.error"),
+          nextStatusLabel: court.is_active
+            ? t("admin.management.courts.statusPending")
+            : t("admin.management.courts.statusLive"),
+          nextStatusTone: court.is_active ? "yellow" : "green",
+          nextActions: [
+            {
+              key: "toggle-status",
+              label: court.is_active
+                ? `${t("admin.management.courts.statusPending")} -> ${t("admin.management.courts.statusLive")}`
+                : `${t("admin.management.courts.statusLive")} -> ${t("admin.management.courts.statusPending")}`,
+              pendingLabel: t("admin.feedbackTable.updating"),
+              confirmTitle: t("admin.feedbackTable.changeStatus"),
+              confirmMessage: `${court.name?.trim() || t("admin.sections.courtFallback")}: ${court.is_active ? t("admin.management.courts.statusPending") : t("admin.management.courts.statusLive")} -> ${court.is_active ? t("admin.management.courts.statusLive") : t("admin.management.courts.statusPending")}?`,
+              confirmLabel: court.is_active
+                ? t("admin.management.courts.statusLive")
+                : t("admin.management.courts.statusPending"),
+              endpoint: `/api/admin/courts/${court.id}`,
+              method: "PATCH",
+              body: { is_active: court.is_active },
+              successMessage: `${t("admin.feedbackTable.changeStatus")}: ${court.is_active ? t("admin.management.courts.statusLive") : t("admin.management.courts.statusPending")}`,
+              errorMessage: t("admin.feedbackTable.error"),
+              nextStatusLabel: court.is_active
+                ? t("admin.management.courts.statusLive")
+                : t("admin.management.courts.statusPending"),
+              nextStatusTone: court.is_active ? "green" : "yellow",
+              nextSortValues: {
+                status: court.is_active
+                  ? t("admin.management.courts.statusLive")
+                  : t("admin.management.courts.statusPending"),
+                actions: court.is_active
+                  ? t("admin.management.courts.statusLive")
+                  : t("admin.management.courts.statusPending"),
+              },
+            },
+          ],
+          nextSortValues: {
+            status: court.is_active
+              ? t("admin.management.courts.statusPending")
+              : t("admin.management.courts.statusLive"),
+            actions: court.is_active
+              ? t("admin.management.courts.statusPending")
+              : t("admin.management.courts.statusLive"),
+          },
+        },
+        sortValues: {
+          status: court.is_active
+            ? t("admin.management.courts.statusLive")
+            : t("admin.management.courts.statusPending"),
+          actions: court.is_active
+            ? t("admin.management.courts.statusLive")
+            : t("admin.management.courts.statusPending"),
+        },
         viewHref: buildLocalizedPath(`/courts/${court.id}`, locale),
         editHref: buildLocalizedPath(`/courts/${court.id}/edit`, locale),
         deleteEndpoint: `/api/admin/courts/${court.id}`,

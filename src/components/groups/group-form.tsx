@@ -17,6 +17,7 @@ import {
   DEFAULT_PLAY_FORMAT,
   type PlayFormat,
 } from "@/lib/play-format";
+import type { GroupStatus } from "@/lib/group-status";
 import type { LineQrUploaderCopy } from "@/components/line-qr-uploader";
 
 export type Option = {
@@ -78,6 +79,7 @@ export type GroupFormValues = {
   sportId: string;
   name: string;
   description: string;
+  status?: GroupStatus | null;
   sessions: CourtSessionBlock[];
   playFormat?: PlayFormat | null;
   playerAmount?: string | null;
@@ -131,6 +133,7 @@ type SubmitPayload = {
   sportId: string;
   name: string;
   description: string;
+  status?: GroupStatus;
   courtIds: string[];
   sessions: { courtId: string; day: string; start: string; end: string }[];
   playFormat: PlayFormat;
@@ -149,6 +152,11 @@ type GroupFormProps = {
   copy: GroupFormCopy;
   photoSection?: React.ReactNode;
   lineQrSection?: React.ReactNode;
+  statusField?: {
+    label: string;
+    helperText?: string;
+    options: Option[];
+  };
   onSubmit: (payload: SubmitPayload) => Promise<void> | void;
   submitting: boolean;
   submitLabel: string;
@@ -177,6 +185,7 @@ export function GroupForm({
   copy,
   photoSection,
   lineQrSection,
+  statusField,
   onSubmit,
   submitting,
   submitLabel,
@@ -188,6 +197,7 @@ export function GroupForm({
     sportId: initialValues.sportId,
     name: initialValues.name,
     description: initialValues.description,
+    status: initialValues.status ?? "published",
     playFormat: initialValues.playFormat ?? DEFAULT_PLAY_FORMAT,
     playerAmount: initialValues.playerAmount ?? "",
     allowWalkIn: initialValues.allowWalkIn !== false,
@@ -383,6 +393,7 @@ export function GroupForm({
         sportId: initialValues.sportId,
         name: initialValues.name,
         description: initialValues.description,
+        status: initialValues.status ?? "published",
         playFormat: initialValues.playFormat ?? DEFAULT_PLAY_FORMAT,
         playerAmount: initialValues.playerAmount ?? "",
         allowWalkIn: initialValues.allowWalkIn !== false,
@@ -401,6 +412,7 @@ export function GroupForm({
         sportId: form.sportId,
         name: form.name,
         description: form.description,
+        status: form.status,
         playFormat: form.playFormat,
         playerAmount: form.playerAmount,
         allowWalkIn: form.allowWalkIn,
@@ -434,6 +446,7 @@ export function GroupForm({
       sportId: form.sportId,
       name: form.name,
       description: form.description,
+      status: form.status,
       playFormat: form.playFormat,
       playerAmount: form.playerAmount,
       allowWalkIn: form.allowWalkIn,
@@ -487,6 +500,18 @@ export function GroupForm({
           variant="light"
         />
       </div>
+      {statusField ? (
+        <BaseSelect
+          label={statusField.label}
+          name="status"
+          value={form.status}
+          onChange={updateForm}
+          options={statusField.options}
+          helperText={statusField.helperText}
+          required
+          variant="light"
+        />
+      ) : null}
       <BaseSelect
         label={copy.playFormatLabel}
         name="playFormat"
