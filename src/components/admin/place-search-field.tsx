@@ -44,12 +44,12 @@ type PlaceSearchFieldProps = {
   invalidMessage?: string;
 };
 
-const SEARCH_DELAY = 300;
+const SEARCH_DELAY = 750;
+const MIN_SEARCH_LENGTH = 3;
 
 export function PlaceSearchField({
   label,
   helper,
-  noResults,
   duplicateLabel = "This place is already registered as",
   duplicateLinkLabel = "existing court",
   placeholder = "Search for a venue, mall, or court",
@@ -106,7 +106,8 @@ export function PlaceSearchField({
   }, [open]);
 
   useEffect(() => {
-    if (!query.trim()) {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery || trimmedQuery.length < MIN_SEARCH_LENGTH) {
       setSuggestions([]);
       setOpen(false);
       setSearching(false);
@@ -116,7 +117,7 @@ export function PlaceSearchField({
     const handle = setTimeout(async () => {
       setSearching(true);
       const params = new URLSearchParams({
-        input: query.trim(),
+        input: trimmedQuery,
         sessiontoken: sessionToken,
       });
       try {
@@ -144,7 +145,7 @@ export function PlaceSearchField({
       clearTimeout(handle);
       controller.abort();
     };
-  }, [query, sessionToken, noResults]);
+  }, [query, sessionToken]);
 
   const handleSelect = async (suggestion: Suggestion) => {
     setOpen(false);

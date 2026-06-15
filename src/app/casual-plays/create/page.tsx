@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import { CasualPlayCreationForm } from "@/components/casual-plays/casual-play-creation-form";
 import type { Option } from "@/components/groups/group-form";
@@ -9,7 +8,6 @@ import {
   getThailandTodayDateString,
 } from "@/lib/casual-play";
 import {
-  buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
@@ -150,16 +148,10 @@ export default async function CreateCasualPlayPage({
     ? sportsRes.data?.find((sport) => sport.code === resolved.sport)
     : null;
   const defaultSportId = sourceSport?.id;
-  const primarySportSlug = sourceSport?.code ?? sportsRes.data?.[0]?.code ?? null;
-  const backHref = buildLocalizedPath(
-    primarySportSlug ? `/${primarySportSlug}/casual-plays` : "/",
-    locale,
-  );
 
   return (
     <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <BaseBackLink href={backHref}>{t("casualPlays.detail.back")}</BaseBackLink>
         <BaseCard
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white p-8"

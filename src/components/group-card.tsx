@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import type { ReactNode, ElementType } from "react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
@@ -113,6 +112,7 @@ function SessionList({
                     <button
                       type="button"
                       onClick={(event) => {
+                        event.preventDefault();
                         event.stopPropagation();
                         onCourtClick?.(courtHref);
                       }}
@@ -167,16 +167,14 @@ export function GroupCard({
   imageAspectClass = "aspect-[4/3]",
   badge,
 }: GroupCardProps) {
-  const router = useRouter();
-
   const handleCourtNavigate = (href?: string | null) => {
     if (!href) return;
-    router.push(href);
+    window.open(href, "_blank", "noopener,noreferrer");
   };
 
   const Wrapper: ElementType = href ? Link : "div";
   const wrapperProps = href
-    ? { href }
+    ? { href, target: "_blank", rel: "noopener noreferrer" }
     : {};
   const fallbackGroupName =
     locale === "th" ? "กลุ่มชุมชน" : "Community group";

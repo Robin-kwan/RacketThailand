@@ -15,7 +15,6 @@ import {
 import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
-import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import { BaseScheduleList } from "@/components/base-schedule-list";
 import { SPORT_META } from "@/data/sportMeta";
@@ -542,14 +541,6 @@ export default async function CourtPage({
       <HeaderSportScope sportSlug={activeSportCode ?? undefined} />
       <HeaderSubLabel value={getSportDisplayName(activeSport, locale)} />
       <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 pb-20 pt-10 md:px-10">
-        <BaseBackLink
-          href={buildLocalizedPath(
-            `/${activeSportCode ?? ""}`,
-            locale,
-          )}
-        >
-          {copy.back}
-        </BaseBackLink>
         <header className="space-y-3 border-b border-slate-200 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -841,15 +832,6 @@ export default async function CourtPage({
               ))}
             </div>
           )}
-          <BaseBackLink
-            href={buildLocalizedPath(
-              `/${activeSportCode ?? ""}/group-finder`,
-              locale,
-            )}
-            className="mt-6 inline-flex w-fit"
-          >
-            {copy.backToGroupFinder}
-          </BaseBackLink>
         </BaseCard>
         <script
           type="application/ld+json"

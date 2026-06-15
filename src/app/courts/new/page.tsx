@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CourtAdminForm } from "@/components/admin/court-form";
-import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import { SPORT_META } from "@/data/sportMeta";
 import {
-  buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
@@ -116,10 +114,6 @@ export default async function NewCourtPage({
         )
       : undefined;
   const defaultSportId = sourceSport?.id;
-  const backHref = buildLocalizedPath(
-    sourceSport ? `/${sourceSport.code}/court-finder` : "/",
-    locale,
-  );
 
   const copy = {
     selectSport: t("admin.selectSport"),
@@ -166,11 +160,6 @@ export default async function NewCourtPage({
   return (
     <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <BaseBackLink href={backHref}>
-          {sourceSport
-            ? t("courtSubmission.backToCourtFinder")
-            : t("courtSubmission.back")}
-        </BaseBackLink>
         <BaseCard
           as="section"
           className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.13)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"

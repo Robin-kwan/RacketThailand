@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import {
   CasualPlayJoinRequestForm,
@@ -451,10 +450,6 @@ export default async function CasualPlayDetailPage({
     full: t("casualPlays.detail.ownerRequests.full"),
     error: t("casualPlays.detail.ownerRequests.error"),
   };
-  const backHref = buildLocalizedPath(
-    sportCode ? `/${sportCode}/casual-plays` : "/",
-    locale,
-  );
   const loginHref = buildAuthPagePath(
     "/login",
     locale,
@@ -467,7 +462,6 @@ export default async function CasualPlayDetailPage({
       <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-[var(--foreground)] md:px-10">
         <HeaderSportScope sportSlug={sportCode ?? undefined} />
         <HeaderSubLabel value={sportName} />
-        <BaseBackLink href={backHref}>{copy.back}</BaseBackLink>
         <BaseCard
           as="section"
           className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"

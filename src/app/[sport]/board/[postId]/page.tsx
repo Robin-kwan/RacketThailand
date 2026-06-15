@@ -5,7 +5,6 @@ import { formatDistanceToNow } from "date-fns";
 import { enUS, th as thLocale } from "date-fns/locale";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { HeaderSubLabel } from "@/components/header-sub-label";
-import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import {
   buildLocalizedPath,
@@ -193,9 +192,6 @@ export default async function CommunityPostPage({
       <HeaderSportScope sportSlug={sport} />
       <HeaderSubLabel value={sportMeta.name[locale]} />
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <BaseBackLink href={buildLocalizedPath(`/${sport}/board`, locale)}>
-          {copy.back}
-        </BaseBackLink>
         <BaseCard
           as="article"
           className="rounded-[32px] border border-slate-200 bg-white p-8 text-[var(--foreground)]"
