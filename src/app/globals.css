@@ -263,7 +263,6 @@ a[class*="bg-transparent"]:not(:hover) {
   border-radius: 999px;
   color: var(--rt-primary-text);
   font-weight: 600;
-  box-shadow: 0 10px 28px rgb(var(--rt-primary-rgb) / 0.28);
   transition:
     background-color 0.2s ease,
     transform 0.2s ease,
@@ -273,7 +272,6 @@ a[class*="bg-transparent"]:not(:hover) {
 .rt-btn-primary:hover:not(:disabled) {
   background-color: rgb(var(--rt-primary-soft-rgb));
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgb(var(--rt-primary-rgb) / 0.32);
 }
 
 .rt-btn-primary:disabled {
@@ -282,7 +280,6 @@ a[class*="bg-transparent"]:not(:hover) {
   color: #ffffff;
   cursor: not-allowed;
   opacity: 1;
-  box-shadow: none;
 }
 .rt-card input:focus,
 .rt-card textarea:focus {
