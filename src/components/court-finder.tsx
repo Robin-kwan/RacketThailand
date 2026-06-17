@@ -214,19 +214,29 @@ export function CourtFinder({
       }
       lastLoadedRequestKeyRef.current = courtListRequestQuery;
       setLoading(true);
-      const response = await fetch(`/api/courts?${courtListRequestQuery}`, {
-        cache: "no-store",
-      });
-      const data = await response.json();
-      if (!isActive) return;
-      const nextCourts = data.courts ?? [];
-      const nextCount = data.count ?? 0;
-      setCourts(nextCourts);
-      setCount(nextCount);
-      setPage(1);
-      setHasMore(nextCourts.length < nextCount);
-      setAvailableProvinces(data.provinces ?? []);
-      setLoading(false);
+      try {
+        const response = await fetch(`/api/courts?${courtListRequestQuery}`, {
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => null);
+        if (!isActive) return;
+        if (!response.ok || !data) {
+          return;
+        }
+        const nextCourts = (data.courts ?? []) as CourtRecord[];
+        const nextCount = Math.max(data.count ?? nextCourts.length, nextCourts.length);
+        setCourts(nextCourts);
+        setCount(nextCount);
+        setPage(1);
+        setHasMore(nextCourts.length < nextCount);
+        if (Array.isArray(data.provinces)) {
+          setAvailableProvinces(data.provinces);
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
     };
     load();
     return () => {
@@ -262,7 +272,7 @@ export function CourtFinder({
         return;
       }
       const nextCourts = (data.courts ?? []) as CourtRecord[];
-      const nextCount = data.count ?? count;
+      const nextCount = Math.max(data.count ?? count, nextCourts.length);
       setCount(nextCount);
       setPage(nextPage);
       setCourts((previous) => {
