@@ -36,7 +36,9 @@ export function CourtCard({
   footer,
 }: CourtCardProps) {
   const Wrapper: ElementType = href ? Link : "div";
-  const wrapperProps = href ? { href } : {};
+  const wrapperProps = href
+    ? { href, target: "_blank", rel: "noopener noreferrer" }
+    : {};
 
   return (
     <Wrapper

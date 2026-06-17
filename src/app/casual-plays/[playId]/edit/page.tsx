@@ -1,5 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import { CasualPlayEditForm } from "@/components/casual-plays/casual-play-edit-form";
 import { EntityDeleteButton } from "@/components/entity-delete-button";
@@ -248,12 +247,7 @@ export default async function EditCasualPlayPage({
   return (
     <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <BaseBackLink
-            href={buildLocalizedPath(`/casual-plays/${play.id}`, locale)}
-          >
-            {t("casualPlays.edit.back")}
-          </BaseBackLink>
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <EntityDeleteButton
             endpoint={`/api/casual-plays/${play.id}`}
             redirectHref={deleteRedirectHref}

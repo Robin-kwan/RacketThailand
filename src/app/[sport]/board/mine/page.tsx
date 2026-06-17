@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { HeaderSubLabel } from "@/components/header-sub-label";
-import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import {
   buildLocalizedPath,
@@ -74,7 +73,6 @@ export default async function MyCommunityPostsPage({
   const copy = {
     title: t("community.myPostsTitle"),
     empty: t("community.myPostsEmpty"),
-    back: t("community.backToBoard"),
     cta: t("community.newPost"),
   };
 
@@ -85,12 +83,7 @@ export default async function MyCommunityPostsPage({
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <BaseBackLink
-              href={buildLocalizedPath(`/${sport.code}/board`, locale)}
-            >
-              {copy.back}
-            </BaseBackLink>
-            <h1 className="mt-4 text-xl font-semibold text-[var(--foreground)]">
+            <h1 className="text-xl font-semibold text-[var(--foreground)]">
               {copy.title}
             </h1>
           </div>

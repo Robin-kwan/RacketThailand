@@ -23,7 +23,6 @@ import { ensureGroupLineQrUrl } from "@/server/lineQr";
 import { ViewTracker } from "@/components/view-tracker";
 import { BaseCard } from "@/components/base-card";
 import { BaseScheduleList } from "@/components/base-schedule-list";
-import { BaseBackLink } from "@/components/base-back-link";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
 import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
@@ -658,11 +657,6 @@ export default async function GroupDetailPage({
     (locale === "th"
       ? `ดูรายละเอียดกลุ่ม ${shareTitle} บน RacketThailand`
       : `View ${shareTitle} on RacketThailand`);
-  const backHref = buildLocalizedPath(
-    sportCode ? `/${sportCode}/group-finder` : "/",
-    locale,
-  );
-
   return (
     <div className="rt-page">
       <ViewTracker
@@ -672,7 +666,6 @@ export default async function GroupDetailPage({
       <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-[var(--foreground)] md:px-10">
         <HeaderSportScope sportSlug={sportCode ?? undefined} />
         <HeaderSubLabel value={sportName} />
-        <BaseBackLink href={backHref}>{copy.back}</BaseBackLink>
         <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
         {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
           <BaseCard

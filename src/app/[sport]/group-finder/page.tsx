@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { GroupFinder } from "@/components/group-finder";
@@ -282,12 +281,6 @@ export default async function GroupFinderPage({
           </h1>
           <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
           <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-500">
-            <Link
-              href={buildLocalizedPath(`/${resolvedParams.sport}`, locale)}
-              className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:border-slate-500"
-            >
-              {t("groupFinder.backToSport")}
-            </Link>
             <TrackedLink
               href={buildLocalizedPath(`/${resolvedParams.sport}/casual-plays`, locale)}
               eventName="sport_cta_click"

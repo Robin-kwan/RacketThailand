@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { OwnershipAssignmentPanel } from "@/components/admin/ownership-assignment-panel";
 import { GroupEditForm } from "@/components/groups/group-edit-form";
 import { BaseCard } from "@/components/base-card";
-import { BaseBackLink } from "@/components/base-back-link";
 import { EntityDeleteButton } from "@/components/entity-delete-button";
 import type { Option } from "@/components/groups/group-form";
 import {
@@ -375,12 +374,7 @@ export default async function EditGroupPage({
       <HeaderSportScope sportSlug={currentSportSlug} />
       <HeaderSubLabel value={currentSportLabel} />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <BaseBackLink
-            href={buildLocalizedPath(`/groups/${group.id}`, locale)}
-          >
-            {t("groups.edit.back")}
-          </BaseBackLink>
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <EntityDeleteButton
             endpoint={`/api/groups/${group.id}`}
             redirectHref={deleteRedirectHref}
@@ -412,7 +406,6 @@ export default async function EditGroupPage({
               dayOptions={dayOptions}
               existingPhotos={photoRows ?? []}
               locale={locale}
-              allowStatusEdit={isAdmin}
               copy={copy}
             />
           </div>

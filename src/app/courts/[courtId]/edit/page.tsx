@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { CourtEditForm } from "@/components/admin/court-edit-form";
 import { OwnershipAssignmentPanel } from "@/components/admin/ownership-assignment-panel";
 import { HeaderSportScope } from "@/components/header-sport-scope";
-import { BaseBackLink } from "@/components/base-back-link";
 import { EntityDeleteButton } from "@/components/entity-delete-button";
 import { SPORT_META } from "@/data/sportMeta";
 import {
@@ -252,10 +251,7 @@ export default async function EditCourtPage({
     <>
       <HeaderSportScope sportSlug={currentSportSlug} />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <BaseBackLink href={buildLocalizedPath(`/courts/${court.id}`, locale)}>
-            {t("courtPage.backToCourt")}
-          </BaseBackLink>
+        <div className="flex flex-wrap items-center justify-end gap-3">
           <EntityDeleteButton
             endpoint={`/api/courts/${court.id}`}
             redirectHref={deleteRedirectHref}

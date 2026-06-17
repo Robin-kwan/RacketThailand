@@ -214,19 +214,29 @@ export function CourtFinder({
       }
       lastLoadedRequestKeyRef.current = courtListRequestQuery;
       setLoading(true);
-      const response = await fetch(`/api/courts?${courtListRequestQuery}`, {
-        cache: "no-store",
-      });
-      const data = await response.json();
-      if (!isActive) return;
-      const nextCourts = data.courts ?? [];
-      const nextCount = data.count ?? 0;
-      setCourts(nextCourts);
-      setCount(nextCount);
-      setPage(1);
-      setHasMore(nextCourts.length < nextCount);
-      setAvailableProvinces(data.provinces ?? []);
-      setLoading(false);
+      try {
+        const response = await fetch(`/api/courts?${courtListRequestQuery}`, {
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => null);
+        if (!isActive) return;
+        if (!response.ok || !data) {
+          return;
+        }
+        const nextCourts = (data.courts ?? []) as CourtRecord[];
+        const nextCount = Math.max(data.count ?? nextCourts.length, nextCourts.length);
+        setCourts(nextCourts);
+        setCount(nextCount);
+        setPage(1);
+        setHasMore(nextCourts.length < nextCount);
+        if (Array.isArray(data.provinces)) {
+          setAvailableProvinces(data.provinces);
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
     };
     load();
     return () => {
@@ -262,7 +272,7 @@ export function CourtFinder({
         return;
       }
       const nextCourts = (data.courts ?? []) as CourtRecord[];
-      const nextCount = data.count ?? count;
+      const nextCount = Math.max(data.count ?? count, nextCourts.length);
       setCount(nextCount);
       setPage(nextPage);
       setCourts((previous) => {
@@ -544,7 +554,7 @@ export function CourtFinder({
               type="button"
               onClick={handleRequestNearby}
               disabled={locatingNearby}
-              className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed"
+              className="rt-btn-primary rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500"
             >
               {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
             </button>

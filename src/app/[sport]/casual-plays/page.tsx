@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { CasualPlayFinder } from "@/components/casual-play-finder";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -156,12 +155,6 @@ export default async function CasualPlayFinderPage({
           </h1>
           <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
           <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-500">
-            <Link
-              href={buildLocalizedPath(`/${resolvedParams.sport}`, locale)}
-              className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 hover:border-slate-500"
-            >
-              {t("casualPlays.backToSport")}
-            </Link>
             <TrackedLink
               href={buildLocalizedPath(`/${resolvedParams.sport}/group-finder`, locale)}
               eventName="sport_cta_click"

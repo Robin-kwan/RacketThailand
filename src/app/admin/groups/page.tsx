@@ -143,6 +143,26 @@ export default async function AdminGroupsPage({
       const contact = buildContact(group);
       const photoCount = group.group_photos?.length ?? 0;
       const status = normalizeGroupStatus(group.status);
+      const draftStatusLabel = locale === "th" ? "ฉบับร่าง" : "Draft";
+      const publishedStatusLabel =
+        sessions.length > 0
+          ? t("admin.management.groups.statusScheduled")
+          : locale === "th"
+            ? "เผยแพร่แล้ว"
+            : "Published";
+      const statusLabel =
+        status === "draft" ? draftStatusLabel : publishedStatusLabel;
+      const statusTone =
+        status === "draft" ? "yellow" : sessions.length > 0 ? "green" : "slate";
+      const nextStatus = status === "draft" ? "published" : "draft";
+      const nextStatusLabel =
+        nextStatus === "draft" ? draftStatusLabel : publishedStatusLabel;
+      const nextStatusTone =
+        nextStatus === "draft"
+          ? "yellow"
+          : sessions.length > 0
+            ? "green"
+            : "slate";
 
       return {
         id: group.id,
@@ -193,18 +213,52 @@ export default async function AdminGroupsPage({
             value: formatDate(group.updated_at, locale),
           },
         ],
-        statusLabel:
-          status === "draft"
-            ? "Draft"
-            : sessions.length > 0
-              ? t("admin.management.groups.statusScheduled")
-              : "Published",
-        statusTone:
-          status === "draft"
-            ? "yellow"
-            : sessions.length > 0
-              ? "green"
-              : "slate",
+        statusLabel,
+        statusTone,
+        statusAction: {
+          key: "toggle-status",
+          label: `${statusLabel} -> ${nextStatusLabel}`,
+          pendingLabel: t("admin.feedbackTable.updating"),
+          confirmTitle: t("admin.feedbackTable.changeStatus"),
+          confirmMessage: `${group.name?.trim() || t("admin.management.groups.fallback")}: ${statusLabel} -> ${nextStatusLabel}?`,
+          confirmLabel: nextStatusLabel,
+          endpoint: `/api/admin/groups/${group.id}`,
+          method: "PATCH",
+          body: { status: nextStatus },
+          successMessage: `${t("admin.feedbackTable.changeStatus")}: ${nextStatusLabel}`,
+          errorMessage: t("admin.feedbackTable.error"),
+          nextStatusLabel,
+          nextStatusTone,
+          nextActions: [
+            {
+              key: "toggle-status",
+              label: `${nextStatusLabel} -> ${statusLabel}`,
+              pendingLabel: t("admin.feedbackTable.updating"),
+              confirmTitle: t("admin.feedbackTable.changeStatus"),
+              confirmMessage: `${group.name?.trim() || t("admin.management.groups.fallback")}: ${nextStatusLabel} -> ${statusLabel}?`,
+              confirmLabel: statusLabel,
+              endpoint: `/api/admin/groups/${group.id}`,
+              method: "PATCH",
+              body: { status },
+              successMessage: `${t("admin.feedbackTable.changeStatus")}: ${statusLabel}`,
+              errorMessage: t("admin.feedbackTable.error"),
+              nextStatusLabel: statusLabel,
+              nextStatusTone: statusTone,
+              nextSortValues: {
+                status: statusLabel,
+                actions: statusLabel,
+              },
+            },
+          ],
+          nextSortValues: {
+            status: nextStatusLabel,
+            actions: nextStatusLabel,
+          },
+        },
+        sortValues: {
+          status: statusLabel,
+          actions: statusLabel,
+        },
         viewHref: buildLocalizedPath(`/groups/${group.id}`, locale),
         editHref: buildLocalizedPath(`/groups/${group.id}/edit`, locale),
         deleteEndpoint: `/api/admin/groups/${group.id}`,

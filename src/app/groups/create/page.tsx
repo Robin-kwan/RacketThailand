@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
 import { GroupCreationForm } from "@/components/groups/group-creation-form";
 import type { Option } from "@/components/groups/group-form";
-import { BaseBackLink } from "@/components/base-back-link";
 import { BaseCard } from "@/components/base-card";
 import { SPORT_META } from "@/data/sportMeta";
 import {
-  buildLocalizedPath,
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
@@ -189,17 +187,10 @@ export default async function CreateGroupPage({
     courts[defaultSportId]?.some((court) => court.value === resolved.court)
       ? resolved.court
       : undefined;
-  const backHref = buildLocalizedPath(
-    sourceSport ? `/${sourceSport.code}/group-finder` : "/",
-    locale,
-  );
 
   return (
     <div className="rt-page">
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <BaseBackLink href={backHref}>
-          {sourceSport ? t("groups.detail.back") : t("courtSubmission.back")}
-        </BaseBackLink>
         <BaseCard
           as="section"
           className="rounded-[32px] border border-slate-200 bg-white p-8"

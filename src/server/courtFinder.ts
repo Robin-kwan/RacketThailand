@@ -367,7 +367,9 @@ export async function fetchCourtsBySport(
     return {
       sport: sportRow,
       courts: paginate(localizedCourts),
-      count: timeFilterActive ? localizedCourts.length : (nearbyRows[0]?.total_count ?? 0),
+      count: timeFilterActive
+        ? localizedCourts.length
+        : Math.max(nearbyRows[0]?.total_count ?? 0, localizedCourts.length),
       provinces,
     };
   }
@@ -424,7 +426,9 @@ export async function fetchCourtsBySport(
   return {
     sport: sportRow,
     courts: paginate(localizedCourts),
-    count: timeFilterActive ? localizedCourts.length : (courtsRes.count ?? 0),
+    count: timeFilterActive
+      ? localizedCourts.length
+      : (courtsRes.count ?? localizedCourts.length),
     provinces,
   };
 }
