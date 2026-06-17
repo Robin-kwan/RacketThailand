@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { syncCourtGroupLinks } from "@/server/groupSessions";
 import { fetchGroupsBySport } from "@/server/groupFinder";
+import { validateCourtIdsForSport } from "@/server/groupCourtValidation";
 import { ensureUserProfile } from "@/server/profile";
 
 type SessionPayload = {
@@ -185,6 +186,27 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: profileError.message },
       { status: 500 },
+    );
+  }
+
+  const courtSportValidation = await validateCourtIdsForSport(
+    adminSupabase,
+    payload.sportId,
+    linkedCourtIds,
+  );
+  if (courtSportValidation.error) {
+    return NextResponse.json(
+      { error: courtSportValidation.error.message },
+      { status: 500 },
+    );
+  }
+  if (courtSportValidation.invalidCourtIds.length > 0) {
+    return NextResponse.json(
+      {
+        code: "INVALID_COURT_SPORT",
+        error: "Selected courts must support the selected sport.",
+      },
+      { status: 400 },
     );
   }
 

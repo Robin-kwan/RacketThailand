@@ -20,6 +20,8 @@ import {
   resolveThailandLocationIds,
 } from "@/server/thailand-location";
 
+const FINDER_PREVIEW_IMAGE = buildAbsoluteUrl("/sports/badminton.png");
+
 type Params = { sport: string };
 type ParamsInput = Promise<Params>;
 type SearchParams = {
@@ -207,11 +209,18 @@ export async function generateMetadata({
       description: filteredDescription,
       url: canonical,
       type: "website",
+      images: [
+        {
+          url: FINDER_PREVIEW_IMAGE,
+          alt: "RacketThailand badminton court preview",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: filteredTitle,
       description: filteredDescription,
+      images: [FINDER_PREVIEW_IMAGE],
     },
   };
 }
@@ -348,7 +357,7 @@ export default async function CourtFinderPage({
                 cta: "add_court",
                 sport: resolvedParams.sport,
               }}
-              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+              className="rt-btn-court inline-flex items-center justify-center px-4 py-2"
             >
               {t("courtSubmission.submit")}
             </TrackedLink>

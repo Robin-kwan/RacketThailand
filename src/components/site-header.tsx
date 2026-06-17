@@ -391,6 +391,7 @@ export function SiteHeader({
                   alt={`${LOCALE_INFO[locale].label} flag`}
                   width={20}
                   height={14}
+                  unoptimized
                   className="h-4 w-6 rounded-sm object-cover"
                 />
               </button>
@@ -412,6 +413,7 @@ export function SiteHeader({
                         alt={`${LOCALE_INFO[option].label} flag`}
                         width={18}
                         height={12}
+                        unoptimized
                         className="h-3 w-5 rounded-[2px] object-cover"
                       />
                       <span>{LOCALE_INFO[option].label}</span>

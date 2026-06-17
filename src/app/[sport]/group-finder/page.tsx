@@ -9,8 +9,14 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
-import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import {
+  buildAbsoluteUrl,
+  buildCanonicalUrl,
+  buildLocaleAlternates,
+} from "@/lib/seo";
 import { fetchGroupsBySport } from "@/server/groupFinder";
+
+const FINDER_PREVIEW_IMAGE = buildAbsoluteUrl("/sports/badminton.png");
 
 type Params = { sport: string };
 type ParamsInput = Promise<Params>;
@@ -175,11 +181,18 @@ export async function generateMetadata({
       description: filteredDescription,
       url: canonical,
       type: "website",
+      images: [
+        {
+          url: FINDER_PREVIEW_IMAGE,
+          alt: "RacketThailand badminton court preview",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: filteredTitle,
       description: filteredDescription,
+      images: [FINDER_PREVIEW_IMAGE],
     },
   };
 }
@@ -304,7 +317,7 @@ export default async function GroupFinderPage({
                 cta: "create_group",
                 sport: resolvedParams.sport,
               }}
-              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+              className="rt-btn-group inline-flex items-center justify-center px-4 py-2"
             >
               {t("header.createGroup")}
             </TrackedLink>

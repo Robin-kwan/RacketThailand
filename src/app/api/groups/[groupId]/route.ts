@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizeGroupStatus } from "@/lib/group-status";
 import { syncCourtGroupLinks } from "@/server/groupSessions";
 import { requireGroupAccess } from "@/server/groupAccess";
+import { validateCourtIdsForSport } from "@/server/groupCourtValidation";
 import { deleteGroupWithAssets } from "@/server/adminDeletion";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
@@ -111,7 +112,7 @@ export async function PATCH(
   const adminSupabase = getSupabaseAdminClient();
   const { data: existingGroup, error: existingGroupError } = await adminSupabase
     .from("groups")
-    .select("phone,line_id,website_url,status")
+    .select("sport_id,phone,line_id,website_url,status")
     .eq("id", resolved.groupId)
     .single();
 
@@ -218,6 +219,47 @@ export async function PATCH(
   );
   const hasSessionPayload = Array.isArray(payload.sessions);
   const hasCourtPayload = Array.isArray(payload.courtIds);
+  const nextSportId = payload.sportId ?? existingGroup.sport_id;
+  let courtIdsToValidate = linkedCourtIds;
+  if (payload.sportId && !hasSessionPayload && !hasCourtPayload) {
+    const [{ data: existingSessions }, { data: existingCourtLinks }] =
+      await Promise.all([
+        adminSupabase
+          .from("group_sessions")
+          .select("court_id")
+          .eq("group_id", resolved.groupId),
+        adminSupabase
+          .from("court_groups")
+          .select("court_id")
+          .eq("group_id", resolved.groupId),
+      ]);
+    courtIdsToValidate = Array.from(
+      new Set([
+        ...((existingSessions ?? []).map((row) => row.court_id)),
+        ...((existingCourtLinks ?? []).map((row) => row.court_id)),
+      ]),
+    );
+  }
+  const courtSportValidation = await validateCourtIdsForSport(
+    adminSupabase,
+    nextSportId,
+    courtIdsToValidate,
+  );
+  if (courtSportValidation.error) {
+    return NextResponse.json(
+      { error: courtSportValidation.error.message },
+      { status: 500 },
+    );
+  }
+  if (courtSportValidation.invalidCourtIds.length > 0) {
+    return NextResponse.json(
+      {
+        code: "INVALID_COURT_SPORT",
+        error: "Selected courts must support the selected sport.",
+      },
+      { status: 400 },
+    );
+  }
   const shouldUpdateGroup = Object.keys(update).length > 0;
 
   if (!shouldUpdateGroup && !hasSessionPayload && !hasCourtPayload) {
