@@ -231,13 +231,13 @@ export default async function DashboardPage({
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={addCourtHref}
-                  className="rt-btn-primary inline-flex items-center justify-center px-5 py-2 text-center text-sm"
+                  className="rt-btn-court inline-flex items-center justify-center px-5 py-2 text-center text-sm"
                 >
                   {ui.addCourt}
                 </Link>
                 <Link
                   href={buildLocalizedPath("/groups/create", locale)}
-                  className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+                  className="rt-btn-group inline-flex items-center justify-center px-5 py-2 text-sm"
                 >
                   {ui.createGroup}
                 </Link>
@@ -267,7 +267,7 @@ export default async function DashboardPage({
                 </h2>
                 <Link
                   href={addCourtHref}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                  className="rt-btn-court inline-flex items-center justify-center px-4 py-2 text-sm"
                 >
                   {ui.addCourt}
                 </Link>
@@ -385,13 +385,13 @@ export default async function DashboardPage({
               <div className="mt-5 grid gap-3">
                 <Link
                   href={addCourtHref}
-                  className="rt-btn-primary inline-flex items-center justify-center px-5 py-2 text-center text-sm"
+                  className="rt-btn-court inline-flex items-center justify-center px-5 py-2 text-center text-sm"
                 >
                   {ui.addCourt}
                 </Link>
                 <Link
                   href={buildLocalizedPath("/groups/create", locale)}
-                  className="rounded-full border border-slate-200 bg-white px-5 py-2 text-center text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+                  className="rt-btn-group inline-flex items-center justify-center px-5 py-2 text-center text-sm"
                 >
                   {ui.createGroup}
                 </Link>

@@ -24,6 +24,7 @@ type BaseAutocompleteProps = {
   placeholder?: string;
   helperText?: string;
   noResultsText?: string;
+  pinnedOptionValues?: string[];
   onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
   className?: string;
   variant?: AutocompleteVariant;
@@ -73,6 +74,7 @@ export function BaseAutocomplete({
   placeholder,
   helperText,
   noResultsText = "No matches found",
+  pinnedOptionValues = [],
   onChange,
   className = "",
   variant = "dark",
@@ -89,10 +91,17 @@ export function BaseAutocomplete({
       return options;
     }
     const normalized = query.toLowerCase();
-    return options.filter((option) =>
+    const matchingOptions = options.filter((option) =>
       option.label.toLowerCase().includes(normalized),
     );
-  }, [options, query]);
+    const matchedValues = new Set(matchingOptions.map((option) => option.value));
+    const pinnedOptions = options.filter(
+      (option) =>
+        pinnedOptionValues.includes(option.value) &&
+        !matchedValues.has(option.value),
+    );
+    return [...pinnedOptions, ...matchingOptions];
+  }, [options, pinnedOptionValues, query]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {

@@ -133,12 +133,15 @@ This codebase already has an established visual language. Preserve it unless the
 - reusable shell components such as `BaseCard`
 - strong CTA hierarchy for content supply actions like adding courts and creating groups
 - avoid decorative page kicker/subtitle labels such as `COMMUNITY • CASUAL PLAYS` or role chips above page titles unless the user explicitly asks for them
+- use black styling for Add Court CTAs and blue styling for Create/Add Group CTAs across public and dashboard pages
 
 Prefer existing shared classes and components:
 
 - `rt-card`
 - `rt-pill`
 - `rt-btn-primary`
+- `rt-btn-court`
+- `rt-btn-group`
 - `rt-text-muted`
 - `BaseCard`
 

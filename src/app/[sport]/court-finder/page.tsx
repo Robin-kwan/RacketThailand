@@ -357,7 +357,7 @@ export default async function CourtFinderPage({
                 cta: "add_court",
                 sport: resolvedParams.sport,
               }}
-              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+              className="rt-btn-court inline-flex items-center justify-center px-4 py-2"
             >
               {t("courtSubmission.submit")}
             </TrackedLink>

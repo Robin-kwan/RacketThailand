@@ -159,7 +159,11 @@ function FeatureCarousel({
                   cta: secondaryCtaName ?? secondaryCtaHref,
                   sport: sportCode,
                 }}
-                className="inline-flex items-center rounded-full border border-[rgb(var(--rt-primary-rgb)/0.2)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--rt-primary)] transition hover:border-[rgb(var(--rt-primary-rgb)/0.42)] hover:bg-[rgb(var(--rt-primary-rgb)/0.06)]"
+                className={`inline-flex items-center justify-center px-3 py-1.5 text-xs ${
+                  secondaryCtaName === "add_court"
+                    ? "rt-btn-court"
+                    : "rt-btn-group"
+                }`}
               >
                 {secondaryCtaLabel}
               </TrackedLink>

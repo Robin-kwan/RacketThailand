@@ -317,7 +317,7 @@ export default async function GroupFinderPage({
                 cta: "create_group",
                 sport: resolvedParams.sport,
               }}
-              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+              className="rt-btn-group inline-flex items-center justify-center px-4 py-2"
             >
               {t("header.createGroup")}
             </TrackedLink>

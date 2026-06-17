@@ -322,6 +322,8 @@ export function GroupEditForm({
         message:
           data?.code === "CONTACT_REQUIRED"
             ? copy.contactRequired
+            : data?.code === "INVALID_COURT_SPORT"
+              ? copy.courtSportMismatch
             : data?.error ?? copy.error,
       });
       return;

@@ -796,7 +796,7 @@ export function GroupFinder({
               `/groups/create?sport=${encodeURIComponent(sportCode)}`,
               locale,
             )}
-            className="mt-5 inline-flex rounded-full bg-[var(--rt-primary)] px-4 py-2 text-xs font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
+            className="rt-btn-group mt-5 inline-flex items-center justify-center px-4 py-2 text-xs"
             onClick={() =>
               track("empty_state_cta_click", {
                 surface: "group_finder",

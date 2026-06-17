@@ -143,7 +143,7 @@ export default async function Landing({
                   surface: "landing_hero",
                   cta: "add_court",
                 }}
-                className="rounded-full bg-[var(--rt-primary)] px-6 py-3 text-sm font-semibold text-[var(--rt-primary-text)] transition hover:bg-[var(--rt-primary-soft)]"
+                className="rt-btn-court inline-flex items-center justify-center px-6 py-3 text-sm"
               >
                 {t("courtSubmission.submit")}
               </TrackedLink>
@@ -154,7 +154,7 @@ export default async function Landing({
                   surface: "landing_hero",
                   cta: "create_group",
                 }}
-                className="rounded-full border border-[rgb(var(--foreground-rgb)/0.18)] bg-white px-6 py-3 text-sm font-semibold text-[rgb(var(--foreground-rgb)/0.8)] transition hover:border-[rgb(var(--foreground-rgb)/0.38)]"
+                className="rt-btn-group inline-flex items-center justify-center px-6 py-3 text-sm"
               >
                 {t("header.createGroup")}
               </TrackedLink>

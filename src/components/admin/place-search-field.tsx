@@ -42,6 +42,8 @@ type PlaceSearchFieldProps = {
   currentCourtId?: string;
   invalid?: boolean;
   invalidMessage?: string;
+  locationPreviewLabel?: string;
+  mapTitle?: string;
 };
 
 const SEARCH_DELAY = 750;
@@ -60,6 +62,8 @@ export function PlaceSearchField({
   currentCourtId,
   invalid = false,
   invalidMessage,
+  locationPreviewLabel = "Location preview",
+  mapTitle = "Selected location map",
 }: PlaceSearchFieldProps) {
   const [query, setQuery] = useState(initialQuery ?? "");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -273,11 +277,11 @@ export function PlaceSearchField({
       {mapCoordinates && (
         <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
           <p className="text-xs font-semibold uppercase text-slate-500">
-            Location preview
+            {locationPreviewLabel}
           </p>
           <div className="overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
             <iframe
-              title="Selected location map"
+              title={mapTitle}
               src={`https://maps.google.com/maps?q=${encodeURIComponent(`${mapCoordinates.latitude},${mapCoordinates.longitude}`)}&z=15&output=embed&hl=en`}
               className="h-64 w-full border-0"
               loading="lazy"
