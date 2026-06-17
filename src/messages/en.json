@@ -822,6 +822,30 @@
     "ownedGroups": {
       "title": "Your groups",
       "empty": "You’re not listed as a group owner yet."
+    },
+    "overview": {
+      "title": "Dashboard",
+      "quickActions": "Quick actions",
+      "quickActionsSubtitle": "Common updates are one tap away.",
+      "editProfile": "Edit profile",
+      "view": "View",
+      "edit": "Edit",
+      "updated": "Updated",
+      "noSport": "No sport",
+      "noLocation": "No location yet",
+      "unnamedCourt": "Unnamed court",
+      "courtImage": "Court image",
+      "unnamedGroup": "Community group",
+      "groupImage": "Group photo",
+      "courtsCount": "Courts",
+      "groupsCount": "Groups",
+      "requestsCount": "Pending requests",
+      "addCourt": "Add court",
+      "createGroup": "Create group",
+      "active": "Active",
+      "inactive": "Inactive",
+      "published": "Published",
+      "draft": "Draft"
     }
   },
   "notifications": {

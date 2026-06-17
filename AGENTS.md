@@ -132,6 +132,7 @@ This codebase already has an established visual language. Preserve it unless the
 - shared green token system in `src/app/globals.css`
 - reusable shell components such as `BaseCard`
 - strong CTA hierarchy for content supply actions like adding courts and creating groups
+- avoid decorative page kicker/subtitle labels such as `COMMUNITY • CASUAL PLAYS` or role chips above page titles unless the user explicitly asks for them
 
 Prefer existing shared classes and components:
 

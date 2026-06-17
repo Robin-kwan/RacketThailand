@@ -822,6 +822,30 @@
     "ownedGroups": {
       "title": "กลุ่มของคุณ",
       "empty": "ยังไม่มีกลุ่มที่คุณเป็นเจ้าของ"
+    },
+    "overview": {
+      "title": "แดชบอร์ด",
+      "quickActions": "ทางลัด",
+      "quickActionsSubtitle": "งานที่ใช้บ่อยอยู่ใกล้ขึ้น",
+      "editProfile": "แก้ไขโปรไฟล์",
+      "view": "ดู",
+      "edit": "แก้ไข",
+      "updated": "อัปเดต",
+      "noSport": "ยังไม่ระบุกีฬา",
+      "noLocation": "ยังไม่มีพื้นที่",
+      "unnamedCourt": "ยังไม่ระบุชื่อสนาม",
+      "courtImage": "รูปสนาม",
+      "unnamedGroup": "กลุ่มชุมชน",
+      "groupImage": "รูปกลุ่ม",
+      "courtsCount": "สนาม",
+      "groupsCount": "กลุ่ม",
+      "requestsCount": "คำขอรออนุมัติ",
+      "addCourt": "เพิ่มสนาม",
+      "createGroup": "สร้างกลุ่ม",
+      "active": "เปิดใช้งาน",
+      "inactive": "ปิดใช้งาน",
+      "published": "เผยแพร่",
+      "draft": "แบบร่าง"
     }
   },
   "notifications": {

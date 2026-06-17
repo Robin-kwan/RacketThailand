@@ -37,9 +37,12 @@ type CourtRequestListProps = {
   locale: Locale;
 };
 
-function formatDate(value: string) {
+function formatDate(value: string, locale: Locale) {
   const date = new Date(value);
-  return date.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  return date.toLocaleString(locale === "th" ? "th-TH" : "en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 export function CourtRequestList({
@@ -48,7 +51,6 @@ export function CourtRequestList({
   locale,
 }: CourtRequestListProps) {
   const [items, setItems] = useState(requests);
-  console.log(items)
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -89,7 +91,7 @@ export function CourtRequestList({
                 {request.groups?.name ?? "Unnamed group"}
               </h3>
               <p className="text-sm text-slate-500">
-                {copy.submitted} {formatDate(request.created_at)}
+                {copy.submitted} {formatDate(request.created_at, locale)}
               </p>
             </div>
             <Link
@@ -97,6 +99,8 @@ export function CourtRequestList({
                 `/courts/${request.courts?.id ?? ""}`,
                 locale,
               )}
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
             >
               {request.courts?.name ??
