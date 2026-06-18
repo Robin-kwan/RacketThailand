@@ -750,7 +750,7 @@ export default async function GroupDetailPage({
               </p>
             </div>
             {group.phone && (
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.phone}
                 </p>
@@ -764,7 +764,7 @@ export default async function GroupDetailPage({
               </div>
             )}
             {displayGroup.line_id && (
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.line}
                 </p>
@@ -778,7 +778,7 @@ export default async function GroupDetailPage({
               </div>
             )}
             {displayGroup.website_url && (
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                   {copy.website}
                 </p>
@@ -787,7 +787,7 @@ export default async function GroupDetailPage({
                   target="_blank"
                   rel="noreferrer"
                   title={displayGroup.website_url}
-                  className="mt-1 block max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[22rem]"
+                  className="mt-1 block min-w-0 max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[22rem]"
                 >
                   {displayGroup.website_url}
                 </a>

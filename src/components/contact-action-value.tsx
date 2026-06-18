@@ -50,17 +50,17 @@ export function ContactActionValue({
 
   if (mode === "phone") {
     return (
-      <div className="mt-1 flex flex-wrap items-center gap-3">
+      <div className="mt-1 flex min-w-0 max-w-full flex-wrap items-center gap-3">
         <a
           href={phoneHref}
           title={value}
-          className="max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[20rem]"
+          className={valueClassName}
         >
           {value}
         </a>
         <a
           href={phoneHref}
-          className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100"
+          className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100"
         >
           <PhoneCall
             className="h-3.5 w-3.5"
@@ -92,21 +92,21 @@ export function ContactActionValue({
   };
 
   return (
-    <div className="mt-1 flex flex-wrap items-center gap-3">
+    <div className="mt-1 flex min-w-0 max-w-full flex-wrap items-center gap-3">
       {mode === "line" ? (
         <a
           href={lineHref}
           target="_blank"
           rel="noreferrer"
           title={value}
-          className="max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[20rem]"
+          className={valueClassName}
         >
           {value}
         </a>
       ) : (
         <p
           title={value}
-          className="max-w-full truncate text-base font-semibold text-[var(--foreground)] sm:max-w-[20rem]"
+          className="block min-w-0 max-w-full truncate text-base font-semibold text-[var(--foreground)] sm:max-w-[20rem]"
         >
           {value}
         </p>
@@ -114,7 +114,7 @@ export function ContactActionValue({
       <button
         type="button"
         onClick={handleCopy}
-        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
         aria-label={copied ? copiedLabel : copyLabel}
       >
         {copied ? (
@@ -133,3 +133,5 @@ export function ContactActionValue({
     </div>
   );
 }
+  const valueClassName =
+    "block min-w-0 max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[20rem]";

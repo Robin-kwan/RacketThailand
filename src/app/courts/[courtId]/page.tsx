@@ -658,7 +658,7 @@ export default async function CourtPage({
                 </li>
               )}
               {detail.court.phone && (
-                <li className="space-y-1">
+                <li className="min-w-0 space-y-1">
                   <strong className="text-slate-900">
                     {copy.phone}:
                   </strong>
@@ -672,7 +672,7 @@ export default async function CourtPage({
                 </li>
               )}
               {detail.court.line_id && (
-                <li className="space-y-1">
+                <li className="min-w-0 space-y-1">
                   <strong className="text-slate-900">
                     {copy.line}:
                   </strong>
@@ -697,7 +697,7 @@ export default async function CourtPage({
                 </li>
               )}
               {detail.court.website_url && (
-                <li>
+                <li className="min-w-0">
                   <strong className="text-slate-900">
                     {copy.website}:
                   </strong>{" "}
@@ -706,7 +706,7 @@ export default async function CourtPage({
                     target="_blank"
                     rel="noreferrer"
                     title={detail.court.website_url}
-                    className="inline-block max-w-full truncate align-bottom text-slate-900 underline sm:max-w-[22rem]"
+                    className="inline-block min-w-0 max-w-full truncate align-bottom text-slate-900 underline sm:max-w-[22rem]"
                   >
                     {detail.court.website_url}
                   </a>

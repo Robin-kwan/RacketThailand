@@ -430,7 +430,10 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
                                   <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                                     {detail.label}
                                   </dt>
-                                  <dd className="mt-0.5 text-sm text-slate-700">
+                                  <dd
+                                    className="mt-0.5 max-w-[18rem] truncate text-sm text-slate-700"
+                                    title={detail.value}
+                                  >
                                     {detail.value}
                                   </dd>
                                 </div>
