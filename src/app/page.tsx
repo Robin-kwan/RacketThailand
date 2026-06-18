@@ -13,7 +13,11 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
-import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import {
+  buildAbsoluteUrl,
+  buildCanonicalUrl,
+  buildLocaleAlternates,
+} from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 type SearchParams = {
@@ -47,6 +51,7 @@ export async function generateMetadata({
     locale === "th"
       ? "ค้นหาสนามและกลุ่มกีฬาแร็กเกตทั่วไทย พร้อมข้อมูลติดต่อและตารางเล่นได้ในที่เดียว"
       : "Discover Thailand racket-sport courts and weekly groups with direct contacts in one place.";
+  const previewImage = buildAbsoluteUrl("/og/racketthailand-icon.png");
 
   return {
     title,
@@ -60,11 +65,20 @@ export async function generateMetadata({
       description,
       url: canonical,
       type: "website",
+      images: [
+        {
+          url: previewImage,
+          width: 1024,
+          height: 1024,
+          alt: "RacketThailand logo",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [previewImage],
     },
   };
 }
