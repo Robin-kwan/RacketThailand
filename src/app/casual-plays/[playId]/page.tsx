@@ -594,7 +594,7 @@ export default async function CasualPlayDetailPage({
               {canViewOwnerContact ? (
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   {play.phone && (
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                         {copy.phone}
                       </p>
@@ -608,7 +608,7 @@ export default async function CasualPlayDetailPage({
                     </div>
                   )}
                   {play.line_id && (
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                         {copy.line}
                       </p>
