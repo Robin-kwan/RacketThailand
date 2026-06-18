@@ -18,7 +18,11 @@ import {
   normalizeLocale,
   type Locale,
 } from "@/lib/i18n";
-import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import {
+  buildAbsoluteUrl,
+  buildCanonicalUrl,
+  buildLocaleAlternates,
+} from "@/lib/seo";
 import { getSeoKeyword } from "@/lib/seoKeywords";
 import { GroupCard } from "@/components/group-card";
 import { CourtCard } from "@/components/court-card";
@@ -377,6 +381,8 @@ export async function generateMetadata({
   const canonicalPath = `/${resolvedParamsValue.sport}`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
+  const previewImage = buildAbsoluteUrl(meta.coverImage);
+  const previewAlt = `${meta.name[locale]} RacketThailand`;
   return {
     title: `${meta.name[locale]} | RacketThailand`,
     description,
@@ -389,11 +395,20 @@ export async function generateMetadata({
       description,
       url: canonical,
       type: "website",
+      images: [
+        {
+          url: previewImage,
+          width: 819,
+          height: 819,
+          alt: previewAlt,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${meta.name[locale]} | RacketThailand`,
       description,
+      images: [previewImage],
     },
   };
 }
