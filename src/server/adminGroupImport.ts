@@ -1,16 +1,42 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { syncCourtSports } from "@/server/courtSports";
 import { syncCourtGroupLinks } from "@/server/groupSessions";
-import { resolveThailandLocationIds } from "@/server/thailand-location";
 
-const AUTOMATION_RUNS_DIR = path.join(
-  process.cwd(),
-  ".codex",
-  "facebook-badminton-group-preview",
-  "runs",
-);
+const GROUP_IMPORT_WORKFLOWS = {
+  badminton: {
+    sourceUrl: "https://www.facebook.com/groups/108488876533648",
+    directory: "facebook-badminton-group-preview",
+  },
+  pickleball: {
+    sourceUrl: "https://www.facebook.com/groups/465849552420177",
+    directory: "facebook-pickleball-group-preview",
+  },
+  tennis: {
+    sourceUrl: "https://www.facebook.com/groups/716723188716013",
+    directory: "facebook-tennis-group-preview",
+  },
+} as const;
+
+type GroupImportSportCode = keyof typeof GROUP_IMPORT_WORKFLOWS;
+
+function isGroupImportSportCode(value: string): value is GroupImportSportCode {
+  return value in GROUP_IMPORT_WORKFLOWS;
+}
+
+function normalizeImportSportCode(value: string | null | undefined) {
+  const code = value?.trim().toLowerCase() ?? "";
+  return isGroupImportSportCode(code) ? code : "badminton";
+}
+
+function resolveAutomationRunsDir(sportCode: GroupImportSportCode) {
+  return path.join(
+    process.cwd(),
+    ".codex",
+    GROUP_IMPORT_WORKFLOWS[sportCode].directory,
+    "runs",
+  );
+}
 
 const GROUP_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_GROUP_BUCKET || "group-images";
@@ -98,6 +124,8 @@ type PreviewCandidate = {
 
 type PreviewPayload = {
   runDate?: string | null;
+  sportCode?: string | null;
+  sourceUrl?: string | null;
   candidates?: PreviewCandidate[] | null;
 };
 
@@ -114,11 +142,14 @@ type ImportedGroupResult = {
 type ImportDraftGroupsInput = {
   preview: PreviewPayload;
   runDate?: string | null;
+  sportCode?: string | null;
   selectedCandidateIndexes?: number[];
 };
 
 type LatestPreviewRun = {
   runDate: string;
+  sportCode: GroupImportSportCode;
+  sourceUrl: string;
   previewPath: string;
   previewText: string;
 };
@@ -375,6 +406,16 @@ function looksCorruptedText(value: string | null | undefined) {
   return questionMarkCount >= Math.ceil(text.length * 0.3);
 }
 
+function hasCorruptedDescription(value: string | null | undefined) {
+  const text = sanitizeDescription(value);
+  if (!text) {
+    return false;
+  }
+
+  const questionMarkCount = (text.match(/\?/g) ?? []).length;
+  return questionMarkCount >= Math.ceil(text.length * 0.3);
+}
+
 function cleanRawPostTitle(value: string | null | undefined) {
   const title = sanitizeText(value)
     .replace(/\|\s*facebook$/i, "")
@@ -601,30 +642,6 @@ function findDuplicateGroup(
   );
 }
 
-function parseProvinceDistrict(value: string[] | null | undefined) {
-  const first = value?.map((entry) => sanitizeText(entry)).find(Boolean);
-  if (!first) {
-    return { province: null, district: null };
-  }
-
-  const parts = first
-    .split(/[|/]/)
-    .map((entry) => sanitizeText(entry))
-    .filter(Boolean);
-
-  if (parts.length >= 2) {
-    return {
-      province: parts[0] || null,
-      district: parts[1] || null,
-    };
-  }
-
-  return {
-    province: parts[0] || null,
-    district: null,
-  };
-}
-
 function parseDetectedDays(value: string) {
   const normalized = value.toLowerCase();
   const matchedDays = DAY_PATTERNS.filter(({ patterns }) =>
@@ -697,6 +714,7 @@ function parseScheduleSessions(
 }
 
 async function loadRawPostMetadata(
+  sportCode: GroupImportSportCode,
   runDate: string | null | undefined,
   sourcePostUrl: string | null | undefined,
 ): Promise<RawPostMetadata | null> {
@@ -710,7 +728,7 @@ async function loadRawPostMetadata(
   }
 
   const rawPostPath = path.join(
-    AUTOMATION_RUNS_DIR,
+    resolveAutomationRunsDir(sportCode),
     runDate,
     "raw",
     `post-${postId}.html`,
@@ -729,12 +747,19 @@ async function loadRawPostMetadata(
   }
 }
 
-async function resolveRunImagesDirectory(runDate: string | null | undefined) {
+async function resolveSportRunImagesDirectory(
+  sportCode: GroupImportSportCode,
+  runDate: string | null | undefined,
+) {
   if (!runDate) {
     return null;
   }
 
-  const imageDirectory = path.join(AUTOMATION_RUNS_DIR, runDate, "images");
+  const imageDirectory = path.join(
+    resolveAutomationRunsDir(sportCode),
+    runDate,
+    "images",
+  );
   try {
     await fs.access(imageDirectory);
     return imageDirectory;
@@ -854,62 +879,8 @@ async function findExistingCourt(venueNames: string[]) {
   return null;
 }
 
-async function createCourtStub(
-  venueName: string,
-  province: string | null,
-  district: string | null,
-  sportId: string,
-  ownerId: string,
-) {
-  const supabase = getSupabaseAdminClient();
-  const resolvedLocation = await resolveThailandLocationIds({
-    province,
-    district,
-  });
-
-  const address = [district, province].filter(Boolean).join(", ") || venueName;
-
-  const { data: insertedCourt, error: insertCourtError } = await supabase
-    .from("courts")
-    .insert({
-      name: venueName,
-      address,
-      district: resolvedLocation.districtNameTh ?? district,
-      province: resolvedLocation.provinceNameTh ?? province,
-      district_id: resolvedLocation.districtId,
-      province_id: resolvedLocation.provinceId,
-      lat: null,
-      lng: null,
-      is_active: false,
-      created_by: ownerId,
-      updated_at: new Date().toISOString(),
-    })
-    .select("id,name")
-    .single();
-
-  if (insertCourtError || !insertedCourt) {
-    throw new Error(insertCourtError?.message ?? "Unable to create court.");
-  }
-
-  const { error: syncError } = await syncCourtSports(
-    supabase,
-    insertedCourt.id,
-    [sportId],
-  );
-  if (syncError) {
-    throw new Error(syncError.message);
-  }
-
-  return {
-    courtId: insertedCourt.id,
-    courtName: insertedCourt.name ?? venueName,
-  };
-}
-
 async function resolveCourtForCandidate(
   candidate: PreviewCandidate,
-  sportId: string,
-  ownerId: string,
   fallbackVenue?: string | null,
 ): Promise<ResolvedCourt> {
   const venueNames = Array.from(
@@ -939,47 +910,26 @@ async function resolveCourtForCandidate(
     };
   }
 
-  const { province, district } = parseProvinceDistrict(candidate.provinceDistrict);
-  try {
-    const createdCourt = await createCourtStub(
-      venueNames[0],
-      province,
-      district,
-      sportId,
-      ownerId,
-    );
-    return {
-      courtId: createdCourt.courtId,
-      courtName: createdCourt.courtName,
-      created: true,
-      warnings: [
-        "Created a hidden court stub because no existing court matched the venue.",
-      ],
-    };
-  } catch (error) {
-    return {
-      courtId: null,
-      courtName: venueNames[0],
-      created: false,
-      warnings: [
-        error instanceof Error
-          ? `Could not create court stub: ${error.message}`
-          : "Could not create court stub.",
-      ],
-    };
-  }
+  return {
+    courtId: null,
+    courtName: venueNames[0],
+    created: false,
+    warnings: [
+      "No existing court matched the venue. Create or bind the court with a Google Maps place before importing this group.",
+    ],
+  };
 }
 
-async function fetchBadmintonSportId() {
+async function fetchSportIdByCode(sportCode: GroupImportSportCode) {
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from("sports")
     .select("id")
-    .eq("code", "badminton")
+    .eq("code", sportCode)
     .single();
 
   if (error || !data?.id) {
-    throw new Error(error?.message ?? "Badminton sport not found.");
+    throw new Error(error?.message ?? `${sportCode} sport not found.`);
   }
 
   return data.id as string;
@@ -1047,38 +997,52 @@ function normalizePreview(input: unknown): PreviewPayload {
 
   return {
     runDate: typeof input.runDate === "string" ? input.runDate.trim() : null,
+    sportCode:
+      typeof input.sportCode === "string" ? input.sportCode.trim() : null,
+    sourceUrl:
+      typeof input.sourceUrl === "string" ? input.sourceUrl.trim() : null,
     candidates,
   };
 }
 
 export async function loadLatestGroupPreviewRun(): Promise<LatestPreviewRun | null> {
-  try {
-    const entries = await fs.readdir(AUTOMATION_RUNS_DIR, {
-      withFileTypes: true,
-    });
-    const runDirectories = entries
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .sort((a, b) => b.localeCompare(a));
+  const runs: LatestPreviewRun[] = [];
+  for (const sportCode of Object.keys(
+    GROUP_IMPORT_WORKFLOWS,
+  ) as GroupImportSportCode[]) {
+    try {
+      const entries = await fs.readdir(resolveAutomationRunsDir(sportCode), {
+        withFileTypes: true,
+      });
+      const runDirectories = entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
 
-    for (const runDate of runDirectories) {
-      const previewPath = path.join(AUTOMATION_RUNS_DIR, runDate, "preview.json");
-      try {
-        const previewText = await fs.readFile(previewPath, "utf8");
-        return {
+      for (const runDate of runDirectories) {
+        const previewPath = path.join(
+          resolveAutomationRunsDir(sportCode),
           runDate,
-          previewPath,
-          previewText,
-        };
-      } catch {
-        continue;
+          "preview.json",
+        );
+        try {
+          const previewText = await fs.readFile(previewPath, "utf8");
+          runs.push({
+            runDate,
+            sportCode,
+            sourceUrl: GROUP_IMPORT_WORKFLOWS[sportCode].sourceUrl,
+            previewPath,
+            previewText,
+          });
+        } catch {
+          continue;
+        }
       }
+    } catch {
+      continue;
     }
-
-    return null;
-  } catch {
-    return null;
   }
+
+  return runs.sort((a, b) => b.runDate.localeCompare(a.runDate))[0] ?? null;
 }
 
 export async function importDraftGroupsFromPreview(
@@ -1108,11 +1072,17 @@ export async function importDraftGroupsFromPreview(
     throw new Error("No valid candidates were selected.");
   }
 
-  const sportId = await fetchBadmintonSportId();
+  const sportCode = normalizeImportSportCode(
+    input.sportCode ?? preview.sportCode,
+  );
+  const sportId = await fetchSportIdByCode(sportCode);
   const ownerProfile = await fetchRacketThailandAdminOwner();
   const ownerId = ownerProfile.id;
   const resolvedRunDate = input.runDate ?? preview.runDate;
-  const imageDirectory = await resolveRunImagesDirectory(resolvedRunDate);
+  const imageDirectory = await resolveSportRunImagesDirectory(
+    sportCode,
+    resolvedRunDate,
+  );
   const supabase = getSupabaseAdminClient();
   const imported: ImportedGroupResult[] = [];
   const skipped: Array<{
@@ -1156,6 +1126,7 @@ export async function importDraftGroupsFromPreview(
   for (const candidateIndex of selectedIndexes) {
     const candidate = candidates[candidateIndex];
     const rawPostMetadata = await loadRawPostMetadata(
+      sportCode,
       resolvedRunDate,
       candidate.sourcePostUrl,
     );
@@ -1193,6 +1164,17 @@ export async function importDraftGroupsFromPreview(
       continue;
     }
 
+    if (hasCorruptedDescription(description)) {
+      skipped.push({
+        candidateIndex,
+        name,
+        existingGroupId: "",
+        reason:
+          "Skipped because the recovered description appears corrupted. Re-open the original source post, re-read the caption/images, and restore the original text before importing.",
+      });
+      continue;
+    }
+
     if (!hasSupportedContactMethod(candidate, contact)) {
       skipped.push({
         candidateIndex,
@@ -1206,8 +1188,6 @@ export async function importDraftGroupsFromPreview(
 
     const resolvedCourt = await resolveCourtForCandidate(
       candidate,
-      sportId,
-      ownerId,
       extractedVenue,
     );
 
@@ -1217,7 +1197,7 @@ export async function importDraftGroupsFromPreview(
         name,
         existingGroupId: "",
         reason:
-          "Skipped because the venue could not be matched to an existing court or created as a new hidden court.",
+          "Skipped because the venue could not be matched to an existing court. Create or bind the court with Google Maps before importing this group.",
       });
       continue;
     }
@@ -1350,6 +1330,8 @@ export async function importDraftGroupsFromPreview(
     skippedCount: skipped.length,
     skipped,
     runDate: input.runDate ?? preview.runDate ?? null,
+    sportCode,
+    sourceUrl: GROUP_IMPORT_WORKFLOWS[sportCode].sourceUrl,
     ownerProfile: {
       id: ownerProfile.id,
       username: ownerProfile.username,

@@ -17,12 +17,16 @@ type PreviewCandidate = {
 
 type PreviewPayload = {
   runDate?: string | null;
+  sportCode?: string | null;
+  sourceUrl?: string | null;
   candidates?: PreviewCandidate[] | null;
 };
 
 type ImportResult = {
   importedCount: number;
   runDate?: string | null;
+  sportCode?: string | null;
+  sourceUrl?: string | null;
   ownerProfile?: {
     id: string;
     username: string | null;
@@ -60,6 +64,7 @@ export function AdminGroupImportPanel({
 }: AdminGroupImportPanelProps) {
   const [previewText, setPreviewText] = useState(initialPreviewText);
   const [runDate, setRunDate] = useState(initialRunDate ?? "");
+  const [sportCode, setSportCode] = useState("badminton");
   const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +82,17 @@ export function AdminGroupImportPanel({
       setRunDate(preview.runDate);
     }
   }, [preview, runDate]);
+
+  useEffect(() => {
+    const nextSport = preview?.sportCode?.trim().toLowerCase();
+    if (
+      nextSport === "badminton" ||
+      nextSport === "pickleball" ||
+      nextSport === "tennis"
+    ) {
+      setSportCode(nextSport);
+    }
+  }, [preview?.sportCode]);
 
   const toggleIndex = (index: number) => {
     setSelectedIndexes((prev) =>
@@ -110,6 +126,7 @@ export function AdminGroupImportPanel({
         body: JSON.stringify({
           preview,
           runDate: runDate || preview.runDate || null,
+          sportCode,
           selectedCandidateIndexes: selectedIndexes,
         }),
       });
@@ -149,7 +166,22 @@ export function AdminGroupImportPanel({
           </p>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="mt-6 grid gap-4 lg:grid-cols-[220px_220px_minmax(0,1fr)]">
+          <label className="space-y-2">
+            <span className="text-sm font-semibold text-slate-700">
+              Sport
+            </span>
+            <select
+              value={sportCode}
+              onChange={(event) => setSportCode(event.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+            >
+              <option value="badminton">Badminton</option>
+              <option value="pickleball">Pickleball</option>
+              <option value="tennis">Tennis</option>
+            </select>
+          </label>
+
           <label className="space-y-2">
             <span className="text-sm font-semibold text-slate-700">
               Run date
@@ -325,11 +357,12 @@ export function AdminGroupImportPanel({
             Import result
           </h3>
           <p className="mt-2 text-sm text-slate-600">
-            Imported {result.importedCount} draft groups from run{" "}
+            Imported {result.importedCount} {result.sportCode ?? sportCode} draft groups from run{" "}
             {(result.runDate ?? runDate) || "unknown"}
             {result.ownerProfile?.username
               ? ` under ${result.ownerProfile.username}.`
               : "."}
+            {result.sourceUrl ? ` Source: ${result.sourceUrl}` : ""}
           </p>
           <div className="mt-5 space-y-4">
             {result.imported.map((item) => (
