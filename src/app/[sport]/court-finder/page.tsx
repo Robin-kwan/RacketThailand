@@ -13,7 +13,9 @@ import {
   buildAbsoluteUrl,
   buildCanonicalUrl,
   buildLocaleAlternates,
+  truncateMetaDescription,
 } from "@/lib/seo";
+import { getSeoKeyword } from "@/lib/seoKeywords";
 import { fetchCourtsBySport } from "@/server/courtFinder";
 import {
   localizeThailandLocation,
@@ -154,9 +156,10 @@ export async function generateMetadata({
     locale === "th"
       ? `ค้นหาสนาม${meta.name[locale]} | RacketThailand`
       : `${meta.name[locale]} Court Finder | RacketThailand`;
+  const seoKeyword = getSeoKeyword(resolvedParams.sport, locale, "courts");
   const description =
     locale === "th"
-      ? `ค้นหาสนาม${meta.name[locale]} พร้อมพิกัด แผนที่ และข้อมูลติดต่อจากทั่วประเทศไทย`
+      ? `ค้นหาสนาม${meta.name[locale]} พร้อมพิกัด แผนที่ และช่องทางติดต่อเพื่อสอบถามหรือจองสนามจากทั่วประเทศไทย ${seoKeyword}`
       : `Browse ${meta.name[locale]} courts in Thailand with map location, contacts, and live community updates.`;
 
   const filteredTitle = searchQuery
@@ -170,11 +173,11 @@ export async function generateMetadata({
       : title;
   const filteredDescription = searchQuery
     ? locale === "th"
-      ? `ดูผลการค้นหาสนาม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมพิกัด แผนที่ และข้อมูลติดต่อ`
+      ? `ดูผลการค้นหาสนาม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมพิกัด แผนที่ และช่องทางติดต่อเพื่อสอบถามหรือจองสนาม ${seoKeyword}`
       : `Browse ${meta.name[locale]} court results matching "${searchQuery}" with map locations and contact details.`
     : provinceLabel
       ? locale === "th"
-        ? `ค้นหาสนาม${meta.name[locale]}ใน${provinceLabel} พร้อมพิกัด แผนที่ และข้อมูลติดต่อ`
+        ? `ค้นหาสนาม${meta.name[locale]}ใน${provinceLabel} พร้อมพิกัด แผนที่ และช่องทางติดต่อเพื่อสอบถามหรือจองสนาม ${seoKeyword}`
         : `Find ${meta.name[locale]} courts in ${provinceLabel} with map locations, contact details, and community context.`
       : description;
   const courtPreview = await fetchCourtsBySport(
@@ -190,10 +193,11 @@ export async function generateMetadata({
     locale,
   );
   const hasListings = (courtPreview.count ?? 0) > 0;
+  const metaDescription = truncateMetaDescription(filteredDescription);
 
   return {
     title: filteredTitle,
-    description: filteredDescription,
+    description: metaDescription,
     robots: hasFreeTextSearch || !hasListings
       ? {
           index: false,
@@ -206,7 +210,7 @@ export async function generateMetadata({
     },
     openGraph: {
       title: filteredTitle,
-      description: filteredDescription,
+      description: metaDescription,
       url: canonical,
       type: "website",
       images: [
@@ -219,7 +223,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: filteredTitle,
-      description: filteredDescription,
+      description: metaDescription,
       images: [FINDER_PREVIEW_IMAGE],
     },
   };

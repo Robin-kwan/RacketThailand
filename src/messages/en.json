@@ -228,7 +228,7 @@
   },
   "courtFinder": {
     "title": "Court finder for {sport}",
-    "subtitle": "Search verified venues, filter by province, and get booking details for every racket sport hub.",
+    "subtitle": "Search verified venues, filter by province, and find contact-to-book details for every racket sport hub.",
     "searchPlaceholder": "Search by court name, location, or keyword",
     "provinceLabel": "Province",
     "startTimeLabel": "Start time",

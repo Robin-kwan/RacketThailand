@@ -13,7 +13,9 @@ import {
   buildAbsoluteUrl,
   buildCanonicalUrl,
   buildLocaleAlternates,
+  truncateMetaDescription,
 } from "@/lib/seo";
+import { getSeoKeyword } from "@/lib/seoKeywords";
 import { fetchGroupsBySport } from "@/server/groupFinder";
 
 const FINDER_PREVIEW_IMAGE = buildAbsoluteUrl("/sports/badminton.png");
@@ -127,9 +129,10 @@ export async function generateMetadata({
     locale === "th"
       ? `ค้นหากลุ่ม${meta.name[locale]} | RacketThailand`
       : `${meta.name[locale]} Group Finder | RacketThailand`;
+  const seoKeyword = getSeoKeyword(resolvedParams.sport, locale, "groups");
   const description =
     locale === "th"
-      ? `ค้นหากลุ่ม${meta.name[locale]} ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย`
+      ? `ค้นหากลุ่ม${meta.name[locale]} ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย ${seoKeyword}`
       : `Find active ${meta.name[locale]} groups in Thailand with schedules, contacts, and nearby map context.`;
 
   const validDayFilter = isDayKey(dayFilter) ? dayFilter : "";
@@ -155,17 +158,18 @@ export async function generateMetadata({
       : title;
   const filteredDescription = searchQuery
     ? locale === "th"
-      ? `ดูผลการค้นหากลุ่ม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ`
+      ? `ดูผลการค้นหากลุ่ม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
       : `Browse ${meta.name[locale]} group results matching "${searchQuery}" with schedules and contact details.`
     : filterSummary
       ? locale === "th"
-        ? `ค้นหากลุ่ม${meta.name[locale]}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ`
+        ? `ค้นหากลุ่ม${meta.name[locale]}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
         : `Find ${meta.name[locale]} groups filtered by ${filterSummary}, with schedules and contact details.`
       : description;
+  const metaDescription = truncateMetaDescription(filteredDescription);
 
   return {
     title: filteredTitle,
-    description: filteredDescription,
+    description: metaDescription,
     robots: hasFreeTextSearch
       ? {
           index: false,
@@ -178,7 +182,7 @@ export async function generateMetadata({
     },
     openGraph: {
       title: filteredTitle,
-      description: filteredDescription,
+      description: metaDescription,
       url: canonical,
       type: "website",
       images: [
@@ -191,7 +195,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: filteredTitle,
-      description: filteredDescription,
+      description: metaDescription,
       images: [FINDER_PREVIEW_IMAGE],
     },
   };

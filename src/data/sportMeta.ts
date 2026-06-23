@@ -121,7 +121,7 @@ export const SPORT_META: Record<string, SportMeta> = {
     coverImage: "/sports/tennis.png",
     heroHeadline: l("สนามและกลุ่มเทนนิสในที่เดียว", "Tennis courts & groups in one place."),
     heroDescription: l(
-      "ค้นหาสนามมาตรฐานและกลุ่มตีประจำ พร้อมช่องทางติดต่อผู้ดูแลเพื่อจองหรือขอร่วมเล่น",
+      "ค้นหาสนามมาตรฐานและกลุ่มตีประจำ พร้อมช่องทางติดต่อผู้ดูแลเพื่อสอบถามการจองหรือขอร่วมเล่น",
       "Find verified courts and weekly hitting groups with organizer contacts ready to go.",
     ),
     closingTitle: l("มีสนามหรือกลุ่มเทนนิสใหม่?", "Have new tennis courts or groups?"),
