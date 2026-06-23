@@ -5,6 +5,7 @@ import { requireAdminApiAccess } from "@/server/adminApi";
 type ImportRequestPayload = {
   preview?: unknown;
   runDate?: string | null;
+  sportCode?: string | null;
   selectedCandidateIndexes?: number[];
 };
 
@@ -39,6 +40,8 @@ export async function POST(request: Request) {
       preview: payload.preview,
       runDate:
         typeof payload.runDate === "string" ? payload.runDate.trim() : null,
+      sportCode:
+        typeof payload.sportCode === "string" ? payload.sportCode.trim() : null,
       selectedCandidateIndexes: Array.isArray(payload.selectedCandidateIndexes)
         ? payload.selectedCandidateIndexes
         : undefined,
