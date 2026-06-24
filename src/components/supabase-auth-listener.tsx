@@ -85,7 +85,6 @@ export function SupabaseAuthListener() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log(event)
       const recovery =
         event === "PASSWORD_RECOVERY" || isRecoverySession(session);
       if (recovery) {
