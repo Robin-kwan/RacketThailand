@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Thai } from "next/font/google";
 import Link from "next/link";
+import Script from "next/script";
 import "./globals.css";
 import { HeaderConfigProvider } from "@/components/header-context";
 import { SiteHeader } from "@/components/site-header";
@@ -93,6 +94,46 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${notoSansThai.variable} flex min-h-screen flex-col antialiased`}
       >
+        <Script id="pending-auth-redirect" strategy="beforeInteractive">
+          {`
+            (function () {
+              try {
+                if (window.location.pathname !== "/") return;
+                var key = "rt-pending-auth-redirect";
+                var pending = window.sessionStorage.getItem(key);
+                if (!pending) return;
+                var redirectPath = pending;
+                try {
+                  var parsed = JSON.parse(pending);
+                  if (parsed && typeof parsed.path === "string") {
+                    redirectPath = parsed.path;
+                  }
+                } catch (_) {}
+                if (!redirectPath || redirectPath.charAt(0) !== "/" || redirectPath.indexOf("//") === 0) {
+                  window.sessionStorage.removeItem(key);
+                  return;
+                }
+                var targetUrl = new URL(redirectPath, window.location.origin);
+                var normalizedPath = targetUrl.pathname.replace(/\\/+$/, "") || "/";
+                if (
+                  normalizedPath === "/" ||
+                  normalizedPath === "/login" ||
+                  normalizedPath === "/signup" ||
+                  normalizedPath === "/verify" ||
+                  normalizedPath.indexOf("/auth/") === 0
+                ) {
+                  window.sessionStorage.removeItem(key);
+                  return;
+                }
+                var target = targetUrl.pathname + targetUrl.search + targetUrl.hash;
+                var current = window.location.pathname + window.location.search + window.location.hash;
+                if (target !== current) {
+                  window.location.replace(target);
+                }
+              } catch (_) {}
+            })();
+          `}
+        </Script>
         <HeaderConfigProvider>
           <ScrollReset />
           <SupabaseAuthListener />

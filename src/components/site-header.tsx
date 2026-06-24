@@ -14,6 +14,7 @@ import {
   normalizeLocale,
   type Locale,
 } from "@/lib/i18n";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { useHeaderConfig } from "@/components/header-context";
 import { NotificationsMenu } from "@/components/notifications-menu";
 import type { NotificationCopy } from "@/components/notifications-menu";
@@ -138,6 +139,14 @@ export function SiteHeader({
     labels.casualPlayFinder,
     locale,
   ]);
+  const currentPathWithQuery = useMemo(() => {
+    const query = searchParams?.toString();
+    return `${pathname}${query ? `?${query}` : ""}`;
+  }, [pathname, searchParams]);
+  const loginHref = useMemo(
+    () => buildAuthPagePath("/login", locale, currentPathWithQuery),
+    [currentPathWithQuery, locale],
+  );
   const autoSubLabel = useMemo(
     () => activeSport?.name[locale] ?? deriveSportLabel(pathname, locale),
     [activeSport, pathname, locale],
@@ -170,7 +179,7 @@ export function SiteHeader({
   const handleLogout = async () => {
     setMenuOpen(false);
     await supabase.auth.signOut();
-    router.replace(buildLocalizedPath("/", locale));
+    router.replace(currentPathWithQuery);
     router.refresh();
   };
   const initials =
@@ -372,7 +381,7 @@ export function SiteHeader({
             ) : (
               <div className="hidden items-center gap-2 min-[1000px]:flex">
                 <Link
-                  href={buildLocalizedPath("/login", locale)}
+                  href={loginHref}
                   className="rounded-full border border-emerald-100/75 bg-white px-4 py-2 font-semibold text-emerald-900 hover:border-emerald-300"
                 >
                   {labels.login}
@@ -440,6 +449,7 @@ export function SiteHeader({
           logout: labels.logout,
           language: labels.language,
         }}
+        loginHref={loginHref}
         subLabel={resolvedSubLabel}
         sportMark={{
           code: resolvedSportSlug,

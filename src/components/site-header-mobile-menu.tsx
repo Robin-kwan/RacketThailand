@@ -60,6 +60,7 @@ export type MobileNavDrawerProps = {
   onClose: () => void;
   onLocaleSelect: (locale: Locale) => void;
   onLogout: () => void;
+  loginHref: string;
 };
 
 export function SiteHeaderMobileMenu({
@@ -77,6 +78,7 @@ export function SiteHeaderMobileMenu({
   onClose,
   onLocaleSelect,
   onLogout,
+  loginHref,
   subLabel,
   sportMark,
 }: MobileNavDrawerProps) {
@@ -227,7 +229,7 @@ export function SiteHeaderMobileMenu({
             </>
           ) : (
             <Link
-              href={buildLocalizedPath("/login", locale)}
+              href={loginHref}
               className="block rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
               onClick={onClose}
             >
