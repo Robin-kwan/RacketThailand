@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Thai } from "next/font/google";
 import Link from "next/link";
-import Script from "next/script";
 import "./globals.css";
 import { HeaderConfigProvider } from "@/components/header-context";
 import { SiteHeader } from "@/components/site-header";
@@ -31,6 +30,73 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 const SITE_URL = getSiteUrl();
+const PENDING_AUTH_REDIRECT_SCRIPT = `
+  (function () {
+    try {
+      if (window.location.pathname !== "/") return;
+      var key = "rt-pending-auth-redirect";
+      var readPendingRedirect = function () {
+        var pending = window.sessionStorage.getItem(key);
+        if (!pending) return "";
+        var redirectPath = pending;
+        try {
+          var parsed = JSON.parse(pending);
+          if (parsed && typeof parsed.path === "string") {
+            redirectPath = parsed.path;
+          }
+        } catch (_) {}
+        if (!redirectPath || redirectPath.charAt(0) !== "/" || redirectPath.indexOf("//") === 0) {
+          window.sessionStorage.removeItem(key);
+          return "";
+        }
+        var targetUrl = new URL(redirectPath, window.location.origin);
+        var normalizedPath = targetUrl.pathname.replace(/\\/+$/, "") || "/";
+        if (
+          normalizedPath === "/" ||
+          normalizedPath === "/login" ||
+          normalizedPath === "/signup" ||
+          normalizedPath === "/verify" ||
+          normalizedPath.indexOf("/auth/") === 0
+        ) {
+          window.sessionStorage.removeItem(key);
+          return "";
+        }
+        return targetUrl.pathname + targetUrl.search + targetUrl.hash;
+      };
+      var authParams = new URLSearchParams(window.location.search);
+      if (
+        authParams.has("code") ||
+        authParams.has("error") ||
+        authParams.has("error_description")
+      ) {
+        var callbackUrl = new URL("/auth/callback", window.location.origin);
+        authParams.forEach(function (value, name) {
+          callbackUrl.searchParams.set(name, value);
+        });
+        if (!callbackUrl.searchParams.has("next")) {
+          var pendingNext = readPendingRedirect();
+          if (pendingNext) {
+            callbackUrl.searchParams.set("next", pendingNext);
+          }
+        }
+        window.location.replace(callbackUrl.pathname + callbackUrl.search);
+        return;
+      }
+      if (
+        window.location.hash.indexOf("access_token=") >= 0 ||
+        window.location.hash.indexOf("refresh_token=") >= 0
+      ) {
+        return;
+      }
+      var target = readPendingRedirect();
+      if (!target) return;
+      var current = window.location.pathname + window.location.search + window.location.hash;
+      if (target !== current) {
+        window.location.replace(target);
+      }
+    } catch (_) {}
+  })();
+`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -91,49 +157,16 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: PENDING_AUTH_REDIRECT_SCRIPT,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${notoSansThai.variable} flex min-h-screen flex-col antialiased`}
       >
-        <Script id="pending-auth-redirect" strategy="beforeInteractive">
-          {`
-            (function () {
-              try {
-                if (window.location.pathname !== "/") return;
-                var key = "rt-pending-auth-redirect";
-                var pending = window.sessionStorage.getItem(key);
-                if (!pending) return;
-                var redirectPath = pending;
-                try {
-                  var parsed = JSON.parse(pending);
-                  if (parsed && typeof parsed.path === "string") {
-                    redirectPath = parsed.path;
-                  }
-                } catch (_) {}
-                if (!redirectPath || redirectPath.charAt(0) !== "/" || redirectPath.indexOf("//") === 0) {
-                  window.sessionStorage.removeItem(key);
-                  return;
-                }
-                var targetUrl = new URL(redirectPath, window.location.origin);
-                var normalizedPath = targetUrl.pathname.replace(/\\/+$/, "") || "/";
-                if (
-                  normalizedPath === "/" ||
-                  normalizedPath === "/login" ||
-                  normalizedPath === "/signup" ||
-                  normalizedPath === "/verify" ||
-                  normalizedPath.indexOf("/auth/") === 0
-                ) {
-                  window.sessionStorage.removeItem(key);
-                  return;
-                }
-                var target = targetUrl.pathname + targetUrl.search + targetUrl.hash;
-                var current = window.location.pathname + window.location.search + window.location.hash;
-                if (target !== current) {
-                  window.location.replace(target);
-                }
-              } catch (_) {}
-            })();
-          `}
-        </Script>
         <HeaderConfigProvider>
           <ScrollReset />
           <SupabaseAuthListener />
