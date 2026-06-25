@@ -154,6 +154,13 @@
     "emailExists": "An account with this email already exists. Try signing in or request a password reset.",
     "rememberMe": "Remember me on this device",
     "forgotPassword": "Forgot password?",
+    "inAppBrowser": {
+      "title": "Opening from Facebook or Instagram?",
+      "body": "If Google or LINE login does not complete, copy this link and open it in Safari or Chrome, then try signing in again.",
+      "copyLink": "Copy link",
+      "copied": "Link copied",
+      "dismiss": "Dismiss"
+    },
     "forgot": {
       "title": "Forgot your password?",
       "subtitle": "Enter your email and we’ll send a reset link. This also lets Google login users create a password for manual sign-in.",
