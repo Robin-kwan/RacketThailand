@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/auth/signup-form";
+import { InAppBrowserNotice } from "@/components/auth/in-app-browser-notice";
 import { BaseCard } from "@/components/base-card";
 import {
   getTranslator,
@@ -61,6 +62,13 @@ export default async function SignupPage({
     googleButton: t("auth.signupGoogleButton"),
     lineButton: t("auth.signupLineButton"),
   };
+  const inAppBrowserCopy = {
+    title: t("auth.inAppBrowser.title"),
+    body: t("auth.inAppBrowser.body"),
+    copyLink: t("auth.inAppBrowser.copyLink"),
+    copied: t("auth.inAppBrowser.copied"),
+    dismiss: t("auth.inAppBrowser.dismiss"),
+  };
 
   if (!t) {
     throw new Error("Translator unavailable");
@@ -73,6 +81,7 @@ export default async function SignupPage({
           as="section"
           className="w-full rounded-[32px] border border-slate-200 bg-white p-8"
         >
+          <InAppBrowserNotice copy={inAppBrowserCopy} />
           <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("auth.signupTitle")}
           </h1>
