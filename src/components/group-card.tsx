@@ -216,7 +216,7 @@ export function GroupCard({
             src={imageUrl}
             alt={imageAlt ?? name ?? fallbackGroupPhotoAlt}
             fill
-            sizes="(max-width:768px) 100vw, 50vw"
+            sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition duration-300 group-hover:scale-105"
           />
         </div>

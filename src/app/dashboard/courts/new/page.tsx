@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { CourtAdminForm } from "@/components/admin/court-form";
 import { SPORT_META } from "@/data/sportMeta";
@@ -18,6 +19,14 @@ type SearchParams = {
 };
 
 type SearchParamsInput = Promise<SearchParams> | undefined;
+
+export const metadata: Metadata = {
+  title: "Add court | RacketThailand",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,

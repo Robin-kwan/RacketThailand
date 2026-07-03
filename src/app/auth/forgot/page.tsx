@@ -21,6 +21,10 @@ async function resolveSearchParams(
 
 export const metadata: Metadata = {
   title: "Forgot password | RacketThailand",
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 export default async function ForgotPasswordPage({

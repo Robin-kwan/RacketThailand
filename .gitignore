@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# codex local runtime artifacts
+.codex/*
+!.codex/facebook-badminton-group-preview/
+!.codex/facebook-pickleball-group-preview/
+!.codex/facebook-tennis-group-preview/
+.codex/facebook-badminton-group-preview/*
+.codex/facebook-pickleball-group-preview/*
+.codex/facebook-tennis-group-preview/*
+!.codex/facebook-badminton-group-preview/workflow.md
+!.codex/facebook-pickleball-group-preview/workflow.md
+!.codex/facebook-tennis-group-preview/workflow.md
