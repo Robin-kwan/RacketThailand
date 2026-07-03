@@ -6,7 +6,19 @@ const BASE_URL =
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: "*", allow: "/" }],
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: [
+          "/admin/",
+          "/api/",
+          "/dashboard/",
+          "/profile/",
+          "/*/edit",
+        ],
+      },
+    ],
     sitemap: `${BASE_URL}/sitemap.xml`,
   };
 }

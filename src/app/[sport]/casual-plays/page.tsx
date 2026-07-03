@@ -28,6 +28,12 @@ async function resolveSearchParams(
   return searchParams;
 }
 
+function getThaiCasualPlayIntent(sportCode: string, sportName: string) {
+  const playVerbSports = new Set(["padel", "pickleball"]);
+  const verb = playVerbSports.has(sportCode) ? "เล่น" : "ตี";
+  return `หาเพื่อน${verb}${sportName}`;
+}
+
 export async function generateMetadata({
   params,
   searchParams,
@@ -53,13 +59,17 @@ export async function generateMetadata({
   const canonicalPath = `/${resolvedParams.sport}/casual-plays`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
+  const thaiIntent = getThaiCasualPlayIntent(
+    resolvedParams.sport,
+    meta.name.th,
+  );
   const title =
     locale === "th"
-      ? `หาเพื่อนตี${meta.name[locale]} | RacketThailand`
+      ? `${thaiIntent} | RacketThailand`
       : `${meta.name[locale]} Casual Plays | RacketThailand`;
   const description =
     locale === "th"
-      ? `ค้นหาโพสต์หาเพื่อนตี${meta.name[locale]} พร้อมวัน เวลา สนาม และข้อมูลติดต่อ`
+      ? `ค้นหาโพสต์${thaiIntent} พร้อมวัน เวลา สนาม และข้อมูลติดต่อ`
       : `Find one-off ${meta.name[locale]} sessions with date, court, and organizer contact details.`;
   const playData = await fetchCasualPlaysBySport(
     resolvedParams.sport,

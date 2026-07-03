@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BaseCard } from "@/components/base-card";
@@ -18,6 +19,14 @@ type SearchParams = {
 };
 
 type SearchParamsInput = Promise<SearchParams> | undefined;
+
+export const metadata: Metadata = {
+  title: "Dashboard | RacketThailand",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,

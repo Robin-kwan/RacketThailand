@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { BaseCard } from "@/components/base-card";
 import { CasualPlayCreationForm } from "@/components/casual-plays/casual-play-creation-form";
@@ -18,6 +19,14 @@ import { fetchSportIdsByCourtIds } from "@/server/courtSports";
 
 type SearchParams = { lang?: string; sport?: string };
 type SearchParamsInput = Promise<SearchParams> | undefined;
+
+export const metadata: Metadata = {
+  title: "Create casual play | RacketThailand",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,

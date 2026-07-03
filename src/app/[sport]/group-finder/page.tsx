@@ -65,6 +65,12 @@ function isDayKey(value: string): value is DayKey {
   return DAY_KEYS.includes(value as DayKey);
 }
 
+function getThaiGroupFinderIntent(sportCode: string, sportName: string) {
+  const playVerbSports = new Set(["padel", "pickleball"]);
+  const verb = playVerbSports.has(sportCode) ? "เล่น" : "ตี";
+  return `หาเพื่อน${verb}${sportName}`;
+}
+
 async function resolveParams(params: ParamsInput): Promise<Params> {
   return params;
 }
@@ -125,14 +131,18 @@ export async function generateMetadata({
   );
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
+  const thaiIntent = getThaiGroupFinderIntent(
+    resolvedParams.sport,
+    meta.name.th,
+  );
   const title =
     locale === "th"
-      ? `ค้นหากลุ่ม${meta.name[locale]} | RacketThailand`
+      ? `ค้นหากลุ่ม${meta.name[locale]}และ${thaiIntent} | RacketThailand`
       : `${meta.name[locale]} Group Finder | RacketThailand`;
   const seoKeyword = getSeoKeyword(resolvedParams.sport, locale, "groups");
   const description =
     locale === "th"
-      ? `ค้นหากลุ่ม${meta.name[locale]} ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย ${seoKeyword}`
+      ? `ค้นหากลุ่ม${meta.name[locale]}และโพสต์${thaiIntent}ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย ${seoKeyword}`
       : `Find active ${meta.name[locale]} groups in Thailand with schedules, contacts, and nearby map context.`;
 
   const validDayFilter = isDayKey(dayFilter) ? dayFilter : "";
@@ -158,11 +168,11 @@ export async function generateMetadata({
       : title;
   const filteredDescription = searchQuery
     ? locale === "th"
-      ? `ดูผลการค้นหากลุ่ม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
+      ? `ดูผลการค้นหากลุ่ม${meta.name[locale]}และโพสต์${thaiIntent}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
       : `Browse ${meta.name[locale]} group results matching "${searchQuery}" with schedules and contact details.`
     : filterSummary
       ? locale === "th"
-        ? `ค้นหากลุ่ม${meta.name[locale]}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
+        ? `ค้นหากลุ่ม${meta.name[locale]}และ${thaiIntent}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
         : `Find ${meta.name[locale]} groups filtered by ${filterSummary}, with schedules and contact details.`
       : description;
   const metaDescription = truncateMetaDescription(filteredDescription);

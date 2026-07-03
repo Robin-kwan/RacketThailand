@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { GroupCreationForm } from "@/components/groups/group-creation-form";
 import type { Option } from "@/components/groups/group-form";
@@ -15,6 +16,14 @@ import { fetchSportIdsByCourtIds } from "@/server/courtSports";
 
 type SearchParams = { lang?: string; sport?: string; court?: string };
 type SearchParamsInput = Promise<SearchParams> | undefined;
+
+export const metadata: Metadata = {
+  title: "Create group | RacketThailand",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 async function resolveSearchParams(
   searchParams?: SearchParamsInput,

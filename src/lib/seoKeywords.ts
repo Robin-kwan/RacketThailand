@@ -21,7 +21,7 @@ const KEYWORDS: Record<string, KeywordEntry> = {
   },
   padel: {
     hero: {
-      th: "ค้นหาสนามพาเดล คอร์ทพาเดลใกล้ฉัน กลุ่มพาเดล และข้อมูลสำหรับคนที่อยากรู้ว่าพาเดลคืออะไร",
+      th: "ค้นหาสนามพาเดล คอร์ทพาเดลใกล้ฉัน กลุ่มพาเดล หาเพื่อนเล่นพาเดล และข้อมูลสำหรับคนที่อยากรู้ว่าพาเดลคืออะไร",
       en: "Find padel courts near me or doubles groups that are accepting new players.",
     },
     courts: {
@@ -29,13 +29,13 @@ const KEYWORDS: Record<string, KeywordEntry> = {
       en: "Find padel courts near me",
     },
     groups: {
-      th: "กลุ่มพาเดล ก๊วนพาเดล และคู่เล่นพาเดลที่เปิดรับสมาชิก",
+      th: "กลุ่มพาเดล ก๊วนพาเดล หาเพื่อนเล่นพาเดล และคู่เล่นพาเดลที่เปิดรับสมาชิก",
       en: "Find padel groups near me",
     },
   },
   pickleball: {
     hero: {
-      th: "ค้นหาสนามพิคเคิลบอลใกล้ฉัน กลุ่มพิคเคิลบอล open play และข้อมูลสำหรับคนที่อยากรู้ว่าพิคเคิลบอลคืออะไร",
+      th: "ค้นหาสนามพิคเคิลบอลใกล้ฉัน กลุ่มพิคเคิลบอล open play หาเพื่อนเล่นพิคเคิลบอล และข้อมูลสำหรับคนที่อยากรู้ว่าพิคเคิลบอลคืออะไร",
       en: "Find pickleball courts near me and running groups across Thailand.",
     },
     courts: {
@@ -43,7 +43,7 @@ const KEYWORDS: Record<string, KeywordEntry> = {
       en: "Find pickleball courts near me",
     },
     groups: {
-      th: "กลุ่มพิคเคิลบอล ก๊วนพิคเคิลบอล และ pickleball open play ที่เปิดรับผู้เล่นใหม่",
+      th: "กลุ่มพิคเคิลบอล ก๊วนพิคเคิลบอล หาเพื่อนเล่นพิคเคิลบอล และ pickleball open play ที่เปิดรับผู้เล่นใหม่",
       en: "Find pickleball meetup groups near me",
     },
   },
