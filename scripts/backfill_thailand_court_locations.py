@@ -142,6 +142,7 @@ def load_reference_tables(project_url: str, service_role: str):
             province_alias_map[alias] = province.id
 
     districts_by_province: dict[int, list[District]] = {}
+    districts_by_id: dict[int, District] = {}
     for row in districts_json:
         district = District(
             id=int(row["id"]),
@@ -149,6 +150,7 @@ def load_reference_tables(project_url: str, service_role: str):
             name_th=row["name_th"],
             name_en=row["name_en"],
         )
+        districts_by_id[district.id] = district
         districts_by_province.setdefault(district.province_id, []).append(district)
 
     district_aliases_by_province: dict[int, dict[str, District]] = {}
@@ -159,7 +161,7 @@ def load_reference_tables(project_url: str, service_role: str):
                 alias_map[alias] = district
         district_aliases_by_province[province_id] = alias_map
 
-    return provinces, province_alias_map, district_aliases_by_province
+    return provinces, province_alias_map, district_aliases_by_province, districts_by_id
 
 
 def extract_component(components: list[dict], types: list[str]) -> str | None:
@@ -195,7 +197,7 @@ def main() -> int:
     if not google_key:
         raise RuntimeError("Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env")
 
-    provinces, province_alias_map, district_aliases_by_province = load_reference_tables(project_url, service_role)
+    provinces, province_alias_map, district_aliases_by_province, districts_by_id = load_reference_tables(project_url, service_role)
     headers = {
         "apikey": service_role,
         "Authorization": f"Bearer {service_role}",
@@ -205,7 +207,7 @@ def main() -> int:
     }
 
     courts = request_json(
-        f"{project_url}/rest/v1/courts?select=id,name,address,district,province,lat,lng,google_place_id,province_id,district_id&or=(province_id.is.null,district_id.is.null)&order=name.asc",
+        f"{project_url}/rest/v1/courts?select=id,name,address,district,province,lat,lng,google_place_id,province_id,district_id&order=name.asc",
         headers={
             "apikey": service_role,
             "Authorization": f"Bearer {service_role}",
@@ -217,6 +219,41 @@ def main() -> int:
     skipped: list[dict] = []
 
     for court in courts:
+        existing_province_id = court.get("province_id")
+        existing_district_id = court.get("district_id")
+        if existing_province_id is not None and existing_district_id is not None:
+            province = provinces.get(int(existing_province_id))
+            district = districts_by_id.get(int(existing_district_id))
+            if province and district and district.province_id == province.id:
+                if court.get("province") != province.name_th or court.get("district") != district.name_th:
+                    update_payload = {
+                        "province_id": province.id,
+                        "district_id": district.id,
+                        "province": province.name_th,
+                        "district": district.name_th,
+                    }
+                    request_json(
+                        f"{project_url}/rest/v1/courts?id=eq.{court['id']}",
+                        headers=headers,
+                        method="PATCH",
+                        body=json.dumps(update_payload, ensure_ascii=False).encode("utf-8"),
+                    )
+                    updated.append(
+                        {
+                            "id": court["id"],
+                            "name": court.get("name"),
+                            "reason": "canonical_text_sync",
+                            "province_before": court.get("province"),
+                            "province_after": province.name_th,
+                            "district_before": court.get("district"),
+                            "district_after": district.name_th,
+                            "province_id": province.id,
+                            "district_id": district.id,
+                            "google_place_id_added": False,
+                        }
+                    )
+                continue
+
         lat = court.get("lat")
         lng = court.get("lng")
         if lat is None or lng is None or math.isnan(float(lat)) or math.isnan(float(lng)):

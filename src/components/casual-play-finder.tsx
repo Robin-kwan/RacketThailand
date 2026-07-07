@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { track } from "@vercel/analytics";
 import type { CasualPlayRecord } from "@/server/casualPlays";
 import { CasualPlayCard } from "@/components/casual-play-card";
+import { DatePickerField } from "@/components/date-picker-field";
 import { NearbyMap, type NearbyMapCourt } from "@/components/nearby-map";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -277,23 +278,20 @@ export function CasualPlayFinder({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">
-              {copy.dateLabel}
-            </label>
-            <input
-              type="date"
+            <DatePickerField
+              label={copy.dateLabel}
               value={dateFilter}
               min={TODAY_DATE}
               max={MAX_PLAY_DATE}
-              onChange={(event) => {
-                setDateFilter(event.target.value);
+              locale={locale}
+              onChange={(nextValue) => {
+                setDateFilter(nextValue);
                 track("finder_filter_used", {
                   surface: "casual_play_finder",
                   sport: sportCode,
                   cta: "date",
                 });
               }}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-400 focus:ring-offset-0"
             />
           </div>
         </div>

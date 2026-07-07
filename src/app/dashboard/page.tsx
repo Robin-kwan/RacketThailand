@@ -11,6 +11,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { formatDateForDisplay } from "@/lib/date-format";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
@@ -76,9 +77,8 @@ function getPrimaryImage(
 
 function formatDate(value: string | null, locale: "th" | "en") {
   if (!value) return "-";
-  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
-    dateStyle: "medium",
-  }).format(new Date(value));
+  void locale;
+  return formatDateForDisplay(value);
 }
 
 export default async function DashboardPage({

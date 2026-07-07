@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { formatDateTimeForDisplay } from "@/lib/date-format";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { showToast } from "@/components/toaster";
 
@@ -34,8 +35,7 @@ type CourtSubmissionRequestsProps = {
 };
 
 function formatDate(value: string) {
-  const date = new Date(value);
-  return date.toLocaleString();
+  return formatDateTimeForDisplay(value);
 }
 
 export function CourtSubmissionRequests({

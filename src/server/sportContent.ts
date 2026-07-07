@@ -1,4 +1,5 @@
 import { FEATURE_DESCRIPTIONS, getSportMeta } from "@/data/sportMeta";
+import { formatDateForDisplay } from "@/lib/date-format";
 import type { Locale } from "@/lib/i18n";
 import { isPublishedGroupStatus } from "@/lib/group-status";
 import { supabaseSelect } from "@/lib/supabaseRest";
@@ -82,16 +83,9 @@ type FeedbackRow = {
 
 const FINDER_PREVIEW_LIMIT = "12";
 
-const DATE_FORMAT: Intl.DateTimeFormatOptions = {
-  month: "short",
-  day: "numeric",
-};
-
 function formatDate(dateString: string | null | undefined) {
   if (!dateString) return "";
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-US", DATE_FORMAT);
+  return formatDateForDisplay(dateString);
 }
 
 function formatCount(count?: number | null) {

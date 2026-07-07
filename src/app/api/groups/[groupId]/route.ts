@@ -5,6 +5,11 @@ import { requireGroupAccess } from "@/server/groupAccess";
 import { validateCourtIdsForSport } from "@/server/groupCourtValidation";
 import { deleteGroupWithAssets } from "@/server/adminDeletion";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import {
+  getCourtIdsFromGroupEvents,
+  normalizeGroupEvents,
+  type GroupEventPayload,
+} from "@/server/groupEvents";
 
 type RouteParams = { groupId: string };
 type RouteParamsInput = Promise<RouteParams>;
@@ -28,6 +33,7 @@ type PatchGroupPayload = {
   description?: string;
   courtIds?: string[];
   sessions?: SessionPayload[];
+  events?: GroupEventPayload[];
   playFormat?: string | null;
   playerAmount?: number | string | null;
   allowWalkIn?: boolean | null;
@@ -211,17 +217,30 @@ export async function PATCH(
   }
 
   const normalizedSessions = normalizeSessions(payload.sessions);
+  const normalizedEvents = normalizeGroupEvents(payload.events);
   const linkedCourtIds = Array.from(
     new Set([
       ...normalizeCourtIds(payload.courtIds),
       ...normalizedSessions.map((session) => session.courtId),
     ]),
   );
+  const submittedCourtIdsToValidate = Array.from(
+    new Set([
+      ...linkedCourtIds,
+      ...getCourtIdsFromGroupEvents(normalizedEvents),
+    ]),
+  );
   const hasSessionPayload = Array.isArray(payload.sessions);
+  const hasEventPayload = Array.isArray(payload.events);
   const hasCourtPayload = Array.isArray(payload.courtIds);
   const nextSportId = payload.sportId ?? existingGroup.sport_id;
-  let courtIdsToValidate = linkedCourtIds;
-  if (payload.sportId && !hasSessionPayload && !hasCourtPayload) {
+  let courtIdsToValidate = submittedCourtIdsToValidate;
+  if (
+    payload.sportId &&
+    !hasSessionPayload &&
+    !hasCourtPayload &&
+    !hasEventPayload
+  ) {
     const [{ data: existingSessions }, { data: existingCourtLinks }] =
       await Promise.all([
         adminSupabase
@@ -233,10 +252,24 @@ export async function PATCH(
           .select("court_id")
           .eq("group_id", resolved.groupId),
       ]);
+    const { data: existingEvents, error: existingEventsError } =
+      await adminSupabase
+        .from("group_events")
+        .select("court_id")
+        .eq("group_id", resolved.groupId);
+    if (existingEventsError) {
+      console.warn(
+        "Unable to load group upcoming sessions for sport validation.",
+        existingEventsError,
+      );
+    }
     courtIdsToValidate = Array.from(
       new Set([
         ...((existingSessions ?? []).map((row) => row.court_id)),
         ...((existingCourtLinks ?? []).map((row) => row.court_id)),
+        ...((existingEvents ?? [])
+          .map((row) => row.court_id)
+          .filter((courtId): courtId is string => Boolean(courtId))),
       ]),
     );
   }
@@ -262,7 +295,12 @@ export async function PATCH(
   }
   const shouldUpdateGroup = Object.keys(update).length > 0;
 
-  if (!shouldUpdateGroup && !hasSessionPayload && !hasCourtPayload) {
+  if (
+    !shouldUpdateGroup &&
+    !hasSessionPayload &&
+    !hasCourtPayload &&
+    !hasEventPayload
+  ) {
     return NextResponse.json(
       { error: "No changes submitted." },
       { status: 400 },
@@ -314,6 +352,39 @@ export async function PATCH(
         );
       }
 
+    }
+  }
+  if (hasEventPayload) {
+    const { error: deleteError } = await adminSupabase
+      .from("group_events")
+      .delete()
+      .eq("group_id", resolved.groupId);
+    if (deleteError) {
+      return NextResponse.json(
+        { error: deleteError.message },
+        { status: 500 },
+      );
+    }
+    if (normalizedEvents.length > 0) {
+      const { error: insertError } = await adminSupabase
+        .from("group_events")
+        .insert(
+          normalizedEvents.map((event) => ({
+            group_id: resolved.groupId,
+            court_id: event.courtId,
+            venue_name: event.venueName,
+            starts_at: event.startsAt,
+            ends_at: event.endsAt,
+            notes: event.notes,
+            created_by: user.id,
+          })),
+        );
+      if (insertError) {
+        return NextResponse.json(
+          { error: insertError.message },
+          { status: 500 },
+        );
+      }
     }
   }
 

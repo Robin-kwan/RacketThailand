@@ -87,6 +87,7 @@ export function GroupCreationForm({
               },
             ]
           : [],
+      events: [],
       playFormat: "double",
       playerAmount: "",
       allowWalkIn: true,
@@ -116,6 +117,14 @@ export function GroupCreationForm({
     lineId?: string;
     websiteUrl?: string;
     sessions: { courtId: string; day: string; start: string; end: string }[];
+    events: {
+      courtId: string;
+      venueName: string;
+      date: string;
+      start: string;
+      end: string;
+      notes: string;
+    }[];
   }) => {
     setSubmitting(true);
 
@@ -200,9 +209,7 @@ export function GroupCreationForm({
     });
     showToast({ variant: "success", message: copy.success });
     if (groupId) {
-      window.setTimeout(() => {
-        router.push(buildLocalizedPath(`/groups/${groupId}`, locale));
-      }, 900);
+      router.push(buildLocalizedPath(`/groups/${groupId}`, locale));
       return;
     }
     setImages([]);
@@ -221,6 +228,7 @@ export function GroupCreationForm({
       sports={sports}
       courts={courts}
       dayOptions={dayOptions}
+      locale={locale}
       copy={copy}
       photoSection={
         <MultiImageInput
@@ -247,6 +255,7 @@ export function GroupCreationForm({
       submitting={submitting}
       submitLabel={copy.submit}
       submittingLabel={copy.submitting}
+      hideSessionStep
     />
   );
 }

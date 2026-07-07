@@ -25,6 +25,15 @@ type ParamsInput = Promise<Params>;
 type SearchParams = { lang?: string };
 type SearchParamsInput = Promise<SearchParams> | undefined;
 
+type GroupEventRow = {
+  id: string;
+  court_id: string | null;
+  venue_name: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  notes: string | null;
+};
+
 async function resolveParams(params: ParamsInput): Promise<Params> {
   return params;
 }
@@ -52,6 +61,48 @@ function formatProfileOption(profile: {
         ? `${username} - ${displayName}`
         : username ?? displayName ?? profile.id.slice(0, 8),
   };
+}
+
+function formatDateInThailand(value: string) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(new Date(value));
+  const partMap = new Map(parts.map((part) => [part.type, part.value]));
+  return [
+    partMap.get("year"),
+    partMap.get("month"),
+    partMap.get("day"),
+  ]
+    .filter(Boolean)
+    .join("-");
+}
+
+function formatTimeInThailand(value: string | null) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Bangkok",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(value));
+}
+
+async function fetchGroupEventsForEdit(groupId: string) {
+  try {
+    const { data } = await supabaseSelect<GroupEventRow>("group_events", {
+      select: "id,court_id,venue_name,starts_at,ends_at,notes",
+      group_id: `eq.${groupId}`,
+      order: "starts_at.asc",
+    });
+    return data ?? [];
+  } catch (error) {
+    console.warn("Unable to load group upcoming sessions.", error);
+    return [];
+  }
 }
 
 export default async function EditGroupPage({
@@ -154,6 +205,8 @@ export default async function EditGroupPage({
     group_id: `eq.${group.id}`,
   });
 
+  const eventRows = await fetchGroupEventsForEdit(group.id);
+
   const { data: photoRows } = await supabaseSelect<{
     id: string;
     image_url: string | null;
@@ -231,6 +284,9 @@ export default async function EditGroupPage({
     new Set([
       ...((courtGroupRows ?? []).map((row) => row.court_id)),
       ...Array.from(groupedSessions.keys()),
+      ...eventRows
+        .map((row) => row.court_id)
+        .filter((courtId): courtId is string => Boolean(courtId)),
     ]),
   );
   const groupedArray =
@@ -269,6 +325,19 @@ export default async function EditGroupPage({
     description: group.description ?? "",
     status: normalizeGroupStatus(group.status),
     sessions: sanitizedSessions,
+    events: eventRows.map((event) => ({
+      id: event.id,
+      courtId:
+        event.court_id &&
+        sportCourtOptions.some((court) => court.value === event.court_id)
+          ? event.court_id
+          : "",
+      venueName: event.venue_name ?? "",
+      date: formatDateInThailand(event.starts_at),
+      start: formatTimeInThailand(event.starts_at),
+      end: formatTimeInThailand(event.ends_at),
+      notes: event.notes ?? "",
+    })),
     playFormat: group.play_format ?? "double",
     playerAmount:
       typeof group.player_amount === "number"
@@ -312,6 +381,19 @@ export default async function EditGroupPage({
     sessionsRemoveCourt: t("groups.form.sessionsRemoveCourt"),
     sessionsEmpty: t("groups.form.sessionsEmpty"),
     sessionCourt: t("groups.form.sessionCourt"),
+    upcomingLabel: t("groups.form.upcomingLabel"),
+    upcomingHelp: t("groups.form.upcomingHelp"),
+    upcomingAdd: t("groups.form.upcomingAdd"),
+    upcomingRemove: t("groups.form.upcomingRemove"),
+    upcomingCourt: t("groups.form.upcomingCourt"),
+    upcomingNoCourt: t("groups.form.upcomingNoCourt"),
+    upcomingVenueName: t("groups.form.upcomingVenueName"),
+    upcomingVenuePlaceholder: t("groups.form.upcomingVenuePlaceholder"),
+    upcomingDate: t("groups.form.upcomingDate"),
+    upcomingStart: t("groups.form.upcomingStart"),
+    upcomingEnd: t("groups.form.upcomingEnd"),
+    upcomingNotes: t("groups.form.upcomingNotes"),
+    upcomingNotesPlaceholder: t("groups.form.upcomingNotesPlaceholder"),
     quickCourtAddOption: t("groups.form.quickCourtAddOption"),
     quickCourtTitle: t("groups.form.quickCourtTitle"),
     quickCourtName: t("groups.form.quickCourtName"),

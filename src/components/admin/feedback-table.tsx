@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { ChevronDown } from "lucide-react";
 import { showToast } from "@/components/toaster";
+import { formatDateForDisplay } from "@/lib/date-format";
 
 export type AdminFeedbackRow = {
   id: string;
@@ -215,7 +216,7 @@ export function AdminFeedbackTable({ rows, copy }: FeedbackTableProps) {
                   </td>
                   <td className="px-5 py-4">
                     <p className="text-sm text-slate-600 whitespace-nowrap">
-                      {new Date(row.createdAt).toLocaleDateString()}
+                      {formatDateForDisplay(row.createdAt)}
                     </p>
                   </td>
                   <td className="px-5 py-4">

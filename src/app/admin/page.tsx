@@ -15,6 +15,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { formatDateTimeForDisplay } from "@/lib/date-format";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
 
@@ -113,7 +114,8 @@ async function resolveSearchParams(
 }
 
 function formatDateTime(value: string, locale: "th" | "en") {
-  return new Date(value).toLocaleString(locale === "th" ? "th-TH" : "en-US");
+  void locale;
+  return formatDateTimeForDisplay(value);
 }
 
 function resolveGrowthWindow(value?: string): (typeof GROWTH_WINDOWS)[number] {

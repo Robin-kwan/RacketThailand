@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n";
+import { formatDateForDisplay } from "@/lib/date-format";
 
 export const THAILAND_TIMEZONE = "Asia/Bangkok";
 const THAILAND_OFFSET = "+07:00";
@@ -102,22 +103,12 @@ export function isCasualPlayTimeRangeValid(
 
 export function formatCasualPlayDate(
   playDate: string,
-  locale: Locale,
+  _locale: Locale,
   style: DateFormatStyle = "full",
 ) {
   if (!playDate) return "";
-  const date = new Date(`${playDate}T12:00:00${THAILAND_OFFSET}`);
-  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
-    timeZone: THAILAND_TIMEZONE,
-    ...(style === "compact"
-      ? { month: "short", day: "numeric" }
-      : {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
-  }).format(date);
+  void style;
+  return formatDateForDisplay(playDate);
 }
 
 export function formatCasualPlayTime(

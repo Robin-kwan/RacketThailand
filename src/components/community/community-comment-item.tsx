@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { CommunityComment } from "@/server/communityBoard";
 import { showToast } from "@/components/toaster";
+import { formatDateTimeForDisplay } from "@/lib/date-format";
 
 type CommunityCommentItemProps = {
   comment: CommunityComment;
@@ -113,7 +114,7 @@ export function CommunityCommentItem({
             {comment.body_text}
           </p>
           <p className="mt-2 text-xs text-[rgb(var(--foreground-rgb)/0.6)]">
-            {new Date(comment.created_at).toLocaleString()}
+            {formatDateTimeForDisplay(comment.created_at)}
           </p>
         </>
       )}

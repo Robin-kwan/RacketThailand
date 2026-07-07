@@ -63,3 +63,16 @@ Every import run should report:
 - image/OCR confidence issues
 - courts created during import
 
+## Court Creation During Group Imports
+
+If a group import creates a court because the venue is not already in RacketThailand, the court must follow `docs/court-insert-standard.md`.
+
+In particular:
+
+- do not insert courts with only legacy text `province` / `district`
+- do not store raw Google location text such as `Bangkok`, `Tambon Tha Sai`, or `Huaykwang` in court location fields
+- resolve `province_id` and `district_id` from `public.provinces` and `public.districts`
+- store canonical Thai `province` and `district` names from the reference tables
+- verify after the import that no newly created court has missing `province_id` or `district_id`
+
+If the location cannot be normalized, skip court creation and leave the group candidate as requiring manual review.

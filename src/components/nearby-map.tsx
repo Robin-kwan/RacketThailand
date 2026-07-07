@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 
 export type NearbyMapCourt = {
@@ -40,6 +40,17 @@ const mapOptions = {
   styles: mapStyles,
   ...(MAP_ID ? { mapId: MAP_ID } : {}),
 } as const;
+
+let googleMapsPromise: Promise<typeof google> | null = null;
+
+const loadGoogleMaps = (apiKey: string) => {
+  googleMapsPromise ??= new Loader({
+    apiKey,
+    version: "weekly",
+    libraries: ["marker"],
+  }).load();
+  return googleMapsPromise;
+};
 
 const createCourtLabel = (name: string, href: string) => {
   const container = document.createElement("div");
@@ -117,7 +128,7 @@ const createLabelOverlay = (
     onAdd() {
       this.div = createInlineLabel(name);
       const pane = this.getPanes()?.overlayMouseTarget;
-      pane?.appendChild(this.div as HTMLDivElement);
+      pane?.appendChild(this.div);
       this.div?.addEventListener("click", () => {
         window.open(this.href, "_blank", "noopener,noreferrer");
       });
@@ -147,66 +158,120 @@ const createLabelOverlay = (
   return overlay;
 };
 
-export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
+function areCourtsEqual(previous: NearbyMapCourt[], next: NearbyMapCourt[]) {
+  if (previous.length !== next.length) return false;
+  return previous.every((court, index) => {
+    const nextCourt = next[index];
+    return (
+      nextCourt &&
+      court.id === nextCourt.id &&
+      court.name === nextCourt.name &&
+      court.latitude === nextCourt.latitude &&
+      court.longitude === nextCourt.longitude &&
+      court.href === nextCourt.href
+    );
+  });
+}
+
+function NearbyMapComponent({ userLocation, courts }: NearbyMapProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const courtsRef = useRef(courts);
+  const courtMarkersRef = useRef<Array<() => void>>([]);
+  const labelOverlaysRef = useRef<google.maps.OverlayView[]>([]);
+  const userMarkerRef = useRef<google.maps.Marker | null>(null);
+  const lastMarkersKeyRef = useRef("");
+  const lastCenterKeyRef = useRef("");
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const visibleCourts = useMemo(() => courts.slice(0, 15), [courts]);
-  const userLatLng = useMemo(() => {
-    if (!userLocation) return null;
-    const lat = Number(userLocation.latitude);
-    const lng = Number(userLocation.longitude);
-    return Number.isFinite(lat) && Number.isFinite(lng)
-      ? { lat, lng }
-      : null;
-  }, [userLocation]);
+  const visibleCourtsKey = courts
+    .slice(0, 15)
+    .map((court) =>
+      [
+        court.id,
+        court.name ?? "",
+        court.latitude,
+        court.longitude,
+        court.href,
+      ].join(":"),
+    )
+    .join("|");
+  const userLat = Number(userLocation?.latitude);
+  const userLng = Number(userLocation?.longitude);
+  const hasUserLatLng = Number.isFinite(userLat) && Number.isFinite(userLng);
 
   useEffect(() => {
-    if (
-      !mapRef.current ||
-      !userLatLng ||
-      Number.isNaN(userLatLng.lat) ||
-      Number.isNaN(userLatLng.lng) ||
-      !apiKey
-    ) {
+    courtsRef.current = courts;
+  }, [courts]);
+
+  useEffect(() => {
+    return () => {
+      courtMarkersRef.current.forEach((clearMarker) => clearMarker());
+      courtMarkersRef.current = [];
+      labelOverlaysRef.current.forEach((overlay) => overlay.setMap(null));
+      labelOverlaysRef.current = [];
+      userMarkerRef.current?.setMap(null);
+      userMarkerRef.current = null;
+      mapInstanceRef.current = null;
+      lastMarkersKeyRef.current = "";
+      lastCenterKeyRef.current = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current || !hasUserLatLng || !apiKey) {
       return;
     }
-    const loader = new Loader({
-      apiKey,
-      version: "weekly",
-      libraries: ["marker"],
-    });
-    let mapInstance: google.maps.Map | null = null;
-    let userMarker: google.maps.Marker | null = null;
-    const courtMarkers: Array<() => void> = [];
-    const labelOverlays: google.maps.OverlayView[] = [];
+    const userLatLng = { lat: userLat, lng: userLng };
+    const centerKey = `${userLatLng.lat},${userLatLng.lng}`;
     let isActive = true;
 
-    loader.load().then(() => {
+    loadGoogleMaps(apiKey).then(() => {
       if (!mapRef.current || !isActive) return;
       const maps = window.google?.maps;
       if (!maps) return;
 
-      mapInstance = new maps.Map(mapRef.current, {
-        ...mapOptions,
-        center: userLatLng,
-      });
-      userMarker = new maps.Marker({
-        map: mapInstance,
-        position: userLatLng,
-        icon: {
-          path: maps.SymbolPath.CIRCLE,
-          scale: 9,
-          fillColor: "#4285F4",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2,
-        },
-        title: "You are here",
-      });
+      if (!mapInstanceRef.current) {
+        mapInstanceRef.current = new maps.Map(mapRef.current, {
+          ...mapOptions,
+          center: userLatLng,
+        });
+        lastCenterKeyRef.current = centerKey;
+      } else if (lastCenterKeyRef.current !== centerKey) {
+        mapInstanceRef.current.setCenter(userLatLng);
+        lastCenterKeyRef.current = centerKey;
+      }
+
+      if (!userMarkerRef.current) {
+        userMarkerRef.current = new maps.Marker({
+          map: mapInstanceRef.current,
+          position: userLatLng,
+          icon: {
+            path: maps.SymbolPath.CIRCLE,
+            scale: 9,
+            fillColor: "#4285F4",
+            fillOpacity: 1,
+            strokeColor: "#ffffff",
+            strokeWeight: 2,
+          },
+          title: "You are here",
+        });
+      } else {
+        userMarkerRef.current.setPosition(userLatLng);
+      }
+
+      if (lastMarkersKeyRef.current === visibleCourtsKey) {
+        return;
+      }
+      courtMarkersRef.current.forEach((clearMarker) => clearMarker());
+      courtMarkersRef.current = [];
+      labelOverlaysRef.current.forEach((overlay) => overlay.setMap(null));
+      labelOverlaysRef.current = [];
+      lastMarkersKeyRef.current = visibleCourtsKey;
 
       const AdvancedMarker = window.google?.maps?.marker
         ?.AdvancedMarkerElement;
       const canUseAdvancedMarker = Boolean(MAP_ID && AdvancedMarker);
+      const visibleCourts = courtsRef.current.slice(0, 15);
 
       visibleCourts.forEach((court) => {
         if (canUseAdvancedMarker) {
@@ -215,7 +280,7 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
             court.href,
           );
           const marker = new AdvancedMarker({
-            map: mapInstance as google.maps.Map,
+            map: mapInstanceRef.current as google.maps.Map,
             position: {
               lat: Number(court.latitude),
               lng: Number(court.longitude),
@@ -226,12 +291,12 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
           marker.addListener("click", () => {
             window.open(court.href, "_blank", "noopener,noreferrer");
           });
-          courtMarkers.push(() => {
+          courtMarkersRef.current.push(() => {
             (marker as google.maps.marker.AdvancedMarkerElement).map = null;
           });
         } else {
           const fallbackMarker = new maps.Marker({
-            map: mapInstance as google.maps.Map,
+            map: mapInstanceRef.current as google.maps.Map,
             position: {
               lat: Number(court.latitude),
               lng: Number(court.longitude),
@@ -241,11 +306,11 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
           fallbackMarker.addListener("click", () => {
             window.open(court.href, "_blank", "noopener,noreferrer");
           });
-          courtMarkers.push(() => fallbackMarker.setMap(null));
+          courtMarkersRef.current.push(() => fallbackMarker.setMap(null));
           if (court.name) {
             const overlay = createLabelOverlay(
               maps,
-              mapInstance as google.maps.Map,
+              mapInstanceRef.current as google.maps.Map,
               {
                 lat: Number(court.latitude),
                 lng: Number(court.longitude),
@@ -253,7 +318,7 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
               court.name,
               court.href,
             );
-            labelOverlays.push(overlay);
+            labelOverlaysRef.current.push(overlay);
           }
         }
       });
@@ -261,14 +326,10 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
 
     return () => {
       isActive = false;
-      courtMarkers.forEach((clearMarker) => clearMarker());
-      labelOverlays.forEach((overlay) => overlay.setMap(null));
-      userMarker?.setMap(null);
-      mapInstance = null;
     };
-  }, [apiKey, userLatLng, visibleCourts]);
+  }, [apiKey, hasUserLatLng, userLat, userLng, visibleCourtsKey]);
 
-  if (!apiKey || !userLatLng) {
+  if (!apiKey || !hasUserLatLng) {
     return null;
   }
 
@@ -280,3 +341,12 @@ export function NearbyMap({ userLocation, courts }: NearbyMapProps) {
     />
   );
 }
+
+export const NearbyMap = memo(NearbyMapComponent, (previous, next) => {
+  const previousLocation = previous.userLocation;
+  const nextLocation = next.userLocation;
+  const sameLocation =
+    previousLocation?.latitude === nextLocation?.latitude &&
+    previousLocation?.longitude === nextLocation?.longitude;
+  return sameLocation && areCourtsEqual(previous.courts, next.courts);
+});

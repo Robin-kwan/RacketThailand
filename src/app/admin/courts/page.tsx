@@ -14,6 +14,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { formatDateForDisplay } from "@/lib/date-format";
 import { buildOpeningHoursEditorCopy } from "@/lib/opening-hours-editor-copy";
 import { buildLineQrUploaderCopy } from "@/lib/line-qr-uploader-copy";
 import { supabaseSelect } from "@/lib/supabaseRest";
@@ -55,7 +56,8 @@ async function resolveSearchParams(
 
 function formatDate(value: string | null, locale: "th" | "en") {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString(locale === "th" ? "th-TH" : "en-US");
+  void locale;
+  return formatDateForDisplay(value);
 }
 
 function buildContact(
