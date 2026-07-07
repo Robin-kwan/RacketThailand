@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, X } from "lucide-react";
+import { formatDateTimeForDisplay } from "@/lib/date-format";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 
 type NotificationMetadata = Record<string, string | null | undefined>;
@@ -265,7 +266,7 @@ export function NotificationsMenu({
                       </button>
                     </div>
                     <p className="text-xs text-slate-400">
-                      {new Date(notification.created_at).toLocaleString()}
+                      {formatDateTimeForDisplay(notification.created_at)}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
                       {notificationLink && (

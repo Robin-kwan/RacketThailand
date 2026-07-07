@@ -11,9 +11,7 @@ import type { Session } from "@supabase/supabase-js";
 import { showToast } from "@/components/toaster";
 
 const EVENTS_TO_HANDLE = new Set([
-  "SIGNED_IN",
   "SIGNED_OUT",
-  "TOKEN_REFRESHED",
   "USER_UPDATED",
 ]);
 
@@ -43,17 +41,18 @@ function buildRecoverySearch() {
 }
 
 function cleanAuthQueryParams() {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return false;
   const url = new URL(window.location.href);
-  if (!url.searchParams.has("code")) return;
+  if (!url.searchParams.has("code")) return false;
   const type = url.searchParams.get("type");
   if (type === "recovery" || url.searchParams.get("flow") === "recovery") {
-    return;
+    return false;
   }
   url.searchParams.delete("code");
   url.searchParams.delete("state");
   url.searchParams.delete("provider");
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  return true;
 }
 
 function getCurrentRelativePath() {
@@ -107,7 +106,10 @@ export function SupabaseAuthListener() {
       }
 
       if (event === "SIGNED_IN") {
-        cleanAuthQueryParams();
+        const cleanedAuthCallbackUrl = cleanAuthQueryParams();
+        if (cleanedAuthCallbackUrl) {
+          router.refresh();
+        }
       }
 
       if (EVENTS_TO_HANDLE.has(event)) {

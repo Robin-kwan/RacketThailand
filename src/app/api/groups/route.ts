@@ -6,6 +6,11 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { syncCourtGroupLinks } from "@/server/groupSessions";
 import { fetchGroupsBySport } from "@/server/groupFinder";
 import { validateCourtIdsForSport } from "@/server/groupCourtValidation";
+import {
+  getCourtIdsFromGroupEvents,
+  normalizeGroupEvents,
+  type GroupEventPayload,
+} from "@/server/groupEvents";
 import { ensureUserProfile } from "@/server/profile";
 
 type SessionPayload = {
@@ -21,6 +26,7 @@ type GroupPayload = {
   description?: string;
   courtIds?: string[];
   sessions?: SessionPayload[];
+  events?: GroupEventPayload[];
   playFormat?: string | null;
   playerAmount?: number | string;
   allowWalkIn?: boolean | null;
@@ -156,10 +162,17 @@ export async function POST(request: Request) {
   }
 
   const normalizedSessions = normalizeSessions(payload.sessions);
+  const normalizedEvents = normalizeGroupEvents(payload.events);
   const linkedCourtIds = Array.from(
     new Set([
       ...normalizeCourtIds(payload.courtIds),
       ...normalizedSessions.map((session) => session.courtId),
+    ]),
+  );
+  const courtIdsToValidate = Array.from(
+    new Set([
+      ...linkedCourtIds,
+      ...getCourtIdsFromGroupEvents(normalizedEvents),
     ]),
   );
   const normalizedPlayerAmount = normalizePlayerAmount(
@@ -192,7 +205,7 @@ export async function POST(request: Request) {
   const courtSportValidation = await validateCourtIdsForSport(
     adminSupabase,
     payload.sportId,
-    linkedCourtIds,
+    courtIdsToValidate,
   );
   if (courtSportValidation.error) {
     return NextResponse.json(
@@ -257,6 +270,27 @@ export async function POST(request: Request) {
       );
     }
 
+  }
+  if (normalizedEvents.length > 0) {
+    const { error: eventsError } = await adminSupabase
+      .from("group_events")
+      .insert(
+        normalizedEvents.map((event) => ({
+          group_id: groupId,
+          court_id: event.courtId,
+          venue_name: event.venueName,
+          starts_at: event.startsAt,
+          ends_at: event.endsAt,
+          notes: event.notes,
+          created_by: user.id,
+        })),
+      );
+    if (eventsError) {
+      return NextResponse.json(
+        { error: eventsError.message },
+        { status: 500 },
+      );
+    }
   }
 
   await syncCourtGroupLinks(adminSupabase, groupId, linkedCourtIds, user.id);

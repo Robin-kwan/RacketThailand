@@ -11,6 +11,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { formatDateTimeForDisplay } from "@/lib/date-format";
 import { buildAuthPagePath } from "@/lib/auth-redirect";
 import {
   buildCanonicalUrl,
@@ -198,7 +199,7 @@ export default async function CommunityPostPage({
         >
           <div className="flex flex-wrap items-center justify-between gap-4 text-xs uppercase text-[rgb(var(--foreground-rgb)/0.6)]">
             <span>{post.category}</span>
-            <span>{new Date(post.created_at).toLocaleString()}</span>
+            <span>{formatDateTimeForDisplay(post.created_at)}</span>
           </div>
           <div className="mt-2 flex items-center gap-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             <div className="relative h-10 w-10 overflow-hidden rounded-full bg-[rgb(var(--foreground-rgb)/0.1)]">

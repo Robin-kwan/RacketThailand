@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Trash2, X } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
 import { BaseAutocomplete } from "@/components/base-autocomplete";
+import { DatePickerField } from "@/components/date-picker-field";
 import { BaseTextField } from "@/components/base-text-field";
 import { BaseNumberField } from "@/components/base-number-field";
 import { BaseTextArea } from "@/components/base-text-area";
@@ -23,6 +24,7 @@ import {
   type PlayFormat,
 } from "@/lib/play-format";
 import type { GroupStatus } from "@/lib/group-status";
+import type { Locale } from "@/lib/i18n";
 import type { LineQrUploaderCopy } from "@/components/line-qr-uploader";
 import type { MapCoordinates } from "@/lib/google-maps";
 import type { PlaceDetailsPayload } from "@/lib/google-places";
@@ -43,6 +45,16 @@ export type CourtSessionBlock = {
   id: string;
   courtId: string;
   slots: SessionSlot[];
+};
+
+export type UpcomingEventSlot = {
+  id: string;
+  courtId: string;
+  venueName: string;
+  date: string;
+  start: string;
+  end: string;
+  notes: string;
 };
 
 const normalizeSessions = (blocks: CourtSessionBlock[]) =>
@@ -69,6 +81,32 @@ const normalizeCourtIds = (blocks: CourtSessionBlock[]) =>
     ),
   );
 
+const normalizeUpcomingEvents = (events: UpcomingEventSlot[]) =>
+  events
+    .map((event) => ({
+      courtId: event.courtId.trim(),
+      venueName: event.venueName.trim(),
+      date: event.date,
+      start: event.start,
+      end: event.end,
+      notes: event.notes.trim(),
+    }))
+    .filter(
+      (event) =>
+        event.date &&
+        event.start &&
+        (event.courtId || event.venueName),
+    );
+
+const getCourtIdsFromUpcomingEvents = (events: UpcomingEventSlot[]) =>
+  Array.from(
+    new Set(
+      events
+        .map((event) => event.courtId.trim())
+        .filter(Boolean),
+    ),
+  );
+
 const hasContactMethod = (values: {
   phone: string;
   lineId: string;
@@ -89,6 +127,7 @@ export type GroupFormValues = {
   description: string;
   status?: GroupStatus | null;
   sessions: CourtSessionBlock[];
+  events: UpcomingEventSlot[];
   playFormat?: PlayFormat | null;
   playerAmount?: string | null;
   allowWalkIn?: boolean | null;
@@ -115,6 +154,19 @@ export type GroupFormCopy = {
   sessionsRemoveCourt: string;
   sessionsEmpty: string;
   sessionCourt: string;
+  upcomingLabel: string;
+  upcomingHelp: string;
+  upcomingAdd: string;
+  upcomingRemove: string;
+  upcomingCourt: string;
+  upcomingNoCourt: string;
+  upcomingVenueName: string;
+  upcomingVenuePlaceholder: string;
+  upcomingDate: string;
+  upcomingStart: string;
+  upcomingEnd: string;
+  upcomingNotes: string;
+  upcomingNotesPlaceholder: string;
   quickCourtAddOption: string;
   quickCourtTitle: string;
   quickCourtName: string;
@@ -170,6 +222,14 @@ type SubmitPayload = {
   description: string;
   courtIds: string[];
   sessions: { courtId: string; day: string; start: string; end: string }[];
+  events: {
+    courtId: string;
+    venueName: string;
+    date: string;
+    start: string;
+    end: string;
+    notes: string;
+  }[];
   playFormat: PlayFormat;
   playerAmount?: string;
   allowWalkIn: boolean;
@@ -195,6 +255,7 @@ type GroupFormProps = {
   sports: Option[];
   courts: Record<string, Option[]>;
   dayOptions: Option[];
+  locale: Locale;
   copy: GroupFormCopy;
   photoSection?: React.ReactNode;
   lineQrSection?: React.ReactNode;
@@ -204,7 +265,10 @@ type GroupFormProps = {
   submittingLabel: string;
   sportDisabled?: boolean;
   externalDirty?: boolean;
+  hideSessionStep?: boolean;
 };
+
+type StepId = "basic" | "courts" | "contact" | "photos";
 
 const createSlot = (): SessionSlot => ({
   id: crypto.randomUUID
@@ -213,6 +277,18 @@ const createSlot = (): SessionSlot => ({
   day: "sunday",
   start: "00:00",
   end: "00:00",
+});
+
+const createUpcomingEvent = (): UpcomingEventSlot => ({
+  id: crypto.randomUUID
+    ? crypto.randomUUID()
+    : `event-${Date.now()}-${Math.random()}`,
+  courtId: "",
+  venueName: "",
+  date: "",
+  start: "00:00",
+  end: "",
+  notes: "",
 });
 
 const GROUP_TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
@@ -235,6 +311,7 @@ export function GroupForm({
   sports,
   courts,
   dayOptions,
+  locale,
   copy,
   photoSection,
   lineQrSection,
@@ -244,6 +321,7 @@ export function GroupForm({
   submittingLabel,
   sportDisabled = false,
   externalDirty = false,
+  hideSessionStep = false,
 }: GroupFormProps) {
   const [form, setForm] = useState({
     sportId: initialValues.sportId,
@@ -259,6 +337,9 @@ export function GroupForm({
   });
   const [courtSessions, setCourtSessions] = useState<CourtSessionBlock[]>(
     initialValues.sessions,
+  );
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEventSlot[]>(
+    initialValues.events,
   );
   const [quickCourt, setQuickCourt] = useState<QuickCourtDraft>(() =>
     createQuickCourtDraft(),
@@ -375,6 +456,13 @@ export function GroupForm({
           }
           return { ...block, courtId: "", slots: [] };
         }),
+      );
+      setUpcomingEvents((prev) =>
+        prev.map((event) =>
+          event.courtId && !optionSet.has(event.courtId)
+            ? { ...event, courtId: "" }
+            : event,
+        ),
       );
     }
   };
@@ -564,13 +652,43 @@ export function GroupForm({
     );
   };
 
+  const addUpcomingEvent = () => {
+    setUpcomingEvents((prev) => [...prev, createUpcomingEvent()]);
+  };
+
+  const updateUpcomingEvent = (
+    eventId: string,
+    field: keyof Omit<UpcomingEventSlot, "id">,
+    value: string,
+  ) => {
+    setUpcomingEvents((prev) =>
+      prev.map((event) =>
+        event.id === eventId ? { ...event, [field]: value } : event,
+      ),
+    );
+  };
+
+  const removeUpcomingEvent = (eventId: string) => {
+    setUpcomingEvents((prev) => prev.filter((event) => event.id !== eventId));
+  };
+
   const serializedSessions = useMemo(
     () => normalizeSessions(courtSessions),
     [courtSessions],
   );
+  const serializedEvents = useMemo(
+    () => normalizeUpcomingEvents(upcomingEvents),
+    [upcomingEvents],
+  );
   const serializedCourtIds = useMemo(
-    () => normalizeCourtIds(courtSessions),
-    [courtSessions],
+    () =>
+      Array.from(
+        new Set([
+          ...normalizeCourtIds(courtSessions),
+          ...getCourtIdsFromUpcomingEvents(upcomingEvents),
+        ]),
+      ),
+    [courtSessions, upcomingEvents],
   );
 
   const initialSnapshot = useMemo(
@@ -588,6 +706,7 @@ export function GroupForm({
         websiteUrl: initialValues.websiteUrl ?? "",
         courtIds: normalizeCourtIds(initialValues.sessions),
         sessions: normalizeSessions(initialValues.sessions),
+        events: normalizeUpcomingEvents(initialValues.events),
       }),
     [initialValues],
   );
@@ -607,17 +726,34 @@ export function GroupForm({
         websiteUrl: form.websiteUrl,
         courtIds: serializedCourtIds,
         sessions: serializedSessions,
+        events: serializedEvents,
       }),
-    [form, serializedCourtIds, serializedSessions],
+    [form, serializedCourtIds, serializedEvents, serializedSessions],
   );
 
   const hasChanges = currentSnapshot !== initialSnapshot || externalDirty;
-  const steps = [
-    copy.wizardStepBasic,
-    copy.wizardStepCourts,
-    copy.wizardStepContact,
-    copy.wizardStepPhotos,
-  ];
+  const steps = useMemo(
+    () =>
+      [
+        { id: "basic" as const, label: copy.wizardStepBasic },
+        hideSessionStep
+          ? null
+          : { id: "courts" as const, label: copy.wizardStepCourts },
+        { id: "contact" as const, label: copy.wizardStepContact },
+        { id: "photos" as const, label: copy.wizardStepPhotos },
+      ].filter((step): step is { id: StepId; label: string } =>
+        Boolean(step),
+      ),
+    [
+      copy.wizardStepBasic,
+      copy.wizardStepContact,
+      copy.wizardStepCourts,
+      copy.wizardStepPhotos,
+      hideSessionStep,
+    ],
+  );
+  const currentStepId = steps[currentStep]?.id ?? "basic";
+  const contactStepIndex = steps.findIndex((step) => step.id === "contact");
   const stepInsetPercent = steps.length > 0 ? 100 / (steps.length * 2) : 0;
   const stepLinePercent =
     steps.length > 1
@@ -635,11 +771,11 @@ export function GroupForm({
 
   const goToNextStep = () => {
     setSubmitAttempted(true);
-    if (currentStep === 0 && !isBasicComplete) {
+    if (currentStepId === "basic" && !isBasicComplete) {
       setBasicErrorVisible(true);
       return;
     }
-    if (currentStep === 2 && !hasContactMethod(form)) {
+    if (currentStepId === "contact" && !hasContactMethod(form)) {
       setContactErrorVisible(true);
       window.requestAnimationFrame(() => {
         firstContactFieldRef.current?.focus();
@@ -665,7 +801,7 @@ export function GroupForm({
     }
     if (!hasContactMethod(form)) {
       setContactErrorVisible(true);
-      setCurrentStep(2);
+      setCurrentStep(contactStepIndex >= 0 ? contactStepIndex : 0);
       window.requestAnimationFrame(() => {
         firstContactFieldRef.current?.focus();
       });
@@ -684,6 +820,7 @@ export function GroupForm({
       websiteUrl: form.websiteUrl,
       courtIds: serializedCourtIds,
       sessions: serializedSessions,
+      events: serializedEvents,
     });
   };
 
@@ -722,7 +859,7 @@ export function GroupForm({
             const isComplete = index < currentStep;
             return (
               <button
-                key={step}
+                key={step.id}
                 type="button"
                 onClick={() => {
                   if (index <= currentStep) {
@@ -756,7 +893,7 @@ export function GroupForm({
                         : "text-slate-500"
                   }`}
                 >
-                  {step}
+                  {step.label}
                 </span>
               </button>
             );
@@ -764,7 +901,7 @@ export function GroupForm({
         </div>
       </div>
 
-      {currentStep === 0 && (
+      {currentStepId === "basic" && (
         <section className="space-y-5">
           <BaseSelect
             label={copy.sport}
@@ -862,7 +999,7 @@ export function GroupForm({
           </label>
         </section>
       )}
-      {currentStep === 2 && (
+      {currentStepId === "contact" && (
       <section className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
@@ -940,7 +1077,7 @@ export function GroupForm({
         {lineQrSection}
       </section>
       )}
-      {currentStep === 1 && (
+      {currentStepId === "courts" && (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">
@@ -1200,9 +1337,139 @@ export function GroupForm({
             ))}
           </div>
         )}
+        <div className="mt-8 space-y-4 border-t border-slate-100 pt-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">
+                {copy.upcomingLabel}
+              </p>
+              <p className="mt-1 text-xs text-[rgb(var(--foreground-rgb)/0.65)]">
+                {copy.upcomingHelp}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addUpcomingEvent}
+              className="text-xs font-semibold text-[rgb(var(--rt-primary-rgb))] hover:text-[rgb(var(--rt-primary-rgb)/0.75)]"
+            >
+              {copy.upcomingAdd}
+            </button>
+          </div>
+          {upcomingEvents.length > 0 && (
+            <div className="space-y-4">
+              {upcomingEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="relative space-y-4 rounded-2xl border border-slate-200 bg-white p-4 pt-11"
+                >
+                  <button
+                    type="button"
+                    onClick={() => removeUpcomingEvent(event.id)}
+                    className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-slate-400 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 hover:text-rose-500"
+                    aria-label={copy.upcomingRemove}
+                    title={copy.upcomingRemove}
+                  >
+                    <X
+                      className="h-4 w-4"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                  </button>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <BaseSelect
+                      label={copy.upcomingCourt}
+                      name={`upcoming-court-${event.id}`}
+                      value={event.courtId}
+                      onChange={(changeEvent) =>
+                        updateUpcomingEvent(
+                          event.id,
+                          "courtId",
+                          changeEvent.target.value,
+                        )
+                      }
+                      options={[
+                        { value: "", label: copy.upcomingNoCourt },
+                        ...courtOptions,
+                      ]}
+                      variant="light"
+                    />
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-[var(--foreground)]">
+                        {copy.upcomingVenueName}
+                      </label>
+                      <BaseTextField
+                        type="text"
+                        value={event.venueName}
+                        onChange={(changeEvent) =>
+                          updateUpcomingEvent(
+                            event.id,
+                            "venueName",
+                            changeEvent.target.value,
+                          )
+                        }
+                        placeholder={copy.upcomingVenuePlaceholder}
+                        variant="light"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <DatePickerField
+                      label={copy.upcomingDate}
+                      value={event.date}
+                      onChange={(next) =>
+                        updateUpcomingEvent(event.id, "date", next)
+                      }
+                      locale={locale}
+                    />
+                    <TimePickerField
+                      id={`upcoming-${event.id}-start`}
+                      label={copy.upcomingStart}
+                      value={event.start}
+                      options={GROUP_TIME_OPTIONS}
+                      className="min-w-0"
+                      onChange={(next) =>
+                        updateUpcomingEvent(event.id, "start", next)
+                      }
+                    />
+                    <ClosingTimePickerField
+                      id={`upcoming-${event.id}-end`}
+                      label={copy.upcomingEnd}
+                      value={event.end}
+                      options={GROUP_CLOSING_TIME_OPTIONS}
+                      startTime={event.start}
+                      allowOvernight
+                      className="min-w-0"
+                      onChange={(next) =>
+                        updateUpcomingEvent(event.id, "end", next)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[var(--foreground)]">
+                      {copy.upcomingNotes}
+                    </label>
+                    <BaseTextArea
+                      value={event.notes}
+                      onChange={(changeEvent) =>
+                        updateUpcomingEvent(
+                          event.id,
+                          "notes",
+                          changeEvent.target.value,
+                        )
+                      }
+                      placeholder={copy.upcomingNotesPlaceholder}
+                      rows={2}
+                      variant="light"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       )}
-      {currentStep === 3 && (
+      {currentStepId === "photos" && (
         <section className="space-y-5">
           {photoSection}
           <button

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { formatDateTimeForDisplay } from "@/lib/date-format";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 
 type RequestCard = {
@@ -38,11 +39,8 @@ type CourtRequestListProps = {
 };
 
 function formatDate(value: string, locale: Locale) {
-  const date = new Date(value);
-  return date.toLocaleString(locale === "th" ? "th-TH" : "en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  void locale;
+  return formatDateTimeForDisplay(value);
 }
 
 export function CourtRequestList({

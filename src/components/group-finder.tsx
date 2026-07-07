@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent } from "react";
 import { track } from "@vercel/analytics";
 import type { GroupRecord } from "@/server/groupFinder";
 import {
@@ -71,6 +72,14 @@ type GroupFinderProps = {
 const PAGE_SIZE = 12;
 const NEARBY_CANDIDATE_LIMIT = 300;
 type LocationState = { latitude: number; longitude: number };
+type NearbyCourtGroup = {
+  court: NearbyMapCourt;
+  distanceKm: number;
+  groups: Array<{
+    group: GroupRecord;
+    distanceKm: number | null;
+  }>;
+};
 type NearbyCandidateCourt = {
   id: string;
   name: string | null | undefined;
@@ -120,6 +129,9 @@ export function GroupFinder({
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
+  const [expandedNearbyCourtIds, setExpandedNearbyCourtIds] = useState<
+    Set<string>
+  >(new Set());
   const [allowAutoLoadMore, setAllowAutoLoadMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const hasSkippedInitialLoadRef = useRef(false);
@@ -136,6 +148,7 @@ export function GroupFinder({
     [locale, sportCode],
   );
   const distanceUnit = locale === "th" ? "กม." : "km";
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -334,8 +347,10 @@ export function GroupFinder({
     setEndTimeFilter("");
     setPlayFormatFilter("");
     setWalkInFilter("");
+    setUserLocation(null);
     setPrioritizeNearby(false);
     setNearbyStatus(null);
+    setExpandedNearbyCourtIds(new Set());
   };
 
   const dayOptions = useMemo(
@@ -372,8 +387,8 @@ export function GroupFinder({
   const filteredGroups = serverGroups;
   const countSummary =
     locale === "th"
-      ? `${count.toLocaleString("th-TH")} กลุ่ม · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
-      : `${count.toLocaleString("en-US")} groups · ${loading ? "loading..." : "live data"}`;
+      ? `${count.toLocaleString("th-TH")} กลุ่ม`
+      : `${count.toLocaleString("en-US")} groups`;
   const loadingMoreLabel =
     locale === "th" ? "กำลังโหลดกลุ่มเพิ่ม..." : "Loading more groups...";
 
@@ -412,8 +427,24 @@ export function GroupFinder({
   };
 
   const handleClearNearby = () => {
+    setUserLocation(null);
     setPrioritizeNearby(false);
     setNearbyStatus(null);
+    setExpandedNearbyCourtIds(new Set());
+  };
+
+  const openDirections = (
+    event: MouseEvent<HTMLAnchorElement>,
+    court: NearbyMapCourt,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!userLocation) return;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${userLocation.latitude},${userLocation.longitude}&destination=${court.latitude},${court.longitude}`;
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (opened) {
+      opened.opener = null;
+    }
   };
 
   useEffect(() => {
@@ -536,13 +567,47 @@ export function GroupFinder({
 
   const mapCourts = useMemo(() => {
     const courtMap = new Map<string, NearbyMapCourt>();
-    groupsWithDistance.forEach(({ nearestCourt }) => {
+    displayedGroups.forEach(({ nearestCourt }) => {
       if (nearestCourt && !courtMap.has(nearestCourt.id)) {
         courtMap.set(nearestCourt.id, nearestCourt);
       }
     });
-    return Array.from(courtMap.values()).slice(0, 15);
-  }, [groupsWithDistance]);
+    return Array.from(courtMap.values());
+  }, [displayedGroups]);
+
+  const nearbyCourtGroups = useMemo(() => {
+    const courtMap = new Map<string, NearbyCourtGroup>();
+    displayedGroups.forEach((entry) => {
+      const { distanceKm, group, nearestCourt } = entry;
+      if (!nearestCourt || distanceKm === null) return;
+      const existing = courtMap.get(nearestCourt.id);
+      if (existing) {
+        existing.distanceKm = Math.min(existing.distanceKm, distanceKm);
+        existing.groups.push({ group, distanceKm });
+        return;
+      }
+      courtMap.set(nearestCourt.id, {
+        court: nearestCourt,
+        distanceKm,
+        groups: [{ group, distanceKm }],
+      });
+    });
+    return Array.from(courtMap.values())
+      .sort((a, b) => a.distanceKm - b.distanceKm)
+      .slice(0, 5);
+  }, [displayedGroups]);
+
+  const toggleNearbyCourt = (courtId: string) => {
+    setExpandedNearbyCourtIds((current) => {
+      const next = new Set(current);
+      if (next.has(courtId)) {
+        next.delete(courtId);
+      } else {
+        next.add(courtId);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -650,7 +715,21 @@ export function GroupFinder({
           />
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-          <p>{countSummary}</p>
+          <p className="inline-flex items-center gap-2">
+            <span>{countSummary}</span>
+            {loading && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span
+                  aria-label={
+                    locale === "th" ? "กำลังอัปเดตข้อมูล" : "Updating data"
+                  }
+                  className="inline-block size-3 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600"
+                  role="status"
+                />
+              </>
+            )}
+          </p>
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -703,40 +782,83 @@ export function GroupFinder({
             <p className="text-sm font-semibold text-slate-700">
               {copy.nearbyListTitle}
             </p>
-            {displayedGroups
-              .filter((entry) => entry.distanceKm !== null)
-              .slice(0, 4)
-              .map((entry) => (
+            {nearbyCourtGroups.map((entry) => {
+              const isExpanded = expandedNearbyCourtIds.has(entry.court.id);
+              const groupCountLabel =
+                locale === "th"
+                  ? `${entry.groups.length.toLocaleString("th-TH")} กลุ่ม`
+                  : `${entry.groups.length.toLocaleString("en-US")} groups`;
+              return (
                 <div
-                  key={`nearby-${entry.group.id}`}
-                  className="flex flex-wrap items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                  key={`nearby-court-${entry.court.id}`}
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-sm"
                 >
-                  <div>
-                    <p className="font-semibold text-slate-900">
-                      {entry.group.name ?? fallbackGroupName}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)} {distanceUnit}
-                    </p>
-                    {typeof entry.group.player_amount === "number" &&
-                      Number.isFinite(entry.group.player_amount) && (
-                        <p className="text-xs text-slate-500">
-                          {copy.playerAmountLabel}: {entry.group.player_amount}
-                        </p>
-                      )}
-                  </div>
-                  {entry.nearestCourt && (
-                    <a
-                      href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.latitude},${userLocation.longitude}&destination=${entry.nearestCourt.latitude},${entry.nearestCourt.longitude}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800"
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleNearbyCourt(entry.court.id)}
+                      className="min-w-0 flex-1 text-left"
+                      aria-expanded={isExpanded}
                     >
-                      {copy.openMaps}
-                    </a>
+                      <span className="block truncate font-semibold text-slate-900">
+                        {entry.court.name ?? (locale === "th" ? "สนาม" : "Court")}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-slate-500">
+                        {copy.distanceLabel}: {entry.distanceKm.toFixed(2)}{" "}
+                        {distanceUnit} · {groupCountLabel}
+                      </span>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleNearbyCourt(entry.court.id)}
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+                      >
+                        {isExpanded
+                          ? locale === "th"
+                            ? "ซ่อนกลุ่ม"
+                            : "Hide groups"
+                          : locale === "th"
+                            ? "ดูกลุ่ม"
+                            : "View groups"}
+                      </button>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.latitude},${userLocation.longitude}&destination=${entry.court.latitude},${entry.court.longitude}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(event) => openDirections(event, entry.court)}
+                        className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800"
+                      >
+                        {copy.openMaps}
+                      </a>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <div className="space-y-2 border-t border-slate-200 bg-white px-4 py-3">
+                      {entry.groups.map(({ group }) => (
+                        <Link
+                          key={`nearby-court-${entry.court.id}-${group.id}`}
+                          href={buildLocalizedPath(`/groups/${group.id}`, locale)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block rounded-xl border border-slate-100 px-3 py-2 hover:border-emerald-200 hover:bg-emerald-50/50"
+                        >
+                          <span className="block font-semibold text-slate-900">
+                            {group.name ?? fallbackGroupName}
+                          </span>
+                          {typeof group.player_amount === "number" &&
+                            Number.isFinite(group.player_amount) && (
+                              <span className="mt-0.5 block text-xs text-slate-500">
+                                {copy.playerAmountLabel}: {group.player_amount}
+                              </span>
+                            )}
+                        </Link>
+                      ))}
+                    </div>
                   )}
                 </div>
-              ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -774,6 +896,11 @@ export function GroupFinder({
                       href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.latitude},${userLocation.longitude}&destination=${entry.nearestCourt.latitude},${entry.nearestCourt.longitude}`}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={(event) =>
+                        entry.nearestCourt
+                          ? openDirections(event, entry.nearestCourt)
+                          : undefined
+                      }
                       className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800"
                     >
                       {copy.openMaps}

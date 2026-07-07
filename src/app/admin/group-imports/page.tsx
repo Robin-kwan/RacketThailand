@@ -8,6 +8,7 @@ import {
   getTranslator,
   normalizeLocale,
 } from "@/lib/i18n";
+import { formatDateForDisplay } from "@/lib/date-format";
 import { getPlayFormatLabel } from "@/lib/play-format";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
@@ -68,7 +69,8 @@ type ProfileRow = {
 
 function formatDate(value: string | null, locale: "th" | "en") {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString(locale === "th" ? "th-TH" : "en-US");
+  void locale;
+  return formatDateForDisplay(value);
 }
 
 function formatTime(value: string | null) {

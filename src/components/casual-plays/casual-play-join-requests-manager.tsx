@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { showToast } from "@/components/toaster";
+import { formatDateTimeForDisplay } from "@/lib/date-format";
 import type { JoinRequestStatus } from "@/components/casual-plays/casual-play-join-request-form";
 
 export type CasualPlayJoinRequestRow = {
@@ -187,9 +188,7 @@ export function CasualPlayJoinRequestsManager({
                       {copy.submitted}
                     </p>
                     <p className="mt-1">
-                      {new Date(item.createdAt).toLocaleString(
-                        locale === "th" ? "th-TH" : "en-US",
-                      )}
+                      {formatDateTimeForDisplay(item.createdAt)}
                     </p>
                   </div>
                 </div>

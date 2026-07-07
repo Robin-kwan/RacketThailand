@@ -269,6 +269,7 @@ Pick the subset that matches your change:
 - `README.md`
 - `RacketThailand_Project_Summary.md`
 - `docs/growth-design-playbook.md`
+- `docs/court-insert-standard.md`
 - `docs/group-import-standard.md`
 - `docs/facebook-group-import-workflows.md`
 - `src/data/sportMeta.ts`

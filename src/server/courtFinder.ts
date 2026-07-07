@@ -261,7 +261,7 @@ export async function fetchCourtFilters(
     ...params,
   });
 
-  const options = await Promise.all(
+  const rawOptions = await Promise.all(
     Array.from(
       new Map(
         (data ?? [])
@@ -299,6 +299,18 @@ export async function fetchCourtFilters(
         label: localized.province ?? value,
       };
     }),
+  );
+
+  const options = Array.from(
+    rawOptions
+      .reduce((map, option) => {
+        const key = option.value.trim().toLowerCase();
+        if (key && !map.has(key)) {
+          map.set(key, option);
+        }
+        return map;
+      }, new Map<string, CourtProvinceOption>())
+      .values(),
   );
 
   return options.sort((a, b) =>

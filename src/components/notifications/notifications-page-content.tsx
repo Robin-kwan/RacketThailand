@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
+import { formatDateTimeForDisplay } from "@/lib/date-format";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { BaseCard } from "@/components/base-card";
 
@@ -285,9 +286,7 @@ export function NotificationsPageContent({
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-[rgb(var(--foreground-rgb)/0.55)]">
-                    {new Date(notification.created_at).toLocaleString(
-                      locale === "th" ? "th-TH" : "en-US",
-                    )}
+                    {formatDateTimeForDisplay(notification.created_at)}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     {notificationLink && (

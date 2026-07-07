@@ -13,6 +13,7 @@ import {
   buildLocaleAlternates,
   truncateMetaDescription,
 } from "@/lib/seo";
+import { formatDateForDisplay } from "@/lib/date-format";
 import { normalizeGroupStatus } from "@/lib/group-status";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
@@ -26,6 +27,11 @@ import { BaseScheduleList } from "@/components/base-schedule-list";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
 import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
+import {
+  GroupEventEditor,
+  GroupSessionEditor,
+} from "@/components/groups/group-session-editor";
+import { GroupSessionForm } from "@/components/groups/group-session-form";
 import { getPlayFormatLabel } from "@/lib/play-format";
 import { localizeThailandLocation } from "@/server/thailand-location";
 
@@ -90,6 +96,7 @@ type GroupRow = {
   name: string | null;
   description: string | null;
   status: string | null;
+  sport_id: string | null;
   sports: { code: string; name: string | null } | null;
   owner_id: string | null;
   updated_at: string | null;
@@ -132,6 +139,16 @@ type GroupSessionRow = {
 
 type GroupCourtLinkRow = {
   court_id: string;
+  courts: GroupSessionRow["courts"];
+};
+
+type GroupEventRow = {
+  id: string;
+  court_id: string | null;
+  venue_name: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  notes: string | null;
   courts: GroupSessionRow["courts"];
 };
 
@@ -204,6 +221,56 @@ function normalizeExternalHref(value: string) {
     return trimmed;
   }
   return `https://${trimmed}`;
+}
+
+function formatDateTimeInThailand(
+  value: string,
+  locale: "th" | "en",
+  options: Intl.DateTimeFormatOptions,
+) {
+  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
+    timeZone: "Asia/Bangkok",
+    ...options,
+  }).format(new Date(value));
+}
+
+function formatEventDate(value: string, locale: "th" | "en") {
+  void locale;
+  return formatDateForDisplay(value);
+}
+
+function formatEventTime(value: string, locale: "th" | "en") {
+  return formatDateTimeInThailand(value, locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatEventTimeRange(
+  startsAt: string,
+  endsAt: string | null,
+  locale: "th" | "en",
+) {
+  const start = formatEventTime(startsAt, locale);
+  const end = endsAt ? formatEventTime(endsAt, locale) : null;
+  return end ? `${start} – ${end}` : start;
+}
+
+async function fetchUpcomingGroupEvents(groupId: string) {
+  try {
+    const { data } = await supabaseSelect<GroupEventRow>("group_events", {
+      select:
+        "id,court_id,venue_name,starts_at,ends_at,notes,courts(id,name,district,district_id,province,province_id)",
+      group_id: `eq.${groupId}`,
+      starts_at: `gte.${new Date().toISOString()}`,
+      order: "starts_at.asc",
+      limit: "8",
+    });
+    return data ?? [];
+  } catch (error) {
+    console.warn("Unable to load group upcoming sessions.", error);
+    return [];
+  }
 }
 
 export async function generateMetadata({
@@ -376,7 +443,7 @@ export default async function GroupDetailPage({
 
   const { data: groups } = await supabaseSelect<GroupRow>("groups", {
     select:
-      "id,name,description,status,owner_id,sports(code,name),updated_at,play_format,player_amount,allow_walk_in,phone,line_id,website_url,line_qr_url",
+      "id,name,description,status,sport_id,owner_id,sports(code,name),updated_at,play_format,player_amount,allow_walk_in,phone,line_id,website_url,line_qr_url",
     id: `eq.${resolvedParams.groupId}`,
     limit: "1",
   });
@@ -441,6 +508,7 @@ export default async function GroupDetailPage({
         order: "created_at.asc",
       }),
     ]);
+  const upcomingEventRows = await fetchUpcomingGroupEvents(group.id);
 
   const owner = owners?.[0] ?? null;
   const sportCode = group.sports?.code;
@@ -498,6 +566,22 @@ export default async function GroupDetailPage({
         ...link,
         courts: {
           ...link.courts,
+          district: localized.district,
+          province: localized.province,
+        },
+      };
+    }),
+  );
+  const localizedUpcomingEvents = await Promise.all(
+    upcomingEventRows.map(async (event) => {
+      if (!event.courts) {
+        return event;
+      }
+      const localized = await localizeThailandLocation(event.courts, locale);
+      return {
+        ...event,
+        courts: {
+          ...event.courts,
           district: localized.district,
           province: localized.province,
         },
@@ -623,6 +707,8 @@ export default async function GroupDetailPage({
     createdBy: t("groups.detail.createdBy"),
     scheduleAny: t("groups.detail.scheduleAny"),
     edit: t("groups.detail.edit"),
+    upcomingTitle: t("groups.detail.upcomingTitle"),
+    upcomingVenueFallback: t("groups.detail.upcomingVenueFallback"),
     sessionsTitle: t("groups.detail.sessionsTitle"),
     sessionsEmpty: t("groups.detail.sessionsEmpty"),
     playFormat: t("groups.detail.playFormat"),
@@ -640,7 +726,91 @@ export default async function GroupDetailPage({
     callAction: t("contactActions.call"),
     shareAction: t("contactActions.share"),
     linkCopiedAction: t("contactActions.linkCopied"),
+    sessionForm: {
+      title: t("groups.detail.sessionForm.title"),
+      description: t("groups.detail.sessionForm.description"),
+      weeklyMode: t("groups.detail.sessionForm.weeklyMode"),
+      dateMode: t("groups.detail.sessionForm.dateMode"),
+      courtLabel: t("groups.detail.sessionForm.courtLabel"),
+      courtPlaceholder: t("groups.detail.sessionForm.courtPlaceholder"),
+      dayLabel: t("groups.detail.sessionForm.dayLabel"),
+      dateLabel: t("groups.detail.sessionForm.dateLabel"),
+      startLabel: t("groups.detail.sessionForm.startLabel"),
+      endLabel: t("groups.detail.sessionForm.endLabel"),
+      notesLabel: t("groups.detail.sessionForm.notesLabel"),
+      notesPlaceholder: t("groups.detail.sessionForm.notesPlaceholder"),
+      submit: t("groups.detail.sessionForm.submit"),
+      submitting: t("groups.detail.sessionForm.submitting"),
+      success: t("groups.detail.sessionForm.success"),
+      error: t("groups.detail.sessionForm.error"),
+      required: t("groups.detail.sessionForm.required"),
+      dateRangeError: t("groups.detail.sessionForm.dateRangeError"),
+      courtSportMismatch: t("groups.detail.sessionForm.courtSportMismatch"),
+      noCourts: t("groups.detail.sessionForm.noCourts"),
+      clearTime: t("groups.detail.sessionForm.clearTime"),
+      quickCourtAddOption: t("groups.form.quickCourtAddOption"),
+      quickCourtTitle: t("groups.form.quickCourtTitle"),
+      quickCourtName: t("groups.form.quickCourtName"),
+      quickCourtNamePlaceholder: t("groups.form.quickCourtNamePlaceholder"),
+      quickCourtPlaceSearch: t("groups.form.quickCourtPlaceSearch"),
+      quickCourtPlaceHelper: t("groups.form.quickCourtPlaceHelper"),
+      quickCourtNoResults: t("groups.form.quickCourtNoResults"),
+      quickCourtDuplicateLabel: t("groups.form.quickCourtDuplicateLabel"),
+      quickCourtDuplicateLinkLabel: t("groups.form.quickCourtDuplicateLinkLabel"),
+      quickCourtLocationPreview: t("groups.form.quickCourtLocationPreview"),
+      quickCourtMapTitle: t("groups.form.quickCourtMapTitle"),
+      quickCourtSave: t("groups.form.quickCourtSave"),
+      quickCourtSaving: t("groups.form.quickCourtSaving"),
+      quickCourtCancel: t("groups.form.quickCourtCancel"),
+      quickCourtNameRequired: t("groups.form.quickCourtNameRequired"),
+      quickCourtPlaceRequired: t("groups.form.quickCourtPlaceRequired"),
+      quickCourtDuplicateError: t("groups.form.quickCourtDuplicateError"),
+      quickCourtLocationIncomplete: t("groups.form.quickCourtLocationIncomplete"),
+      quickCourtCreateError: t("groups.form.quickCourtCreateError"),
+    },
+    sessionEdit: {
+      edit: t("groups.detail.sessionEdit.edit"),
+      title: t("groups.detail.sessionEdit.title"),
+      add: t("groups.detail.sessionEdit.add"),
+      remove: t("groups.detail.sessionEdit.remove"),
+      save: t("groups.detail.sessionEdit.save"),
+      saving: t("groups.detail.sessionEdit.saving"),
+      cancel: t("groups.detail.sessionEdit.cancel"),
+      success: t("groups.detail.sessionEdit.success"),
+      error: t("groups.detail.sessionEdit.error"),
+      required: t("groups.detail.sessionEdit.required"),
+      dayLabel: t("groups.detail.sessionForm.dayLabel"),
+      dateLabel: t("groups.detail.sessionForm.dateLabel"),
+      startLabel: t("groups.detail.sessionForm.startLabel"),
+      endLabel: t("groups.detail.sessionForm.endLabel"),
+      notesLabel: t("groups.detail.sessionForm.notesLabel"),
+      notesPlaceholder: t("groups.detail.sessionForm.notesPlaceholder"),
+      clearTime: t("groups.detail.sessionForm.clearTime"),
+      empty: t("groups.detail.sessionEdit.empty"),
+      dateRangeError: t("groups.detail.sessionForm.dateRangeError"),
+      removeCourt: t("groups.detail.sessionEdit.removeCourt"),
+      removeCourtConfirm: t("groups.detail.sessionEdit.removeCourtConfirm"),
+      removeCourtSuccess: t("groups.detail.sessionEdit.removeCourtSuccess"),
+      removeCourtError: t("groups.detail.sessionEdit.removeCourtError"),
+      deleteEvent: t("groups.detail.sessionEdit.deleteEvent"),
+      deleteEventConfirm: t("groups.detail.sessionEdit.deleteEventConfirm"),
+      deleteEventSuccess: t("groups.detail.sessionEdit.deleteEventSuccess"),
+      deleteEventError: t("groups.detail.sessionEdit.deleteEventError"),
+    },
   };
+  const dayKeys = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ] as const;
+  const dayOptions = dayKeys.map((day) => ({
+    value: day,
+    label: t(`groups.days.${day}`),
+  }));
   const fallbackGroupName =
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackCourtName =
@@ -809,6 +979,100 @@ export default async function GroupDetailPage({
           </div>
         </BaseCard>
 
+        {canEdit && group.sport_id && (
+          <GroupSessionForm
+            groupId={group.id}
+            sportId={group.sport_id}
+            locale={locale}
+            dayOptions={dayOptions}
+            copy={copy.sessionForm}
+          />
+        )}
+
+        {localizedUpcomingEvents.length > 0 && (
+          <section className="space-y-4 rounded-[32px] border border-slate-200 bg-white p-8">
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">
+              {copy.upcomingTitle}
+            </h2>
+            <div className="space-y-3">
+              {localizedUpcomingEvents.map((event) => {
+                const locationLabel = [
+                  event.courts?.district,
+                  event.courts?.province,
+                ]
+                  .filter((value): value is string => Boolean(value && value.trim()))
+                  .join(" · ");
+                const venueLabel =
+                  event.courts?.name ??
+                  event.venue_name ??
+                  copy.upcomingVenueFallback;
+                return (
+                  <div
+                    key={event.id}
+                    className="rounded-3xl border border-slate-100 bg-[rgb(var(--foreground-rgb)/0.02)] p-5"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-[var(--rt-primary)]">
+                          {formatEventDate(event.starts_at, locale)}
+                        </p>
+                        {event.courts?.id ? (
+                          <Link
+                            href={buildLocalizedPath(
+                              `/courts/${event.courts.id}${
+                                sportCode
+                                  ? `?sport=${encodeURIComponent(sportCode)}`
+                                  : ""
+                              }`,
+                              locale,
+                            )}
+                            className="text-base font-semibold text-[var(--foreground)] hover:text-[var(--rt-primary)]"
+                          >
+                            {venueLabel}
+                          </Link>
+                        ) : (
+                          <p className="text-base font-semibold text-[var(--foreground)]">
+                            {venueLabel}
+                          </p>
+                        )}
+                        {locationLabel && (
+                          <p className="text-xs uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.5)]">
+                            {locationLabel}
+                          </p>
+                        )}
+                      </div>
+                      <p className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700">
+                        {formatEventTimeRange(
+                          event.starts_at,
+                          event.ends_at,
+                          locale,
+                        )}
+                      </p>
+                      {canEdit && event.court_id && (
+                        <GroupEventEditor
+                          groupId={group.id}
+                          eventId={event.id}
+                          courtId={event.court_id}
+                          startsAt={event.starts_at}
+                          endsAt={event.ends_at}
+                          notes={event.notes}
+                          locale={locale}
+                          copy={copy.sessionEdit}
+                        />
+                      )}
+                    </div>
+                    {event.notes && (
+                      <p className="mt-3 whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+                        {event.notes}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section className="space-y-4 rounded-[32px] border border-slate-200 bg-white p-8">
           <h2 className="text-lg font-semibold text-[var(--foreground)]">
             {copy.sessionsTitle}
@@ -831,8 +1095,8 @@ export default async function GroupDetailPage({
                     key={entry.court?.id ?? `session-${index}`}
                     className="space-y-2 border-b border-slate-100 pb-5 last:border-b-0 last:pb-0"
                   >
-                    {entry.court ? (
-                      <div className="space-y-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      {entry.court ? (
                         <div className="space-y-1">
                           <Link
                             href={buildLocalizedPath(
@@ -853,6 +1117,28 @@ export default async function GroupDetailPage({
                             </p>
                           )}
                         </div>
+                      ) : (
+                        <p className="text-base font-semibold text-[var(--foreground)]">
+                          {t("groups.detail.court")}
+                        </p>
+                      )}
+                      {canEdit && entry.court?.id && (
+                        <GroupSessionEditor
+                          groupId={group.id}
+                          courtId={entry.court.id}
+                          sessions={entry.sessions.map((session) => ({
+                            id: session.id,
+                            day: session.day,
+                            startTime: session.start_time,
+                            endTime: session.end_time,
+                          }))}
+                          dayOptions={dayOptions}
+                          copy={copy.sessionEdit}
+                        />
+                      )}
+                    </div>
+                    {entry.court ? (
+                      <div className="space-y-3">
                         {entry.photoUrl && (
                           <div className="relative mx-auto h-36 w-full max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:mx-0">
                             <Image
@@ -865,11 +1151,7 @@ export default async function GroupDetailPage({
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <p className="text-base font-semibold text-[var(--foreground)]">
-                        {t("groups.detail.court")}
-                      </p>
-                    )}
+                    ) : null}
                     {entry.sessions.length > 0 ? (
                       <BaseScheduleList
                         entries={entry.sessions.map((session, sessionIndex) => ({

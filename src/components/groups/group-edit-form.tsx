@@ -52,6 +52,7 @@ type GroupRecord = {
   description: string;
   status?: GroupStatus | null;
   sessions: GroupFormValues["sessions"];
+  events: GroupFormValues["events"];
   playFormat?: PlayFormat | null;
   playerAmount?: string | null;
   allowWalkIn?: boolean | null;
@@ -126,6 +127,7 @@ export function GroupEditForm({
     description: group.description,
     status: group.status ?? "published",
     sessions: group.sessions,
+    events: group.events,
     playFormat: group.playFormat ?? "double",
     playerAmount: group.playerAmount ?? "",
     allowWalkIn: group.allowWalkIn !== false,
@@ -286,6 +288,14 @@ export function GroupEditForm({
     lineId?: string;
     websiteUrl?: string;
     sessions: { courtId: string; day: string; start: string; end: string }[];
+    events: {
+      courtId: string;
+      venueName: string;
+      date: string;
+      start: string;
+      end: string;
+      notes: string;
+    }[];
   }) => {
     setSubmitting(true);
 
@@ -306,6 +316,7 @@ export function GroupEditForm({
         playFormat: payload.playFormat,
         courtIds: payload.courtIds,
         sessions: payload.sessions,
+        events: payload.events,
         playerAmount: payload.playerAmount,
         allowWalkIn: payload.allowWalkIn,
         phone: payload.phone,
@@ -481,6 +492,7 @@ export function GroupEditForm({
       sports={sports}
       courts={courts}
       dayOptions={dayOptions}
+      locale={locale}
       copy={copy}
       photoSection={
         <div className="space-y-3">

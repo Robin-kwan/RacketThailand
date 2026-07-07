@@ -3,6 +3,10 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { BaseTextField } from "@/components/base-text-field";
+import {
+  formatDateInputForDisplay,
+  parseDisplayDateInput,
+} from "@/lib/date-format";
 import type { Locale } from "@/lib/i18n";
 
 type DatePickerFieldProps = {
@@ -17,6 +21,7 @@ type DatePickerFieldProps = {
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  inputClassName?: string;
 };
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -108,8 +113,9 @@ export function DatePickerField({
   max,
   required = false,
   disabled = false,
-  placeholder = "YYYY-MM-DD",
+  placeholder = "DD/MM/YYYY",
   className,
+  inputClassName,
 }: DatePickerFieldProps) {
   const generatedId = useId();
   const resolvedId = id ?? generatedId;
@@ -119,8 +125,15 @@ export function DatePickerField({
   const selectedDate = useMemo(() => parseDateString(value ?? ""), [value]);
   const initialViewDate = selectedDate ?? minDate ?? new Date();
   const [open, setOpen] = useState(false);
+  const [displayValue, setDisplayValue] = useState(() =>
+    formatDateInputForDisplay(value),
+  );
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(initialViewDate));
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setDisplayValue(formatDateInputForDisplay(value));
+  }, [value]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -204,7 +217,7 @@ export function DatePickerField({
           type="text"
           inputMode="numeric"
           maxLength={10}
-          value={value ?? ""}
+          value={displayValue}
           disabled={disabled}
           required={required}
           placeholder={placeholder}
@@ -218,8 +231,11 @@ export function DatePickerField({
           }}
           onChange={(event) => {
             const nextValue = event.target.value;
-            onChange(nextValue);
-            const parsed = parseDateString(nextValue);
+            setDisplayValue(nextValue);
+            const parsedValue = parseDisplayDateInput(nextValue);
+            if (!parsedValue) return;
+            onChange(parsedValue);
+            const parsed = parseDateString(parsedValue);
             if (parsed) {
               setViewMonth(startOfMonth(parsed));
             }
@@ -230,6 +246,7 @@ export function DatePickerField({
             }
           }}
           variant="light"
+          className={inputClassName}
         />
         {open && (
           <div className="fixed inset-x-3 bottom-4 z-50 max-h-[min(400px,calc(100dvh-2rem))] min-w-0 overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(26rem,calc(100vw-3rem))] sm:min-w-full">
@@ -278,6 +295,7 @@ export function DatePickerField({
                     disabled={cell.disabled}
                     onClick={() => {
                       onChange(cell.key);
+                      setDisplayValue(formatDateInputForDisplay(cell.key));
                       setOpen(false);
                     }}
                     className={`aspect-square rounded-2xl border text-sm font-semibold transition ${
