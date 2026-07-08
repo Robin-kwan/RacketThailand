@@ -26,6 +26,51 @@ type SearchParams = {
 
 type SearchParamInput = Promise<SearchParams> | undefined;
 
+const LANDING_SEO = {
+  th: {
+    title:
+      "RacketThailand | ค้นหาสนามและกลุ่มแบดมินตัน เทนนิส พาเดล พิคเคิลบอล ปิงปอง",
+    description:
+      "ค้นหาสนามและกลุ่มกีฬาแร็กเกตในไทย: แบดมินตัน พาเดล พิคเคิลบอล เทนนิส และปิงปอง พร้อม court finder, group finder, ตารางเล่น และคอมมูนิตี้กีฬา",
+    keywords: [
+      "สนามแบดมินตัน",
+      "สนามเทนนิส",
+      "สนามพาเดล",
+      "สนามพิคเคิลบอล",
+      "สนามปิงปอง",
+      "กลุ่มแบดมินตัน",
+      "กลุ่มเทนนิส",
+      "หาเพื่อนตีแบด",
+      "หาเพื่อนตีเทนนิส",
+      "คอมมูนิตี้กีฬา",
+      "กีฬาแร็กเกต",
+      "court finder Thailand",
+      "group finder Thailand",
+      "racket sports community Thailand",
+    ],
+  },
+  en: {
+    title:
+      "RacketThailand | Badminton, Tennis, Padel, Pickleball & Table Tennis in Thailand",
+    description:
+      "Find badminton, padel, pickleball, tennis and table tennis courts, groups, court finder, group finder, weekly sessions and sport communities across Thailand.",
+    keywords: [
+      "badminton court Thailand",
+      "tennis court Thailand",
+      "padel Thailand",
+      "pickleball Thailand",
+      "table tennis Thailand",
+      "court finder Thailand",
+      "group finder Thailand",
+      "sport community Thailand",
+      "racket sports community Thailand",
+      "badminton group Bangkok",
+      "tennis group Bangkok",
+      "weekly racket sports Thailand",
+    ],
+  },
+} as const;
+
 async function resolveSearchParams(
   searchParams?: SearchParamInput,
 ): Promise<SearchParams | undefined> {
@@ -43,19 +88,14 @@ export async function generateMetadata({
   const canonicalPath = "/";
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
-  const title =
-    locale === "th"
-      ? "RacketThailand | สนามและกลุ่มกีฬาแร็กเกตทั่วไทย"
-      : "RacketThailand | Racket Sports Community in Thailand";
-  const description =
-    locale === "th"
-      ? "ค้นหาสนามและกลุ่มกีฬาแร็กเกตทั่วไทย พร้อมข้อมูลติดต่อและตารางเล่นได้ในที่เดียว"
-      : "Discover Thailand racket-sport courts and weekly groups with direct contacts in one place.";
+  const seo = LANDING_SEO[locale];
+  const { title, description, keywords } = seo;
   const previewImage = buildAbsoluteUrl("/og/racketthailand-icon.png");
 
   return {
     title,
     description,
+    keywords: [...keywords],
     alternates: {
       canonical,
       languages: alternates,
@@ -138,8 +178,23 @@ export default async function Landing({
     },
   };
   const isAuthenticated = Boolean(user);
+  const seo = LANDING_SEO[locale];
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "RacketThailand",
+    url: buildCanonicalUrl("/", locale),
+    inLanguage: locale,
+    description: seo.description,
+    keywords: seo.keywords.join(", "),
+  };
+
   return (
     <div className="rt-page">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <main className="mx-auto mt-6 flex w-full max-w-screen-xl flex-col items-center gap-12 px-6 pb-10 text-center text-[var(--foreground)] md:px-10">
         <header className="relative w-full max-w-4xl overflow-hidden rounded-[38px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white px-7 py-10 shadow-[0_14px_48px_rgb(var(--foreground-rgb)/0.08)] md:px-12">
           <div className="relative flex flex-col items-center gap-5">

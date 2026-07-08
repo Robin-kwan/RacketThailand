@@ -52,15 +52,15 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
   const thumbnails = ordered.slice(1);
   const primaryCanOpen = primaryImage.allowFullscreen !== false;
   const primaryPresentation =
-    primaryImage.allowFullscreen === false
-      ? "contain"
-      : (presentationById[primaryImage.id] ?? "cover");
+    presentationById[primaryImage.id] ?? "cover";
   const primaryImageClass =
     primaryPresentation === "contain"
       ? "object-contain"
       : "object-cover";
   const primaryFrameClass =
-    primaryPresentation === "contain" ? "bg-black" : "bg-white";
+    primaryPresentation === "contain"
+      ? "bg-[linear-gradient(135deg,#f8fafc_0%,#eef8f4_100%)]"
+      : "bg-white";
   const handlePrimaryImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
     const image = event.currentTarget;
     const nextPresentation = getPresentationFromSize(
@@ -103,7 +103,7 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
                 alt={courtName ?? "Court photo"}
                 fill
                 sizes="(max-width: 768px) calc(100vw - 3rem), 944px"
-                className="object-contain"
+                className={primaryImageClass}
               />
             </div>
           )}
