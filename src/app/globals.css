@@ -88,6 +88,15 @@ input[type="time"] {
   -moz-appearance: textfield;
 }
 
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+    line-height: 1.35rem !important;
+  }
+}
+
 input:user-invalid,
 select:user-invalid,
 textarea:user-invalid,
