@@ -593,27 +593,6 @@ export default async function SportPage({
           plays={casualPlayResult.plays}
         />
       )}
-      {courtFeature && (
-        <FeatureCarousel
-          title={t("sport.latestCourtsTitle")}
-          subtitle={t("sport.latestCourtsSubtitle", {
-            sport: sport.name[locale],
-          })}
-          cards={courtFeature.cards}
-          emptyCopy={carouselEmptyCopy}
-          ctaHref={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
-          ctaLabel={viewAllLabel}
-          secondaryCtaHref={buildLocalizedPath(
-            `/courts/new?sport=${sport.code}`,
-            locale,
-          )}
-          secondaryCtaLabel={t("courtSubmission.submit")}
-          secondaryCtaName="add_court"
-          locale={locale}
-          sportCode={sport.code}
-          type="court"
-        />
-      )}
       {groupFeature && (
         <FeatureCarousel
           title={t("sport.latestGroupsTitle")}
@@ -633,6 +612,27 @@ export default async function SportPage({
           locale={locale}
           sportCode={sport.code}
           type="group"
+        />
+      )}
+      {courtFeature && (
+        <FeatureCarousel
+          title={t("sport.latestCourtsTitle")}
+          subtitle={t("sport.latestCourtsSubtitle", {
+            sport: sport.name[locale],
+          })}
+          cards={courtFeature.cards}
+          emptyCopy={carouselEmptyCopy}
+          ctaHref={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
+          ctaLabel={viewAllLabel}
+          secondaryCtaHref={buildLocalizedPath(
+            `/courts/new?sport=${sport.code}`,
+            locale,
+          )}
+          secondaryCtaLabel={t("courtSubmission.submit")}
+          secondaryCtaName="add_court"
+          locale={locale}
+          sportCode={sport.code}
+          type="court"
         />
       )}
     </div>
