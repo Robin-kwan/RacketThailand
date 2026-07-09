@@ -31,7 +31,7 @@ const LANDING_SEO = {
     title:
       "RacketThailand | ค้นหาสนามและกลุ่มแบดมินตัน เทนนิส พาเดล พิคเคิลบอล ปิงปอง",
     description:
-      "ค้นหาสนามและกลุ่มกีฬาแร็กเกตในไทย: แบดมินตัน พาเดล พิคเคิลบอล เทนนิส และปิงปอง พร้อม court finder, group finder, ตารางเล่น และคอมมูนิตี้กีฬา",
+      "แพลตฟอร์มสำหรับค้นหาสนาม กลุ่มผู้เล่น กิจกรรม และชุมชนกีฬาแร็กเกตในประเทศไทย ครอบคลุมแบดมินตัน เทนนิส พาเดล พิคเคิลบอล และปิงปอง",
     keywords: [
       "สนามแบดมินตัน",
       "สนามเทนนิส",
@@ -53,7 +53,7 @@ const LANDING_SEO = {
     title:
       "RacketThailand | Badminton, Tennis, Padel, Pickleball & Table Tennis in Thailand",
     description:
-      "Find badminton, padel, pickleball, tennis and table tennis courts, groups, court finder, group finder, weekly sessions and sport communities across Thailand.",
+      "A platform for finding racket sport courts, player groups, activities, and communities across Thailand, covering badminton, tennis, padel, pickleball, and table tennis.",
     keywords: [
       "badminton court Thailand",
       "tennis court Thailand",
