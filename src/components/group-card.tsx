@@ -17,6 +17,7 @@ type SessionCourt = { id?: string | null; name?: string | null } | null;
 
 export type GroupCardSession = {
   day: string;
+  date?: string;
   start_time: string | null;
   end_time: string | null;
   courts?: SessionCourt;
@@ -81,7 +82,14 @@ function SessionList({
     <div className="space-y-1 text-xs leading-snug text-slate-600 sm:text-sm">
       <ul className="space-y-1">
         {visible.map((session, index) => {
-          const dayLabel = dayLabels[session.day] ?? session.day;
+          const dayLabel = session.date
+            ? new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                timeZone: "UTC",
+              }).format(new Date(`${session.date}T12:00:00Z`))
+            : dayLabels[session.day] ?? session.day;
           const timeRange =
             session.start_time && session.end_time
               ? formatSimpleTimeRange(

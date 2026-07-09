@@ -28,6 +28,7 @@ import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
 import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
 import type { Locale } from "@/lib/i18n";
+import { CalendarDays, Clock3 } from "lucide-react";
 
 function getGroupCover(group: {
   sports?: { code: string } | null;
@@ -45,6 +46,34 @@ function getGroupCover(group: {
 
 function getCourtFallbackImage(sportCode?: string | null) {
   return SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.png";
+}
+
+function formatUpcomingEventDate(value: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
+    timeZone: "Asia/Bangkok",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function formatUpcomingEventTime(
+  startsAt: string,
+  endsAt: string | null,
+  locale: Locale,
+) {
+  const formatter = new Intl.DateTimeFormat(
+    locale === "th" ? "th-TH" : "en-US",
+    {
+      timeZone: "Asia/Bangkok",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+  );
+  const start = formatter.format(new Date(startsAt));
+  const end = endsAt ? formatter.format(new Date(endsAt)) : null;
+  return end ? `${start} - ${end}` : start;
 }
 
 type CourtDetail = NonNullable<Awaited<ReturnType<typeof fetchCourtDetail>>>;
@@ -373,6 +402,10 @@ export default async function CourtPage({
     locale,
     activeSportCode,
   );
+  const upcomingEvents = detail.upcomingEvents.filter(
+    (event) =>
+      !activeSportCode || event.groups?.sports?.code === activeSportCode,
+  );
 
   const gallery = detail.photos.length
     ? detail.photos
@@ -445,6 +478,7 @@ export default async function CourtPage({
     back: t("courtPage.back"),
     groupsTitle: t("courtPage.groupsTitle"),
     groupsEmpty: t("courtPage.groupsEmpty"),
+    upcomingSessionsTitle: t("courtPage.upcomingSessionsTitle"),
     verified: t("courtPage.verified"),
     verifiedTooltip: t("courtPage.verifiedTooltip"),
     statusPending: t("courtPage.statusPending"),
@@ -727,6 +761,60 @@ export default async function CourtPage({
             description={copy.mapDescription}
             openMapsLabel={copy.openGoogleMaps}
           />
+        )}
+
+        {upcomingEvents.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              {copy.upcomingSessionsTitle}
+            </h2>
+            <div className="grid gap-3 md:grid-cols-2">
+              {upcomingEvents.map((event) => {
+                const eventGroup = event.groups;
+                if (!eventGroup) return null;
+                const eventSportCode = eventGroup.sports?.code ?? null;
+                return (
+                  <Link
+                    key={event.id}
+                    href={buildLocalizedPath(
+                      `/groups/${eventGroup.id}${
+                        eventSportCode
+                          ? `?sport=${encodeURIComponent(eventSportCode)}`
+                          : ""
+                      }`,
+                      locale,
+                    )}
+                    className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)]">
+                      <CalendarDays className="size-4" aria-hidden />
+                      <span>
+                        {formatUpcomingEventDate(event.starts_at, locale)}
+                      </span>
+                    </div>
+                    <h3 className="mt-3 text-base font-semibold text-slate-900">
+                      {eventGroup.name ?? fallbackGroupName}
+                    </h3>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                      <Clock3 className="size-4" aria-hidden />
+                      <span>
+                        {formatUpcomingEventTime(
+                          event.starts_at,
+                          event.ends_at,
+                          locale,
+                        )}
+                      </span>
+                    </div>
+                    {event.notes && (
+                      <p className="mt-3 line-clamp-2 whitespace-pre-line text-sm text-slate-600">
+                        {event.notes}
+                      </p>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
         )}
 
         <BaseCard

@@ -49,6 +49,7 @@ export async function GET(request: Request) {
   const limit = Number(searchParams.get("limit") ?? "12");
   const offset = Number(searchParams.get("offset") ?? "0");
   const search = searchParams.get("search") ?? undefined;
+  const date = searchParams.get("date") ?? undefined;
   const day = searchParams.get("day") ?? undefined;
   const startTime = searchParams.get("startTime") ?? undefined;
   const endTime = searchParams.get("endTime") ?? undefined;
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
       limit: Number.isFinite(limit) && limit > 0 ? limit : 12,
       offset: Number.isFinite(offset) && offset > 0 ? offset : 0,
       search,
+      date,
       day,
       startTime,
       endTime,

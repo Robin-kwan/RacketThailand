@@ -25,6 +25,7 @@ type ParamsInput = Promise<Params>;
 type SearchParams = {
   lang?: string;
   search?: string;
+  date?: string;
   day?: string;
   startTime?: string;
   endTime?: string;
@@ -104,6 +105,7 @@ export async function generateMetadata({
   }
   const t = await getTranslator(locale);
   const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
+  const dateFilter = sanitizeQueryParam(resolvedSearch?.date);
   const dayFilter = sanitizeQueryParam(resolvedSearch?.day);
   const startTimeFilter = sanitizeQueryParam(resolvedSearch?.startTime);
   const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
@@ -113,6 +115,7 @@ export async function generateMetadata({
   const stableQuery = hasFreeTextSearch
     ? {}
     : {
+        date: dateFilter || undefined,
         day: isDayKey(dayFilter) ? dayFilter : undefined,
         startTime: startTimeFilter || undefined,
         endTime: endTimeFilter || undefined,
@@ -147,6 +150,7 @@ export async function generateMetadata({
 
   const validDayFilter = isDayKey(dayFilter) ? dayFilter : "";
   const filterParts = [
+    dateFilter,
     validDayFilter ? t(`groups.days.${validDayFilter}`) : "",
     playFormatFilter === "single" ? t("groups.form.playFormatSingle") : "",
     playFormatFilter === "double" ? t("groups.form.playFormatDouble") : "",
@@ -228,6 +232,7 @@ export default async function GroupFinderPage({
   }
 
   const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
+  const dateFilter = sanitizeQueryParam(resolvedSearch?.date);
   const dayFilter = sanitizeQueryParam(resolvedSearch?.day);
   const startTimeFilter = sanitizeQueryParam(resolvedSearch?.startTime);
   const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
@@ -235,6 +240,7 @@ export default async function GroupFinderPage({
   const walkInFilter = sanitizeQueryParam(resolvedSearch?.allowWalkIn);
   const groupData = await fetchGroupsBySport(resolvedParams.sport, {
     search: searchQuery || undefined,
+    date: dateFilter || undefined,
     day: isDayKey(dayFilter) ? dayFilter : undefined,
     startTime: startTimeFilter || undefined,
     endTime: endTimeFilter || undefined,
@@ -264,6 +270,7 @@ export default async function GroupFinderPage({
     backLink: t("groupFinder.backLink"),
     sessionsLabel: t("groupFinder.sessionsLabel"),
     scheduleAnytime: t("groupFinder.scheduleAnytime"),
+    dateFilterLabel: t("groupFinder.dateFilterLabel"),
     dayFilterLabel: t("groupFinder.dayFilterLabel"),
     anyDayLabel: t("groupFinder.anyDayLabel"),
     startTimeLabel: t("groupFinder.startTimeLabel"),
@@ -346,6 +353,7 @@ export default async function GroupFinderPage({
           initialGroups={groupData.groups}
           total={groupData.count}
           initialSearch={searchQuery}
+          initialDate={dateFilter}
           initialDay={isDayKey(dayFilter) ? dayFilter : ""}
           initialStartTime={startTimeFilter}
           initialEndTime={endTimeFilter}

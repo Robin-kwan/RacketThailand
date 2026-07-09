@@ -478,6 +478,20 @@ type CourtGroupLink = {
     } | null;
 };
 
+export type CourtUpcomingGroupEvent = {
+  id: string;
+  court_id: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  notes: string | null;
+  groups: {
+    id: string;
+    name: string | null;
+    status: string | null;
+    sports?: { code: string; name: string | null } | null;
+  } | null;
+};
+
 export async function fetchCourtDetail(
   courtId: string,
   locale: Locale = "th",
@@ -495,7 +509,12 @@ export async function fetchCourtDetail(
   }
 
   const sportIds = await fetchSportIdsByCourtId(courtId);
-  const [{ data: sportRows }, { data: photos }, { data: groupLinks }] =
+  const [
+    { data: sportRows },
+    { data: photos },
+    { data: groupLinks },
+    { data: upcomingEvents },
+  ] =
     await Promise.all([
       supabaseSelect<SportRow>("sports", {
         select: "id,code,name",
@@ -516,6 +535,14 @@ export async function fetchCourtDetail(
         court_id: `eq.${courtId}`,
         order: "created_at.desc",
       }),
+      supabaseSelect<CourtUpcomingGroupEvent>("group_events", {
+        select:
+          "id,court_id,starts_at,ends_at,notes,groups(id,name,status,sports(code,name))",
+        court_id: `eq.${courtId}`,
+        starts_at: `gte.${new Date().toISOString()}`,
+        order: "starts_at.asc",
+        limit: "12",
+      }),
     ]);
 
   const sport =
@@ -535,5 +562,8 @@ export async function fetchCourtDetail(
       (groupLinks ?? []).filter((link) =>
         isPublishedGroupStatus(link.groups?.status),
       ),
+    upcomingEvents: (upcomingEvents ?? []).filter((event) =>
+      isPublishedGroupStatus(event.groups?.status),
+    ),
   };
 }
