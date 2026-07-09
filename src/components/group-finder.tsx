@@ -15,6 +15,8 @@ import { NearbyMap, type NearbyMapCourt } from "@/components/nearby-map";
 import { useDebounce } from "@/hooks/use-debounce";
 import { GroupCard } from "@/components/group-card";
 import { TimePickerField } from "@/components/time-picker-field";
+import { DatePickerField } from "@/components/date-picker-field";
+import { getThailandTodayDateString } from "@/lib/casual-play";
 
 type GroupFinderCopy = {
   searchPlaceholder: string;
@@ -24,6 +26,7 @@ type GroupFinderCopy = {
   backLink: string;
   sessionsLabel: string;
   scheduleAnytime: string;
+  dateFilterLabel: string;
   dayFilterLabel: string;
   anyDayLabel: string;
   startTimeLabel: string;
@@ -62,6 +65,7 @@ type GroupFinderProps = {
   initialGroups: GroupRecord[];
   total: number;
   initialSearch?: string;
+  initialDate?: string;
   initialDay?: string;
   initialStartTime?: string;
   initialEndTime?: string;
@@ -71,6 +75,7 @@ type GroupFinderProps = {
 
 const PAGE_SIZE = 12;
 const NEARBY_CANDIDATE_LIMIT = 300;
+const TODAY_DATE = getThailandTodayDateString();
 type LocationState = { latitude: number; longitude: number };
 type NearbyCourtGroup = {
   court: NearbyMapCourt;
@@ -105,6 +110,7 @@ export function GroupFinder({
   initialGroups,
   total,
   initialSearch = "",
+  initialDate = "",
   initialDay = "",
   initialStartTime = "",
   initialEndTime = "",
@@ -114,6 +120,7 @@ export function GroupFinder({
   const pathname = usePathname();
   const [search, setSearch] = useState(initialSearch);
   const debouncedSearch = useDebounce(search);
+  const [dateFilter, setDateFilter] = useState(initialDate);
   const [dayFilter, setDayFilter] = useState(initialDay);
   const [startTimeFilter, setStartTimeFilter] = useState(initialStartTime);
   const [endTimeFilter, setEndTimeFilter] = useState(initialEndTime);
@@ -154,6 +161,7 @@ export function GroupFinder({
     const params = new URLSearchParams(window.location.search);
     const entries = [
       ["search", debouncedSearch],
+      ["date", dateFilter],
       ["day", dayFilter],
       ["startTime", startTimeFilter],
       ["endTime", endTimeFilter],
@@ -173,6 +181,7 @@ export function GroupFinder({
       window.history.replaceState(null, "", nextUrl);
     }
   }, [
+    dateFilter,
     dayFilter,
     debouncedSearch,
     endTimeFilter,
@@ -194,6 +203,7 @@ export function GroupFinder({
         !prioritizeNearby &&
         !userLocation &&
         debouncedSearch === initialSearch &&
+        dateFilter === initialDate &&
         dayFilter === initialDay &&
         startTimeFilter === initialStartTime &&
         endTimeFilter === initialEndTime &&
@@ -218,6 +228,7 @@ export function GroupFinder({
         params.set("nearbyLng", String(userLocation.longitude));
       }
       if (debouncedSearch) params.set("search", debouncedSearch);
+      if (dateFilter) params.set("date", dateFilter);
       if (dayFilter) params.set("day", dayFilter);
       if (startTimeFilter) params.set("startTime", startTimeFilter);
       if (endTimeFilter) params.set("endTime", endTimeFilter);
@@ -244,12 +255,14 @@ export function GroupFinder({
     sportCode,
     locale,
     debouncedSearch,
+    dateFilter,
     dayFilter,
     playFormatFilter,
     walkInFilter,
     startTimeFilter,
     endTimeFilter,
     initialAllowWalkIn,
+    initialDate,
     initialDay,
     initialEndTime,
     initialPlayFormat,
@@ -271,6 +284,7 @@ export function GroupFinder({
         offset: String((nextPage - 1) * PAGE_SIZE),
       });
       if (debouncedSearch) params.set("search", debouncedSearch);
+      if (dateFilter) params.set("date", dateFilter);
       if (dayFilter) params.set("day", dayFilter);
       if (startTimeFilter) params.set("startTime", startTimeFilter);
       if (endTimeFilter) params.set("endTime", endTimeFilter);
@@ -301,6 +315,7 @@ export function GroupFinder({
     }
   }, [
     count,
+    dateFilter,
     dayFilter,
     debouncedSearch,
     hasMore,
@@ -342,6 +357,7 @@ export function GroupFinder({
       cta: "reset_filters",
     });
     setSearch("");
+    setDateFilter("");
     setDayFilter("");
     setStartTimeFilter("");
     setEndTimeFilter("");
@@ -612,7 +628,7 @@ export function GroupFinder({
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-200 bg-white p-6">
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem] md:items-end">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem_16rem] md:items-end">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">
               {copy.searchPlaceholder}
@@ -632,12 +648,28 @@ export function GroupFinder({
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             />
           </div>
+          <DatePickerField
+            label={copy.dateFilterLabel}
+            value={dateFilter}
+            min={TODAY_DATE}
+            onChange={(value) => {
+              setDateFilter(value);
+              setDayFilter("");
+              track("finder_filter_used", {
+                surface: "group_finder",
+                sport: sportCode,
+                cta: "date",
+              });
+            }}
+            locale={locale}
+          />
           <BaseSelect
             label={copy.dayFilterLabel}
             name="dayFilter"
             value={dayFilter}
             onChange={(event) => {
               setDayFilter(event.target.value);
+              if (event.target.value) setDateFilter("");
               track("finder_filter_used", {
                 surface: "group_finder",
                 sport: sportCode,
@@ -958,13 +990,17 @@ export function GroupFinder({
                   imageUrl={primaryPhoto}
                   imageAlt={group.name ?? fallbackGroupPhotoAlt}
                   description={group.description}
-                  sessions={group.group_sessions ?? []}
+                  sessions={
+                    dateFilter
+                      ? group.matched_sessions ?? []
+                      : group.group_sessions ?? []
+                  }
                   playFormat={group.play_format ?? null}
                   allowWalkIn={group.allow_walk_in ?? null}
                   dayLabels={dayLabels}
                   scheduleAnytime={copy.scheduleAnytime}
                   locale={locale}
-                  showSessions={false}
+                  showSessions={Boolean(dateFilter)}
                   showDescription
                   showLocation={false}
                   distanceLabel={distanceLabel}

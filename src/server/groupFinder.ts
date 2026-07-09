@@ -21,6 +21,7 @@ export type GroupPhoto = {
 
 export type GroupSessionRecord = {
   day: string;
+  date?: string;
   start_time: string | null;
   end_time: string | null;
   courts?: {
@@ -33,6 +34,17 @@ export type GroupSessionRecord = {
     district?: string | null;
     district_id?: number | null;
   } | null;
+};
+
+export type GroupEventRecord = {
+  id: string;
+  group_id: string;
+  court_id: string | null;
+  venue_name: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  notes: string | null;
+  courts?: GroupSessionRecord["courts"];
 };
 
 export type GroupCourtLinkRecord = {
@@ -61,11 +73,13 @@ export type GroupRecord = {
   line_id?: string | null;
   group_photos?: GroupPhoto[] | null;
   group_sessions?: GroupSessionRecord[] | null;
+  matched_sessions?: GroupSessionRecord[] | null;
   court_groups?: GroupCourtLinkRecord[] | null;
 };
 
 export type GroupFilterOptions = {
   search?: string;
+  date?: string;
   day?: string;
   startTime?: string;
   endTime?: string;
@@ -81,6 +95,38 @@ type GroupSessionFilterRow = {
   start_time: string | null;
   end_time: string | null;
 };
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_BY_INDEX = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+] as const;
+
+function resolveDateFilter(value?: string) {
+  if (!value || !DATE_PATTERN.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const calendarDate = new Date(Date.UTC(year, month - 1, day));
+  if (
+    calendarDate.getUTCFullYear() !== year ||
+    calendarDate.getUTCMonth() !== month - 1 ||
+    calendarDate.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  const startMs = Date.UTC(year, month - 1, day) - 7 * 60 * 60 * 1000;
+  return {
+    date: value,
+    day: DAY_BY_INDEX[calendarDate.getUTCDay()],
+    start: new Date(startMs).toISOString(),
+    end: new Date(startMs + 24 * 60 * 60 * 1000).toISOString(),
+    startMs,
+  };
+}
 
 function buildSearchClause(query: string) {
   const term = buildPostgrestIlikeTerm(query);
@@ -123,6 +169,7 @@ async function fetchCourtIdsByLocationSearch(
 }
 
 async function fetchGroupIdsByCourtIds(
+  sportId: string,
   courtIds: string[],
   filters: GroupFilterOptions,
 ) {
@@ -149,9 +196,13 @@ async function fetchGroupIdsByCourtIds(
     sessionsByGroup.set(session.group_id, existing);
   });
 
-  return Array.from(sessionsByGroup.entries())
+  const recurringGroupIds = Array.from(sessionsByGroup.entries())
     .filter(([, sessions]) => sessionsMatchScheduleFilters(sessions, filters))
     .map(([groupId]) => groupId);
+  const eventGroupIds = (await fetchEventMatches(sportId, filters, courtIds)).map(
+    (event) => event.group_id,
+  );
+  return Array.from(new Set([...recurringGroupIds, ...eventGroupIds]));
 }
 
 function sessionOverlapsDay(
@@ -192,6 +243,56 @@ function resolveTimeWindow(filters: GroupFilterOptions) {
     startMinute: endMinute === 0 ? 24 * 60 - 1 : (endMinute as number) - 1,
     endMinute: endMinute === 0 ? 24 * 60 : (endMinute as number),
   };
+}
+
+function eventMatchesTimeWindow(
+  event: Pick<GroupEventRecord, "starts_at" | "ends_at">,
+  filters: GroupFilterOptions,
+  dateStartMs: number,
+) {
+  const window = resolveTimeWindow(filters);
+  if (!window) return true;
+  const eventStart = new Date(event.starts_at).getTime();
+  const eventEnd = event.ends_at
+    ? new Date(event.ends_at).getTime()
+    : eventStart + 1;
+  const windowStart = dateStartMs + window.startMinute * 60 * 1000;
+  const windowEnd = dateStartMs + window.endMinute * 60 * 1000;
+  return eventStart < windowEnd && eventEnd > windowStart;
+}
+
+async function fetchEventMatches(
+  sportId: string,
+  filters: GroupFilterOptions,
+  courtIds?: string[],
+) {
+  const date = resolveDateFilter(filters.date);
+  if (!date || (courtIds && courtIds.length === 0)) {
+    return [] as GroupEventRecord[];
+  }
+
+  const params: Record<string, string> = {
+    select:
+      "id,group_id,court_id,venue_name,starts_at,ends_at,notes,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id),groups!inner(sport_id,status)",
+    starts_at: `gte.${date.start}`,
+    and: `(starts_at.lt.${date.end})`,
+    "groups.sport_id": `eq.${sportId}`,
+    "groups.status": "eq.published",
+    order: "starts_at.asc",
+    limit: "5000",
+  };
+  if (courtIds) {
+    params.court_id = `in.(${courtIds.join(",")})`;
+  }
+
+  const { data } = await supabaseSelect<GroupEventRecord>(
+    "group_events",
+    params,
+    { preferCount: false },
+  );
+  return (data ?? []).filter((event) =>
+    eventMatchesTimeWindow(event, filters, date.startMs),
+  );
 }
 
 function sessionMatchesTimeWindow(
@@ -311,10 +412,25 @@ export async function fetchGroupsBySport(
     return { sport: null, groups: [], count: 0 };
   }
 
-  const scheduleGroupIds = await fetchGroupIdsByScheduleFilters(
+  const dateFilter = resolveDateFilter(filters.date);
+  const effectiveScheduleFilters = dateFilter
+    ? { ...filters, day: dateFilter.day }
+    : filters;
+  const recurringGroupIds = await fetchGroupIdsByScheduleFilters(
     sportRow.id,
-    filters,
+    effectiveScheduleFilters,
   );
+  const matchingEvents = dateFilter
+    ? await fetchEventMatches(sportRow.id, filters)
+    : [];
+  const scheduleGroupIds = dateFilter
+    ? Array.from(
+        new Set([
+          ...(recurringGroupIds ?? []),
+          ...matchingEvents.map((event) => event.group_id),
+        ]),
+      )
+    : recurringGroupIds;
 
   const params: Record<string, string> = {
     select:
@@ -337,7 +453,11 @@ export async function fetchGroupsBySport(
         sportRow.id,
         filters.search,
       );
-      const groupIds = await fetchGroupIdsByCourtIds(courtIds, filters);
+      const groupIds = await fetchGroupIdsByCourtIds(
+        sportRow.id,
+        courtIds,
+        effectiveScheduleFilters,
+      );
       if (groupIds.length > 0) {
         params.or = clause.replace(/\)$/, `,id.in.(${groupIds.join(",")}))`);
       } else {
@@ -365,15 +485,49 @@ export async function fetchGroupsBySport(
       .filter((group) => isPublishedGroupStatus(group.status))
       .map(async (group) => {
       const displaySessions =
-        (filters.day || filters.startTime || filters.endTime) &&
+        (effectiveScheduleFilters.day ||
+          effectiveScheduleFilters.startTime ||
+          effectiveScheduleFilters.endTime) &&
         group.group_sessions
           ? group.group_sessions.filter((session) =>
-              sessionMatchesFilters(session, filters),
+              sessionMatchesFilters(session, effectiveScheduleFilters),
             )
           : group.group_sessions;
+      const groupEvents = matchingEvents.filter(
+        (event) => event.group_id === group.id,
+      );
 
       return {
         ...group,
+        matched_sessions: dateFilter
+          ? [
+              ...(displaySessions ?? []).map((session) => ({
+                ...session,
+                date: dateFilter.date,
+              })),
+              ...groupEvents.map((event) => ({
+                day: dateFilter.day,
+                date: dateFilter.date,
+                start_time: new Intl.DateTimeFormat("en-GB", {
+                  timeZone: "Asia/Bangkok",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hourCycle: "h23",
+                }).format(new Date(event.starts_at)),
+                end_time: event.ends_at
+                  ? new Intl.DateTimeFormat("en-GB", {
+                      timeZone: "Asia/Bangkok",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hourCycle: "h23",
+                    }).format(new Date(event.ends_at))
+                  : null,
+                courts: event.courts,
+              })),
+            ].sort((a, b) =>
+              (a.start_time ?? "").localeCompare(b.start_time ?? ""),
+            )
+          : null,
         group_sessions:
           displaySessions == null
             ? displaySessions
