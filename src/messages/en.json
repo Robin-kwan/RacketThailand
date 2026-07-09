@@ -34,7 +34,7 @@
   },
   "landing": {
     "heroTitle": "Find racket sport courts and groups in Thailand",
-    "heroDescription": "Use RacketThailand as a court finder, group finder, and sport community hub for badminton, padel, pickleball, tennis, and table tennis, with weekly sessions and direct contacts.",
+    "heroDescription": "A platform for finding racket sport courts, player groups, activities, and communities across Thailand, covering badminton, tennis, padel, pickleball, and table tennis.",
     "contactPrompt": "Have new courts or groups to add? hello@racketthailand.com",
     "cardCta": "Open portal",
     "feedbackTitle": "Share quick feedback",
@@ -60,8 +60,8 @@
     "groupOwnerStep3": "Request court verification to increase trust",
     "regularUserTitle": "Regular Player",
     "regularUserDescription": "Find courts, groups, weekly sessions, and community posts for badminton, padel, pickleball, tennis, and table tennis in Thailand.",
-    "regularUserStep1": "Use the court finder to search courts by sport and location",
-    "regularUserStep2": "Use the group finder to browse active groups and weekly sessions",
+    "regularUserStep1": "Search for courts by sport and location",
+    "regularUserStep2": "Browse active groups and their regular sessions",
     "regularUserStep3": "Follow sport community posts and updates"
   },
   "sport": {
