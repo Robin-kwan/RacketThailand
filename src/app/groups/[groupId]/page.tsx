@@ -35,6 +35,16 @@ import { GroupSessionForm } from "@/components/groups/group-session-form";
 import { getPlayFormatLabel } from "@/lib/play-format";
 import { localizeThailandLocation } from "@/server/thailand-location";
 
+const WEEKDAY_ORDER = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
 const DAY_LABELS: Record<string, { en: string; th: string }> = {
   sunday: { en: "Sunday", th: "วันอาทิตย์" },
   monday: { en: "Monday", th: "วันจันทร์" },
@@ -48,6 +58,19 @@ const DAY_LABELS: Record<string, { en: string; th: string }> = {
 function getDayLabel(day: string, locale: string) {
   const lang = locale === "th" ? "th" : "en";
   return DAY_LABELS[day]?.[lang] ?? day;
+}
+
+function compareWeeklySessions(
+  a: Pick<GroupSessionRow, "day" | "start_time">,
+  b: Pick<GroupSessionRow, "day" | "start_time">,
+) {
+  const aDay = WEEKDAY_ORDER.indexOf(a.day.toLowerCase());
+  const bDay = WEEKDAY_ORDER.indexOf(b.day.toLowerCase());
+  const dayComparison =
+    (aDay === -1 ? WEEKDAY_ORDER.length : aDay) -
+    (bDay === -1 ? WEEKDAY_ORDER.length : bDay);
+
+  return dayComparison || (a.start_time ?? "").localeCompare(b.start_time ?? "");
 }
 
 function formatTimeValue(value: string, locale: string) {
@@ -619,6 +642,10 @@ export default async function GroupDetailPage({
     }
   });
 
+  const sortedSessionRows = [...localizedSessionRows].sort(
+    compareWeeklySessions,
+  );
+
   const sessionGroups = (() => {
     const map = new Map<
       string,
@@ -628,7 +655,7 @@ export default async function GroupDetailPage({
         photoUrl: string | null;
       }
     >();
-    localizedSessionRows.forEach((session) => {
+    sortedSessionRows.forEach((session) => {
       const key = session.court_id;
       const existing = map.get(key);
       if (existing) {

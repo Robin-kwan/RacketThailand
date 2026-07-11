@@ -29,6 +29,10 @@ function getPresentationFromSize(width: number, height: number): ImagePresentati
   return isSmallForHero || isAwkwardHeroCrop ? "contain" : "cover";
 }
 
+function isTallImage(width: number, height: number) {
+  return Boolean(width && height && width / height < 0.9);
+}
+
 export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
   const ordered = useMemo(() => {
     return gallery
@@ -39,6 +43,9 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
   const [presentationById, setPresentationById] = useState<
     Record<string, ImagePresentation>
   >({});
+  const [tallImageById, setTallImageById] = useState<Record<string, boolean>>(
+    {},
+  );
   const [lightbox, setLightbox] = useState<{ open: boolean; index: number }>({
     open: false,
     index: 0,
@@ -57,6 +64,11 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
     primaryPresentation === "contain"
       ? "object-contain"
       : "object-cover";
+  const primaryIsTall =
+    primaryCanOpen && (tallImageById[primaryImage.id] ?? false);
+  const primaryHeightClass = primaryIsTall
+    ? "h-[min(800px,calc((100vw-3rem)*1.5))]"
+    : "h-[280px] md:h-[420px]";
   const primaryFrameClass =
     primaryPresentation === "contain"
       ? "bg-[linear-gradient(135deg,#f8fafc_0%,#eef8f4_100%)]"
@@ -73,6 +85,12 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
         ? current
         : { ...current, [primaryImage.id]: nextPresentation },
     );
+    setTallImageById((current) => {
+      const nextTall = isTallImage(image.naturalWidth, image.naturalHeight);
+      return current[primaryImage.id] === nextTall
+        ? current
+        : { ...current, [primaryImage.id]: nextTall };
+    });
   };
 
   return (
@@ -85,7 +103,7 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
             <button
               type="button"
               onClick={() => setLightbox({ open: true, index: 0 })}
-              className="relative block h-[280px] w-full overflow-hidden md:h-[420px]"
+              className={`relative block w-full overflow-hidden ${primaryHeightClass}`}
             >
               <Image
                 src={primaryImage.image_url}
@@ -97,7 +115,7 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
               />
             </button>
           ) : (
-            <div className="relative block h-[280px] w-full overflow-hidden md:h-[420px]">
+            <div className={`relative block w-full overflow-hidden ${primaryHeightClass}`}>
               <Image
                 src={primaryImage.image_url}
                 alt={courtName ?? "Court photo"}

@@ -5,7 +5,7 @@ import { syncCourtGroupLinks } from "@/server/groupSessions";
 
 const GROUP_IMPORT_WORKFLOWS = {
   badminton: {
-    sourceUrl: "https://www.facebook.com/groups/108488876533648",
+    sourceUrl: "https://www.facebook.com/groups/431415030762524",
     directory: "facebook-badminton-group-preview",
   },
   pickleball: {
