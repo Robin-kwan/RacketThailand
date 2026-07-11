@@ -18,7 +18,7 @@ under:
 
 | Sport | Source URL | Workflow Directory |
 | --- | --- | --- |
-| Badminton | `https://www.facebook.com/groups/108488876533648` | `.codex/facebook-badminton-group-preview` |
+| Badminton | `https://www.facebook.com/groups/431415030762524` | `.codex/facebook-badminton-group-preview` |
 | Pickleball | `https://www.facebook.com/groups/465849552420177` | `.codex/facebook-pickleball-group-preview` |
 | Tennis | `https://www.facebook.com/groups/716723188716013` | `.codex/facebook-tennis-group-preview` |
 
@@ -79,4 +79,3 @@ The import remains review-first:
 - import as draft
 - review in admin
 - publish only after validation
-

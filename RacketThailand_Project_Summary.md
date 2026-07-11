@@ -1,385 +1,539 @@
-# RacketThailand.com – Project Summary
+# RacketThailand.com - Project Summary
 
-RacketThailand is a multi-sport community platform focused on **racket sports in Thailand**, including:
+RacketThailand is a Thai-first multi-sport community platform for racket sports in Thailand.
+
+Supported sports:
 - Badminton
 - Padel
 - Pickleball
 - Tennis
 - Table Tennis
 
-The main domain is:
-- `racketthailand.com`
+Production entry points:
+- `https://racketthailand.com`
+- `https://badminton.racketthailand.com`
+- `https://padel.racketthailand.com`
+- `https://pickleball.racketthailand.com`
+- `https://tennis.racketthailand.com`
+- `https://tabletennis.racketthailand.com`
 
-There are sport-specific subdomains like:
-- `badminton.racketthailand.com`
-- `padel.racketthailand.com`
-- `pickleball.racketthailand.com`
-- `tennis.racketthailand.com`
-- `tabletennis.racketthailand.com`
+All sports share:
+- one Supabase project
+- one Supabase Auth system
+- one Postgres database
+- one Next.js application
 
-All subdomains share:
-- One **Supabase project**
-- One **Auth system**
-- One **Postgres database**
+In local development, sport scope is represented by `/<sport>` routes. In production, `proxy.ts` rewrites supported sport subdomains to the matching `/<sport>` route.
 
-UI/UX principle: Prefer reusable **base components** (shared inputs, selects, buttons, cards) across all sports to keep styling and behavior consistent.
+## Current Product Surface
 
-Common storage buckets (public):
-- `avatars` (profile pictures)
-- `court-images`, `group-images`
-- `community-images` (community board uploads – configure via `NEXT_PUBLIC_SUPABASE_COMMUNITY_BUCKET` if the name changes)
-The sport context is determined by subdomain and mapped to a `sports` row using `code` (e.g. `'badminton'`).
+Current public discovery flows:
+- Landing page: `/`
+- Sport portal: `/<sport>`
+- Court finder: `/<sport>/court-finder`
+- Group finder: `/<sport>/group-finder`
+- Casual plays: `/<sport>/casual-plays`
+- Community board: `/<sport>/board`
+- Court detail: `/courts/[courtId]`
+- Group detail: `/groups/[groupId]`
+- Casual play detail: `/casual-plays/[playId]`
 
-## Core Goals
+Current contribution and account flows:
+- Public court submission: `/courts/new`
+- Group creation: `/groups/create`
+- Casual play creation: `/casual-plays/create`
+- Profile edit: `/profile/edit`
+- Notifications: `/notifications`
 
-1. Help players **find courts**, **groups**, and **matches** for racket sports in Thailand.
-2. Provide a **sport-specific community board** for questions, posts, news, and reviews.
-3. Provide a **scoreboard and match tracking** system.
-4. Allow **multi-sport profiles** with per-sport skill levels.
-5. Collect **feedback and reports** from users (about the platform or other users).
+Current admin and operations flows:
+- `/admin`
+- `/admin/courts`
+- `/admin/groups`
+- `/admin/group-imports`
+- `/admin/groups/import`
+- `/admin/casual-plays`
+- `/admin/feedback`
+- `/admin/court-owners`
 
-The project starts as a **web-first** product (Next.js + Supabase). A mobile app may be added later.
+Planned or schema-only areas:
+- Match tracking and scoreboards have database tables, but no primary surfaced product route yet.
+- Multi-sport profile preferences have a `profile_sports` table, but the surfaced product flow is still limited.
+- `group_events` supports dated upcoming group sessions.
 
-## Tech Stack (high level)
+## Tech Stack
 
-- **Frontend**: Next.js (App Router, TypeScript, Tailwind or similar)
-- **Backend / Data**: Supabase (Postgres, Auth, Storage)
-- **Auth**: Supabase Auth (single auth for all sports/subdomains)
-- **Database**: Postgres with RLS (Row Level Security)
+- Frontend: Next.js App Router, React, TypeScript
+- Styling: Tailwind CSS with shared RacketThailand tokens in `src/app/globals.css`
+- Data/Auth/Storage: Supabase Auth, Postgres, Storage
+- Internationalization: `next-intl`
+- Maps/Places: Google Maps and Places APIs
+- Analytics: Vercel Analytics and Speed Insights
+
+## Locale Model
+
+- Supported locales: Thai (`th`) and English (`en`)
+- Thai is the default locale.
+- Locale is controlled by the `?lang=` query string, not a URL prefix.
+- Copy lives in `src/messages/th.json` and `src/messages/en.json`.
+- Shared locale helpers live in `src/lib/i18n.ts`.
+
+## Sport Model
+
+Sports are defined in `public.sports` and by route metadata in `src/data/sportMeta.ts`.
+
+Current sport codes:
+- `badminton`
+- `padel`
+- `pickleball`
+- `tennis`
+- `tabletennis`
+
+Most sport-scoped records reference `sports.id` through `sport_id`.
+
+Court sport scoping is more flexible: courts can be linked to one or more sports through `court_sports`. Older summary language that described court finder as only `courts.sport_id` is stale.
+
+## Storage Buckets
+
+Default bucket names used by the app:
+- `avatars`
+- `court-images`
+- `court-line-qr`
+- `group-images`
+- `group-line-qr`
+
+The summary previously mentioned `community-images`; the current app does not expose a mature community image upload flow around that bucket.
 
 ## Key Database Entities
 
-### 1. sports
-- Defines available sports: badminton, padel, pickleball, tennis, table tennis.
-- Columns:
-  - `id` (uuid)
-  - `code` (text, unique) – e.g. `'badminton'`
-  - `name` (text)
-- Used as a foreign key (`sport_id`) throughout the schema.
+### `sports`
 
-### 2. profiles
-- 1:1 with `auth.users`.
-- Represents a person using the platform.
-- Columns:
-  - `id` (uuid, PK, references `auth.users`)
-  - `username` (unique)
-  - `display_name`
-  - `bio`
-  - `default_sport` (uuid → sports.id)
-  - `location` (e.g. `'Bangkok - Bang Na'`)
-  - `avatar_url`
-  - `status` (text, default `'member'`; allowed values: `'member'`, `'court_manager'`, `'admin'`)
-  - `created_at`
+Defines supported sports.
 
-### 3. profile_sports
-- Describes which sports a profile plays, with optional skill and preference.
-- Allows **multi-sport users**.
-- Columns:
-  - `profile_id` (uuid → profiles.id)
-  - `sport_id` (uuid → sports.id)
-  - `skill_level` (text)
-  - `preference` (int, 1–5)
-  - `is_primary` (boolean)
-  - `created_at`
-- Composite primary key: (`profile_id`, `sport_id`).
+Important columns:
+- `id`
+- `code`
+- `name`
+- `created_at`
 
-### 4. courts
-- Represents racket courts/venues across Thailand.
-- Supports **court finder** and SEO.
-- Columns:
-  - `id` (uuid)
-  - `sport_id` (uuid → sports.id)
-  - `name`
-  - `description`
-  - `address`
-  - `district`
-  - `province`
-  - `lat`, `lng`
-  - `google_place_id` (text; optional reference to Google Maps)
-  - `phone`
-  - `line_id`
-  - `website_url`
-  - `price_note`
-  - `opening_hours` (jsonb; structured weekly schedule)
-  - `is_active` (boolean)
-  - `created_by` (uuid → profiles.id)
-  - `created_at`
-  - `updated_at` (timestamptz default `now()`)
+### `profiles`
 
-### 5. court_photos
-- Photos for courts.
-- Columns:
-  - `id` (uuid)
-  - `court_id` (uuid → courts.id)
-  - `image_url`
-  - `is_primary` (boolean)
-  - `created_at`
+Represents app users and admin/court-management access.
 
-### 6. groups
-- For **group/partner finder**.
-- Examples:
-  - “Badminton Sukhumvit Intermediate Group”
-  - “Padel Bangna Weekend Group”
-- Columns:
-  - `id` (uuid)
-  - `sport_id` (uuid → sports.id)
-  - `name`
-  - `description`
-  - `owner_id` (uuid → profiles.id)
-  - `player_amount` (integer, optional — average number of players per session)
-  - `phone` (text, optional contact number)
-  - `line_id` (text, optional LINE ID)
-  - `created_at`
-  - `updated_at` (timestamptz default `now()`)
+Important columns:
+- `id`
+- `username`
+- `display_name`
+- `bio`
+- `default_sport`
+- `location`
+- `avatar_url`
+- `status`
+- `created_at`
 
-> Cleanup note: if older deployments still have `location`, `skill_min`, or `skill_max` columns on `public.groups`, remove them with:
-> ```sql
-> alter table public.groups
->   drop column if exists location,
->   drop column if exists skill_min,
->   drop column if exists skill_max;
-> ```
->
-> Earlier versions also stored `default_court_id` and `schedule` directly on `public.groups`. Migrate those rows into `group_sessions` (below) and drop the legacy columns:
-> ```sql
-> alter table public.groups
->   drop column if exists default_court_id,
->   drop column if exists schedule;
-> ```
+Common `status` values are `member` and `admin`. Some app code also checks `court_manager` for court-management access, so keep that distinction in mind before changing access rules.
 
-### 7. group_sessions *(new)*
-- Weekly sessions owned by each community group.
-- Columns:
-  - `id` (uuid)
-  - `group_id` (uuid → groups.id on delete cascade)
-  - `court_id` (uuid → courts.id on delete cascade)
-  - `day` (text enum: `sunday` … `saturday`)
-  - `start_time` (time)
-  - `end_time` (time)
-  - `created_at`
-  - `updated_at`
+### `profile_sports`
 
-### 7a. casual_plays *(new)*
-- One-off sessions that expire after the play day.
-- Intended for smaller/private sessions that do **not** require court-owner verification.
-- Columns:
-  - `id` (uuid)
-  - `sport_id` (uuid → sports.id on delete cascade)
-  - `court_id` (uuid → courts.id on delete set null, optional)
-  - `owner_id` (uuid → profiles.id on delete cascade)
-  - `title`
-  - `description` (optional)
-  - `venue_name` (text, optional fallback when no linked court)
-  - `location_note` (text, optional meetup / landmark note)
-  - `play_date` (date)
-  - `start_time` (time)
-  - `end_time` (time, optional)
-  - `player_amount` (integer, optional)
-  - `phone` (text, optional)
-  - `line_id` (text, optional)
-  - `created_at`
-  - `updated_at`
-- Suggested constraints:
-  - `court_id is not null or venue_name is not null`
-  - `end_time > start_time` when `end_time` is present
-  - `player_amount > 0` when present
-- App rules:
-  - Listings may only be scheduled between "today" and one month ahead in Thailand time.
-  - Public finder/detail routes exclude rows whose `play_date` is before the current Thailand date.
+Stores optional per-sport user preferences and skill information.
 
-### 8. community_posts *(revamped)*
-- Sport-specific community board posts stored/rendered as plain text.
-- Covers announcements, trading, questions, and meetup planning.
-- Columns:
-  - `id` (uuid, PK)
-  - `sport_id` (uuid → sports.id, required)
-  - `author_id` (uuid → profiles.id, nullable for imported/system posts)
-  - `title` (text)
-  - `body_text` (text; raw body content)
-  - `category` (enum/text; e.g. `'update'`, `'event'`, `'market'`, `'question'`, `'other'`)
-  - `status` (enum: `'draft'`, `'published'`, `'flagged'`, `'archived'`)
-  - `pinned` (boolean default false)
-  - `attachments` (jsonb array of Supabase Storage URLs)
-  - `created_at`, `updated_at`
+Important columns:
+- `profile_id`
+- `sport_id`
+- `skill_level`
+- `preference`
+- `is_primary`
+- `created_at`
 
-### 9. community_comments *(revamped)*
-- Threaded comments on community posts.
-- Columns:
-  - `id` (uuid, PK)
-  - `post_id` (uuid → community_posts.id)
-  - `author_id` (uuid → profiles.id)
-  - `body_text` (text)
-  - `parent_id` (uuid → community_comments.id, nullable for top-level)
-  - `created_at`, `updated_at`
+Current status: schema exists, but the surfaced product flow is still limited.
 
-### 10. community_likes *(new)*
-- Single-reaction system (“Like”) per user/post.
-- Columns:
-  - `post_id` (uuid → community_posts.id)
-  - `user_id` (uuid → profiles.id)
-  - `created_at`
-- Composite primary key (`post_id`, `user_id`) prevents duplicate likes.
+### `courts`
 
-### 11. notifications *(new)*
-- Keeps a history of system notifications (e.g., court verification requests).
-- Columns:
-  - `id` (uuid, PK, default `gen_random_uuid()`)
-  - `recipient_id` (uuid → profiles.id)
-  - `type` (text, e.g. `'court-group-request'`)
-  - `message` (text, optional fallback message)
-  - `metadata` (`jsonb`, stores contextual IDs/names)
-  - `read_at` (timestamptz, nullable)
-  - `created_at` (timestamptz default `now()`)
-- Suggested Supabase SQL:
-  ```sql
-  create table if not exists public.notifications (
-    id uuid primary key default gen_random_uuid(),
-    recipient_id uuid not null references public.profiles(id) on delete cascade,
-    type text not null,
-    message text,
-    metadata jsonb,
-    read_at timestamptz,
-    created_at timestamptz default now()
-  );
-  alter table public.notifications enable row level security;
-  create policy "Recipients can view notifications"
-    on public.notifications for select
-    using (recipient_id = auth.uid());
-  create policy "Recipients can mark notifications"
-    on public.notifications for update
-    using (recipient_id = auth.uid());
-  create policy "System inserts notifications"
-    on public.notifications for insert
-    with check (auth.role() = 'service_role');
-  ```
+Represents venues across Thailand.
 
-### 11. matches
-- Represents a match for scoreboard / match tracking.
-- Can be linked to a group and a court.
-- Columns:
-  - `id` (uuid)
-  - `sport_id` (uuid → sports.id)
-  - `group_id` (uuid → groups.id, optional)
-  - `court_id` (uuid → courts.id, optional)
-  - `scheduled_at`
-  - `status` (text: `'scheduled'`, `'in_progress'`, `'finished'`)
-  - `created_by` (uuid → profiles.id)
-  - `created_at`
+Important columns:
+- `id`
+- `name`
+- `description`
+- `address`
+- `district`
+- `province`
+- `district_id`
+- `province_id`
+- `lat`
+- `lng`
+- `google_place_id`
+- `phone`
+- `line_id`
+- `line_qr_url`
+- `website_url`
+- `price_note`
+- `opening_hours`
+- `is_active`
+- `created_by`
+- `created_at`
+- `updated_at`
 
-### 12. match_participants
-- Who is playing in a match and which team they are on.
-- Columns:
-  - `match_id` (uuid → matches.id)
-  - `profile_id` (uuid → profiles.id)
-  - `team` (e.g. `'A'`, `'B'`)
-  - `is_winner` (boolean)
-- Primary key: (`match_id`, `profile_id`).
+Court finder filters active courts by sport through `court_sports`, plus province/district/location filters.
 
-### 13. match_games
-- Game-level scores within a match (e.g. best-of-3 games).
-- Columns:
-  - `id` (uuid)
-  - `match_id` (uuid → matches.id)
-  - `game_no` (integer: 1, 2, 3, ...)
-  - `team_a_score` (int)
-  - `team_b_score` (int)
-  - `created_at`
+### `court_sports`
 
-### 14. feedback
-- Handles both **general feedback** and **reports**.
-- Can optionally attach context (sport, group, court, match, post, reported user).
-- Columns:
-  - `id` (uuid)
-  - `reporter_id` (uuid → profiles.id)
-  - `reported_profile_id` (uuid → profiles.id, optional)
-  - `sport_id` (uuid → sports.id, optional)
-  - `group_id` (uuid → groups.id, optional)
-  - `court_id` (uuid → courts.id, optional)
-  - `match_id` (uuid → matches.id, optional)
-  - `post_id` (uuid → posts.id, optional)
-  - `type` (text: `'general'`, `'bug'`, `'feature'`, `'report_user'`, `'report_content'`, etc.)
-  - `subject`
-  - `message`
-  - `status` (text: `'open'`, `'in_review'`, `'resolved'`, `'dismissed'`)
-  - `priority` (text: `'low'`, `'normal'`, `'high'`, `'urgent'`)
-  - `checked` (boolean, default `false` — admins toggle after reading)
-  - `handled_by` (uuid → profiles.id, admin)
-  - `resolution_note`
-  - `created_at`
-  - `updated_at`
+Join table for multi-sport courts.
 
-## RLS & Access Control Overview
+Important columns:
+- `court_id`
+- `sport_id`
+- `created_at`
 
-- **profiles**
-  - Anyone can read.
-  - Users can insert and update only their own row.
+Composite primary key:
+- `court_id`
+- `sport_id`
 
-- **profile_sports**
-  - Only the owner of the profile can read/write their sports.
+### `court_photos`
 
-- **courts & court_photos**
-  - Publicly readable.
-  - Any authenticated user can insert courts/photos.
-  - Only the `created_by` user can update court details.
+Stores court images.
 
-- **groups**
-  - Public groups are readable by everyone.
-  - Owners can update their groups.
-  - Users can join/leave groups as themselves.
-  - Members and group owners can see membership info.
+Important columns:
+- `id`
+- `court_id`
+- `image_url`
+- `is_primary`
+- `created_at`
 
-- **posts & comments**
-  - Publicly readable.
-  - Authenticated users can create posts/comments.
-  - Authors can update their own posts/comments.
+### `groups`
 
-- **matches, match_participants, match_games**
-  - Matches and games are publicly readable.
-  - Authenticated users can create matches.
-  - Match creator can update matches and games.
-  - Participants and match creator can see participants.
-  - Participants can add themselves to matches.
+Represents recurring player groups and clubs.
 
-- **feedback**
-  - Feedback is visible to:
-    - The reporter (who submitted it), and
-    - Admins (`profiles.is_admin = true`).
-  - Only authenticated users can create feedback.
-  - Only admins can update status/resolution.
+Important columns:
+- `id`
+- `sport_id`
+- `name`
+- `description`
+- `owner_id`
+- `player_amount`
+- `phone`
+- `line_id`
+- `line_qr_url`
+- `website_url`
+- `rating_system`
+- `rating_min`
+- `rating_max`
+- `play_format`
+- `allow_walk_in`
+- `status`
+- `created_at`
+- `updated_at`
 
-## Main MVP Features Mapped to Schema
+`status` controls public visibility:
+- `published` groups appear in public finder/detail pages.
+- `draft` groups are hidden from public discovery until admin publishes them.
 
-- **Court Finder** → `courts`, `court_photos`, filtered by `sport_id`, `province`, `district`.
-- **Group Finder** → `groups`, filtered by sport and schedule (day/time) plus proximity sorting.
-- **Community Board** → `posts`, `comments`, with optional `sport_id` and `group_id`.
-- **Scoreboard / Matches** → `matches`, `match_participants`, `match_games`.
-- **Multi-sport Profiles** → `profiles`, `profile_sports`, plus `default_sport`.
-- **Feedback & Reports** → `feedback`, optionally linked to users/content.
+### `group_photos`
 
-## Important Design Principles
+Stores group images.
 
-- Single database and auth for all sports and all subdomains.
-- Sports differentiated by `sport_id` (multi-tenant style).
-- Focus on:
-  - Simplicity
-  - Scalability with indexes
-  - Ability to extend later (chat, tournaments, booking, etc.)
-- No per-sport duplicated tables; everything filters on `sport_id`.
+Important columns:
+- `id`
+- `group_id`
+- `image_url`
+- `is_primary`
+- `created_at`
 
-## Recent UI Enhancements
+### `group_sessions`
 
-- Public funnel redesign now covers landing, sport portal, court finder, and group finder with stronger CTA hierarchy and editorial-style visual treatment.
-- Added an authenticated public court submission page at `/courts/new` that writes to `courts` without introducing a new queue table, while preserving existing admin/dashboard court-management workflows.
-- Added an admin-controlled court submission policy toggle:
-  - ON: public submissions publish immediately.
-  - OFF: public submissions are stored as pending (`is_active = false`) and only become visible after admin publish from `/admin/courts`.
-- Conversion instrumentation now tracks key acquisition events: `landing_cta_click`, `sport_cta_click`, `empty_state_cta_click`, `court_submit_started`, `court_submit_success`, `group_submit_success`, and `finder_filter_used`.
-- Sitemap now includes every sport community board route (`/{sport}/board`) to improve search discoverability for active community content.
-- Court finder’s “Find nearby courts” view now embeds a live Google Maps instance with a blue dot for the user location plus labeled pins for nearby courts, matching the Google Maps experience requested by stakeholders.
-- All Google Maps/Places integrations (client map plus server API routes) now read the single `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` value from `.env.local`. For Advanced Marker labels, optionally define `NEXT_PUBLIC_GOOGLE_MAP_ID` with a vector map ID—otherwise the map will gracefully fall back to classic pins.
-- Group finder now supports filtering by day and half-hour time slots plus a “Find nearby groups” option that geolocates the user, centers the court map, and surfaces the closest sessions.
-- Court and group detail pages now emit localized metadata, canonical URLs, and Schema.org structured data so search engines can index locations and clubs with richer previews.
-- Introduced a centralized green palette in `src/app/globals.css` with reusable helpers (`.rt-card`, `.rt-pill`, `.rt-btn-primary`, `.rt-text-muted`) so every court/group/community card pulls from the same `--rt-primary*` tokens. Updating the color now only requires editing those CSS variables.
-- Landing hero cards, dashboard court/group lists, and the admin feedback table were migrated to the new `rt-card`/`rt-btn-primary` styles—no more hard-coded blue/emerald values—and their buttons inherit the shared disabled grey state.
-- Feedback form inputs now live inside an `rt-card`, adopt the primary palette, and continue to rely on the shared base input styles (rounded corners, white background) so other forms can reuse the same component without extra tweaking.
-- Added `BaseCard` (`src/components/base-card.tsx`) so every card wrapper (landing tiles, dashboard cards, admin tables) consumes the exact same radius, border, background, and shadow tokens just by using one component instead of retyping classes.
+Stores recurring weekly group sessions.
+
+Important columns:
+- `id`
+- `group_id`
+- `court_id`
+- `day`
+- `weekday`
+- `start_time`
+- `end_time`
+- `note`
+- `created_at`
+- `updated_at`
+
+The app mostly works with `day` names such as `monday` and `tuesday`. The database also has `weekday` for numeric weekday support.
+
+### `group_events`
+
+Stores dated upcoming group sessions.
+
+Important columns:
+- `id`
+- `group_id`
+- `court_id`
+- `venue_name`
+- `starts_at`
+- `ends_at`
+- `notes`
+- `created_by`
+- `created_at`
+- `updated_at`
+
+Current product use:
+- Group forms can manage dated events.
+- Group finder date filtering can match either recurring weekly sessions or dated events.
+- Court detail can show upcoming group events at that court when data exists.
+
+### `court_groups`
+
+Links groups to courts and tracks verification by court/admin.
+
+Important columns:
+- `id`
+- `court_id`
+- `group_id`
+- `verification_status`
+- `verified_by`
+- `verified_at`
+- `note`
+- `created_at`
+
+Verification statuses:
+- `pending`
+- `verified`
+- `rejected`
+
+### `casual_plays`
+
+Stores one-off play listings.
+
+Important columns:
+- `id`
+- `sport_id`
+- `court_id`
+- `owner_id`
+- `title`
+- `description`
+- `venue_name`
+- `location_note`
+- `play_date`
+- `start_time`
+- `end_time`
+- `player_amount`
+- `phone`
+- `line_id`
+- `allow_public_contact`
+- `rating_system`
+- `rating_min`
+- `rating_max`
+- `play_format`
+- `created_at`
+- `updated_at`
+
+App rules:
+- Listings are created for a bounded upcoming date range in Thailand time.
+- Public finder/detail routes exclude expired listings.
+- Contact visibility can depend on listing settings and join-request status.
+
+### `casual_play_join_requests`
+
+Stores join requests for casual plays.
+
+Important columns:
+- `id`
+- `play_id`
+- `requester_id`
+- `contact_name`
+- `phone`
+- `line_id`
+- `message`
+- `status`
+- `responded_at`
+- `created_at`
+- `updated_at`
+
+Statuses:
+- `pending`
+- `accepted`
+- `rejected`
+- `cancelled`
+
+### `community_posts`
+
+Stores sport-specific community board posts.
+
+Important columns:
+- `id`
+- `sport_id`
+- `author_id`
+- `title`
+- `body_text`
+- `category`
+- `status`
+- `pinned`
+- `attachments`
+- `created_at`
+- `updated_at`
+
+Current route usage is based on `community_posts`, not the older `posts` table.
+
+### `community_comments`
+
+Stores comments on community posts.
+
+Important columns:
+- `id`
+- `post_id`
+- `author_id`
+- `body_text`
+- `parent_id`
+- `created_at`
+- `updated_at`
+
+### `community_likes`
+
+Stores one like per user/post.
+
+Important columns:
+- `post_id`
+- `user_id`
+- `created_at`
+
+Composite primary key:
+- `post_id`
+- `user_id`
+
+### `notifications`
+
+Stores user notification history.
+
+Important columns:
+- `id`
+- `recipient_id`
+- `type`
+- `message`
+- `metadata`
+- `read_at`
+- `created_at`
+
+Used for flows such as court-group requests, casual-play join requests, and feedback notifications.
+
+### `feedback`
+
+Stores general feedback, bug reports, feature ideas, and moderation/report context.
+
+Important columns:
+- `id`
+- `reporter_id`
+- `reported_profile_id`
+- `sport_id`
+- `group_id`
+- `court_id`
+- `match_id`
+- `post_id`
+- `type`
+- `subject`
+- `message`
+- `status`
+- `priority`
+- `checked`
+- `handled_by`
+- `resolution_note`
+- `created_at`
+- `updated_at`
+
+The landing feedback form and admin feedback inbox are part of the current app.
+
+### Match Tables
+
+The following tables exist but are not a primary surfaced product area yet:
+- `matches`
+- `match_participants`
+- `match_games`
+
+They are intended for future match tracking and scoreboards.
+
+### Legacy Community Tables
+
+The older `posts` and `comments` tables may still exist in the database, but current community board routes use:
+- `community_posts`
+- `community_comments`
+- `community_likes`
+
+Avoid building new community features on `posts`/`comments` unless intentionally migrating legacy data.
+
+## Feature Mapping
+
+- Court Finder: `courts`, `court_sports`, `court_photos`, `provinces`, `districts`
+- Court Detail: `courts`, `court_photos`, `court_groups`, `group_sessions`, `group_events`
+- Group Finder: `groups`, `group_photos`, `group_sessions`, `group_events`, `court_groups`
+- Group Detail: `groups`, `group_photos`, `group_sessions`, `group_events`, `court_groups`
+- Casual Plays: `casual_plays`, `casual_play_join_requests`
+- Community Board: `community_posts`, `community_comments`, `community_likes`
+- Notifications: `notifications`
+- Feedback/Admin Inbox: `feedback`
+- Future Match Tracking: `matches`, `match_participants`, `match_games`
+- Profile Preferences: `profiles`, `profile_sports`
+
+## Access Control Overview
+
+RLS is enabled on the core public tables. App-level server code often uses:
+- user-scoped Supabase clients for authenticated user actions
+- the admin/service-role client for privileged admin operations
+- small server modules in `src/server/*` for shared read and validation logic
+
+Current access patterns:
+- Public pages can read published/active discovery content.
+- Authenticated users can submit courts, create groups, create casual plays, post to boards, submit feedback, and manage their own records.
+- Admin users are identified through `profiles.status = 'admin'`.
+- Some court-management paths also check for `profiles.status = 'court_manager'`; confirm the allowed profile status values before changing court-manager access rules.
+- Draft groups and inactive courts are hidden from public discovery until published/activated.
+
+## SEO and Growth
+
+SEO support includes:
+- localized metadata
+- canonical URLs
+- alternate language URLs where route code supports them
+- sitemap coverage for sport portals, finder pages, detail pages, casual plays, and community board routes
+- structured data on court and group detail pages
+
+Important analytics events include:
+- `landing_cta_click`
+- `sport_cta_click`
+- `empty_state_cta_click`
+- `court_submit_started`
+- `court_submit_success`
+- `group_submit_success`
+- `finder_filter_used`
+
+## UI Direction
+
+The current visual system is Thai-first, soft green, and card-based, with shared tokens in `src/app/globals.css`.
+
+Preferred shared classes/components:
+- `rt-card`
+- `rt-pill`
+- `rt-btn-primary`
+- `rt-btn-court`
+- `rt-btn-group`
+- `rt-text-muted`
+- `BaseCard`
+
+CTA convention:
+- Add Court CTAs use the black court button style.
+- Create/Add Group CTAs use the blue group button style.
+
+Avoid broad one-off redesigns unless the task explicitly asks for a redesign.
+
+## Recent Implementation Notes
+
+- Landing metadata and hero copy were updated to describe the site as a platform for courts, player groups, activities, and racket-sport communities across Thailand.
+- Sport portal ordering now gives group discovery more priority than court discovery.
+- Group Finder supports a calendar date filter. A selected date matches recurring weekly sessions on that weekday and dated `group_events` on that Thailand-local date.
+- Group Finder still supports day, time, location/proximity, search, and nearby-group behavior.
+- Court detail can show upcoming dated group sessions from `group_events` when future events exist for that court.
+- Public court submissions can be immediately published or held pending based on the admin-controlled court submission policy.
+- Admin group import tooling can create hidden draft groups and reuse existing courts/sessions/photos where possible.
+- The Husky pre-commit hook runs lint, clean, and build to avoid stale Next.js cache path issues between PowerShell and Git shell.
+
+## Practical Notes
+
+- The database is the source of truth for production content, but the route tree is the source of truth for surfaced product features.
+- Some schema exists ahead of the product UI. Do not assume a feature is live only because a table exists.
+- When adding public routes, update canonical/alternate metadata and sitemap behavior.
+- When adding user-facing text, update both Thai and English message files.
+- When touching Supabase-backed features, check RLS assumptions, storage bucket names, auth state, and admin access rules.
