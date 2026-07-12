@@ -104,6 +104,23 @@ export const metadata: Metadata = {
   title: "RacketThailand | Racket Sports Community",
   description:
     "Discover courts, groups, and community updates for every racket sport in Thailand.",
+  icons: {
+    icon: [
+      {
+        url: "/icon.png?v=rally-gap-20260712",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
+    shortcut: "/favicon.ico?v=rally-gap-20260712",
+    apple: [
+      {
+        url: "/apple-icon.png?v=rally-gap-20260712",
+        type: "image/png",
+        sizes: "180x180",
+      },
+    ],
+  },
   alternates: {
     canonical: "/",
   },
