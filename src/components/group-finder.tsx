@@ -627,7 +627,7 @@ export function GroupFinder({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem_16rem] md:items-end">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">
@@ -645,7 +645,7 @@ export function GroupFinder({
                 });
               }}
               placeholder={copy.searchPlaceholder}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
             />
           </div>
           <DatePickerField
@@ -803,7 +803,7 @@ export function GroupFinder({
       </div>
 
       {prioritizeNearby && userLocation && mapCourts.length > 0 && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
           <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.mapHeading}
           </p>
@@ -823,7 +823,7 @@ export function GroupFinder({
               return (
                 <div
                   key={`nearby-court-${entry.court.id}`}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-sm"
+                  className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50 text-sm"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                     <button
@@ -896,7 +896,7 @@ export function GroupFinder({
       )}
 
       {prioritizeNearby && userLocation && mapCourts.length === 0 && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
           <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.nearbyListTitle}
           </p>
@@ -907,7 +907,7 @@ export function GroupFinder({
               .map((entry) => (
                 <div
                   key={`nearby-${entry.group.id}`}
-                  className="flex flex-wrap items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                  className="flex flex-wrap items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
                 >
                   <div>
                     <p className="font-semibold text-slate-900">
@@ -945,7 +945,7 @@ export function GroupFinder({
       )}
 
       {displayedGroups.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">
+        <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-slate-600">
           <p className="text-xl font-semibold text-slate-900">
             {copy.emptyTitle}
           </p>

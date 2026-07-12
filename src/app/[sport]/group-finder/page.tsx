@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { GroupFinder } from "@/components/group-finder";
 import { TrackedLink } from "@/components/analytics/tracked-link";
+import { SportFinderHero } from "@/components/sport-finder-hero";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { getSportMeta } from "@/data/sportMeta";
 import {
@@ -302,64 +303,64 @@ export default async function GroupFinderPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#f7fbf9] text-slate-900">
       <HeaderSubLabel value={meta.name[locale]} />
-      <main className="relative mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--rt-primary-rgb)/0.16),transparent_42%),radial-gradient(circle_at_92%_18%,rgb(var(--foreground-rgb)/0.08),transparent_44%)]"
-        />
-        <section className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)] backdrop-blur">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-            {copy.title}
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
-          <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-500">
-            <TrackedLink
-              href={buildLocalizedPath(`/${resolvedParams.sport}/casual-plays`, locale)}
-              eventName="sport_cta_click"
-              eventPayload={{
-                surface: "group_finder_header",
-                cta: "open_casual_plays",
-                sport: resolvedParams.sport,
-              }}
-              className="rounded-full border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:border-slate-500"
-            >
-              {copy.casualPlaysCta}
-            </TrackedLink>
-            <TrackedLink
-              href={buildLocalizedPath(
-                `/groups/create?sport=${encodeURIComponent(resolvedParams.sport)}`,
-                locale,
-              )}
-              eventName="sport_cta_click"
-              eventPayload={{
-                surface: "group_finder_header",
-                cta: "create_group",
-                sport: resolvedParams.sport,
-              }}
-              className="rt-btn-group inline-flex items-center justify-center px-4 py-2"
-            >
-              {t("header.createGroup")}
-            </TrackedLink>
+      <main>
+        <SportFinderHero
+          sportName={meta.name[locale]}
+          sportAccent={meta.accent}
+          imageUrl={meta.coverImage}
+          title={copy.title}
+          description={copy.subtitle}
+        >
+          <TrackedLink
+            href={buildLocalizedPath(`/${resolvedParams.sport}/casual-plays`, locale)}
+            eventName="sport_cta_click"
+            eventPayload={{
+              surface: "group_finder_header",
+              cta: "open_casual_plays",
+              sport: resolvedParams.sport,
+            }}
+            className="inline-flex items-center justify-center rounded-full border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/80 hover:bg-white/20"
+          >
+            {copy.casualPlaysCta}
+          </TrackedLink>
+          <TrackedLink
+            href={buildLocalizedPath(
+              `/groups/create?sport=${encodeURIComponent(resolvedParams.sport)}`,
+              locale,
+            )}
+            eventName="sport_cta_click"
+            eventPayload={{
+              surface: "group_finder_header",
+              cta: "create_group",
+              sport: resolvedParams.sport,
+            }}
+            className="rt-btn-group inline-flex items-center justify-center px-5 py-3 text-sm"
+          >
+            {t("header.createGroup")}
+          </TrackedLink>
+        </SportFinderHero>
+        <section className="px-6 py-10 md:px-10 md:py-12">
+          <div className="mx-auto w-full max-w-screen-xl">
+            <GroupFinder
+              sportCode={resolvedParams.sport}
+              locale={locale}
+              fallbackImage={meta.coverImage}
+              copy={copy}
+              dayLabels={dayLabels}
+              initialGroups={groupData.groups}
+              total={groupData.count}
+              initialSearch={searchQuery}
+              initialDate={dateFilter}
+              initialDay={isDayKey(dayFilter) ? dayFilter : ""}
+              initialStartTime={startTimeFilter}
+              initialEndTime={endTimeFilter}
+              initialPlayFormat={playFormatFilter}
+              initialAllowWalkIn={walkInFilter}
+            />
           </div>
         </section>
-        <GroupFinder
-          sportCode={resolvedParams.sport}
-          locale={locale}
-          fallbackImage={meta.coverImage}
-          copy={copy}
-          dayLabels={dayLabels}
-          initialGroups={groupData.groups}
-          total={groupData.count}
-          initialSearch={searchQuery}
-          initialDate={dateFilter}
-          initialDay={isDayKey(dayFilter) ? dayFilter : ""}
-          initialStartTime={startTimeFilter}
-          initialEndTime={endTimeFilter}
-          initialPlayFormat={playFormatFilter}
-          initialAllowWalkIn={walkInFilter}
-        />
       </main>
     </div>
   );

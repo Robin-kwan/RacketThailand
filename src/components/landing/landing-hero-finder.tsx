@@ -46,7 +46,7 @@ export function LandingHeroFinder({
   }, []);
 
   return (
-    <div className="flex w-full flex-col gap-3 rounded-2xl border border-slate-200/90 bg-white p-3 shadow-[0_18px_45px_rgb(15_23_42/0.13)] sm:flex-row sm:items-stretch sm:gap-0 sm:p-2">
+    <div className="flex w-full flex-col gap-3 rounded-lg border border-slate-200/90 bg-white p-3 shadow-[0_18px_45px_rgb(15_23_42/0.13)] sm:flex-row sm:items-stretch sm:gap-0 sm:p-2">
       <div ref={menuRef} className="relative min-w-0 flex-1 sm:border-r sm:border-slate-200">
         <button
           type="button"

@@ -132,7 +132,7 @@ export default async function DashboardAddCourtPage({
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-      <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
         <h1 className="text-xl font-semibold text-slate-900">
           {copy.title}
         </h1>

@@ -46,7 +46,7 @@ export function CourtMap({
   }, [latitude, longitude, name, normalizedPlaceId]);
 
   return (
-    <section className="space-y-4 rounded-[32px] bg-white/90 p-6">
+    <section className="space-y-4 rounded-lg bg-white/90 p-6">
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase text-slate-400">
           {eyebrow}
@@ -54,7 +54,7 @@ export function CourtMap({
         <h2 className="text-xl font-semibold text-slate-900">{name}</h2>
         <p className="text-sm text-slate-600">{description}</p>
       </header>
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100">
+      <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-transparent via-transparent to-white/15" />
         <iframe
           title={`${name} location`}
@@ -65,7 +65,7 @@ export function CourtMap({
           referrerPolicy="no-referrer-when-downgrade"
         />
       </div>
-      <div className="rounded-2xl bg-slate-50/70 px-4 py-3 text-sm text-slate-600">
+      <div className="rounded-lg bg-slate-50/70 px-4 py-3 text-sm text-slate-600">
         <a
           href={mapsUrl}
           target="_blank"

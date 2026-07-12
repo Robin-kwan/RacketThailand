@@ -56,7 +56,7 @@ export function ConfirmationDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={messageId}
-        className="rt-notification-modal relative w-full max-w-md rounded-[28px] border border-white/80 bg-white px-6 pb-6 pt-7 text-slate-900 shadow-[0_24px_80px_rgb(15_23_42/0.28)]"
+        className="rt-notification-modal relative w-full max-w-md rounded-lg border border-white/80 bg-white px-6 pb-6 pt-7 text-slate-900 shadow-[0_24px_80px_rgb(15_23_42/0.28)]"
       >
         <button
           type="button"

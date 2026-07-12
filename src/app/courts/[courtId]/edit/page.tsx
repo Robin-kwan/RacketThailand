@@ -265,7 +265,7 @@ export default async function EditCourtPage({
             }}
           />
         </div>
-        <section className="rounded-[32px] border border-slate-200 bg-white/90 p-8 backdrop-blur">
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
           <h1 className="text-xl font-semibold text-slate-900">
             {copy.title}
           </h1>

@@ -163,7 +163,7 @@ export default async function CreateCasualPlayPage({
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
         <BaseCard
           as="section"
-          className="rounded-[32px] border border-slate-200 bg-white p-8"
+          className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {copy.title}
@@ -172,7 +172,7 @@ export default async function CreateCasualPlayPage({
             {copy.subtitle}
           </p>
           {sports.length === 0 ? (
-            <p className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-[rgb(var(--foreground-rgb)/0.02)] p-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+            <p className="mt-6 rounded-lg border border-dashed border-slate-200 bg-[rgb(var(--foreground-rgb)/0.02)] p-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
               {t("sport.featureEmpty")}
             </p>
           ) : (

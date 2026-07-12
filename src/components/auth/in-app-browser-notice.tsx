@@ -47,7 +47,7 @@ export function InAppBrowserNotice({ copy }: InAppBrowserNoticeProps) {
   };
 
   return (
-    <div className="mb-5 rounded-3xl border border-amber-200 bg-amber-50/95 p-4 text-sm text-amber-950 shadow-sm">
+    <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50/95 p-4 text-sm text-amber-950 shadow-sm">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-amber-700">
           <ExternalLink className="h-4 w-4" strokeWidth={2} aria-hidden />

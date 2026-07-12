@@ -457,7 +457,7 @@ export function CasualPlayForm({
           />
         </div>
       </div>
-      <fieldset className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+      <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
         <legend className="text-sm font-semibold text-[var(--foreground)]">
           {copy.contactVisibilityLabel}
         </legend>
@@ -465,7 +465,7 @@ export function CasualPlayForm({
           {copy.contactVisibilityHelp}
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
             <input
               type="radio"
               name="contactVisibility"
@@ -477,7 +477,7 @@ export function CasualPlayForm({
             />
             <span className="font-semibold">{copy.requestToJoinLabel}</span>
           </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
             <input
               type="radio"
               name="contactVisibility"

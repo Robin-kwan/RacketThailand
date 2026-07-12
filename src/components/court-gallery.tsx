@@ -33,7 +33,10 @@ function isTallImage(width: number, height: number) {
   return Boolean(width && height && width / height < 0.9);
 }
 
-export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
+export function CourtGallery({
+  gallery,
+  courtName,
+}: CourtGalleryProps) {
   const ordered = useMemo(() => {
     return gallery
       .slice()
@@ -46,6 +49,9 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
   const [tallImageById, setTallImageById] = useState<Record<string, boolean>>(
     {},
   );
+  const [aspectRatioById, setAspectRatioById] = useState<
+    Record<string, number>
+  >({});
   const [lightbox, setLightbox] = useState<{ open: boolean; index: number }>({
     open: false,
     index: 0,
@@ -58,21 +64,50 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
   const primaryImage = ordered[0];
   const thumbnails = ordered.slice(1);
   const primaryCanOpen = primaryImage.allowFullscreen !== false;
-  const primaryPresentation =
-    presentationById[primaryImage.id] ?? "cover";
+  const primaryPresentation = primaryImage.allowFullscreen === false
+    ? "cover"
+    : (presentationById[primaryImage.id] ?? "cover");
   const primaryImageClass =
     primaryPresentation === "contain"
       ? "object-contain"
       : "object-cover";
   const primaryIsTall =
     primaryCanOpen && (tallImageById[primaryImage.id] ?? false);
-  const primaryHeightClass = primaryIsTall
-    ? "h-[min(800px,calc((100vw-3rem)*1.5))]"
-    : "h-[280px] md:h-[420px]";
-  const primaryFrameClass =
-    primaryPresentation === "contain"
-      ? "bg-[linear-gradient(135deg,#f8fafc_0%,#eef8f4_100%)]"
-      : "bg-white";
+  const primaryAspectRatio = aspectRatioById[primaryImage.id] ?? null;
+  const useNaturalWideAspect =
+    primaryPresentation === "contain" &&
+    !primaryIsTall &&
+    primaryAspectRatio !== null &&
+    primaryAspectRatio >= 1.5;
+  const useConstrainedImageStage =
+    primaryPresentation === "contain" &&
+    primaryAspectRatio !== null &&
+    primaryAspectRatio < 1.5;
+  const primaryHeightClass = useConstrainedImageStage
+    ? "aspect-square"
+    : useNaturalWideAspect
+      ? "aspect-[2/1]"
+      : "h-[280px] md:h-[420px]";
+  const primaryMediaStyle =
+    (useNaturalWideAspect || useConstrainedImageStage) && primaryAspectRatio
+    ? { aspectRatio: primaryAspectRatio }
+    : undefined;
+  const constrainedMaxWidth = primaryAspectRatio
+    ? Math.round(Math.min(640, 760 * primaryAspectRatio))
+    : undefined;
+  const primaryFrameClass = useConstrainedImageStage
+    ? "mx-auto w-full"
+    : `overflow-hidden rounded-lg border border-slate-200 shadow-sm ${
+        primaryPresentation === "contain"
+          ? "bg-[linear-gradient(135deg,#f8fafc_0%,#eef8f4_100%)]"
+          : "bg-white"
+      }`;
+  const primaryFrameStyle = useConstrainedImageStage && constrainedMaxWidth
+    ? { maxWidth: `${constrainedMaxWidth}px` }
+    : undefined;
+  const primaryMediaClass = `${
+    useConstrainedImageStage ? "rounded-lg shadow-sm" : ""
+  } relative block w-full overflow-hidden ${primaryHeightClass}`;
   const handlePrimaryImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
     const image = event.currentTarget;
     const nextPresentation = getPresentationFromSize(
@@ -91,19 +126,27 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
         ? current
         : { ...current, [primaryImage.id]: nextTall };
     });
+    setAspectRatioById((current) => {
+      const nextAspectRatio = image.naturalWidth / image.naturalHeight;
+      return current[primaryImage.id] === nextAspectRatio
+        ? current
+        : { ...current, [primaryImage.id]: nextAspectRatio };
+    });
   };
 
   return (
     <>
       <section className="space-y-3">
         <div
-          className={`overflow-hidden rounded-3xl border border-slate-200 ${primaryFrameClass}`}
+          className={primaryFrameClass}
+          style={primaryFrameStyle}
         >
           {primaryCanOpen ? (
             <button
               type="button"
               onClick={() => setLightbox({ open: true, index: 0 })}
-              className={`relative block w-full overflow-hidden ${primaryHeightClass}`}
+              className={primaryMediaClass}
+              style={primaryMediaStyle}
             >
               <Image
                 src={primaryImage.image_url}
@@ -115,7 +158,10 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
               />
             </button>
           ) : (
-            <div className={`relative block w-full overflow-hidden ${primaryHeightClass}`}>
+            <div
+              className={primaryMediaClass}
+              style={primaryMediaStyle}
+            >
               <Image
                 src={primaryImage.image_url}
                 alt={courtName ?? "Court photo"}
@@ -139,7 +185,7 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
                       index: index + 1,
                     })
                   }
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
                 >
                   <div className="relative aspect-[4/3] w-full">
                     <Image
@@ -154,7 +200,7 @@ export function CourtGallery({ gallery, courtName }: CourtGalleryProps) {
               ) : (
                 <div
                   key={photo.id}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
                 >
                   <div className="relative aspect-[4/3] w-full">
                     <Image

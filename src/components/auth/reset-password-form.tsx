@@ -86,7 +86,7 @@ export function ResetPasswordForm({ copy }: { copy: ResetCopy }) {
         </label>
         <input
           type="password"
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--rt-primary-border)] focus:bg-white"
+          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--rt-primary-border)] focus:bg-white"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="••••••••"
@@ -100,7 +100,7 @@ export function ResetPasswordForm({ copy }: { copy: ResetCopy }) {
         </label>
         <input
           type="password"
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--rt-primary-border)] focus:bg-white"
+          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--rt-primary-border)] focus:bg-white"
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="••••••••"
@@ -111,7 +111,7 @@ export function ResetPasswordForm({ copy }: { copy: ResetCopy }) {
       <button
         type="submit"
         disabled={updating}
-        className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="w-full rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {updating ? copy.updating : copy.button}
       </button>

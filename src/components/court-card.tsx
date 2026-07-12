@@ -43,7 +43,7 @@ export function CourtCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 sm:rounded-3xl ${className ?? ""}`}
+      className={`group flex h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_34px_rgb(15_23_42/0.12)] focus-visible:ring-2 focus-visible:ring-[var(--rt-primary)] ${className ?? ""}`}
     >
       <div className="overflow-hidden border-b border-slate-100 bg-slate-100">
         <div className={`relative ${imageAspectClass} w-full`}>

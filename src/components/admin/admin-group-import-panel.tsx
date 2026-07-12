@@ -153,7 +153,7 @@ export function AdminGroupImportPanel({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
         <div className="space-y-3">
           <h2 className="text-xl font-semibold text-slate-900">
             Import automation preview as hidden draft groups
@@ -174,7 +174,7 @@ export function AdminGroupImportPanel({
             <select
               value={sportCode}
               onChange={(event) => setSportCode(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-slate-400"
             >
               <option value="badminton">Badminton</option>
               <option value="pickleball">Pickleball</option>
@@ -191,7 +191,7 @@ export function AdminGroupImportPanel({
               value={runDate}
               onChange={(event) => setRunDate(event.target.value)}
               placeholder="YYYY-MM-DD"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
             />
           </label>
 
@@ -203,7 +203,7 @@ export function AdminGroupImportPanel({
               value={previewText}
               onChange={(event) => setPreviewText(event.target.value)}
               rows={14}
-              className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none transition focus:border-slate-400"
             />
           </label>
         </div>
@@ -234,13 +234,13 @@ export function AdminGroupImportPanel({
         </div>
 
         {error ? (
-          <p className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <p className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
           </p>
         ) : null}
       </section>
 
-      <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">
@@ -258,11 +258,11 @@ export function AdminGroupImportPanel({
         </div>
 
         {!preview ? (
-          <p className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+          <p className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
             Preview JSON is invalid.
           </p>
         ) : candidates.length === 0 ? (
-          <p className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+          <p className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
             No candidates found in this preview.
           </p>
         ) : (
@@ -277,7 +277,7 @@ export function AdminGroupImportPanel({
               return (
                 <label
                   key={`${candidate.groupName ?? "candidate"}-${index}`}
-                  className={`block rounded-3xl border p-5 transition ${
+                  className={`block rounded-lg border p-5 transition ${
                     checked
                       ? "border-emerald-300 bg-emerald-50/50"
                       : "border-slate-200 bg-slate-50"
@@ -338,7 +338,7 @@ export function AdminGroupImportPanel({
                       </div>
 
                       {description ? (
-                        <p className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                        <p className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                           {description}
                         </p>
                       ) : null}
@@ -352,7 +352,7 @@ export function AdminGroupImportPanel({
       </section>
 
       {result ? (
-        <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+        <section className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900">
             Import result
           </h3>
@@ -368,7 +368,7 @@ export function AdminGroupImportPanel({
             {result.imported.map((item) => (
               <div
                 key={item.groupId}
-                className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+                className="rounded-lg border border-slate-200 bg-slate-50 p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>

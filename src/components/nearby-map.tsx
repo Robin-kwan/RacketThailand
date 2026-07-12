@@ -336,7 +336,7 @@ function NearbyMapComponent({ userLocation, courts }: NearbyMapProps) {
   return (
     <div
       ref={mapRef}
-      className="w-full rounded-2xl border border-slate-200"
+      className="w-full rounded-lg border border-slate-200"
       style={{ aspectRatio: "4 / 3" }}
     />
   );

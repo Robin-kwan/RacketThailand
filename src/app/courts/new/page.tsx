@@ -166,7 +166,7 @@ export default async function NewCourtPage({
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
         <BaseCard
           as="section"
-          className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.13)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"
+          className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
             {t("courtSubmission.title")}

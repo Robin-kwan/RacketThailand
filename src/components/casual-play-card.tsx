@@ -81,7 +81,7 @@ export function CasualPlayCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className="group flex h-full w-full flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-4 transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-indigo-400 sm:gap-3 sm:rounded-3xl sm:px-5 sm:py-6"
+      className="group flex h-full w-full flex-col gap-2 rounded-lg border border-slate-200 bg-white px-3 py-4 shadow-sm transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_34px_rgb(15_23_42/0.12)] focus-visible:ring-2 focus-visible:ring-[var(--rt-primary)] sm:gap-3 sm:px-5 sm:py-6"
     >
       <div className="min-w-0">
         <p className="line-clamp-2 text-sm font-medium text-slate-900 sm:text-xl">

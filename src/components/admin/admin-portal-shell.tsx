@@ -70,12 +70,12 @@ export function AdminPortalShell({
   children,
 }: AdminPortalShellProps) {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#f7fbf9] text-slate-900">
       <main className="mx-auto flex w-full max-w-[2400px] flex-col gap-6 px-6 pb-20 pt-10 md:px-10 xl:flex-row xl:items-start">
         <aside className="xl:sticky xl:top-10 xl:w-[260px] xl:flex-none">
           <nav
             aria-label={copy.navigationLabel}
-            className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
           >
             <div className="space-y-2">
               {navItems.map((item) => {
@@ -84,7 +84,7 @@ export function AdminPortalShell({
                   <Link
                     key={item.path}
                     href={item.href}
-                    className={`block rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                    className={`block rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${
                       isActive
                         ? "border-slate-900 bg-slate-900 text-white"
                         : "border-slate-200 bg-slate-50 text-slate-900 hover:border-slate-300 hover:bg-white"
@@ -99,8 +99,8 @@ export function AdminPortalShell({
         </aside>
 
         <div className="min-w-0 flex-1 space-y-6">
-          <section className="rounded-[32px] border border-slate-200 bg-white px-8 py-7 shadow-sm">
-            <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+          <section className="border-b border-slate-200 bg-white px-6 py-7 md:px-8">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-950">{title}</h1>
           </section>
           {children}
         </div>

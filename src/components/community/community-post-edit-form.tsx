@@ -102,7 +102,7 @@ export function CommunityPostEditForm({
             required
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--rt-primary)] focus:bg-white"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--rt-primary)] focus:bg-white"
           />
         </div>
         <BaseSelect
@@ -125,7 +125,7 @@ export function CommunityPostEditForm({
             onChange={(event) => setBody(event.target.value)}
             placeholder={copy.bodyPlaceholder}
             rows={8}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-[var(--rt-primary)] focus:bg-white"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-[var(--rt-primary)] focus:bg-white"
             required
           />
         </div>

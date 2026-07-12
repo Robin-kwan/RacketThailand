@@ -976,7 +976,7 @@ export function GroupForm({
               variant="light"
             />
           </div>
-          <label className="flex cursor-pointer items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
             <input
               type="checkbox"
               checked={form.allowWalkIn}
@@ -1100,7 +1100,7 @@ export function GroupForm({
             {courtSessions.map((block) => (
               <div
                 key={block.id}
-                className="relative space-y-4 rounded-2xl border border-slate-200 bg-white p-4 pt-11"
+                className="relative space-y-4 rounded-lg border border-slate-200 bg-white p-4 pt-11"
               >
                 <button
                   type="button"
@@ -1131,7 +1131,7 @@ export function GroupForm({
                   />
                   {quickCourt.blockId === block.id && (
                     <div
-                      className="mt-4 space-y-4 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4"
+                      className="mt-4 space-y-4 rounded-lg border border-emerald-100 bg-emerald-50/40 p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <p className="text-sm font-semibold text-slate-900">
@@ -1216,7 +1216,7 @@ export function GroupForm({
                         }
                       />
                       {quickCourt.error && (
-                        <p className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
+                        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
                           {quickCourt.error}
                         </p>
                       )}
@@ -1248,7 +1248,7 @@ export function GroupForm({
                     {copy.sessionsTitle ?? copy.scheduleLabel}
                   </p>
                   {block.slots.length === 0 && (
-                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
+                    <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
                       {copy.scheduleOptionalEmpty}
                     </p>
                   )}
@@ -1360,7 +1360,7 @@ export function GroupForm({
               {upcomingEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="relative space-y-4 rounded-2xl border border-slate-200 bg-white p-4 pt-11"
+                  className="relative space-y-4 rounded-lg border border-slate-200 bg-white p-4 pt-11"
                 >
                   <button
                     type="button"

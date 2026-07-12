@@ -233,7 +233,7 @@ export default async function Landing({
                   cta: `open_${sport.code}`,
                   sport: sport.code,
                 }}
-                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_34px_rgb(15_23_42/0.12)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_34px_rgb(15_23_42/0.12)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 <article className="relative aspect-[4/3] w-full overflow-hidden">
                   <Image

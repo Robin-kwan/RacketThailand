@@ -240,7 +240,7 @@ export function TimePickerField({
               setOpen(false);
             }
           }}
-          className="flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:border-slate-400 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:border-[var(--rt-primary)] focus-visible:ring-4 focus-visible:ring-[rgb(var(--rt-primary-rgb)/0.12)] focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className={`min-w-0 flex-1 ${displayValue ? "" : "text-slate-500"}`}>
             {displayValue || placeholder || ""}
@@ -262,7 +262,7 @@ export function TimePickerField({
           ) : null}
         </button>
         {open && (
-          <div className="fixed inset-x-3 bottom-4 z-50 flex max-h-[min(400px,calc(100dvh-2rem))] min-w-0 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(24rem,calc(100vw-3rem))] sm:min-w-full">
+          <div className="fixed inset-x-3 bottom-4 z-50 flex max-h-[min(400px,calc(100dvh-2rem))] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(24rem,calc(100vw-3rem))] sm:min-w-full">
             <div className="border-b border-slate-100 px-4 py-3">
               <p className="text-xs font-semibold text-[rgb(var(--foreground-rgb)/0.55)]">
                 {label}
@@ -285,7 +285,7 @@ export function TimePickerField({
                       key={option.value}
                       ref={selected ? selectedOptionRef : null}
                       type="button"
-                      className={`rounded-2xl border px-3 py-2 text-left text-sm transition ${
+                      className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
                         selected
                           ? "border-[rgb(var(--rt-primary-rgb)/0.35)] bg-[rgb(var(--rt-primary-rgb)/0.08)] text-[var(--foreground)]"
                           : "border-slate-200 bg-slate-50 text-[var(--foreground)] hover:border-slate-300 hover:bg-white"

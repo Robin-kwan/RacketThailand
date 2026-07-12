@@ -123,7 +123,7 @@ export function ImageLightbox({
       <div
         className={
           variant === "compact"
-            ? "relative aspect-square w-[min(82vw,420px)] rounded-3xl bg-white p-4"
+            ? "relative aspect-square w-[min(82vw,420px)] rounded-lg bg-white p-4"
             : "relative h-[70vh] w-full max-w-4xl touch-pan-y"
         }
         onClick={(event) => event.stopPropagation()}

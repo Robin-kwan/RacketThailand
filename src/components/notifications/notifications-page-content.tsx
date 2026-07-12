@@ -248,7 +248,7 @@ export function NotificationsPageContent({
         </button>
       </div>
 
-      <BaseCard as="div" className="rounded-[28px] border border-slate-200 bg-white p-4 md:p-6">
+      <BaseCard as="div" className="rounded-lg border border-slate-200 bg-white p-4 md:p-6">
         {loading ? (
           <p className="py-12 text-center text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
             {copy.loading}
@@ -265,7 +265,7 @@ export function NotificationsPageContent({
               return (
                 <li
                   key={notification.id}
-                  className={`rounded-2xl border px-4 py-3 ${
+                  className={`rounded-lg border px-4 py-3 ${
                     isUnread
                       ? "border-slate-200 bg-[rgb(var(--rt-primary-rgb)/0.05)]"
                       : "border-slate-200 bg-white"
@@ -318,7 +318,7 @@ export function NotificationsPageContent({
           </ul>
         )}
         {error && (
-          <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             <span className="inline-flex items-center gap-2">
               <AlertCircle
                 className="h-4 w-4"

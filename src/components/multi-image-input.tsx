@@ -191,7 +191,7 @@ export function MultiImageInput({
             type="button"
             onClick={handleAddClick}
             disabled={processing}
-            className={`flex ${cardHeightClass} items-center justify-center rounded-2xl border border-dashed text-3xl disabled:cursor-wait disabled:opacity-60 ${styles.addButton}`}
+            className={`flex ${cardHeightClass} items-center justify-center rounded-lg border border-dashed text-3xl disabled:cursor-wait disabled:opacity-60 ${styles.addButton}`}
           >
             {processing ? "..." : "+"}
           </button>

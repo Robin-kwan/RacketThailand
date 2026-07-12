@@ -162,7 +162,7 @@ export function OwnershipAssignmentPanel({
   };
 
   return (
-    <section className="rounded-[32px] border border-emerald-100 bg-white p-6 shadow-sm">
+    <section className="rounded-lg border border-emerald-100 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">
@@ -170,7 +170,7 @@ export function OwnershipAssignmentPanel({
           </h2>
           <p className="mt-1 text-sm text-slate-600">{copy.subtitle}</p>
         </div>
-        <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+        <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
           <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
             {copy.currentLabel}
           </span>
@@ -199,7 +199,7 @@ export function OwnershipAssignmentPanel({
                 setSelected(null);
                 setOpen(true);
               }}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-10 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-lg border border-slate-200 bg-white px-10 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400"
             />
             <button
               type="button"
@@ -214,7 +214,7 @@ export function OwnershipAssignmentPanel({
               />
             </button>
             {open && (
-              <div className="absolute z-50 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-xl">
+              <div className="absolute z-50 mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-xl">
                 {loading ? (
                   <p className="px-3 py-2 text-sm text-slate-500">
                     {copy.searching}

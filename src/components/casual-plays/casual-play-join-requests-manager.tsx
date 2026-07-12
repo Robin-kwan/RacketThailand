@@ -119,7 +119,7 @@ export function CasualPlayJoinRequestsManager({
   };
 
   return (
-    <section className="rounded-[32px] border border-slate-200 bg-white p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-6">
       <h2 className="text-xl font-semibold text-[var(--foreground)]">
         {copy.title}
       </h2>
@@ -137,7 +137,7 @@ export function CasualPlayJoinRequestsManager({
       )}
 
       {items.length === 0 ? (
-        <p className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+        <p className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
           {copy.empty}
         </p>
       ) : (
@@ -157,7 +157,7 @@ export function CasualPlayJoinRequestsManager({
             return (
               <article
                 key={item.id}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>

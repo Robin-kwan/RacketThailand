@@ -79,7 +79,7 @@ export default async function SignupPage({
       <main className="mx-auto flex w-full max-w-3xl flex-col px-6 pb-20 pt-10 md:px-10">
         <BaseCard
           as="section"
-          className="w-full rounded-[32px] border border-slate-200 bg-white p-8"
+          className="w-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <InAppBrowserNotice copy={inAppBrowserCopy} />
           <h1 className="text-xl font-semibold text-[var(--foreground)]">

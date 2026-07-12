@@ -21,7 +21,7 @@ export function BaseScheduleList({
   }
 
   const containerClassName = [
-    "overflow-hidden rounded-2xl border border-[var(--rt-primary-border)] bg-[rgb(var(--rt-primary-soft-rgb)/0.7)] text-sm text-[var(--foreground)]",
+    "overflow-hidden rounded-lg border border-[var(--rt-primary-border)] bg-[rgb(var(--rt-primary-soft-rgb)/0.7)] text-sm text-[var(--foreground)]",
     className,
   ]
     .filter(Boolean)

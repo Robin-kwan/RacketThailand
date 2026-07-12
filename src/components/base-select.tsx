@@ -34,13 +34,13 @@ const VARIANT_STYLES: Record<
     label: "text-slate-100",
     helper: "text-slate-400",
     select:
-      "w-full rounded-2xl border border-slate-700 bg-slate-900/60 px-3 py-3 pr-12 text-sm text-slate-100 outline-none transition focus:border-slate-500 focus:bg-slate-900",
+      "w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-3 pr-12 text-sm text-slate-100 outline-none transition focus:border-slate-500 focus:bg-slate-900",
   },
   light: {
     label: "text-slate-700",
     helper: "text-slate-500",
     select:
-      "w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white",
+      "w-full rounded-lg border border-slate-300 bg-white px-3 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)] focus:bg-white",
   },
 };
 

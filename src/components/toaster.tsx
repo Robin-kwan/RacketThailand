@@ -103,7 +103,7 @@ export function Toaster() {
         aria-modal="true"
         aria-labelledby="notification-modal-title"
         aria-describedby="notification-modal-message"
-        className="rt-notification-modal relative w-full max-w-sm rounded-[28px] border border-white/80 bg-white px-6 pb-6 pt-7 text-center text-slate-900 shadow-[0_24px_80px_rgb(15_23_42/0.28)]"
+        className="rt-notification-modal relative w-full max-w-sm rounded-lg border border-white/80 bg-white px-6 pb-6 pt-7 text-center text-slate-900 shadow-[0_24px_80px_rgb(15_23_42/0.28)]"
       >
         <button
           type="button"

@@ -736,7 +736,7 @@ export function CourtEditForm({
                     />
                 ))}
                 {photos.length < 8 && (
-                  <label className="flex h-40 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-3xl text-slate-400 hover:border-slate-500 hover:text-slate-600 focus-within:border-slate-500">
+                  <label className="flex h-40 cursor-pointer items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-3xl text-slate-400 hover:border-slate-500 hover:text-slate-600 focus-within:border-slate-500">
                     <Plus
                       className="h-8 w-8"
                       strokeWidth={1.8}
@@ -761,7 +761,7 @@ export function CourtEditForm({
       <button
         type="submit"
         disabled={submitting || !hasPendingChanges}
-        className="w-full rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="w-full rounded-lg bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-800 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {submitting ? `${copy.submitting}...` : copy.submit}
       </button>

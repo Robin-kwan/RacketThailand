@@ -274,7 +274,7 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
             {copy.searchLabel}
           </span>
-          <span className="mt-2 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-slate-400 focus-within:bg-white">
+          <span className="mt-2 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 focus-within:border-slate-400 focus-within:bg-white">
             <Search
               className="h-4 w-4 flex-none text-slate-400"
               strokeWidth={1.8}
@@ -294,11 +294,11 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
       </div>
 
       {!hasItems ? (
-        <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
+        <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
           {copy.empty}
         </p>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px] border-collapse text-sm">
               <thead>

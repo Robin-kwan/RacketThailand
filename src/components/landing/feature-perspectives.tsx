@@ -32,7 +32,7 @@ type FeaturePerspectivesProps = {
 
 function CourtOwnerIllustration() {
   return (
-    <div className="relative h-40 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3">
+    <div className="relative h-40 rounded-lg border border-emerald-200 bg-emerald-50/70 p-3">
       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
         <Building2 className="h-3 w-3" strokeWidth={1.8} aria-hidden />
         Court Profile
@@ -63,7 +63,7 @@ function CourtOwnerIllustration() {
 
 function GroupOwnerIllustration() {
   return (
-    <div className="relative h-40 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-3">
+    <div className="relative h-40 rounded-lg border border-cyan-200 bg-cyan-50/70 p-3">
       <div className="rounded-xl border border-cyan-200 bg-white p-2">
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase text-cyan-700">
@@ -94,7 +94,7 @@ function GroupOwnerIllustration() {
 
 function RegularUserIllustration() {
   return (
-    <div className="relative h-40 rounded-2xl border border-indigo-200 bg-indigo-50/65 p-3">
+    <div className="relative h-40 rounded-lg border border-indigo-200 bg-indigo-50/65 p-3">
       <div className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-white px-2 py-1.5">
         <Search className="h-3.5 w-3.5 text-indigo-700" strokeWidth={1.8} aria-hidden />
         <div className="h-2 w-24 rounded-full bg-indigo-100" />
@@ -157,7 +157,7 @@ function PerspectiveCard({
 
 export function FeaturePerspectives({ copy }: FeaturePerspectivesProps) {
   return (
-    <section className="w-full max-w-[1100px] rounded-[30px] border border-[rgb(var(--foreground-rgb)/0.1)] bg-[rgb(var(--foreground-rgb)/0.02)] p-4 md:p-7">
+    <section className="w-full max-w-[1100px] rounded-lg border border-[rgb(var(--foreground-rgb)/0.1)] bg-[rgb(var(--foreground-rgb)/0.02)] p-4 md:p-7">
       <header className="mx-auto mb-6 max-w-3xl text-center">
         <h2 className="text-xl font-semibold text-[var(--foreground)]">
           {copy.title}

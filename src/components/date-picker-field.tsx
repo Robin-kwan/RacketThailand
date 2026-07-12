@@ -249,13 +249,13 @@ export function DatePickerField({
           className={inputClassName}
         />
         {open && (
-          <div className="fixed inset-x-3 bottom-4 z-50 max-h-[min(400px,calc(100dvh-2rem))] min-w-0 overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(26rem,calc(100vw-3rem))] sm:min-w-full">
+          <div className="fixed inset-x-3 bottom-4 z-50 max-h-[min(400px,calc(100dvh-2rem))] min-w-0 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(26rem,calc(100vw-3rem))] sm:min-w-full">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => canGoPrev && setViewMonth((current) => addMonths(current, -1))}
                 disabled={!canGoPrev}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Previous month"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -272,7 +272,7 @@ export function DatePickerField({
                 type="button"
                 onClick={() => canGoNext && setViewMonth((current) => addMonths(current, 1))}
                 disabled={!canGoNext}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Next month"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -298,7 +298,7 @@ export function DatePickerField({
                       setDisplayValue(formatDateInputForDisplay(cell.key));
                       setOpen(false);
                     }}
-                    className={`aspect-square rounded-2xl border text-sm font-semibold transition ${
+                    className={`aspect-square rounded-lg border text-sm font-semibold transition ${
                       cell.key === value
                         ? "border-[rgb(var(--rt-primary-rgb)/0.35)] bg-[rgb(var(--rt-primary-rgb)/0.1)] text-[var(--foreground)]"
                         : cell.disabled

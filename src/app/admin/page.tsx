@@ -247,7 +247,7 @@ export default async function AdminPanel({
         navigationLabel: t("admin.navigation"),
       }}
     >
-      <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -263,7 +263,7 @@ export default async function AdminPanel({
             <Link
               key={action.href}
               href={action.href}
-              className="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
+              className="rounded-lg border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
             >
               <p className="text-lg font-semibold text-slate-900">
                 {action.title}
@@ -277,7 +277,7 @@ export default async function AdminPanel({
         {metricCards.map((label, index) => (
           <div
             key={label}
-            className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm"
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
               {label}
@@ -291,7 +291,7 @@ export default async function AdminPanel({
         ))}
       </section>
 
-      <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -329,7 +329,7 @@ export default async function AdminPanel({
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
               {t("admin.growth.courtsAdded")}
             </p>
@@ -339,7 +339,7 @@ export default async function AdminPanel({
               )}
             </p>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
               {t("admin.growth.groupsAdded")}
             </p>
@@ -366,7 +366,7 @@ export default async function AdminPanel({
             </div>
             <div className="mt-4 space-y-3">
               {recentCourtsRes.data.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
                   {t("admin.growth.emptyCourts")}
                 </p>
               ) : (
@@ -374,7 +374,7 @@ export default async function AdminPanel({
                   <Link
                     key={court.id}
                     href={buildLocalizedPath(`/courts/${court.id}`, locale)}
-                    className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
+                    className="block rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -424,7 +424,7 @@ export default async function AdminPanel({
             </div>
             <div className="mt-4 space-y-3">
               {recentGroupsRes.data.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
                   {t("admin.growth.emptyGroups")}
                 </p>
               ) : (
@@ -432,7 +432,7 @@ export default async function AdminPanel({
                   <Link
                     key={group.id}
                     href={buildLocalizedPath(`/groups/${group.id}`, locale)}
-                    className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
+                    className="block rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
                   >
                     <p className="font-semibold text-slate-900">
                       {group.name?.trim() ||
@@ -466,7 +466,7 @@ export default async function AdminPanel({
       />
 
       <section className="grid gap-6 xl:grid-cols-3">
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -485,14 +485,14 @@ export default async function AdminPanel({
           </div>
           <div className="mt-5 space-y-3">
             {pendingCourtsRes.data.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+              <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
                 {t("admin.sections.pendingCourtsEmpty")}
               </p>
             ) : (
               pendingCourtsRes.data.map((court) => (
                 <div
                   key={court.id}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -522,7 +522,7 @@ export default async function AdminPanel({
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -541,7 +541,7 @@ export default async function AdminPanel({
           </div>
           <div className="mt-5 space-y-3">
             {unreadFeedbackRes.data.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+              <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
                 {t("admin.sections.feedbackEmpty")}
               </p>
             ) : (
@@ -553,7 +553,7 @@ export default async function AdminPanel({
                 return (
                   <div
                     key={feedback.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4"
                   >
                     <p className="font-semibold text-slate-900">
                       {feedback.subject?.trim() ||
@@ -577,7 +577,7 @@ export default async function AdminPanel({
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -590,7 +590,7 @@ export default async function AdminPanel({
           </div>
           <div className="mt-5 space-y-3">
             {upcomingCasualPlaysRes.data.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+              <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
                 {t("admin.sections.casualPlaysEmpty")}
               </p>
             ) : (
@@ -598,7 +598,7 @@ export default async function AdminPanel({
                 <Link
                   key={play.id}
                   href={buildLocalizedPath(`/casual-plays/${play.id}`, locale)}
-                  className="block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
+                  className="block rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
                 >
                   <p className="font-semibold text-slate-900">
                     {play.title?.trim() || t("admin.sections.casualPlayFallback")}

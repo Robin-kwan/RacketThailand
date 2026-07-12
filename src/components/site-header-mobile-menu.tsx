@@ -90,16 +90,16 @@ export function SiteHeaderMobileMenu({
       />
       <aside
         ref={mobileMenuRef}
-        className="relative ml-auto flex h-full w-80 flex-col gap-6 border-l border-slate-200 bg-white p-6 text-slate-900"
+        className="relative ml-auto flex h-full w-80 flex-col gap-6 border-l border-slate-200 bg-white p-6 text-slate-900 shadow-[-16px_0_36px_rgb(15_23_42/0.12)]"
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <RacketThailandMark className="h-12 w-14 shrink-0 overflow-hidden rounded-lg" />
+            <RacketThailandMark className="h-12 w-14 shrink-0 overflow-hidden rounded-md" />
             <div>
             <p className="text-sm font-semibold text-slate-700">
               {labels.brand}
             </p>
-            <p className="text-xs font-semibold uppercase text-slate-400">
+            <p className="text-xs font-medium text-slate-500">
               {subLabel}
             </p>
             </div>
@@ -107,7 +107,7 @@ export function SiteHeaderMobileMenu({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-slate-300 p-3 text-slate-500 hover:border-slate-400"
+            className="rounded-lg border border-slate-300 p-3 text-slate-500 hover:border-slate-400"
             aria-label="Close menu"
           >
             <X
@@ -128,8 +128,10 @@ export function SiteHeaderMobileMenu({
                   key={link.path}
                   href={link.href}
                   onClick={onClose}
-                  className={`flex items-center justify-between text-base font-semibold ${
-                    isLinkActive ? "text-slate-900" : "text-slate-500 hover:text-slate-900"
+                  className={`flex items-center justify-between border-l-2 pl-3 text-base font-semibold ${
+                    isLinkActive
+                      ? "border-[var(--rt-primary)] text-slate-900"
+                      : "border-transparent text-slate-500 hover:text-slate-900"
                   }`}
                 >
                   {link.label}
@@ -148,7 +150,7 @@ export function SiteHeaderMobileMenu({
         <div className="space-y-5">
           {isAuthenticated ? (
             <>
-              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="relative h-12 w-12 overflow-hidden rounded-full bg-slate-200 text-white">
                   {user?.avatarUrl ? (
                     <Image
@@ -173,7 +175,7 @@ export function SiteHeaderMobileMenu({
                   <p className="text-xs text-slate-500">{user?.email}</p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-slate-800">
                     {notificationCopy.title}
@@ -183,14 +185,14 @@ export function SiteHeaderMobileMenu({
               </div>
               <Link
                 href={buildLocalizedPath("/profile/edit", locale)}
-                className="block rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
+                className="block rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
                 onClick={onClose}
               >
                 {labels.profile}
               </Link>
               <Link
                 href={buildLocalizedPath("/dashboard", locale)}
-                className="block rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
+                className="block rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
                 onClick={onClose}
               >
                 {labels.dashboard}
@@ -198,7 +200,7 @@ export function SiteHeaderMobileMenu({
               {isAdmin && (
                 <Link
                   href={buildLocalizedPath("/admin", locale)}
-                  className="block rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
+                  className="block rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
                   onClick={onClose}
                 >
                   {labels.admin}
@@ -210,7 +212,7 @@ export function SiteHeaderMobileMenu({
                   onClose();
                   onLogout();
                 }}
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-rose-500"
+                className="w-full rounded-lg border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-rose-500"
               >
                 {labels.logout}
               </button>
@@ -218,7 +220,7 @@ export function SiteHeaderMobileMenu({
           ) : (
             <Link
               href={loginHref}
-              className="block rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
+              className="block rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
               onClick={onClose}
             >
               {labels.login}
@@ -226,7 +228,7 @@ export function SiteHeaderMobileMenu({
           )}
         </div>
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase text-slate-500">
+          <p className="text-xs font-semibold text-slate-500">
             {labels.language}
           </p>
           <div className="mt-2 grid grid-cols-2 gap-3">
@@ -235,7 +237,7 @@ export function SiteHeaderMobileMenu({
                 key={option}
                 type="button"
                 onClick={() => onLocaleSelect(option)}
-                className={`flex items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold ${
+                className={`flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-semibold ${
                   option === locale
                     ? "border-slate-600 text-slate-900"
                     : "border-slate-200 text-slate-500"
