@@ -862,37 +862,6 @@ export default async function GroupDetailPage({
       <HeaderSportScope sportSlug={sportCode ?? undefined} />
       <HeaderSubLabel value={sportName} />
       <main className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 text-[var(--foreground)] md:px-10 md:pb-20">
-        <header className="hidden">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="max-w-3xl">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
-                {group.name ?? fallbackGroupName}
-              </h1>
-              {group.description && (
-                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[rgb(var(--foreground-rgb)/0.75)] md:text-base">
-                  {group.description}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <ShareButton
-                title={shareTitle}
-                text={shareText}
-                url={canonicalUrl}
-                label={copy.shareAction}
-                copiedLabel={copy.linkCopiedAction}
-              />
-              {canEdit && (
-                <Link
-                  href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {copy.edit}
-                </Link>
-              )}
-            </div>
-          </div>
-        </header>
         <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
         {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
           <section className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900">
