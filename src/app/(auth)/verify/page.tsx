@@ -60,7 +60,7 @@ export default async function VerifyPage({
       <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 pb-20 pt-16 text-center md:px-10">
         <BaseCard
           as="section"
-          className="rounded-[32px] border border-slate-200 bg-white px-8 py-10"
+          className="rounded-lg border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-8 md:py-10"
         >
           <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("auth.pendingTitle")}
@@ -75,7 +75,7 @@ export default async function VerifyPage({
               redirectPath={redirectTo}
             />
             {!userId && (
-              <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
                 {t("auth.pendingMissingUserId")}
               </p>
             )}

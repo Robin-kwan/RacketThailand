@@ -46,7 +46,7 @@ export function CommunityCommentForm({
         value={body}
         onChange={(event) => setBody(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400"
+        className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400"
         rows={4}
       />
       <div className="flex items-center justify-between text-sm text-slate-400">

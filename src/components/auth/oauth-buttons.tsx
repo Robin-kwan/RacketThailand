@@ -69,7 +69,7 @@ export function OAuthButtons({
         type="button"
         onClick={() => onProviderClick("google")}
         disabled={disabled || hasLoadingProvider}
-        className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         <span className="flex h-6 w-6 items-center justify-center">
           <GoogleIcon />
@@ -84,7 +84,7 @@ export function OAuthButtons({
         type="button"
         onClick={() => onProviderClick("line")}
         disabled={disabled || hasLoadingProvider}
-        className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 disabled:bg-slate-500 disabled:text-white disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         <span className="flex h-6 w-6 items-center justify-center">
           <LineIcon />

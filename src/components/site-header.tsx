@@ -19,7 +19,7 @@ import { useHeaderConfig } from "@/components/header-context";
 import { NotificationsMenu } from "@/components/notifications-menu";
 import type { NotificationCopy } from "@/components/notifications-menu";
 import { SiteHeaderMobileMenu } from "@/components/site-header-mobile-menu";
-import { SportBallMark } from "@/components/sport-ball-mark";
+import { RacketThailandMark } from "@/components/racketthailand-mark";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type HeaderUser = {
@@ -188,7 +188,6 @@ export function SiteHeader({
       labels.brand.charAt(0) ||
       "R").toUpperCase();
   const isAuthenticated = Boolean(user);
-
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       if (
@@ -219,7 +218,7 @@ export function SiteHeader({
     };
   }, []);
   const headerClass =
-    "relative w-full border-b border-white/20 bg-[linear-gradient(120deg,#0b8f68_0%,#08815f_48%,#066049_100%)] py-3 px-4 text-sm text-[var(--rt-primary-text)] shadow-[0_8px_24px_rgb(var(--foreground-rgb)/0.08)] transition-all duration-300 md:px-8";
+    "relative w-full border-b border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-[0_1px_0_rgb(15_23_42/0.03)] transition-all duration-300 md:px-8";
 
   return (
     <>
@@ -231,27 +230,20 @@ export function SiteHeader({
               href={buildLocalizedPath("/", locale)}
               className="flex items-center gap-3"
             >
-              <SportBallMark
-                sportCode={resolvedSportSlug}
-                label={autoSubLabel}
-                accent={activeSport?.accent}
-                compact
-              />
+              <RacketThailandMark className="h-12 w-14 shrink-0 overflow-hidden rounded-md" />
               <div className="text-left">
-                <p className="text-lg font-semibold text-white">
+                <p className="text-lg font-semibold text-slate-950">
                   {labels.brand}
                 </p>
-                <p className="text-[11px] font-semibold uppercase text-[rgb(var(--rt-primary-text-rgb)/0.75)]">
-                  <span style={{ color: "#e6fff8" }}>
-                    {resolvedSubLabel}
-                  </span>
+                <p className="text-xs font-medium text-slate-500">
+                  {resolvedSubLabel}
                 </p>
               </div>
             </Link>
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 min-[1000px]:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 min-[1000px]:hidden"
               aria-label="Open navigation menu"
             >
               <Menu
@@ -262,7 +254,7 @@ export function SiteHeader({
             </button>
           </div>
           {navLinks.length > 0 && (
-            <nav className="hidden flex-wrap items-center gap-6 text-sm font-semibold text-white min-[1000px]:flex">
+            <nav className="hidden flex-wrap items-center gap-5 text-sm font-semibold min-[1000px]:flex">
               {navLinks.map((link) => {
                 const isLinkActive =
                   pathname === link.path ||
@@ -272,8 +264,10 @@ export function SiteHeader({
                     key={link.path}
                     href={link.href}
                     aria-current={isLinkActive ? "page" : undefined}
-                    className={`transition ${
-                      isLinkActive ? "text-white" : "text-white/90 hover:text-white"
+                    className={`border-b-2 py-2 transition-colors ${
+                      isLinkActive
+                        ? "border-[var(--rt-primary)] text-slate-950"
+                        : "border-transparent text-slate-600 hover:text-slate-950"
                     }`}
                   >
                     {link.label}
@@ -324,13 +318,13 @@ export function SiteHeader({
                 </button>
                 {menuOpen && (
                   <div
-                    className="absolute right-0 top-full z-50 mt-3 w-58 rounded-2xl border border-[rgb(var(--foreground-rgb)/0.15)] bg-white p-3 text-sm text-[var(--foreground)]"
+                    className="absolute right-0 top-full z-50 mt-3 w-58 rounded-lg border border-slate-200 bg-white p-3 text-sm text-[var(--foreground)] shadow-lg"
                     role="menu"
                   >
                     <div className="flex flex-col">
                       <Link
                         href={buildLocalizedPath("/profile/edit", locale)}
-                        className="flex items-center justify-between rounded-xl px-3 py-2 text-[var(--foreground)] hover:bg-[rgb(var(--foreground-rgb)/0.1)]"
+                        className="flex items-center justify-between rounded-md px-3 py-2 text-[var(--foreground)] hover:bg-slate-100"
                         onClick={() => setMenuOpen(false)}
                       >
                         {labels.profile}
@@ -343,7 +337,7 @@ export function SiteHeader({
                       {isAdmin && (
                         <Link
                           href={buildLocalizedPath("/admin", locale)}
-                          className="mt-1 flex items-center justify-between rounded-xl px-3 py-2 text-[var(--foreground)] hover:bg-[rgb(var(--foreground-rgb)/0.1)]"
+                          className="mt-1 flex items-center justify-between rounded-md px-3 py-2 text-[var(--foreground)] hover:bg-slate-100"
                           onClick={() => setMenuOpen(false)}
                         >
                           {labels.admin}
@@ -356,7 +350,7 @@ export function SiteHeader({
                       )}
                       <Link
                         href={buildLocalizedPath("/dashboard", locale)}
-                        className="mt-1 flex items-center justify-between rounded-xl px-3 py-2 text-[var(--foreground)] hover:bg-[rgb(var(--foreground-rgb)/0.1)]"
+                        className="mt-1 flex items-center justify-between rounded-md px-3 py-2 text-[var(--foreground)] hover:bg-slate-100"
                         onClick={() => setMenuOpen(false)}
                       >
                         {labels.dashboard}
@@ -370,7 +364,7 @@ export function SiteHeader({
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="mt-1 w-full rounded-xl px-3 py-2 text-left text-[var(--foreground)] hover:bg-[rgb(var(--foreground-rgb)/0.1)]"
+                      className="mt-1 w-full rounded-md px-3 py-2 text-left text-[var(--foreground)] hover:bg-slate-100"
                       role="menuitem"
                     >
                       {labels.logout}
@@ -382,7 +376,7 @@ export function SiteHeader({
               <div className="hidden items-center gap-2 min-[1000px]:flex">
                 <Link
                   href={loginHref}
-                  className="rounded-full border border-emerald-100/75 bg-white px-4 py-2 font-semibold text-emerald-900 hover:border-emerald-300"
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-800 transition-colors hover:border-slate-500"
                 >
                   {labels.login}
                 </Link>
@@ -405,13 +399,13 @@ export function SiteHeader({
                 />
               </button>
               {localeMenuOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-2xl border border-[rgb(var(--foreground-rgb)/0.15)] bg-white p-2 text-sm text-[var(--foreground)]">
+                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-slate-200 bg-white p-2 text-sm text-[var(--foreground)] shadow-lg">
                   {(Object.keys(LOCALE_INFO) as Locale[]).map((option) => (
                     <button
                       key={option}
                       type="button"
                       onClick={() => handleLocaleSelect(option)}
-                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left ${
+                      className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left ${
                         option === locale
                           ? "bg-[rgb(var(--foreground-rgb)/0.08)] font-semibold"
                           : "text-[rgb(var(--foreground-rgb)/0.7)] hover:bg-[rgb(var(--foreground-rgb)/0.05)]"
@@ -451,11 +445,6 @@ export function SiteHeader({
         }}
         loginHref={loginHref}
         subLabel={resolvedSubLabel}
-        sportMark={{
-          code: resolvedSportSlug,
-          label: autoSubLabel,
-          accent: activeSport?.accent,
-        }}
         notificationCopy={notificationCopy}
         isAuthenticated={isAuthenticated}
         isAdmin={isAdmin}

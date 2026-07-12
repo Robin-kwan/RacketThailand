@@ -22,7 +22,7 @@ export function CommunityPostCard({
   return (
     <Link
       href={href}
-      className="block rounded-3xl border border-slate-200 bg-white px-6 py-5 text-[var(--foreground)] transition hover:border-slate-400"
+      className="block rounded-lg border border-slate-200 bg-white px-6 py-5 text-[var(--foreground)] shadow-sm transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
     >
       <div className="flex items-center gap-3 text-xs text-[rgb(var(--foreground-rgb)/0.6)]">
         <div className="relative h-10 w-10 overflow-hidden rounded-full bg-[rgb(var(--foreground-rgb)/0.1)]">

@@ -92,10 +92,10 @@ export function LineQrUploader({
         </p>
       )}
       {error && <p className="text-xs text-rose-500">{error}</p>}
-      <div className="rounded-2xl border border-dashed border-[rgb(var(--foreground-rgb)/0.2)] bg-[rgb(var(--foreground-rgb)/0.05)] p-4">
+      <div className="rounded-lg border border-dashed border-[rgb(var(--foreground-rgb)/0.2)] bg-[rgb(var(--foreground-rgb)/0.05)] p-4">
         {preview ? (
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-            <div className="relative h-32 w-32 overflow-hidden rounded-2xl border border-[rgb(var(--foreground-rgb)/0.2)] bg-white">
+            <div className="relative h-32 w-32 overflow-hidden rounded-lg border border-[rgb(var(--foreground-rgb)/0.2)] bg-white">
               <Image
                 src={preview}
                 alt="LINE QR"
@@ -127,7 +127,7 @@ export function LineQrUploader({
             </div>
           </div>
         ) : (
-          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border border-[rgb(var(--foreground-rgb)/0.2)] bg-white px-4 py-6 text-center text-sm font-semibold text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.4)]">
+          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-[rgb(var(--foreground-rgb)/0.2)] bg-white px-4 py-6 text-center text-sm font-semibold text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.4)]">
             <input
               type="file"
               accept={LINE_QR_UPLOAD_ACCEPT}

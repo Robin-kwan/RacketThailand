@@ -464,7 +464,7 @@ export default async function CasualPlayDetailPage({
         <HeaderSubLabel value={sportName} />
         <BaseCard
           as="section"
-          className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
+          className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-xl font-semibold text-[var(--foreground)]">
@@ -493,7 +493,7 @@ export default async function CasualPlayDetailPage({
               {play.description}
             </p>
           )}
-          <div className="grid gap-5 rounded-3xl border border-slate-100 bg-[rgb(var(--foreground-rgb)/0.02)] px-6 py-5 sm:grid-cols-2">
+          <div className="grid gap-5 rounded-lg border border-slate-200 bg-slate-50 px-5 py-5 sm:grid-cols-2">
             <div>
               <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                 {copy.owner}
@@ -582,7 +582,7 @@ export default async function CasualPlayDetailPage({
             )}
           </div>
           {(play.phone || play.line_id) && (
-            <div className="rounded-3xl border border-slate-100 bg-white px-6 py-5">
+            <div className="rounded-lg border border-slate-200 bg-white px-6 py-5 shadow-sm">
               <h2 className="text-base font-semibold text-[var(--foreground)]">
                 {copy.ownerContactTitle}
               </h2>
@@ -623,7 +623,7 @@ export default async function CasualPlayDetailPage({
                   )}
                 </div>
               ) : (
-                <p className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                <p className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
                   {copy.ownerContactLocked}
                 </p>
               )}

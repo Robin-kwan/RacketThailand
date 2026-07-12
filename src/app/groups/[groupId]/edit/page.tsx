@@ -499,7 +499,7 @@ export default async function EditGroupPage({
         </div>
         <BaseCard
           as="section"
-          className="rounded-[32px] border border-slate-200 bg-white p-8"
+          className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("groups.edit.title")}

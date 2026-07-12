@@ -15,7 +15,6 @@ import {
 import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
-import { BaseCard } from "@/components/base-card";
 import { BaseScheduleList } from "@/components/base-schedule-list";
 import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
@@ -567,25 +566,30 @@ export default async function CourtPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#f7fbf9] text-slate-900">
       <ViewTracker
         event="court_view"
         payload={{ courtId: detail.court.id }}
       />
       <HeaderSportScope sportSlug={activeSportCode ?? undefined} />
       <HeaderSubLabel value={getSportDisplayName(activeSport, locale)} />
-      <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 pb-20 pt-10 md:px-10">
-        <header className="space-y-3 border-b border-slate-200 pb-6">
+      <main className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 md:px-10 md:pb-20">
+        <header className="hidden">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
                 {detail.court.name ?? fallbackCourtName}
               </h1>
-              <p className="text-sm text-slate-600">
+              <p className="mt-2 text-sm text-slate-600">
                 {[detail.court.district, detail.court.province]
                   .filter(Boolean)
                   .join(" · ")}
               </p>
+              {detail.court.description && (
+                <p className="mt-3 max-w-3xl whitespace-pre-line text-sm leading-6 text-slate-600 md:text-base">
+                  {detail.court.description}
+                </p>
+              )}
               {availableSports.length > 0 && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="text-xs font-semibold text-slate-500">
@@ -643,25 +647,81 @@ export default async function CourtPage({
         </header>
         <CourtGallery gallery={gallery} courtName={detail.court.name} />
 
-        <BaseCard
-          as="section"
-          className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8 backdrop-blur"
-        >
+        <section className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
+            <div className="max-w-3xl">
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
+                {detail.court.name ?? fallbackCourtName}
+              </h1>
+              <p className="mt-2 text-sm text-slate-600">
+                {[detail.court.district, detail.court.province]
+                  .filter(Boolean)
+                  .join(" Â· ")}
+              </p>
+              {detail.court.description && (
+                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600 md:text-base">
+                  {detail.court.description}
+                </p>
+              )}
+              {availableSports.length > 0 && (
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-500">
+                    {copy.availableSports}
+                  </span>
+                  {availableSports.map((sport) => {
+                    const sportCode = sport.code ?? "";
+                    const isActive = sportCode === activeSportCode;
+                    return (
+                      <Link
+                        key={sport.id ?? sportCode}
+                        href={buildLocalizedPath(
+                          `/courts/${detail.court.id}${
+                            sportCode
+                              ? `?sport=${encodeURIComponent(sportCode)}`
+                              : ""
+                          }`,
+                          locale,
+                        )}
+                        className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                          isActive
+                            ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                        }`}
+                        aria-current={isActive ? "page" : undefined}
+                      >
+                        {getSportDisplayName(sport, locale)}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ShareButton
+                title={shareTitle}
+                text={shareText}
+                url={canonicalUrl}
+                label={copy.shareAction}
+                copiedLabel={copy.linkCopiedAction}
+              />
+              {canEdit && (
+                <Link
+                  href={buildLocalizedPath(
+                    `/courts/${resolvedParams.courtId}/edit`,
+                    locale,
+                  )}
+                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+                >
+                  {copy.edit}
+                </Link>
+              )}
+            </div>
+          </div>
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-900">
               {copy.contact}
             </h2>
             <ul className="space-y-3 text-sm text-slate-600">
-              {detail.court.description && (
-                <li>
-                  <strong className="text-slate-900">
-                    {copy.description}:
-                  </strong>
-                  <p className="mt-1 whitespace-pre-line">
-                    {detail.court.description}
-                  </p>
-                </li>
-              )}
               {detail.court.address && (
                 <li>
                   <strong className="text-slate-900">
@@ -726,7 +786,7 @@ export default async function CourtPage({
                     src={detail.court.line_qr_url}
                     alt="LINE QR"
                     sizes="144px"
-                    className="relative h-36 w-36 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                    className="relative h-36 w-36 overflow-hidden rounded-lg border border-slate-200 bg-white"
                   />
                 </li>
               )}
@@ -748,7 +808,7 @@ export default async function CourtPage({
               )}
             </ul>
           </div>
-        </BaseCard>
+        </section>
 
         {hasMapCoordinates && (
           <CourtMap
@@ -784,7 +844,7 @@ export default async function CourtPage({
                       }`,
                       locale,
                     )}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                    className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-[transform,border-color,box-shadow] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
                   >
                     <div className="flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)]">
                       <CalendarDays className="size-4" aria-hidden />
@@ -817,10 +877,7 @@ export default async function CourtPage({
           </section>
         )}
 
-        <BaseCard
-          as="section"
-          className="rounded-[32px] border border-slate-200 bg-white px-6 py-8"
-        >
+        <section className="rounded-lg border border-slate-200 bg-white px-6 py-8 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-900">
               {copy.groupsTitle}
@@ -920,7 +977,7 @@ export default async function CourtPage({
               ))}
             </div>
           )}
-        </BaseCard>
+        </section>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

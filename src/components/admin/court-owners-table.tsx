@@ -487,7 +487,7 @@ export function CourtOwnersTable({
               <select
                 value={sportFilter}
                 onChange={(event) => setSportFilter(event.target.value)}
-                className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-3 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400"
               >
                 {sportOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -511,7 +511,7 @@ export function CourtOwnersTable({
               value={courtQuery}
               onChange={(event) => setCourtQuery(event.target.value)}
               placeholder={copy.courtPlaceholder}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
             />
           </div>
           <div className="space-y-2">
@@ -523,7 +523,7 @@ export function CourtOwnersTable({
               value={managerQuery}
               onChange={(event) => setManagerQuery(event.target.value)}
               placeholder={copy.managerPlaceholder}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
             />
           </div>
           <div className="space-y-2">
@@ -535,7 +535,7 @@ export function CourtOwnersTable({
               value={locationQuery}
               onChange={(event) => setLocationQuery(event.target.value)}
               placeholder={copy.locationPlaceholder}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
             />
           </div>
         </div>
@@ -560,7 +560,7 @@ export function CourtOwnersTable({
               {filteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8">
-                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
+                    <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
                       {copy.noResults}
                     </div>
                   </td>
@@ -598,7 +598,7 @@ export function CourtOwnersTable({
                             onChange={(event) =>
                               handleAssignmentChange(row.id, event.target.value)
                             }
-                            className="w-full appearance-none rounded-2xl border border-slate-200 bg-white px-3 py-2.5 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                            className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-12 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                           >
                             {assignmentOptions.map((option) => (
                               <option
@@ -653,7 +653,7 @@ export function CourtOwnersTable({
             role="dialog"
             aria-modal="true"
             aria-label={copy.updateTitle}
-            className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[32px] border border-slate-200 bg-white p-6 shadow-2xl"
+            className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-lg border border-slate-200 bg-white p-6 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-4">

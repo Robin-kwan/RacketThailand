@@ -212,7 +212,7 @@ export default async function TermsPage({
       <main className="mx-auto flex max-w-4xl flex-col gap-6 px-6 pb-20 pt-10 text-[var(--foreground)] md:px-10">
         <BaseCard
           as="section"
-          className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)]"
+          className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--foreground-rgb)/0.52)]">
@@ -229,7 +229,7 @@ export default async function TermsPage({
             </p>
           </div>
 
-          <div className="rounded-3xl border border-[rgb(var(--rt-primary-rgb)/0.18)] bg-[rgb(var(--rt-primary-rgb)/0.06)] p-5">
+          <div className="rounded-lg border border-[rgb(var(--rt-primary-rgb)/0.18)] bg-[rgb(var(--rt-primary-rgb)/0.06)] p-5">
             <p className="text-sm font-semibold text-[var(--foreground)]">
               {copy.contactLabel}
             </p>
@@ -251,7 +251,7 @@ export default async function TermsPage({
             {copy.sections.map((section) => (
               <section
                 key={section.title}
-                className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5"
+                className="rounded-lg border border-slate-200 bg-slate-50/70 p-5"
               >
                 <h2 className="text-lg font-semibold text-[var(--foreground)]">
                   {section.title}

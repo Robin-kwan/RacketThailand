@@ -388,7 +388,7 @@ export function GroupSessionForm({
   };
 
   return (
-    <section className="space-y-5 rounded-[32px] border border-slate-200 bg-white p-6 sm:p-8">
+    <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-[var(--foreground)]">
@@ -417,7 +417,7 @@ export function GroupSessionForm({
                   setMode(value);
                   setValidationVisible(false);
                 }}
-                className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm font-semibold transition ${
                   active
                     ? "border-[rgb(var(--rt-primary-border-rgb))] bg-[rgb(var(--rt-primary-rgb)/0.1)] text-[var(--foreground)]"
                     : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
@@ -462,7 +462,7 @@ export function GroupSessionForm({
           }
         />
         {quickCourt && (
-          <div className="space-y-4 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
+          <div className="space-y-4 rounded-lg border border-emerald-100 bg-emerald-50/40 p-4">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-semibold text-slate-900">
                 {copy.quickCourtTitle}
@@ -551,7 +551,7 @@ export function GroupSessionForm({
               }
             />
             {quickCourt.error && (
-              <p className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
+              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
                 {quickCourt.error}
               </p>
             )}

@@ -112,7 +112,7 @@ function LocationDetailItem({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-white/80 bg-white/90 p-4 shadow-[0_10px_30px_rgb(var(--foreground-rgb)/0.05)] ${
+      className={`rounded-lg border border-white/80 bg-white/90 p-4 shadow-[0_10px_30px_rgb(var(--foreground-rgb)/0.05)] ${
         fullWidth ? "sm:col-span-2" : ""
       }`}
     >
@@ -155,7 +155,7 @@ export function LocationDetailsCard({
   }
 
   return (
-    <section className="overflow-hidden rounded-[28px] border border-emerald-200 bg-[linear-gradient(145deg,rgba(236,253,245,0.98),rgba(255,255,255,0.96))] shadow-[0_18px_60px_rgb(var(--rt-primary-rgb)/0.08)]">
+    <section className="overflow-hidden rounded-lg border border-emerald-200 bg-[linear-gradient(145deg,rgba(236,253,245,0.98),rgba(255,255,255,0.96))] shadow-[0_18px_60px_rgb(var(--rt-primary-rgb)/0.08)]">
       <div className="border-b border-emerald-100/80 px-5 py-5 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
@@ -244,7 +244,7 @@ export function CourtFormFields({
           </span>
           <details className="group relative">
             <summary
-              className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-900 shadow-sm outline-none transition hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-emerald-300"
+              className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-900 shadow-sm outline-none transition hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-emerald-300"
               aria-invalid={sportInvalid}
               data-invalid={sportInvalid ? "true" : undefined}
             >
@@ -259,7 +259,7 @@ export function CourtFormFields({
                 aria-hidden
               />
             </summary>
-            <div className="absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="absolute z-30 mt-2 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
               {sports.map((sport) => (
                 <label
                   key={sport.id}

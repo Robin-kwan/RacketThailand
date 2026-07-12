@@ -152,54 +152,58 @@ export default async function CasualPlayFinderPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#f7fbf9] text-slate-900">
       <HeaderSubLabel value={meta.name[locale]} />
-      <main className="relative mx-auto flex max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--rt-primary-rgb)/0.16),transparent_42%),radial-gradient(circle_at_92%_18%,rgb(var(--foreground-rgb)/0.08),transparent_44%)]"
-        />
-        <section className="rounded-[34px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white/95 p-8 shadow-[0_24px_80px_rgb(var(--foreground-rgb)/0.08)] backdrop-blur">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-            {copy.title}
-          </h1>
-          <p className="mt-2 text-sm text-slate-600">{copy.subtitle}</p>
-          <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-500">
-            <TrackedLink
-              href={buildLocalizedPath(`/${resolvedParams.sport}/group-finder`, locale)}
-              eventName="sport_cta_click"
-              eventPayload={{
-                surface: "casual_play_header",
-                cta: "open_group_finder",
-                sport: resolvedParams.sport,
-              }}
-              className="rounded-full border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:border-slate-500"
-            >
-              {copy.groupFinderCta}
-            </TrackedLink>
-            <TrackedLink
-              href={buildLocalizedPath(
-                `/casual-plays/create?sport=${encodeURIComponent(resolvedParams.sport)}`,
-                locale,
-              )}
-              eventName="sport_cta_click"
-              eventPayload={{
-                surface: "casual_play_header",
-                cta: "create_casual_play",
-                sport: resolvedParams.sport,
-              }}
-              className="rounded-full bg-[var(--rt-primary)] px-4 py-2 font-semibold text-[var(--rt-primary-text)] hover:bg-[var(--rt-primary-soft)]"
-            >
-              {copy.createCta}
-            </TrackedLink>
+      <main>
+        <section className="border-b border-slate-200 bg-white">
+          <div className="mx-auto w-full max-w-screen-xl px-6 py-12 md:px-10 md:py-14">
+            <div className="max-w-2xl border-l-2 border-[var(--rt-primary)] pl-5">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
+                {copy.title}
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{copy.subtitle}</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <TrackedLink
+                  href={buildLocalizedPath(`/${resolvedParams.sport}/group-finder`, locale)}
+                  eventName="sport_cta_click"
+                  eventPayload={{
+                    surface: "casual_play_header",
+                    cta: "open_group_finder",
+                    sport: resolvedParams.sport,
+                  }}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-500"
+                >
+                  {copy.groupFinderCta}
+                </TrackedLink>
+                <TrackedLink
+                  href={buildLocalizedPath(
+                    `/casual-plays/create?sport=${encodeURIComponent(resolvedParams.sport)}`,
+                    locale,
+                  )}
+                  eventName="sport_cta_click"
+                  eventPayload={{
+                    surface: "casual_play_header",
+                    cta: "create_casual_play",
+                    sport: resolvedParams.sport,
+                  }}
+                  className="rt-btn-primary inline-flex items-center justify-center px-4 py-2 text-sm"
+                >
+                  {copy.createCta}
+                </TrackedLink>
+              </div>
+            </div>
           </div>
         </section>
-        <CasualPlayFinder
-          sportCode={resolvedParams.sport}
-          locale={locale}
-          copy={copy}
-          initialPlays={playData.plays}
-        />
+        <section className="px-6 py-10 md:px-10 md:py-12">
+          <div className="mx-auto w-full max-w-screen-xl">
+            <CasualPlayFinder
+              sportCode={resolvedParams.sport}
+              locale={locale}
+              copy={copy}
+              initialPlays={playData.plays}
+            />
+          </div>
+        </section>
       </main>
     </div>
   );

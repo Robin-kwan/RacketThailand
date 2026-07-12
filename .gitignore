@@ -20,6 +20,10 @@
 # production
 /build
 
+# generated design artifacts
+/outputs/
+/design-qa.md
+
 # misc
 .DS_Store
 *.pem

@@ -195,7 +195,7 @@ export default async function CommunityPostPage({
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
         <BaseCard
           as="article"
-          className="rounded-[32px] border border-slate-200 bg-white p-8 text-[var(--foreground)]"
+          className="rounded-lg border border-slate-200 bg-white p-6 text-[var(--foreground)] shadow-sm md:p-8"
         >
           <div className="flex flex-wrap items-center justify-between gap-4 text-xs uppercase text-[rgb(var(--foreground-rgb)/0.6)]">
             <span>{post.category}</span>
@@ -257,7 +257,7 @@ export default async function CommunityPostPage({
 
         <BaseCard
           as="section"
-          className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 text-[var(--foreground)]"
+          className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 text-[var(--foreground)] shadow-sm"
         >
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[var(--foreground)]">

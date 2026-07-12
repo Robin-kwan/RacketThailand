@@ -60,21 +60,18 @@ export function FeedbackForm({ copy }: FeedbackFormProps) {
   };
 
   return (
-    <div className="space-y-6 text-left">
-      <div className="space-y-2 text-[var(--foreground)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[rgb(var(--foreground-rgb)/0.65)]">
-          Feedback
-        </p>
-        <h2 className="text-xl font-semibold">
+    <div className="space-y-7 text-left">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
           {copy.title}
         </h2>
-        <p className="text-sm text-[rgb(var(--foreground-rgb)/0.55)]">
+        <p className="mt-2 text-sm leading-6 text-slate-600">
           {copy.subtitle}
         </p>
       </div>
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-[rgb(var(--foreground-rgb)/0.8)]">
+          <label className="text-sm font-medium text-slate-800">
             {copy.subjectLabel}
           </label>
           <input
@@ -82,26 +79,26 @@ export function FeedbackForm({ copy }: FeedbackFormProps) {
             value={subject}
             onChange={(event) => setSubject(event.target.value)}
             placeholder={copy.subjectPlaceholder}
-            className="w-full rounded-2xl border border-[rgb(var(--rt-primary-text-rgb)/0.2)] bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none transition focus:border-[rgb(var(--rt-primary-text-rgb)/0.4)]"
+            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
             maxLength={120}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-[rgb(var(--foreground-rgb)/0.8)]">
+          <label className="text-sm font-medium text-slate-800">
             {copy.messageLabel}
           </label>
           <textarea
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             placeholder={copy.messagePlaceholder}
-            className="min-h-[140px] w-full rounded-2xl border border-[rgb(var(--rt-primary-text-rgb)/0.2)] bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none transition focus:border-[rgb(var(--rt-primary-text-rgb)/0.4)]"
+            className="min-h-36 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
             required
           />
         </div>
         <button
           type="submit"
           disabled={submitting || !message.trim()}
-          className="rt-btn-primary w-full px-4 py-3 text-base disabled:opacity-100"
+          className="rt-btn-primary px-5 py-3 text-sm disabled:opacity-100"
         >
           {submitting ? `${copy.submitLabel}...` : copy.submitLabel}
         </button>

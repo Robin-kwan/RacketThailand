@@ -35,6 +35,9 @@ const nextConfig: NextConfig = {
       {
         pathname: "/flags/**",
       },
+      {
+        pathname: "/images/**",
+      },
     ],
     remotePatterns: [
       ...supabaseHostnames.map((hostname) => ({

@@ -192,7 +192,7 @@ export function ProfileForm({
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
       <div className="flex flex-wrap items-center gap-4">
-        <div className="relative h-20 w-20 overflow-hidden rounded-3xl bg-slate-200">
+        <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-slate-200">
           {avatarPreview || form.avatar_url ? (
             <Image
               src={avatarPreview || form.avatar_url}
@@ -232,7 +232,7 @@ export function ProfileForm({
           name="display_name"
           value={form.display_name}
           onChange={handleInputChange}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           maxLength={80}
         />
       </div>
@@ -283,7 +283,7 @@ export function ProfileForm({
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="w-full rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {saving ? `${copy.saving}...` : copy.save}
       </button>

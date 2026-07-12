@@ -173,11 +173,11 @@ export function SignupForm({
   if (!isMounted) {
     return (
       <div className="mt-8 space-y-4">
-        <div className="h-14 rounded-2xl bg-slate-100/80" />
-        <div className="h-14 rounded-2xl bg-slate-100/80" />
-        <div className="h-14 rounded-2xl bg-slate-100/80" />
-        <div className="h-14 rounded-2xl bg-slate-100/80" />
-        <div className="h-12 rounded-2xl bg-slate-900/70" />
+        <div className="h-14 rounded-lg bg-slate-100/80" />
+        <div className="h-14 rounded-lg bg-slate-100/80" />
+        <div className="h-14 rounded-lg bg-slate-100/80" />
+        <div className="h-14 rounded-lg bg-slate-100/80" />
+        <div className="h-12 rounded-lg bg-slate-900/70" />
       </div>
     );
   }
@@ -200,7 +200,7 @@ export function SignupForm({
         <input
           type="text"
           name="name"
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           placeholder={copy.namePlaceholder}
           required
         />
@@ -212,7 +212,7 @@ export function SignupForm({
         <input
           type="email"
           name="email"
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           placeholder="name@email.com"
           required
         />
@@ -225,7 +225,7 @@ export function SignupForm({
           <input
             type={showPassword ? "text" : "password"}
             name="password"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             placeholder="••••••••"
             minLength={8}
             required
@@ -249,7 +249,7 @@ export function SignupForm({
           <input
             type={showConfirmPassword ? "text" : "password"}
             name="confirmPassword"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             placeholder="••••••••"
             minLength={8}
             required
@@ -269,7 +269,7 @@ export function SignupForm({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="w-full rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {submitting ? `${copy.button}...` : copy.button}
       </button>

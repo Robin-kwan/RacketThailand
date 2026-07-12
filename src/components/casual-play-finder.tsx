@@ -256,7 +256,7 @@ export function CasualPlayFinder({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <div className="grid gap-4 md:grid-cols-[1.7fr_1fr]">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">
@@ -274,7 +274,7 @@ export function CasualPlayFinder({
                 });
               }}
               placeholder={copy.searchPlaceholder}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
             />
           </div>
           <div className="space-y-2">
@@ -341,7 +341,7 @@ export function CasualPlayFinder({
       </div>
 
       {prioritizeNearby && userLocation && mapCourts.length > 0 && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
           <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.mapHeading}
           </p>
@@ -358,7 +358,7 @@ export function CasualPlayFinder({
               .map((entry) => (
                 <div
                   key={`nearby-${entry.play.id}`}
-                  className="flex flex-wrap items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                  className="flex flex-wrap items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
                 >
                   <div>
                     <p className="font-semibold text-slate-900">
@@ -389,7 +389,7 @@ export function CasualPlayFinder({
       )}
 
       {displayedPlays.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">
+        <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-slate-600">
           <p className="text-xl font-semibold text-slate-900">
             {copy.emptyTitle}
           </p>

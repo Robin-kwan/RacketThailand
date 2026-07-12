@@ -98,7 +98,7 @@ export default async function MyCommunityPostsPage({
         {posts.length === 0 ? (
           <BaseCard
             as="div"
-            className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center text-[rgb(var(--foreground-rgb)/0.75)]"
+            className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center text-[rgb(var(--foreground-rgb)/0.75)] shadow-sm"
           >
             <p>{copy.empty}</p>
           </BaseCard>

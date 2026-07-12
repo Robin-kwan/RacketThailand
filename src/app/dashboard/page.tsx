@@ -283,7 +283,7 @@ export default async function DashboardPage({
               </div>
 
               {ownedCourts.length === 0 ? (
-                <p className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm rt-text-muted">
+                <p className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-5 text-sm rt-text-muted">
                   {copy.ownedCourtsEmpty}
                 </p>
               ) : (
@@ -298,7 +298,7 @@ export default async function DashboardPage({
                         key={court.id}
                         className="flex gap-4 py-4 first:pt-0 last:pb-0"
                       >
-                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-slate-100">
+                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
                           <Image
                             src={getPrimaryImage(
                               court.court_photos,
@@ -418,7 +418,7 @@ export default async function DashboardPage({
                 {copy.ownedGroupsTitle}
               </h2>
               {ownedGroups.length === 0 ? (
-                <p className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm rt-text-muted">
+                <p className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-5 text-sm rt-text-muted">
                   {copy.ownedGroupsEmpty}
                 </p>
               ) : (
@@ -434,7 +434,7 @@ export default async function DashboardPage({
                         key={group.id}
                         className="flex gap-3 py-4 first:pt-0 last:pb-0"
                       >
-                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-slate-100">
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
                           <Image
                             src={getPrimaryImage(
                               group.group_photos,

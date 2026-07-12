@@ -474,7 +474,7 @@ export function CourtFinder({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem] md:items-end">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">
@@ -492,7 +492,7 @@ export function CourtFinder({
                 });
               }}
               placeholder={copy.searchPlaceholder}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
             />
           </div>
           <div>
@@ -590,7 +590,7 @@ export function CourtFinder({
       </div>
 
       {prioritizeNearby && userLocation && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
           <p className="text-xs font-semibold uppercase text-slate-400">
             {copy.mapHeading}
           </p>
@@ -599,7 +599,7 @@ export function CourtFinder({
               <NearbyMap userLocation={userLocation} courts={mapCourts} />
             ) : (
               <div
-                className="flex w-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500"
+              className="flex w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500"
                 style={{ aspectRatio: "4 / 3" }}
               >
                 {copy.nearbyEmpty}
@@ -613,7 +613,7 @@ export function CourtFinder({
               .map((entry) => (
                 <div
                   key={`nearby-${entry.court.id}`}
-                  className="flex flex-wrap items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                  className="flex flex-wrap items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
                 >
                   <Link
                     href={buildCourtHref(entry.court.id)}
@@ -645,7 +645,7 @@ export function CourtFinder({
       )}
 
       {courts.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">
+        <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-slate-600">
           <p className="text-xl font-semibold text-slate-900">
             {copy.emptyTitle}
           </p>

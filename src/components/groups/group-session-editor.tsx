@@ -304,7 +304,7 @@ export function GroupSessionEditor({
       {open && (
         <form
           onSubmit={handleSubmit}
-          className="basis-full rounded-3xl border border-slate-200 bg-slate-50/70 p-4"
+          className="basis-full rounded-lg border border-slate-200 bg-slate-50/70 p-4"
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-sm font-semibold text-[var(--foreground)]">
@@ -322,14 +322,14 @@ export function GroupSessionEditor({
 
           <div className="space-y-3">
             {rows.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+              <p className="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
                 {copy.empty}
               </p>
             ) : (
               rows.map((row) => (
                 <div
                   key={row.key}
-                  className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                  className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                 >
                   <BaseSelect
                     label={copy.dayLabel}
@@ -578,7 +578,7 @@ export function GroupEventEditor({
       {open && (
         <form
           onSubmit={handleSubmit}
-          className="mt-4 w-full basis-full rounded-3xl border border-slate-200 bg-slate-50/70 p-4"
+          className="mt-4 w-full basis-full rounded-lg border border-slate-200 bg-slate-50/70 p-4"
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-sm font-semibold text-[var(--foreground)]">

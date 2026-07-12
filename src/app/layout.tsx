@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Noto_Sans_Thai } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { HeaderConfigProvider } from "@/components/header-context";
+import { RacketThailandMark } from "@/components/racketthailand-mark";
 import { SiteHeader } from "@/components/site-header";
 import { ToasterProvider } from "@/components/toaster-provider";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
@@ -103,6 +104,23 @@ export const metadata: Metadata = {
   title: "RacketThailand | Racket Sports Community",
   description:
     "Discover courts, groups, and community updates for every racket sport in Thailand.",
+  icons: {
+    icon: [
+      {
+        url: "/icon.png?v=rally-gap-20260712",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
+    shortcut: "/favicon.ico?v=rally-gap-20260712",
+    apple: [
+      {
+        url: "/apple-icon.png?v=rally-gap-20260712",
+        type: "image/png",
+        sizes: "180x180",
+      },
+    ],
+  },
   alternates: {
     canonical: "/",
   },
@@ -176,19 +194,24 @@ export default async function RootLayout({
           </div>
           <div className="w-full" aria-hidden="true" />
           <main className="rt-main-shell flex-1 text-slate-900">{children}</main>
-          <footer className="border-t border-emerald-100/60 bg-[linear-gradient(120deg,#066049_0%,#087657_48%,#0b8f68_100%)] text-[rgb(var(--rt-primary-text-rgb)/0.94)] shadow-[0_-14px_44px_rgb(var(--foreground-rgb)/0.14)]">
-            <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-7 text-sm md:flex-row md:items-center md:justify-between md:px-10">
-              <p>RacketThailand | © {new Date().getFullYear()}</p>
-              <div className="flex flex-col gap-2 md:items-end">
+          <footer className="border-t border-slate-200 bg-white text-slate-600">
+            <div className="mx-auto flex max-w-screen-xl flex-col gap-5 px-6 py-7 text-sm md:flex-row md:items-center md:justify-between md:px-10">
+              <div className="flex items-center gap-3">
+                <RacketThailandMark className="h-9 w-11 shrink-0 overflow-hidden rounded-md" />
+                <p className="font-medium text-slate-700">
+                  RacketThailand | © {new Date().getFullYear()}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 md:justify-end">
                 <Link
                   href="/terms"
-                  className="text-[rgb(var(--rt-primary-text-rgb)/0.8)] hover:text-[rgb(var(--rt-primary-text-rgb)/0.95)]"
+                  className="transition-colors hover:text-slate-950"
                 >
                   Terms & conditions
                 </Link>
                 <a
                   href="mailto:racketthailand@gmail.com"
-                  className="text-[rgb(var(--rt-primary-text-rgb)/0.8)] hover:text-[rgb(var(--rt-primary-text-rgb)/0.95)]"
+                  className="transition-colors hover:text-slate-950"
                 >
                   Contact us: racketthailand@gmail.com
                 </a>

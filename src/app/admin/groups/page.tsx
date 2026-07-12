@@ -276,7 +276,7 @@ export default async function AdminGroupsPage({
         navigationLabel: t("admin.navigation"),
       }}
     >
-      <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+      <section className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>

@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { HeaderSubLabel } from "@/components/header-sub-label";
-import { BaseCard } from "@/components/base-card";
 import { COMMUNITY_CATEGORIES } from "@/data/communityCategories";
 import {
   buildLocalizedPath,
@@ -168,17 +167,17 @@ export default async function CommunityBoardPage({
   const redirectTarget = buildLocalizedPath(`/${sport.code}/board`, locale);
 
   return (
-    <div className="rt-page">
+    <div className="min-h-screen bg-[#f7fbf9] text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sportMeta.name[locale]} />
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
-        <header className="space-y-3">
+      <main className="mx-auto flex w-full max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 md:px-10 md:pb-20">
+        <header className="border-b border-slate-200 pb-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-semibold text-[var(--foreground)]">
+            <div className="border-l-2 border-[var(--rt-primary)] pl-5">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
                 {copy.title}
               </h1>
-              <p className="text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+              <p className="mt-2 text-sm leading-6 text-slate-600">
                 {copy.subtitle}
               </p>
             </div>
@@ -193,7 +192,7 @@ export default async function CommunityBoardPage({
               )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-600">
             <span className="font-semibold">{copy.filterLabel}</span>
             <div className="flex flex-wrap gap-2">
               {categoryFilters.map((category) => {
@@ -216,22 +215,16 @@ export default async function CommunityBoardPage({
           </div>
         </header>
         {isAuthenticated ? (
-          <BaseCard
-            as="section"
-            className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-[0_12px_45px_rgb(var(--foreground-rgb)/0.06)]"
-          >
+          <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <CommunityPostForm
               sportCode={sport.code}
               categories={localizedCategories}
               copy={formCopy}
               redirectTo={redirectTarget}
             />
-          </BaseCard>
+          </section>
         ) : (
-          <BaseCard
-            as="section"
-            className="rounded-[32px] border border-slate-200 bg-white p-6 text-sm text-[rgb(var(--foreground-rgb)/0.7)]"
-          >
+          <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
             <p>
               {copy.loginPrompt}{" "}
               <Link
@@ -245,16 +238,13 @@ export default async function CommunityBoardPage({
                 {t("header.login")}
               </Link>
             </p>
-          </BaseCard>
+          </section>
         )}
 
         {filteredPosts.length === 0 ? (
-          <BaseCard
-            as="div"
-            className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center text-[rgb(var(--foreground-rgb)/0.75)]"
-          >
+          <div className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center text-slate-600 shadow-sm">
             <p>{copy.empty}</p>
-          </BaseCard>
+          </div>
         ) : (
           <div className="space-y-4">
             {filteredPosts.map((post) => (

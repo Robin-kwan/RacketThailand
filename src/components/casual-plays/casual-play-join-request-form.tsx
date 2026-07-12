@@ -110,7 +110,7 @@ export function CasualPlayJoinRequestForm({
     isFull && status !== "pending" && status !== "accepted";
 
   return (
-    <section className="rounded-[32px] border border-slate-200 bg-white p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-[var(--foreground)]">
@@ -123,11 +123,11 @@ export function CasualPlayJoinRequestForm({
       </div>
 
       {isFullBlocked ? (
-        <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-semibold text-rose-700">
+        <div className="mt-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-semibold text-rose-700">
           {copy.full}
         </div>
       ) : !isAuthenticated ? (
-        <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+        <div className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
           <p>{copy.loginPrompt}</p>
           <Link
             href={loginHref}
@@ -139,7 +139,7 @@ export function CasualPlayJoinRequestForm({
       ) : (
         <>
           {statusMessage && !showForm && (
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
+            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
               <p>{statusMessage}</p>
               {status === "rejected" && (
                 <button

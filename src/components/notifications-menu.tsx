@@ -216,7 +216,7 @@ export function NotificationsMenu({
         )}
       </button>
       {open && (
-        <div className="fixed inset-x-3 top-20 z-50 max-h-[min(400px,calc(100dvh-6rem))] overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 text-sm sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:w-80">
+        <div className="fixed inset-x-3 top-20 z-50 max-h-[min(400px,calc(100dvh-6rem))] overflow-hidden rounded-lg border border-slate-200 bg-white p-4 text-sm sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:w-80">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-900">
               {copy.title}
@@ -240,7 +240,7 @@ export function NotificationsMenu({
                 return (
                   <li
                     key={notification.id}
-                    className={`rounded-2xl border px-3 py-2 ${
+                    className={`rounded-lg border px-3 py-2 ${
                       notification.read_at
                         ? "border-slate-100 bg-white"
                         : "border-slate-200 bg-slate-50"

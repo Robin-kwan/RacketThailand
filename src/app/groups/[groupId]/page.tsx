@@ -22,7 +22,6 @@ import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
 import { ViewTracker } from "@/components/view-tracker";
-import { BaseCard } from "@/components/base-card";
 import { BaseScheduleList } from "@/components/base-schedule-list";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
@@ -855,34 +854,26 @@ export default async function GroupDetailPage({
       ? `ดูรายละเอียดกลุ่ม ${shareTitle} บน RacketThailand`
       : `View ${shareTitle} on RacketThailand`);
   return (
-    <div className="rt-page">
+    <div className="min-h-screen bg-[#f7fbf9] text-[var(--foreground)]">
       <ViewTracker
         event="group_view"
         payload={{ groupId: group.id }}
       />
-      <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 pb-20 pt-10 text-[var(--foreground)] md:px-10">
-        <HeaderSportScope sportSlug={sportCode ?? undefined} />
-        <HeaderSubLabel value={sportName} />
-        <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
-        {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
-          <BaseCard
-            as="section"
-            className="rounded-[28px] border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900"
-          >
-            <p className="font-semibold">Draft preview</p>
-            <p className="mt-1">
-              This group is hidden from the public website until an admin changes it to published.
-            </p>
-          </BaseCard>
-        ) : null}
-        <BaseCard
-          as="section"
-          className="space-y-6 rounded-[32px] border border-slate-200 bg-white p-8"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-xl font-semibold text-[var(--foreground)]">
-              {group.name ?? fallbackGroupName}
-            </h1>
+      <HeaderSportScope sportSlug={sportCode ?? undefined} />
+      <HeaderSubLabel value={sportName} />
+      <main className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 text-[var(--foreground)] md:px-10 md:pb-20">
+        <header className="hidden">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-3xl">
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
+                {group.name ?? fallbackGroupName}
+              </h1>
+              {group.description && (
+                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[rgb(var(--foreground-rgb)/0.75)] md:text-base">
+                  {group.description}
+                </p>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <ShareButton
                 title={shareTitle}
@@ -901,12 +892,47 @@ export default async function GroupDetailPage({
               )}
             </div>
           </div>
-          {group.description && (
-            <p className="mt-2 whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.75)]">
-              {group.description}
+        </header>
+        <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
+        {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
+          <section className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900">
+            <p className="font-semibold">Draft preview</p>
+            <p className="mt-1">
+              This group is hidden from the public website until an admin changes it to published.
             </p>
-          )}
-          <div className="mt-6 grid gap-5 rounded-3xl border border-slate-100 bg-[rgb(var(--foreground-rgb)/0.02)] px-6 py-5 sm:grid-cols-2">
+          </section>
+        ) : null}
+        <section className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
+            <div className="max-w-3xl">
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
+                {group.name ?? fallbackGroupName}
+              </h1>
+              {group.description && (
+                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[rgb(var(--foreground-rgb)/0.75)] md:text-base">
+                  {group.description}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ShareButton
+                title={shareTitle}
+                text={shareText}
+                url={canonicalUrl}
+                label={copy.shareAction}
+                copiedLabel={copy.linkCopiedAction}
+              />
+              {canEdit && (
+                <Link
+                  href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+                >
+                  {copy.edit}
+                </Link>
+              )}
+            </div>
+          </div>
+          <div className="grid gap-5 rounded-lg border border-slate-200 bg-slate-50 px-5 py-5 sm:grid-cols-2">
             <div>
               <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                 {copy.playFormat}
@@ -999,12 +1025,12 @@ export default async function GroupDetailPage({
                   src={displayGroup.line_qr_url}
                   alt="LINE QR"
                   sizes="128px"
-                  className="relative mt-2 h-32 w-32 overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  className="relative mt-2 h-32 w-32 overflow-hidden rounded-lg border border-slate-200 bg-white"
                 />
               </div>
             )}
           </div>
-        </BaseCard>
+        </section>
 
         {canEdit && group.sport_id && (
           <GroupSessionForm
@@ -1017,7 +1043,7 @@ export default async function GroupDetailPage({
         )}
 
         {localizedUpcomingEvents.length > 0 && (
-          <section className="space-y-4 rounded-[32px] border border-slate-200 bg-white p-8">
+          <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
             <h2 className="text-lg font-semibold text-[var(--foreground)]">
               {copy.upcomingTitle}
             </h2>
@@ -1036,7 +1062,7 @@ export default async function GroupDetailPage({
                 return (
                   <div
                     key={event.id}
-                    className="rounded-3xl border border-slate-100 bg-[rgb(var(--foreground-rgb)/0.02)] p-5"
+                    className="rounded-lg border border-slate-200 bg-slate-50 p-5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
@@ -1100,7 +1126,7 @@ export default async function GroupDetailPage({
           </section>
         )}
 
-        <section className="space-y-4 rounded-[32px] border border-slate-200 bg-white p-8">
+        <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
           <h2 className="text-lg font-semibold text-[var(--foreground)]">
             {copy.sessionsTitle}
           </h2>
@@ -1167,7 +1193,7 @@ export default async function GroupDetailPage({
                     {entry.court ? (
                       <div className="space-y-3">
                         {entry.photoUrl && (
-                          <div className="relative mx-auto h-36 w-full max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 sm:mx-0">
+                          <div className="relative mx-auto h-36 w-full max-w-sm overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:mx-0">
                             <Image
                               src={entry.photoUrl}
                               alt={entry.court.name ?? fallbackCourtPhotoAlt}

@@ -54,7 +54,7 @@ export function BaseImageCard({
   const styles = VARIANT_CLASSNAMES[variant] ?? VARIANT_CLASSNAMES.dark;
   return (
     <div
-      className={`${heightClass} relative overflow-hidden rounded-2xl border ${styles.container}`}
+      className={`${heightClass} relative overflow-hidden rounded-lg border ${styles.container}`}
     >
       {onRemove && (
         <button

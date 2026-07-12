@@ -46,38 +46,6 @@ const STAT_ICONS: Record<string, LucideIcon> = {
   groups: Users,
 };
 
-const STAT_CARD_STYLES: Record<
-  string,
-  {
-    cardBorder: string;
-    iconWrap: string;
-    valueText: string;
-    marker: string;
-  }
-> = {
-  courts: {
-    cardBorder: "border-emerald-200",
-    iconWrap:
-      "border-emerald-200 bg-emerald-50 text-emerald-700",
-    valueText: "text-emerald-700",
-    marker: "bg-emerald-500",
-  },
-  groups: {
-    cardBorder: "border-teal-200",
-    iconWrap:
-      "border-teal-200 bg-teal-50 text-teal-700",
-    valueText: "text-teal-700",
-    marker: "bg-teal-500",
-  },
-  default: {
-    cardBorder: "border-slate-200",
-    iconWrap:
-      "border-slate-200 bg-slate-50 text-slate-700",
-    valueText: "text-slate-700",
-    marker: "bg-slate-500",
-  },
-};
-
 export function generateStaticParams() {
   return SUPPORTED_SPORTS.map((sport) => ({ sport }));
 }
@@ -144,12 +112,14 @@ function FeatureCarousel({
       };
 
   return (
-    <section className="px-6 py-4 text-[var(--foreground)] md:px-12">
-      <div className="mx-auto max-w-5xl">
+    <section className={`border-t border-slate-200 px-6 py-12 text-[var(--foreground)] md:px-10 md:py-14 ${
+      type === "court" ? "bg-[#f7fbf9]" : "bg-white"
+    }`}>
+      <div className="mx-auto max-w-screen-xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">{title}</h2>
-            <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{title}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
               {subtitle}
             </p>
           </div>
@@ -243,7 +213,7 @@ function FeatureCarousel({
             </div>
           </div>
         ) : (
-          <p className="mt-6 text-sm text-[rgb(var(--foreground-rgb)/0.5)]">
+          <p className="mt-6 text-sm text-slate-500">
             {emptyCopy}
           </p>
         )}
@@ -276,12 +246,12 @@ function CasualPlayPreviewSection({
   const hasPlays = plays.length > 0;
 
   return (
-    <section className="px-6 py-4 text-[var(--foreground)] md:px-12">
-      <div className="mx-auto max-w-5xl">
+    <section className="border-t border-slate-200 bg-[#f7fbf9] px-6 py-12 text-[var(--foreground)] md:px-10 md:py-14">
+      <div className="mx-auto max-w-screen-xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">{title}</h2>
-            <p className="mt-1 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{title}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
               {subtitle}
             </p>
           </div>
@@ -339,7 +309,7 @@ function CasualPlayPreviewSection({
             </div>
           </div>
         ) : (
-          <p className="mt-6 text-sm text-[rgb(var(--foreground-rgb)/0.5)]">
+          <p className="mt-6 text-sm text-slate-500">
             {emptyCopy}
           </p>
         )}
@@ -436,6 +406,8 @@ export default async function SportPage({
 
   const courtFeature = sport.features.find((feature) => feature.key === "courts");
   const groupFeature = sport.features.find((feature) => feature.key === "groups");
+  const sportMeta = getSportMeta(sport.code);
+  const heroImage = sportMeta?.coverImage ?? "/sports/badminton.png";
   const carouselEmptyCopy = t("sport.carouselEmpty");
   const viewAllLabel = t("sport.viewAll");
   const boardCta = t("community.boardCta");
@@ -449,85 +421,47 @@ export default async function SportPage({
       />
     );
   };
-  const getStatStyle = (key: string) =>
-    STAT_CARD_STYLES[key] ?? STAT_CARD_STYLES.default;
-
   return (
-    <div className="min-h-screen text-[var(--foreground)]">
+    <div className="min-h-screen bg-[#f7fbf9] text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
-      <section className="relative overflow-hidden border-y border-[rgb(var(--foreground-rgb)/0.1)] bg-white px-6 py-12 md:px-12">
+      <section className="relative isolate overflow-hidden border-b border-slate-800 bg-[#10281e] text-white">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--rt-primary-rgb)/0.14),transparent_34%),radial-gradient(circle_at_95%_15%,rgb(var(--foreground-rgb)/0.08),transparent_42%)]"
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${heroImage})` }}
         />
-        <div className="relative mx-auto flex max-w-5xl flex-col gap-8 text-[var(--foreground)]">
-          <div className="space-y-4">
-            <h1 className="text-xl font-semibold leading-tight tracking-tight">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[#10281e]/35"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, rgba(8, 31, 23, 0.96) 0%, rgba(8, 31, 23, 0.9) 36%, rgba(8, 31, 23, 0.5) 65%, rgba(8, 31, 23, 0.12) 100%)",
+          }}
+        />
+        <div className="relative mx-auto flex min-h-[390px] max-w-screen-xl flex-col justify-end px-6 py-10 md:min-h-[440px] md:px-10 md:py-14">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3 text-sm font-semibold text-white/80">
+              <span
+                aria-hidden
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: sport.accent }}
+              />
+              <span>{sport.name[locale]}</span>
+            </div>
+            <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-white md:text-5xl">
               {sport.hero.headline[locale]}
             </h1>
-            <p className="text-lg text-[rgb(var(--foreground-rgb)/0.78)]">
+            <p className="mt-4 max-w-xl text-sm leading-6 text-white/80 md:text-base md:leading-7">
               {sport.hero.description[locale]}
             </p>
           </div>
-          <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-2 lg:max-w-none lg:grid-cols-[repeat(auto-fit,minmax(190px,1fr))]">
-            {sport.hero.stats.map((stat) => {
-              const styles = getStatStyle(stat.key);
-              const href =
-                stat.key === "courts"
-                  ? buildLocalizedPath(`/${sport.code}/court-finder`, locale)
-                  : stat.key === "groups"
-                    ? buildLocalizedPath(`/${sport.code}/group-finder`, locale)
-                    : null;
-              const statContent = (
-                <>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.55)]">
-                        {t(`sport.stats.${stat.key}`)}
-                      </p>
-                      <p className={`mt-2 text-xl font-semibold leading-none tracking-tight ${styles.valueText}`}>
-                        {stat.value}
-                      </p>
-                    </div>
-                    <span className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border ${styles.iconWrap}`}>
-                      {renderStatIcon(stat.key)}
-                    </span>
-                  </div>
-                  <div className={`mt-4 h-1.5 w-16 rounded-full ${styles.marker}`} />
-                </>
-              );
 
-              if (href) {
-                return (
-                  <TrackedLink
-                    key={stat.key}
-                    href={href}
-                    eventName="sport_cta_click"
-                    eventPayload={{
-                      surface: "sport_stat_card",
-                      cta: `open_${stat.key}`,
-                      sport: sport.code,
-                    }}
-                    className={`group block rounded-2xl border bg-white px-5 py-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-[var(--rt-primary)] focus-visible:ring-offset-2 ${styles.cardBorder}`}
-                    aria-label={`${t(`sport.stats.${stat.key}`)}: ${stat.value}`}
-                  >
-                    {statContent}
-                  </TrackedLink>
-                );
-              }
-
-              return (
-                <div
-                  key={stat.key}
-                  className={`rounded-2xl border bg-white px-5 py-4 ${styles.cardBorder}`}
-                >
-                  {statContent}
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="mt-7 flex flex-wrap gap-3">
             <TrackedLink
               href={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
               eventName="sport_cta_click"
@@ -536,7 +470,7 @@ export default async function SportPage({
                 cta: "open_court_finder",
                 sport: sport.code,
               }}
-              className="rounded-full bg-[var(--rt-primary)] px-6 py-3 text-sm font-semibold text-[var(--rt-primary-text)]"
+              className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-slate-100"
             >
               {t("courtFinder.cta")}
             </TrackedLink>
@@ -548,10 +482,13 @@ export default async function SportPage({
                 cta: "open_group_finder",
                 sport: sport.code,
               }}
-              className="rounded-full border border-[rgb(var(--rt-primary-rgb)/0.45)] bg-white px-6 py-3 text-sm font-semibold text-[var(--rt-primary)] hover:border-[rgb(var(--rt-primary-rgb)/0.75)]"
+              className="inline-flex items-center justify-center rounded-full border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/80 hover:bg-white/20"
             >
               {t("sport.groupFinderCta")}
             </TrackedLink>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-white/80">
             <TrackedLink
               href={buildLocalizedPath(`/${sport.code}/casual-plays`, locale)}
               eventName="sport_cta_click"
@@ -560,7 +497,7 @@ export default async function SportPage({
                 cta: "open_casual_plays",
                 sport: sport.code,
               }}
-              className="rounded-full border border-emerald-300 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-800 hover:border-emerald-500"
+              className="transition hover:text-white"
             >
               {t("sport.casualPlaysCta")}
             </TrackedLink>
@@ -572,10 +509,46 @@ export default async function SportPage({
                 cta: "open_board",
                 sport: sport.code,
               }}
-              className="rounded-full border border-[rgb(var(--foreground-rgb)/0.18)] bg-white px-6 py-3 text-sm font-semibold text-[rgb(var(--foreground-rgb)/0.75)] hover:border-[rgb(var(--foreground-rgb)/0.35)] hover:text-[var(--foreground)]"
+              className="transition hover:text-white"
             >
               {boardCta}
             </TrackedLink>
+          </div>
+
+          <div className="mt-8 grid w-full max-w-md grid-cols-2 divide-x divide-white/20 overflow-hidden rounded-lg border border-white/20 bg-slate-950/30 backdrop-blur-sm">
+            {sport.hero.stats.map((stat) => {
+              const href =
+                stat.key === "courts"
+                  ? buildLocalizedPath(`/${sport.code}/court-finder`, locale)
+                  : buildLocalizedPath(`/${sport.code}/group-finder`, locale);
+
+              return (
+                <TrackedLink
+                  key={stat.key}
+                  href={href}
+                  eventName="sport_cta_click"
+                  eventPayload={{
+                    surface: "sport_stat_card",
+                    cta: `open_${stat.key}`,
+                    sport: sport.code,
+                  }}
+                  className="group flex items-center gap-3 px-4 py-3 transition hover:bg-white/10"
+                  aria-label={`${t(`sport.stats.${stat.key}`)}: ${stat.value}`}
+                >
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white">
+                    {renderStatIcon(stat.key)}
+                  </span>
+                  <span>
+                    <span className="block text-lg font-semibold leading-none text-white">
+                      {stat.value}
+                    </span>
+                    <span className="mt-1 block text-[11px] font-semibold text-white/65">
+                      {t(`sport.stats.${stat.key}`)}
+                    </span>
+                  </span>
+                </TrackedLink>
+              );
+            })}
           </div>
         </div>
       </section>

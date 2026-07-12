@@ -99,7 +99,7 @@ export default async function EditCommunityPostPage({
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pb-20 pt-10 md:px-10">
         <BaseCard
           as="section"
-          className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_18px_70px_rgb(var(--foreground-rgb)/0.08)] md:p-8"
+          className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <div className="mb-6 border-b border-slate-100 pb-5">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-950">

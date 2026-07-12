@@ -116,7 +116,7 @@ export default async function ProfileEditPage({
       <main className="mx-auto flex w-full max-w-3xl flex-col px-6 pb-20 pt-10 md:px-10">
         <BaseCard
           as="section"
-          className="rounded-[36px] border border-slate-200 bg-white p-6 shadow-[0_18px_70px_rgb(var(--foreground-rgb)/0.08)] md:p-8"
+          className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <div className="border-b border-slate-100 pb-6">
             <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">

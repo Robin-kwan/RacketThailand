@@ -55,7 +55,7 @@ export default async function ForgotPasswordPage({
       <main className="mx-auto flex max-w-lg flex-col gap-4 px-6 pb-20 pt-16 text-center md:px-8">
         <BaseCard
           as="section"
-          className="rounded-[32px] border border-slate-200 bg-white p-8"
+          className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
         >
           <h1 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
             {copy.title}

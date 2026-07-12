@@ -46,7 +46,7 @@ export function CommunityCommentItem({
   };
 
   return (
-    <li className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-[var(--foreground)]">
+    <li className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-[var(--foreground)]">
       <div className="flex items-center gap-3 text-xs font-semibold text-[rgb(var(--foreground-rgb)/0.6)]">
         <div className="relative h-8 w-8 overflow-hidden rounded-full bg-[rgb(var(--foreground-rgb)/0.1)]">
           {comment.author?.avatar_url ? (
@@ -85,7 +85,7 @@ export function CommunityCommentItem({
             value={body}
             onChange={(event) => setBody(event.target.value)}
             rows={4}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--rt-primary)]"
+            className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--rt-primary)]"
           />
           <div className="flex gap-2 text-xs">
             <button
