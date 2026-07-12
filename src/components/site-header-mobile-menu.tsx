@@ -6,7 +6,7 @@ import { Check, X } from "lucide-react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { NotificationsMenu } from "@/components/notifications-menu";
 import type { NotificationCopy } from "@/components/notifications-menu";
-import { SportBallMark } from "@/components/sport-ball-mark";
+import { RacketThailandMark } from "@/components/racketthailand-mark";
 
 export type MenuLink = {
   label: string;
@@ -46,11 +46,6 @@ export type MobileNavDrawerProps = {
   locale: Locale;
   labels: MobileMenuLabels;
   subLabel: string;
-  sportMark?: {
-    code?: string;
-    label?: string;
-    accent?: string;
-  };
   notificationCopy: NotificationCopy;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -80,7 +75,6 @@ export function SiteHeaderMobileMenu({
   onLogout,
   loginHref,
   subLabel,
-  sportMark,
 }: MobileNavDrawerProps) {
   if (!isOpen) {
     return null;
@@ -100,13 +94,7 @@ export function SiteHeaderMobileMenu({
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <SportBallMark
-              sportCode={sportMark?.code}
-              label={sportMark?.label}
-              accent={sportMark?.accent}
-              compact
-              variant="drawer"
-            />
+            <RacketThailandMark className="h-12 w-14 shrink-0 overflow-hidden rounded-lg" />
             <div>
             <p className="text-sm font-semibold text-slate-700">
               {labels.brand}

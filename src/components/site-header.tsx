@@ -19,7 +19,7 @@ import { useHeaderConfig } from "@/components/header-context";
 import { NotificationsMenu } from "@/components/notifications-menu";
 import type { NotificationCopy } from "@/components/notifications-menu";
 import { SiteHeaderMobileMenu } from "@/components/site-header-mobile-menu";
-import { SportBallMark } from "@/components/sport-ball-mark";
+import { RacketThailandMark } from "@/components/racketthailand-mark";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type HeaderUser = {
@@ -188,6 +188,7 @@ export function SiteHeader({
       labels.brand.charAt(0) ||
       "R").toUpperCase();
   const isAuthenticated = Boolean(user);
+  const isLandingPage = pathname === "/";
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -218,8 +219,9 @@ export function SiteHeader({
       document.removeEventListener("mousedown", handleClick);
     };
   }, []);
-  const headerClass =
-    "relative w-full border-b border-white/20 bg-[linear-gradient(120deg,#0b8f68_0%,#08815f_48%,#066049_100%)] py-3 px-4 text-sm text-[var(--rt-primary-text)] shadow-[0_8px_24px_rgb(var(--foreground-rgb)/0.08)] transition-all duration-300 md:px-8";
+  const headerClass = isLandingPage
+    ? "relative w-full border-b border-slate-200 bg-white py-3 px-4 text-sm text-slate-900 shadow-[0_8px_24px_rgb(15_23_42/0.05)] transition-all duration-300 md:px-8"
+    : "relative w-full border-b border-white/20 bg-[linear-gradient(120deg,#0b8f68_0%,#08815f_48%,#066049_100%)] py-3 px-4 text-sm text-[var(--rt-primary-text)] shadow-[0_8px_24px_rgb(var(--foreground-rgb)/0.08)] transition-all duration-300 md:px-8";
 
   return (
     <>
@@ -231,18 +233,21 @@ export function SiteHeader({
               href={buildLocalizedPath("/", locale)}
               className="flex items-center gap-3"
             >
-              <SportBallMark
-                sportCode={resolvedSportSlug}
-                label={autoSubLabel}
-                accent={activeSport?.accent}
-                compact
+              <RacketThailandMark
+                className="h-12 w-14 shrink-0 overflow-hidden rounded-lg"
               />
               <div className="text-left">
-                <p className="text-lg font-semibold text-white">
+                <p className={`text-lg font-semibold ${isLandingPage ? "text-slate-950" : "text-white"}`}>
                   {labels.brand}
                 </p>
-                <p className="text-[11px] font-semibold uppercase text-[rgb(var(--rt-primary-text-rgb)/0.75)]">
-                  <span style={{ color: "#e6fff8" }}>
+                <p
+                  className={`text-[11px] font-semibold uppercase ${
+                    isLandingPage
+                      ? "text-slate-500"
+                      : "text-[rgb(var(--rt-primary-text-rgb)/0.75)]"
+                  }`}
+                >
+                  <span style={{ color: isLandingPage ? "#64748b" : "#e6fff8" }}>
                     {resolvedSubLabel}
                   </span>
                 </p>
@@ -251,7 +256,11 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 min-[1000px]:hidden"
+              className={`flex h-11 w-11 items-center justify-center rounded-full min-[1000px]:hidden ${
+                isLandingPage
+                  ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  : "bg-white/10 text-white hover:bg-white/20"
+              }`}
               aria-label="Open navigation menu"
             >
               <Menu
@@ -382,7 +391,11 @@ export function SiteHeader({
               <div className="hidden items-center gap-2 min-[1000px]:flex">
                 <Link
                   href={loginHref}
-                  className="rounded-full border border-emerald-100/75 bg-white px-4 py-2 font-semibold text-emerald-900 hover:border-emerald-300"
+                  className={`rounded-full border bg-white px-4 py-2 font-semibold transition ${
+                    isLandingPage
+                      ? "border-slate-300 text-slate-800 hover:border-slate-500"
+                      : "border-emerald-100/75 text-emerald-900 hover:border-emerald-300"
+                  }`}
                 >
                   {labels.login}
                 </Link>
@@ -451,11 +464,6 @@ export function SiteHeader({
         }}
         loginHref={loginHref}
         subLabel={resolvedSubLabel}
-        sportMark={{
-          code: resolvedSportSlug,
-          label: autoSubLabel,
-          accent: activeSport?.accent,
-        }}
         notificationCopy={notificationCopy}
         isAuthenticated={isAuthenticated}
         isAdmin={isAdmin}

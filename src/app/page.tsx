@@ -1,13 +1,10 @@
 import Image from "next/image";
 import type { Metadata } from "next";
+import { CalendarDays, MapPinned, UsersRound } from "lucide-react";
 import { LANDING_SPORTS } from "@/data/sportMeta";
 import { FeedbackForm } from "@/components/feedback-form";
-import { BaseCard } from "@/components/base-card";
 import { TrackedLink } from "@/components/analytics/tracked-link";
-import {
-  FeaturePerspectives,
-  type FeaturePerspectivesCopy,
-} from "@/components/landing/feature-perspectives";
+import { LandingHeroFinder } from "@/components/landing/landing-hero-finder";
 import {
   buildLocalizedPath,
   getTranslator,
@@ -146,39 +143,30 @@ export default async function Landing({
     successMessage: t("landing.feedbackSuccess"),
     errorMessage: t("landing.feedbackError"),
   };
-  const perspectivesCopy: FeaturePerspectivesCopy = {
-    title: t("landing.perspectivesTitle"),
-    subtitle: t("landing.perspectivesSubtitle"),
-    courtOwner: {
-      title: t("landing.courtOwnerTitle"),
-      description: t("landing.courtOwnerDescription"),
-      steps: [
-        t("landing.courtOwnerStep1"),
-        t("landing.courtOwnerStep2"),
-        t("landing.courtOwnerStep3"),
-      ],
-    },
-    groupOwner: {
-      title: t("landing.groupOwnerTitle"),
-      description: t("landing.groupOwnerDescription"),
-      steps: [
-        t("landing.groupOwnerStep1"),
-        t("landing.groupOwnerStep2"),
-        t("landing.groupOwnerStep3"),
-      ],
-    },
-    regularUser: {
-      title: t("landing.regularUserTitle"),
-      description: t("landing.regularUserDescription"),
-      steps: [
-        t("landing.regularUserStep1"),
-        t("landing.regularUserStep2"),
-        t("landing.regularUserStep3"),
-      ],
-    },
-  };
   const isAuthenticated = Boolean(user);
   const seo = LANDING_SEO[locale];
+  const heroSports = LANDING_SPORTS.map((sport) => ({
+    code: sport.code,
+    name: sport.name[locale],
+    color: sport.color,
+  }));
+  const discoveryItems = [
+    {
+      title: t("landing.discoveryGroupsTitle"),
+      description: t("landing.discoveryGroupsDescription"),
+      icon: UsersRound,
+    },
+    {
+      title: t("landing.discoveryCourtsTitle"),
+      description: t("landing.discoveryCourtsDescription"),
+      icon: MapPinned,
+    },
+    {
+      title: t("landing.discoveryCasualTitle"),
+      description: t("landing.discoveryCasualDescription"),
+      icon: CalendarDays,
+    },
+  ];
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -195,44 +183,46 @@ export default async function Landing({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <main className="mx-auto mt-6 flex w-full max-w-screen-xl flex-col items-center gap-12 px-6 pb-10 text-center text-[var(--foreground)] md:px-10">
-        <header className="relative w-full max-w-4xl overflow-hidden rounded-[38px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white px-7 py-10 shadow-[0_14px_48px_rgb(var(--foreground-rgb)/0.08)] md:px-12">
-          <div className="relative flex flex-col items-center gap-5">
-            <h1 className="text-xl font-semibold leading-tight tracking-tight text-[var(--foreground)]">
-              {t("landing.heroTitle")}
-            </h1>
-            <p className="max-w-3xl text-sm text-[rgb(var(--foreground-rgb)/0.75)] md:text-lg">
-              {t("landing.heroDescription")}
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <TrackedLink
-                href={buildLocalizedPath("/courts/new", locale)}
-                eventName="landing_cta_click"
-                eventPayload={{
-                  surface: "landing_hero",
-                  cta: "add_court",
-                }}
-                className="rt-btn-court inline-flex items-center justify-center px-6 py-3 text-sm"
-              >
-                {t("courtSubmission.submit")}
-              </TrackedLink>
-              <TrackedLink
-                href={buildLocalizedPath("/groups/create", locale)}
-                eventName="landing_cta_click"
-                eventPayload={{
-                  surface: "landing_hero",
-                  cta: "create_group",
-                }}
-                className="rt-btn-group inline-flex items-center justify-center px-6 py-3 text-sm"
-              >
-                {t("header.createGroup")}
-              </TrackedLink>
+      <main className="w-full overflow-hidden text-[var(--foreground)]">
+        <section className="relative z-10 isolate min-h-[610px] border-b border-slate-200 bg-slate-100">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/racketthailand-tennis-hero-v1.png"
+            alt="Tennis player on an outdoor court in Bangkok"
+            className="absolute inset-0 h-full w-full object-cover object-[72%_center]"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.94)_44%,rgba(255,255,255,0.82)_65%,rgba(255,255,255,0.35)_82%,rgba(255,255,255,0)_100%)]" />
+          <div className="relative mx-auto flex min-h-[610px] w-full max-w-screen-xl items-center px-6 py-16 md:px-10">
+            <div className="w-full max-w-2xl">
+              <p className="text-sm font-semibold text-[var(--rt-primary)]">
+                {t("landing.heroKicker")}
+              </p>
+              <h1 className="mt-4 max-w-xl text-4xl font-semibold leading-[1.12] tracking-tight text-slate-950 md:text-5xl">
+                {t("landing.heroTitle")}
+              </h1>
+              <div className="mt-8 max-w-2xl">
+                <LandingHeroFinder
+                  locale={locale}
+                  sports={heroSports}
+                  sportLabel={t("landing.heroSportLabel")}
+                  groupLabel={t("landing.heroGroupCta")}
+                  courtLabel={t("landing.heroCourtCta")}
+                />
+              </div>
             </div>
           </div>
-        </header>
+        </section>
 
-        <section className="w-full max-w-[1100px]">
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <section className="bg-white py-14 md:py-18">
+          <div className="mx-auto w-full max-w-screen-xl px-6 md:px-10">
+            <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+                  {t("landing.sportsTitle")}
+                </h2>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {LANDING_SPORTS.map((sport) => (
               <TrackedLink
                 key={sport.code}
@@ -243,44 +233,96 @@ export default async function Landing({
                   cta: `open_${sport.code}`,
                   sport: sport.code,
                 }}
-                className="group overflow-hidden rounded-[26px] border border-[rgb(var(--foreground-rgb)/0.12)] bg-white transition-[transform,border-color,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-[rgb(var(--rt-primary-border-rgb))] hover:shadow-[0_18px_50px_rgb(var(--foreground-rgb)/0.14)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_34px_rgb(15_23_42/0.12)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
-                <article className="relative h-52 w-full overflow-hidden md:h-64">
+                <article className="relative aspect-[4/3] w-full overflow-hidden">
                   <Image
                     src={sport.coverImage}
                     alt={`${sport.name[locale]} cover`}
                     fill
-                    sizes="(max-width: 768px) calc(100vw - 3rem), (max-width: 1200px) calc((100vw - 5rem - 3rem) / 2), 340px"
-                    quality={60}
-                    className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.035] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                    sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) calc((100vw - 6.5rem) / 2), calc((100vw - 8rem) / 5)"
+                    quality={70}
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                     priority={sport.code === "badminton"}
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent" />
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 text-left text-white">
-                    <p className="text-xl font-semibold tracking-tight">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/45 px-4 py-3 text-left text-white">
+                    <p className="text-lg font-semibold tracking-tight">
                       {sport.name[locale]}
-                    </p>
-                    <p className="mt-1 text-xs uppercase text-white/75">
-                      {t("landing.cardCta")}
                     </p>
                   </div>
                 </article>
               </TrackedLink>
             ))}
+            </div>
           </div>
         </section>
 
-        <FeaturePerspectives copy={perspectivesCopy} />
+        <section className="border-y border-slate-200 bg-[#f7fbf9] py-14 md:py-18">
+          <div className="mx-auto w-full max-w-screen-xl px-6 md:px-10">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+              {t("landing.discoveryTitle")}
+            </h2>
+            <div className="mt-8 grid gap-8 md:grid-cols-3 md:gap-12">
+              {discoveryItems.map(({ title, description, icon: Icon }) => (
+                <article key={title} className="border-l-2 border-[var(--rt-primary)] pl-5">
+                  <Icon
+                    className="h-5 w-5 text-[var(--rt-primary)]"
+                    strokeWidth={1.9}
+                    aria-hidden
+                  />
+                  <h3 className="mt-4 text-lg font-semibold text-slate-950">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-y border-slate-200 bg-white py-14 md:py-18">
+          <div className="mx-auto grid w-full max-w-screen-xl gap-8 px-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-10">
+            <div className="max-w-2xl border-l-2 border-[var(--rt-primary)] pl-5">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+                {t("landing.contributeTitle")}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600 md:text-base">
+                {t("landing.contributeDescription")}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3 md:justify-end">
+              <TrackedLink
+                href={buildLocalizedPath("/courts/new", locale)}
+                eventName="landing_cta_click"
+                eventPayload={{
+                  surface: "landing_contribute",
+                  cta: "add_court",
+                }}
+                className="rt-btn-court inline-flex items-center justify-center px-5 py-3 text-sm"
+              >
+                {t("courtSubmission.submit")}
+              </TrackedLink>
+              <TrackedLink
+                href={buildLocalizedPath("/groups/create", locale)}
+                eventName="landing_cta_click"
+                eventPayload={{
+                  surface: "landing_contribute",
+                  cta: "create_group",
+                }}
+                className="rt-btn-group inline-flex items-center justify-center px-5 py-3 text-sm"
+              >
+                {t("header.createGroup")}
+              </TrackedLink>
+            </div>
+          </div>
+        </section>
 
         {isAuthenticated && (
-          <div className="w-full max-w-[1000px]">
-            <BaseCard
-              as="section"
-              className="mt-2 w-full rounded-[40px] border border-[rgb(var(--rt-primary-rgb)/0.34)] bg-white/95 p-8 text-left shadow-[0_16px_60px_rgb(var(--rt-primary-rgb)/0.12)]"
-            >
-              <FeedbackForm copy={feedbackCopy} />
-            </BaseCard>
-          </div>
+          <section className="border-b border-slate-200 bg-[#f7fbf9] py-14 md:py-18">
+            <div className="mx-auto w-full max-w-screen-xl px-6 md:px-10">
+              <div className="max-w-3xl">
+                <FeedbackForm copy={feedbackCopy} />
+              </div>
+            </div>
+          </section>
         )}
       </main>
     </div>
