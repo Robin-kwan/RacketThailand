@@ -1,7 +1,15 @@
 "use client";
 
-import { Fragment, useMemo, useState, useTransition } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import type { FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
@@ -56,6 +64,10 @@ export type GroupSessionEditorCopy = {
   deleteEventConfirm: string;
   deleteEventSuccess: string;
   deleteEventError: string;
+  deleteWeeklySession: string;
+  deleteWeeklySessionConfirm: string;
+  deleteWeeklySessionSuccess: string;
+  deleteWeeklySessionError: string;
 };
 
 type EditableSession = {
@@ -82,6 +94,17 @@ type GroupEventEditorProps = {
   endsAt: string | null;
   notes: string | null;
   locale: "th" | "en";
+  copy: GroupSessionEditorCopy;
+};
+
+type GroupWeeklySessionEditorProps = {
+  groupId: string;
+  sessionId: string;
+  courtId: string;
+  day: string;
+  startTime: string | null;
+  endTime: string | null;
+  dayOptions: Option[];
   copy: GroupSessionEditorCopy;
 };
 
@@ -441,6 +464,255 @@ export function GroupSessionEditor({
   );
 }
 
+export function GroupWeeklySessionEditor({
+  groupId,
+  sessionId,
+  courtId,
+  day: initialDay,
+  startTime,
+  endTime,
+  dayOptions,
+  copy,
+}: GroupWeeklySessionEditorProps) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [day, setDay] = useState(initialDay);
+  const [start, setStart] = useState(normalizeTime(startTime));
+  const [end, setEnd] = useState(normalizeTime(endTime));
+  const [validationVisible, setValidationVisible] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const isInvalid = !day || !start || !end;
+
+  const resetDraft = useCallback(() => {
+    setDay(initialDay);
+    setStart(normalizeTime(startTime));
+    setEnd(normalizeTime(endTime));
+    setValidationVisible(false);
+  }, [endTime, initialDay, startTime]);
+
+  const close = useCallback(() => {
+    if (submitting || deleting || isPending) return;
+    resetDraft();
+    setOpen(false);
+  }, [deleting, isPending, resetDraft, submitting]);
+
+  useEffect(() => {
+    if (!open || submitting || deleting || isPending) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        close();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [close, deleting, isPending, open, submitting]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setValidationVisible(true);
+
+    if (isInvalid) {
+      showToast({ variant: "error", message: copy.required });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(`/api/groups/${groupId}/sessions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "weekly",
+          sessionId,
+          courtId,
+          day,
+          start,
+          end,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        showToast({
+          variant: "error",
+          message: payload?.error ?? copy.error,
+        });
+        return;
+      }
+
+      showToast({ variant: "success", message: copy.success });
+      setOpen(false);
+      setValidationVisible(false);
+      startTransition(() => router.refresh());
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/groups/${groupId}/sessions`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "weekly", sessionId }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        showToast({
+          variant: "error",
+          message: payload?.error ?? copy.deleteWeeklySessionError,
+        });
+        return;
+      }
+
+      showToast({ variant: "success", message: copy.deleteWeeklySessionSuccess });
+      setConfirmDeleteOpen(false);
+      setOpen(false);
+      startTransition(() => router.refresh());
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <Fragment>
+      <button
+        type="button"
+        onClick={() => {
+          if (!open) resetDraft();
+          setOpen(true);
+        }}
+        className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-800"
+        aria-label={copy.edit}
+        title={copy.edit}
+      >
+        <Pencil className="size-3.5" aria-hidden />
+      </button>
+
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[9997] flex items-center justify-center bg-slate-950/45 px-4 py-8 backdrop-blur-sm"
+              role="presentation"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) {
+                  close();
+                }
+              }}
+            >
+              <form
+                onSubmit={handleSubmit}
+                role="dialog"
+                aria-modal="true"
+                aria-label={copy.title}
+                className="w-full max-w-lg rounded-lg border border-white/80 bg-white p-5 shadow-[0_24px_80px_rgb(15_23_42/0.28)] sm:p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-950">
+                      {copy.title}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={close}
+                    className="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:text-slate-900"
+                    aria-label={copy.cancel}
+                    title={copy.cancel}
+                  >
+                    <X className="size-4" aria-hidden />
+                  </button>
+                </div>
+
+                <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                  <BaseSelect
+                    label={copy.dayLabel}
+                    name={`session-day-${sessionId}`}
+                    value={day}
+                    onChange={(event) => setDay(event.target.value)}
+                    options={dayOptions}
+                    required
+                    variant="light"
+                  />
+                  <TimePickerField
+                    label={copy.startLabel}
+                    value={start}
+                    options={TIME_OPTIONS}
+                    onChange={setStart}
+                  />
+                  <ClosingTimePickerField
+                    label={copy.endLabel}
+                    value={end}
+                    options={CLOSING_TIME_OPTIONS}
+                    startTime={start}
+                    allowOvernight
+                    clearLabel={copy.clearTime}
+                    onChange={setEnd}
+                  />
+                </div>
+
+                {validationVisible && isInvalid && (
+                  <p className="mt-3 text-sm font-medium text-rose-600">
+                    {copy.required}
+                  </p>
+                )}
+
+                <div className="mt-6 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    disabled={deleting || isPending}
+                    onClick={() => setConfirmDeleteOpen(true)}
+                    className="inline-flex size-10 items-center justify-center rounded-lg border border-rose-100 bg-white text-rose-500 transition hover:border-rose-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label={copy.deleteWeeklySession}
+                    title={copy.deleteWeeklySession}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={close}
+                      className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+                    >
+                      {copy.cancel}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || isPending}
+                      className="rt-btn-group inline-flex items-center justify-center px-5 py-2 text-sm"
+                    >
+                      {submitting || isPending ? `${copy.saving}...` : copy.save}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
+      <ConfirmationDialog
+        open={confirmDeleteOpen}
+        title={copy.deleteWeeklySession}
+        message={copy.deleteWeeklySessionConfirm}
+        confirmLabel={copy.deleteWeeklySession}
+        cancelLabel={copy.cancel}
+        loading={deleting}
+        onConfirm={handleDelete}
+        onClose={() => setConfirmDeleteOpen(false)}
+      />
+    </Fragment>
+  );
+}
+
 export function GroupEventEditor({
   groupId,
   eventId,
@@ -466,18 +738,30 @@ export function GroupEventEditor({
   const maxDate = getThailandDate(30);
   const isInvalid = !date || date < today || date > maxDate || !start;
 
-  const resetDraft = () => {
+  const resetDraft = useCallback(() => {
     setDate(formatDateForInput(startsAt));
     setStart(formatTimeForInput(startsAt));
     setEnd(formatTimeForInput(endsAt));
     setDraftNotes(notes ?? "");
     setValidationVisible(false);
-  };
+  }, [endsAt, notes, startsAt]);
 
-  const handleCancel = () => {
+  const close = useCallback(() => {
+    if (submitting || deleting || isPending) return;
     resetDraft();
     setOpen(false);
-  };
+  }, [deleting, isPending, resetDraft, submitting]);
+
+  useEffect(() => {
+    if (!open || submitting || deleting || isPending) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        close();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [close, deleting, isPending, open, submitting]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -567,107 +851,132 @@ export function GroupEventEditor({
         type="button"
         onClick={() => {
           if (!open) resetDraft();
-          setOpen((current) => !current);
+          setOpen(true);
         }}
-        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+        className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-800"
+        aria-label={copy.edit}
+        title={copy.edit}
       >
-        <Pencil className="h-3.5 w-3.5" aria-hidden />
-        {copy.edit}
+        <Pencil className="size-3.5" aria-hidden />
       </button>
 
-      {open && (
-        <form
-          onSubmit={handleSubmit}
-          className="mt-4 w-full basis-full rounded-lg border border-slate-200 bg-slate-50/70 p-4"
-        >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-[var(--foreground)]">
-              {copy.title}
-            </h3>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:text-slate-900"
-              aria-label={copy.cancel}
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[9997] flex items-center justify-center bg-slate-950/45 px-4 py-8 backdrop-blur-sm"
+              role="presentation"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) {
+                  close();
+                }
+              }}
             >
-              <X className="h-4 w-4" aria-hidden />
-            </button>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <DatePickerField
-              label={copy.dateLabel}
-              value={date}
-              onChange={setDate}
-              locale={locale}
-              min={today}
-              max={maxDate}
-              required
-            />
-            <TimePickerField
-              label={copy.startLabel}
-              value={start}
-              options={TIME_OPTIONS}
-              onChange={setStart}
-            />
-            <ClosingTimePickerField
-              label={copy.endLabel}
-              value={end}
-              options={CLOSING_TIME_OPTIONS}
-              startTime={start}
-              allowOvernight
-              allowClear
-              clearLabel={copy.clearTime}
-              onChange={setEnd}
-            />
-          </div>
-          <div className="mt-3 space-y-2">
-            <label className="text-sm font-semibold text-[var(--foreground)]">
-              {copy.notesLabel}
-            </label>
-            <BaseTextArea
-              value={draftNotes}
-              onChange={(event) => setDraftNotes(event.target.value)}
-              placeholder={copy.notesPlaceholder}
-              rows={2}
-              variant="light"
-            />
-          </div>
+              <form
+                onSubmit={handleSubmit}
+                role="dialog"
+                aria-modal="true"
+                aria-label={copy.title}
+                className="w-full max-w-xl rounded-lg border border-white/80 bg-white p-5 shadow-[0_24px_80px_rgb(15_23_42/0.28)] sm:p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-950">
+                      {copy.title}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={close}
+                    className="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:text-slate-900"
+                    aria-label={copy.cancel}
+                    title={copy.cancel}
+                  >
+                    <X className="size-4" aria-hidden />
+                  </button>
+                </div>
 
-          {validationVisible && isInvalid && (
-            <p className="mt-3 text-sm font-medium text-rose-600">
-              {date && (date < today || date > maxDate)
-                ? copy.dateRangeError
-                : copy.required}
-            </p>
-          )}
+                <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                  <DatePickerField
+                    label={copy.dateLabel}
+                    value={date}
+                    onChange={setDate}
+                    locale={locale}
+                    min={today}
+                    max={maxDate}
+                    required
+                  />
+                  <TimePickerField
+                    label={copy.startLabel}
+                    value={start}
+                    options={TIME_OPTIONS}
+                    onChange={setStart}
+                  />
+                  <ClosingTimePickerField
+                    label={copy.endLabel}
+                    value={end}
+                    options={CLOSING_TIME_OPTIONS}
+                    startTime={start}
+                    allowOvernight
+                    allowClear
+                    clearLabel={copy.clearTime}
+                    onChange={setEnd}
+                  />
+                </div>
 
-          <div className="mt-4 flex justify-end gap-2">
-            <button
-              type="button"
-              disabled={deleting || isPending}
-              onClick={() => setConfirmDeleteOpen(true)}
-              className="mr-auto inline-flex items-center gap-2 rounded-full border border-rose-100 bg-white px-4 py-2 text-sm font-semibold text-rose-500 transition hover:border-rose-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" aria-hidden />
-              {deleting ? `${copy.saving}...` : copy.deleteEvent}
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
-            >
-              {copy.cancel}
-            </button>
-            <button
-              type="submit"
-              disabled={submitting || isPending}
-              className="rt-btn-group inline-flex items-center justify-center px-5 py-2 text-sm"
-            >
-              {submitting || isPending ? `${copy.saving}...` : copy.save}
-            </button>
-          </div>
-        </form>
-      )}
+                <div className="mt-4 space-y-2">
+                  <label className="text-sm font-semibold text-slate-950">
+                    {copy.notesLabel}
+                  </label>
+                  <BaseTextArea
+                    value={draftNotes}
+                    onChange={(event) => setDraftNotes(event.target.value)}
+                    placeholder={copy.notesPlaceholder}
+                    rows={2}
+                    variant="light"
+                  />
+                </div>
+
+                {validationVisible && isInvalid && (
+                  <p className="mt-3 text-sm font-medium text-rose-600">
+                    {date && (date < today || date > maxDate)
+                      ? copy.dateRangeError
+                      : copy.required}
+                  </p>
+                )}
+
+                <div className="mt-6 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    disabled={deleting || isPending}
+                    onClick={() => setConfirmDeleteOpen(true)}
+                    className="inline-flex size-10 items-center justify-center rounded-lg border border-rose-100 bg-white text-rose-500 transition hover:border-rose-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label={copy.deleteEvent}
+                    title={copy.deleteEvent}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={close}
+                      className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+                    >
+                      {copy.cancel}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || isPending}
+                      className="rt-btn-group inline-flex items-center justify-center px-5 py-2 text-sm"
+                    >
+                      {submitting || isPending ? `${copy.saving}...` : copy.save}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
       <ConfirmationDialog
         open={confirmDeleteOpen}
         title={copy.deleteEvent}

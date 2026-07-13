@@ -998,9 +998,9 @@
       "scheduleAny": "Anytime",
       "edit": "Edit group",
       "updated": "Last updated",
-      "upcomingTitle": "Upcoming sessions",
+      "upcomingTitle": "Upcoming dates",
       "upcomingVenueFallback": "Session venue",
-      "sessionsTitle": "Sessions & courts",
+      "sessionsTitle": "Regular weekly schedule",
       "sessionsEmpty": "No sessions added yet.",
       "playerAmount": "Average players",
       "playFormat": "Play format",
@@ -1054,7 +1054,11 @@
         "deleteEvent": "Delete",
         "deleteEventConfirm": "Delete this upcoming session?",
         "deleteEventSuccess": "Upcoming session deleted.",
-        "deleteEventError": "Unable to delete this upcoming session."
+        "deleteEventError": "Unable to delete this upcoming session.",
+        "deleteWeeklySession": "Delete session",
+        "deleteWeeklySessionConfirm": "Delete this recurring session?",
+        "deleteWeeklySessionSuccess": "Recurring session deleted.",
+        "deleteWeeklySessionError": "Unable to delete this recurring session."
       },
       "back": "Back to group finder"
     },

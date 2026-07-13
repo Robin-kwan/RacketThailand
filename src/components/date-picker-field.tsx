@@ -125,6 +125,7 @@ export function DatePickerField({
   const selectedDate = useMemo(() => parseDateString(value ?? ""), [value]);
   const initialViewDate = selectedDate ?? minDate ?? new Date();
   const [open, setOpen] = useState(false);
+  const [openAbove, setOpenAbove] = useState(false);
   const [displayValue, setDisplayValue] = useState(() =>
     formatDateInputForDisplay(value),
   );
@@ -157,6 +158,35 @@ export function DatePickerField({
     }
 
     return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const updatePlacement = () => {
+      if (window.innerWidth < 640) {
+        setOpenAbove(false);
+        return;
+      }
+
+      const inputBounds = containerRef.current?.getBoundingClientRect();
+      if (!inputBounds) return;
+
+      const estimatedCalendarHeight = 340;
+      const spaceBelow = window.innerHeight - inputBounds.bottom;
+      const spaceAbove = inputBounds.top;
+      setOpenAbove(
+        spaceBelow < estimatedCalendarHeight && spaceAbove > spaceBelow,
+      );
+    };
+
+    updatePlacement();
+    window.addEventListener("resize", updatePlacement);
+    window.addEventListener("scroll", updatePlacement, true);
+    return () => {
+      window.removeEventListener("resize", updatePlacement);
+      window.removeEventListener("scroll", updatePlacement, true);
+    };
   }, [open]);
 
   const weekdayLabels = useMemo(
@@ -202,6 +232,14 @@ export function DatePickerField({
   }, [maxDate, viewMonth]);
 
   const rootClassName = className ? `space-y-2 ${className}` : "space-y-2";
+  const desktopPlacementClass = openAbove
+    ? "sm:bottom-full sm:top-auto sm:mb-2"
+    : "sm:top-full sm:bottom-auto sm:mt-2";
+
+  const openCalendar = () => {
+    setViewMonth(startOfMonth(selectedDate ?? minDate ?? new Date()));
+    setOpen(true);
+  };
 
   return (
     <div className={rootClassName} ref={containerRef}>
@@ -222,12 +260,10 @@ export function DatePickerField({
           required={required}
           placeholder={placeholder}
           onClick={() => {
-            setViewMonth(startOfMonth(selectedDate ?? minDate ?? new Date()));
-            setOpen(true);
+            openCalendar();
           }}
           onFocus={() => {
-            setViewMonth(startOfMonth(selectedDate ?? minDate ?? new Date()));
-            setOpen(true);
+            openCalendar();
           }}
           onChange={(event) => {
             const nextValue = event.target.value;
@@ -249,40 +285,47 @@ export function DatePickerField({
           className={inputClassName}
         />
         {open && (
-          <div className="fixed inset-x-3 bottom-4 z-50 max-h-[min(400px,calc(100dvh-2rem))] min-w-0 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(26rem,calc(100vw-3rem))] sm:min-w-full">
-            <div className="flex items-center justify-between gap-3">
+          <>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-[1px] sm:hidden"
+              aria-label="Close calendar"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={label}
+              className={`fixed left-1/2 top-1/2 z-50 w-[min(19rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-slate-200 bg-white p-3 shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:left-0 sm:w-[19rem] sm:translate-x-0 sm:translate-y-0 ${desktopPlacementClass}`}
+            >
+              <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => canGoPrev && setViewMonth((current) => addMonths(current, -1))}
                 disabled={!canGoPrev}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Previous month"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <div className="text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--foreground-rgb)/0.45)]">
-                  {label}
-                </p>
-                <p className="mt-1 text-base font-semibold text-slate-900">
-                  {monthLabel}
-                </p>
-              </div>
+              <p className="text-sm font-semibold text-slate-900">
+                {monthLabel}
+              </p>
               <button
                 type="button"
                 onClick={() => canGoNext && setViewMonth((current) => addMonths(current, 1))}
                 disabled={!canGoNext}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Next month"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-4 grid grid-cols-7 gap-2">
+              <div className="mt-3 grid grid-cols-7 justify-items-center gap-1">
               {weekdayLabels.map((weekday) => (
                 <div
                   key={weekday}
-                  className="text-center text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.45)]"
+                  className="flex size-9 items-center justify-center text-center text-[10px] font-semibold text-[rgb(var(--foreground-rgb)/0.45)]"
                 >
                   {weekday}
                 </div>
@@ -298,7 +341,7 @@ export function DatePickerField({
                       setDisplayValue(formatDateInputForDisplay(cell.key));
                       setOpen(false);
                     }}
-                    className={`aspect-square rounded-lg border text-sm font-semibold transition ${
+                    className={`flex size-9 items-center justify-center rounded-lg border text-sm font-semibold transition ${
                       cell.key === value
                         ? "border-[rgb(var(--rt-primary-rgb)/0.35)] bg-[rgb(var(--rt-primary-rgb)/0.1)] text-[var(--foreground)]"
                         : cell.disabled
@@ -313,12 +356,13 @@ export function DatePickerField({
                 ) : (
                   <div
                     key={`empty-${index}`}
-                    className="aspect-square"
+                    className="size-9"
                   />
                 ),
               )}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
