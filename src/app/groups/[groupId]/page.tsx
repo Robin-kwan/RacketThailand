@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -13,7 +12,6 @@ import {
   buildLocaleAlternates,
   truncateMetaDescription,
 } from "@/lib/seo";
-import { formatDateForDisplay } from "@/lib/date-format";
 import { normalizeGroupStatus } from "@/lib/group-status";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
@@ -22,17 +20,17 @@ import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
 import { ViewTracker } from "@/components/view-tracker";
-import { BaseScheduleList } from "@/components/base-schedule-list";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
 import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
 import {
   GroupEventEditor,
-  GroupSessionEditor,
+  GroupWeeklySessionEditor,
 } from "@/components/groups/group-session-editor";
 import { GroupSessionForm } from "@/components/groups/group-session-form";
 import { getPlayFormatLabel } from "@/lib/play-format";
 import { localizeThailandLocation } from "@/server/thailand-location";
+import { CalendarDays, Clock3, MapPin, Repeat2 } from "lucide-react";
 
 const WEEKDAY_ORDER = [
   "monday",
@@ -256,9 +254,24 @@ function formatDateTimeInThailand(
   }).format(new Date(value));
 }
 
-function formatEventDate(value: string, locale: "th" | "en") {
-  void locale;
-  return formatDateForDisplay(value);
+function formatEventDateParts(value: string, locale: "th" | "en") {
+  const date = new Date(value);
+  const formatter = new Intl.DateTimeFormat(
+    locale === "th" ? "th-TH" : "en-US",
+    { timeZone: "Asia/Bangkok" },
+  );
+  return {
+    weekday: new Intl.DateTimeFormat(
+      locale === "th" ? "th-TH" : "en-US",
+      { timeZone: "Asia/Bangkok", weekday: "short" },
+    ).format(date),
+    day: formatter.formatToParts(date).find((part) => part.type === "day")
+      ?.value,
+    month: new Intl.DateTimeFormat(
+      locale === "th" ? "th-TH" : "en-US",
+      { timeZone: "Asia/Bangkok", month: "short" },
+    ).format(date),
+  };
 }
 
 function formatEventTime(value: string, locale: "th" | "en") {
@@ -644,6 +657,13 @@ export default async function GroupDetailPage({
   const sortedSessionRows = [...localizedSessionRows].sort(
     compareWeeklySessions,
   );
+  const weeklyTimetable = WEEKDAY_ORDER.map((day) => ({
+    day,
+    label: getDayLabel(day, locale),
+    sessions: sortedSessionRows.filter(
+      (session) => session.day.toLowerCase() === day,
+    ),
+  })).filter((entry) => entry.sessions.length > 0);
 
   const sessionGroups = (() => {
     const map = new Map<
@@ -677,6 +697,9 @@ export default async function GroupDetailPage({
     });
     return Array.from(map.values());
   })();
+  const linkedCourtsWithoutSessions = sessionGroups.filter(
+    (entry) => entry.sessions.length === 0,
+  );
   const canonicalPath = `/groups/${group.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
   const primaryImage = gallery[0]?.image_url ?? null;
@@ -822,6 +845,18 @@ export default async function GroupDetailPage({
       deleteEventConfirm: t("groups.detail.sessionEdit.deleteEventConfirm"),
       deleteEventSuccess: t("groups.detail.sessionEdit.deleteEventSuccess"),
       deleteEventError: t("groups.detail.sessionEdit.deleteEventError"),
+      deleteWeeklySession: t(
+        "groups.detail.sessionEdit.deleteWeeklySession",
+      ),
+      deleteWeeklySessionConfirm: t(
+        "groups.detail.sessionEdit.deleteWeeklySessionConfirm",
+      ),
+      deleteWeeklySessionSuccess: t(
+        "groups.detail.sessionEdit.deleteWeeklySessionSuccess",
+      ),
+      deleteWeeklySessionError: t(
+        "groups.detail.sessionEdit.deleteWeeklySessionError",
+      ),
     },
   };
   const dayKeys = [
@@ -841,8 +876,6 @@ export default async function GroupDetailPage({
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackCourtName =
     locale === "th" ? "สนามที่เชื่อมไว้" : "Linked court";
-  const fallbackCourtPhotoAlt =
-    locale === "th" ? "รูปสนาม" : "Court photo";
   const canEdit = Boolean(isGroupOwner || isAdminViewer);
   const sportName = group.sports?.name ?? undefined;
   const playFormatLabel = getPlayFormatLabel(group.play_format, locale);
@@ -862,37 +895,6 @@ export default async function GroupDetailPage({
       <HeaderSportScope sportSlug={sportCode ?? undefined} />
       <HeaderSubLabel value={sportName} />
       <main className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 text-[var(--foreground)] md:px-10 md:pb-20">
-        <header className="hidden">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="max-w-3xl">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
-                {group.name ?? fallbackGroupName}
-              </h1>
-              {group.description && (
-                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[rgb(var(--foreground-rgb)/0.75)] md:text-base">
-                  {group.description}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <ShareButton
-                title={shareTitle}
-                text={shareText}
-                url={canonicalUrl}
-                label={copy.shareAction}
-                copiedLabel={copy.linkCopiedAction}
-              />
-              {canEdit && (
-                <Link
-                  href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {copy.edit}
-                </Link>
-              )}
-            </div>
-          </div>
-        </header>
         <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
         {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
           <section className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900">
@@ -1044,191 +1046,260 @@ export default async function GroupDetailPage({
 
         {localizedUpcomingEvents.length > 0 && (
           <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <h2 className="text-lg font-semibold text-[var(--foreground)]">
-              {copy.upcomingTitle}
-            </h2>
+            <div className="flex items-center gap-3">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                <CalendarDays className="size-4" aria-hidden />
+              </span>
+              <h2 className="text-lg font-semibold text-[var(--foreground)]">
+                {copy.upcomingTitle}
+              </h2>
+            </div>
             <div className="space-y-3">
               {localizedUpcomingEvents.map((event) => {
                 const locationLabel = [
                   event.courts?.district,
                   event.courts?.province,
                 ]
-                  .filter((value): value is string => Boolean(value && value.trim()))
-                  .join(" · ");
+                  .filter(
+                    (value): value is string =>
+                      Boolean(value && value.trim()),
+                  )
+                  .join(", ");
                 const venueLabel =
                   event.courts?.name ??
                   event.venue_name ??
                   copy.upcomingVenueFallback;
+                const eventDate = formatEventDateParts(
+                  event.starts_at,
+                  locale,
+                );
                 return (
-                  <div
+                  <article
                     key={event.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 p-5"
+                    className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-[var(--rt-primary)]">
-                          {formatEventDate(event.starts_at, locale)}
-                        </p>
-                        {event.courts?.id ? (
-                          <Link
-                            href={buildLocalizedPath(
-                              `/courts/${event.courts.id}${
-                                sportCode
-                                  ? `?sport=${encodeURIComponent(sportCode)}`
-                                  : ""
-                              }`,
-                              locale,
-                            )}
-                            className="text-base font-semibold text-[var(--foreground)] hover:text-[var(--rt-primary)]"
-                          >
-                            {venueLabel}
-                          </Link>
-                        ) : (
-                          <p className="text-base font-semibold text-[var(--foreground)]">
-                            {venueLabel}
-                          </p>
-                        )}
-                        {locationLabel && (
-                          <p className="text-xs uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.5)]">
-                            {locationLabel}
-                          </p>
-                        )}
+                    <div className="flex items-start gap-4">
+                      <div className="flex w-[4.5rem] shrink-0 flex-col items-center border-r border-slate-200 pr-4 text-center">
+                        <span className="text-[11px] font-semibold uppercase text-blue-700">
+                          {eventDate.weekday}
+                        </span>
+                        <span className="mt-1 text-3xl font-semibold leading-none text-slate-950">
+                          {eventDate.day ?? "-"}
+                        </span>
+                        <span className="mt-1 text-xs font-medium text-slate-500">
+                          {eventDate.month}
+                        </span>
                       </div>
-                      <p className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700">
-                        {formatEventTimeRange(
-                          event.starts_at,
-                          event.ends_at,
-                          locale,
-                        )}
-                      </p>
-                      {canEdit && event.court_id && (
-                        <GroupEventEditor
-                          groupId={group.id}
-                          eventId={event.id}
-                          courtId={event.court_id}
-                          startsAt={event.starts_at}
-                          endsAt={event.ends_at}
-                          notes={event.notes}
-                          locale={locale}
-                          copy={copy.sessionEdit}
-                        />
-                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 space-y-2">
+                            <p className="inline-flex items-center gap-2 text-base font-semibold text-slate-950">
+                              <Clock3 className="size-4 text-blue-700" aria-hidden />
+                              {formatEventTimeRange(
+                                event.starts_at,
+                                event.ends_at,
+                                locale,
+                              )}
+                            </p>
+                            {event.courts?.id ? (
+                              <Link
+                                href={buildLocalizedPath(
+                                  `/courts/${event.courts.id}${
+                                    sportCode
+                                      ? `?sport=${encodeURIComponent(sportCode)}`
+                                      : ""
+                                  }`,
+                                  locale,
+                                )}
+                                className="block truncate text-sm font-semibold text-slate-800 hover:text-blue-700"
+                              >
+                                {venueLabel}
+                              </Link>
+                            ) : (
+                              <p className="truncate text-sm font-semibold text-slate-800">
+                                {venueLabel}
+                              </p>
+                            )}
+                            {locationLabel && (
+                              <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                                <MapPin className="size-3.5" aria-hidden />
+                                {locationLabel}
+                              </p>
+                            )}
+                          </div>
+                          {canEdit && event.court_id && (
+                            <GroupEventEditor
+                              groupId={group.id}
+                              eventId={event.id}
+                              courtId={event.court_id}
+                              startsAt={event.starts_at}
+                              endsAt={event.ends_at}
+                              notes={event.notes}
+                              locale={locale}
+                              copy={copy.sessionEdit}
+                            />
+                          )}
+                        </div>
+                      </div>
                     </div>
                     {event.notes && (
-                      <p className="mt-3 whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
+                      <p className="mt-4 border-t border-slate-200 pt-3 whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
                         {event.notes}
                       </p>
                     )}
-                  </div>
+                  </article>
                 );
               })}
             </div>
           </section>
         )}
 
-        <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">
-            {copy.sessionsTitle}
-          </h2>
-          {sessionGroups.length === 0 ? (
+        <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-emerald-50 text-[var(--rt-primary)]">
+              <Repeat2 className="size-4" aria-hidden />
+            </span>
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">
+              {copy.sessionsTitle}
+            </h2>
+          </div>
+          {weeklyTimetable.length === 0 ? (
             <p className="text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
               {copy.sessionsEmpty}
             </p>
           ) : (
-            <div className="space-y-4">
-              {sessionGroups.map((entry, index) => {
-                const locationLabel = [
-                  entry.court?.district,
-                  entry.court?.province,
-                ]
-                  .filter((value): value is string => Boolean(value && value.trim()))
-                  .join(" · ");
-                return (
-                  <div
-                    key={entry.court?.id ?? `session-${index}`}
-                    className="space-y-2 border-b border-slate-100 pb-5 last:border-b-0 last:pb-0"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      {entry.court ? (
-                        <div className="space-y-1">
-                          <Link
-                            href={buildLocalizedPath(
-                              `/courts/${entry.court.id}${
-                                sportCode
-                                  ? `?sport=${encodeURIComponent(sportCode)}`
-                                  : ""
-                              }`,
-                              locale,
-                            )}
-                            className="text-base font-semibold text-[var(--foreground)] hover:text-[var(--rt-primary)]"
-                          >
-                            {entry.court.name ?? fallbackCourtName}
-                          </Link>
-                          {locationLabel && (
-                            <p className="text-xs uppercase tracking-wide text-[rgb(var(--foreground-rgb)/0.5)]">
-                              {locationLabel}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-base font-semibold text-[var(--foreground)]">
-                          {t("groups.detail.court")}
-                        </p>
-                      )}
-                      {canEdit && entry.court?.id && (
-                        <GroupSessionEditor
-                          groupId={group.id}
-                          courtId={entry.court.id}
-                          sessions={entry.sessions.map((session) => ({
-                            id: session.id,
-                            day: session.day,
-                            startTime: session.start_time,
-                            endTime: session.end_time,
-                          }))}
-                          dayOptions={dayOptions}
-                          copy={copy.sessionEdit}
-                        />
-                      )}
-                    </div>
-                    {entry.court ? (
-                      <div className="space-y-3">
-                        {entry.photoUrl && (
-                          <div className="relative mx-auto h-36 w-full max-w-sm overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:mx-0">
-                            <Image
-                              src={entry.photoUrl}
-                              alt={entry.court.name ?? fallbackCourtPhotoAlt}
-                              fill
-                              sizes="(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 25vw"
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-                    {entry.sessions.length > 0 ? (
-                      <BaseScheduleList
-                        entries={entry.sessions.map((session, sessionIndex) => ({
-                          id: session.id ?? `${entry.court?.id ?? "session"}-${sessionIndex}`,
-                          label: getDayLabel(session.day, locale),
-                          value:
-                            session.start_time && session.end_time
-                              ? formatTimeRange(session.start_time, session.end_time, locale)
-                              : copy.scheduleAny,
-                        }))}
-                        className="mt-4"
-                      />
-                    ) : (
-                      <p className="text-sm text-[rgb(var(--foreground-rgb)/0.65)]">
-                        {copy.scheduleAny}
-                      </p>
-                    )}
+            <div className="grid gap-3 lg:grid-cols-2">
+              {weeklyTimetable.map((dayEntry) => (
+                <section
+                  key={dayEntry.day}
+                  className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                >
+                  <div className="border-b border-slate-200 bg-white px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-950">
+                      {dayEntry.label}
+                    </p>
                   </div>
-                );
-              })}
+                  <div className="divide-y divide-slate-200">
+                    {dayEntry.sessions.map((session) => {
+                      const locationLabel = [
+                        session.courts?.district,
+                        session.courts?.province,
+                      ]
+                        .filter(
+                          (value): value is string =>
+                            Boolean(value && value.trim()),
+                        )
+                        .join(", ");
+                      const courtLabel =
+                        session.courts?.name ?? fallbackCourtName;
+                      const courtHref = session.courts?.id
+                        ? buildLocalizedPath(
+                            `/courts/${session.courts.id}${
+                              sportCode
+                                ? `?sport=${encodeURIComponent(sportCode)}`
+                                : ""
+                            }`,
+                            locale,
+                          )
+                        : null;
+                      return (
+                        <div
+                          key={session.id}
+                          className="flex items-start gap-3 px-4 py-3"
+                        >
+                          <p className="w-24 shrink-0 text-sm font-semibold text-slate-950">
+                            {session.start_time && session.end_time
+                              ? formatTimeRange(
+                                  session.start_time,
+                                  session.end_time,
+                                  locale,
+                                )
+                              : copy.scheduleAny}
+                          </p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              {courtHref ? (
+                                <Link
+                                  href={courtHref}
+                                  className="block min-w-0 truncate text-sm font-semibold text-slate-700 hover:text-[var(--rt-primary)]"
+                                >
+                                  {courtLabel}
+                                </Link>
+                              ) : (
+                                <p className="min-w-0 truncate text-sm font-semibold text-slate-700">
+                                  {courtLabel}
+                                </p>
+                              )}
+                              {canEdit && (
+                                <GroupWeeklySessionEditor
+                                  groupId={group.id}
+                                  sessionId={session.id}
+                                  courtId={session.court_id}
+                                  day={session.day}
+                                  startTime={session.start_time}
+                                  endTime={session.end_time}
+                                  dayOptions={dayOptions}
+                                  copy={copy.sessionEdit}
+                                />
+                              )}
+                            </div>
+                            {locationLabel && (
+                              <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                                <MapPin className="size-3.5" aria-hidden />
+                                {locationLabel}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
             </div>
           )}
-        </section>
-        <script
+          {linkedCourtsWithoutSessions.length > 0 && (
+            <div className="border-t border-slate-200 pt-4">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {linkedCourtsWithoutSessions.map((entry, index) => {
+                  const court = entry.court;
+                  const courtHref = court?.id
+                    ? buildLocalizedPath(
+                        `/courts/${court.id}${
+                          sportCode
+                            ? `?sport=${encodeURIComponent(sportCode)}`
+                            : ""
+                        }`,
+                        locale,
+                      )
+                    : null;
+                  return (
+                    <div
+                      key={court?.id ?? `linked-court-${index}`}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3"
+                    >
+                      {courtHref ? (
+                        <Link
+                          href={courtHref}
+                          className="truncate text-sm font-semibold text-slate-700 hover:text-[var(--rt-primary)]"
+                        >
+                          {court?.name ?? fallbackCourtName}
+                        </Link>
+                      ) : (
+                        <p className="truncate text-sm font-semibold text-slate-700">
+                          {court?.name ?? fallbackCourtName}
+                        </p>
+                      )}
+                      <span className="shrink-0 text-xs text-slate-500">
+                        {copy.scheduleAny}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredData),

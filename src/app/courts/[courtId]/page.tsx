@@ -47,14 +47,24 @@ function getCourtFallbackImage(sportCode?: string | null) {
   return SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.png";
 }
 
-function formatUpcomingEventDate(value: string, locale: Locale) {
-  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
+function formatUpcomingEventDateParts(value: string, locale: Locale) {
+  const date = new Date(value);
+  const localeCode = locale === "th" ? "th-TH" : "en-US";
+  const day = new Intl.DateTimeFormat(localeCode, {
     timeZone: "Asia/Bangkok",
-    weekday: "short",
     day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
+  }).format(date);
+  return {
+    weekday: new Intl.DateTimeFormat(localeCode, {
+      timeZone: "Asia/Bangkok",
+      weekday: "short",
+    }).format(date),
+    day,
+    month: new Intl.DateTimeFormat(localeCode, {
+      timeZone: "Asia/Bangkok",
+      month: "short",
+    }).format(date),
+  };
 }
 
 function formatUpcomingEventTime(
@@ -574,77 +584,6 @@ export default async function CourtPage({
       <HeaderSportScope sportSlug={activeSportCode ?? undefined} />
       <HeaderSubLabel value={getSportDisplayName(activeSport, locale)} />
       <main className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 md:px-10 md:pb-20">
-        <header className="hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
-                {detail.court.name ?? fallbackCourtName}
-              </h1>
-              <p className="mt-2 text-sm text-slate-600">
-                {[detail.court.district, detail.court.province]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-              {detail.court.description && (
-                <p className="mt-3 max-w-3xl whitespace-pre-line text-sm leading-6 text-slate-600 md:text-base">
-                  {detail.court.description}
-                </p>
-              )}
-              {availableSports.length > 0 && (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500">
-                    {copy.availableSports}
-                  </span>
-                  {availableSports.map((sport) => {
-                    const sportCode = sport.code ?? "";
-                    const isActive = sportCode === activeSportCode;
-                    return (
-                      <Link
-                        key={sport.id ?? sportCode}
-                        href={buildLocalizedPath(
-                          `/courts/${detail.court.id}${
-                            sportCode
-                              ? `?sport=${encodeURIComponent(sportCode)}`
-                              : ""
-                          }`,
-                          locale,
-                        )}
-                        className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                          isActive
-                            ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
-                        }`}
-                        aria-current={isActive ? "page" : undefined}
-                      >
-                        {getSportDisplayName(sport, locale)}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <ShareButton
-                title={shareTitle}
-                text={shareText}
-                url={canonicalUrl}
-                label={copy.shareAction}
-                copiedLabel={copy.linkCopiedAction}
-              />
-              {canEdit && (
-                <Link
-                  href={buildLocalizedPath(
-                    `/courts/${resolvedParams.courtId}/edit`,
-                    locale,
-                  )}
-                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {copy.edit}
-                </Link>
-              )}
-            </div>
-          </div>
-        </header>
         <CourtGallery gallery={gallery} courtName={detail.court.name} />
 
         <section className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
@@ -656,7 +595,7 @@ export default async function CourtPage({
               <p className="mt-2 text-sm text-slate-600">
                 {[detail.court.district, detail.court.province]
                   .filter(Boolean)
-                  .join(" Â· ")}
+                  .join(" - ")}
               </p>
               {detail.court.description && (
                 <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600 md:text-base">
@@ -824,15 +763,24 @@ export default async function CourtPage({
         )}
 
         {upcomingEvents.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900">
-              {copy.upcomingSessionsTitle}
-            </h2>
-            <div className="grid gap-3 md:grid-cols-2">
+          <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            <div className="flex items-center gap-3">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                <CalendarDays className="size-4" aria-hidden />
+              </span>
+              <h2 className="text-lg font-semibold text-slate-900">
+                {copy.upcomingSessionsTitle}
+              </h2>
+            </div>
+            <div className="space-y-3">
               {upcomingEvents.map((event) => {
                 const eventGroup = event.groups;
                 if (!eventGroup) return null;
                 const eventSportCode = eventGroup.sports?.code ?? null;
+                const eventDate = formatUpcomingEventDateParts(
+                  event.starts_at,
+                  locale,
+                );
                 return (
                   <Link
                     key={event.id}
@@ -844,32 +792,37 @@ export default async function CourtPage({
                       }`,
                       locale,
                     )}
-                    className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-[transform,border-color,box-shadow] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                    className="flex items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 transition-[border-color,box-shadow] hover:border-slate-300 hover:shadow-sm sm:p-5"
                   >
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[var(--rt-primary)]">
-                      <CalendarDays className="size-4" aria-hidden />
-                      <span>
-                        {formatUpcomingEventDate(event.starts_at, locale)}
+                    <div className="flex w-[4.5rem] shrink-0 flex-col items-center border-r border-slate-200 pr-4 text-center">
+                      <span className="text-[11px] font-semibold uppercase text-blue-700">
+                        {eventDate.weekday}
+                      </span>
+                      <span className="mt-1 text-3xl font-semibold leading-none text-slate-950">
+                        {eventDate.day}
+                      </span>
+                      <span className="mt-1 text-xs font-medium text-slate-500">
+                        {eventDate.month}
                       </span>
                     </div>
-                    <h3 className="mt-3 text-base font-semibold text-slate-900">
-                      {eventGroup.name ?? fallbackGroupName}
-                    </h3>
-                    <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
-                      <Clock3 className="size-4" aria-hidden />
-                      <span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-2 text-base font-semibold text-slate-950">
+                        <Clock3 className="size-4 text-blue-700" aria-hidden />
                         {formatUpcomingEventTime(
                           event.starts_at,
                           event.ends_at,
                           locale,
                         )}
-                      </span>
-                    </div>
-                    {event.notes && (
-                      <p className="mt-3 line-clamp-2 whitespace-pre-line text-sm text-slate-600">
-                        {event.notes}
                       </p>
-                    )}
+                      <h3 className="mt-2 truncate text-sm font-semibold text-slate-800">
+                        {eventGroup.name ?? fallbackGroupName}
+                      </h3>
+                      {event.notes && (
+                        <p className="mt-2 line-clamp-2 whitespace-pre-line text-sm text-slate-600">
+                          {event.notes}
+                        </p>
+                      )}
+                    </div>
                   </Link>
                 );
               })}

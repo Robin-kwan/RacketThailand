@@ -998,9 +998,9 @@
       "scheduleAny": "ยังไม่ระบุเวลา",
       "edit": "แก้ไขกลุ่ม",
       "updated": "อัปเดตล่าสุด",
-      "upcomingTitle": "รอบเล่นถัดไป",
+      "upcomingTitle": "รอบเล่นตามวันที่",
       "upcomingVenueFallback": "สถานที่รอบนี้",
-      "sessionsTitle": "วันเวลาเล่นและสนาม",
+      "sessionsTitle": "ตารางเล่นประจำทุกสัปดาห์",
       "sessionsEmpty": "ยังไม่ได้เพิ่มวันเวลาเล่น",
       "playerAmount": "จำนวนผู้เล่นเฉลี่ย",
       "playFormat": "รูปแบบการเล่น",
@@ -1054,7 +1054,11 @@
         "deleteEvent": "ลบ",
         "deleteEventConfirm": "ลบรอบเล่นถัดไปนี้?",
         "deleteEventSuccess": "ลบรอบเล่นถัดไปแล้ว",
-        "deleteEventError": "ไม่สามารถลบรอบเล่นถัดไปนี้ได้"
+        "deleteEventError": "ไม่สามารถลบรอบเล่นถัดไปนี้ได้",
+        "deleteWeeklySession": "ลบรอบเล่น",
+        "deleteWeeklySessionConfirm": "ลบรอบเล่นประจำนี้?",
+        "deleteWeeklySessionSuccess": "ลบรอบเล่นประจำแล้ว",
+        "deleteWeeklySessionError": "ไม่สามารถลบรอบเล่นประจำนี้ได้"
       },
       "back": "กลับไปหน้าค้นหากลุ่ม"
     },

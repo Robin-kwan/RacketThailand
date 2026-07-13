@@ -21,7 +21,9 @@ type SessionCreatePayload = {
 type SessionUpdatePayload = {
   mode?: "weekly" | "date";
   eventId?: string | null;
+  sessionId?: string | null;
   courtId?: string | null;
+  day?: string | null;
   date?: string | null;
   start?: string | null;
   end?: string | null;
@@ -35,8 +37,9 @@ type SessionUpdatePayload = {
 };
 
 type SessionDeletePayload = {
-  mode?: "date" | "court";
+  mode?: "date" | "weekly" | "court";
   eventId?: string | null;
+  sessionId?: string | null;
   courtId?: string | null;
 };
 
@@ -413,6 +416,50 @@ export async function PATCH(
     return NextResponse.json({ ok: true });
   }
 
+  if (payload.mode === "weekly" && payload.sessionId) {
+    const sessionId = normalizeText(payload.sessionId);
+    const day = normalizeText(payload.day);
+    const start = normalizeText(payload.start);
+    const end = normalizeText(payload.end);
+
+    if (!sessionId || !VALID_DAYS.has(day) || !isTime(start) || !isTime(end)) {
+      return NextResponse.json(
+        { error: "Day, start time, and end time are required." },
+        { status: 400 },
+      );
+    }
+
+    const { data: existingSession, error: existingSessionError } =
+      await adminSupabase
+        .from("group_sessions")
+        .select("id")
+        .eq("id", sessionId)
+        .eq("group_id", resolved.groupId)
+        .single();
+
+    if (existingSessionError || !existingSession) {
+      return NextResponse.json(
+        { error: "Session not found." },
+        { status: 404 },
+      );
+    }
+
+    const { error: updateError } = await adminSupabase
+      .from("group_sessions")
+      .update({ day, start_time: start, end_time: end })
+      .eq("id", sessionId)
+      .eq("group_id", resolved.groupId);
+
+    if (updateError) {
+      return NextResponse.json(
+        { error: updateError.message },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
   const courtId = normalizeText(payload.courtId);
   const sessions = normalizeWeeklySessions(payload.sessions);
 
@@ -552,6 +599,46 @@ export async function DELETE(
       .from("group_events")
       .delete()
       .eq("id", eventId)
+      .eq("group_id", resolved.groupId);
+
+    if (deleteError) {
+      return NextResponse.json(
+        { error: deleteError.message },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
+  if (payload.mode === "weekly") {
+    const sessionId = normalizeText(payload.sessionId);
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: "Session is required." },
+        { status: 400 },
+      );
+    }
+
+    const { data: existingSession, error: existingSessionError } =
+      await adminSupabase
+        .from("group_sessions")
+        .select("id")
+        .eq("id", sessionId)
+        .eq("group_id", resolved.groupId)
+        .single();
+
+    if (existingSessionError || !existingSession) {
+      return NextResponse.json(
+        { error: "Session not found." },
+        { status: 404 },
+      );
+    }
+
+    const { error: deleteError } = await adminSupabase
+      .from("group_sessions")
+      .delete()
+      .eq("id", sessionId)
       .eq("group_id", resolved.groupId);
 
     if (deleteError) {
