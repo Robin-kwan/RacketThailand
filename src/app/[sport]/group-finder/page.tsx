@@ -68,9 +68,34 @@ function isDayKey(value: string): value is DayKey {
 }
 
 function getThaiGroupFinderIntent(sportCode: string, sportName: string) {
+  const intents: Record<string, string> = {
+    badminton: "หาก๊วนตีแบดและหาเพื่อนตีแบด",
+    padel: "หากลุ่มเล่นพาเดลและหาเพื่อนเล่นพาเดล",
+    pickleball: "หากลุ่มเล่นพิคเคิลบอลและหาเพื่อนเล่นพิคเคิลบอล",
+    tennis: "หากลุ่มตีเทนนิสและหาเพื่อนตีเทนนิส",
+    tabletennis: "หากลุ่มตีปิงปองและหาเพื่อนตีปิงปอง",
+  };
+
+  const intent = intents[sportCode];
+  if (intent) {
+    return intent;
+  }
+
   const playVerbSports = new Set(["padel", "pickleball"]);
   const verb = playVerbSports.has(sportCode) ? "เล่น" : "ตี";
   return `หาเพื่อน${verb}${sportName}`;
+}
+
+function getEnglishGroupFinderIntent(sportCode: string, sportName: string) {
+  const intents: Record<string, string> = {
+    badminton: "Find badminton groups and badminton partners",
+    padel: "Find padel groups and padel partners",
+    pickleball: "Find pickleball groups and pickleball partners",
+    tennis: "Find tennis groups and tennis partners",
+    tabletennis: "Find table tennis groups and table tennis partners",
+  };
+
+  return intents[sportCode] ?? `Find ${sportName} groups and partners`;
 }
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
@@ -139,15 +164,19 @@ export async function generateMetadata({
     resolvedParams.sport,
     meta.name.th,
   );
+  const englishIntent = getEnglishGroupFinderIntent(
+    resolvedParams.sport,
+    meta.name.en,
+  );
   const title =
     locale === "th"
-      ? `ค้นหากลุ่ม${meta.name[locale]}และ${thaiIntent} | RacketThailand`
-      : `${meta.name[locale]} Group Finder | RacketThailand`;
+      ? `${thaiIntent} | RacketThailand`
+      : `${englishIntent} | RacketThailand`;
   const seoKeyword = getSeoKeyword(resolvedParams.sport, locale, "groups");
   const description =
     locale === "th"
-      ? `ค้นหากลุ่ม${meta.name[locale]}และโพสต์${thaiIntent}ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย ${seoKeyword}`
-      : `Find active ${meta.name[locale]} groups in Thailand with schedules, contacts, and nearby map context.`;
+      ? `${thaiIntent} ค้นหากลุ่ม${meta.name[locale]}ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย ${seoKeyword}`
+      : `${englishIntent} in Thailand with schedules, contacts, and nearby map context. ${seoKeyword}`;
 
   const validDayFilter = isDayKey(dayFilter) ? dayFilter : "";
   const filterParts = [
@@ -165,20 +194,20 @@ export async function generateMetadata({
   const filteredTitle = searchQuery
     ? locale === "th"
       ? `ผลการค้นหากลุ่ม${meta.name[locale]} "${searchQuery}" | RacketThailand`
-      : `${meta.name[locale]} groups matching "${searchQuery}" | RacketThailand`
+      : `${englishIntent} matching "${searchQuery}" | RacketThailand`
     : filterSummary
       ? locale === "th"
         ? `กลุ่ม${meta.name[locale]}: ${filterSummary} | RacketThailand`
-        : `${meta.name[locale]} groups: ${filterSummary} | RacketThailand`
+        : `${englishIntent}: ${filterSummary} | RacketThailand`
       : title;
   const filteredDescription = searchQuery
     ? locale === "th"
-      ? `ดูผลการค้นหากลุ่ม${meta.name[locale]}และโพสต์${thaiIntent}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
-      : `Browse ${meta.name[locale]} group results matching "${searchQuery}" with schedules and contact details.`
+      ? `${thaiIntent} ดูผลการค้นหากลุ่ม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
+      : `${englishIntent} matching "${searchQuery}" with schedules and contact details. ${seoKeyword}`
     : filterSummary
       ? locale === "th"
-        ? `ค้นหากลุ่ม${meta.name[locale]}และ${thaiIntent}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
-        : `Find ${meta.name[locale]} groups filtered by ${filterSummary}, with schedules and contact details.`
+        ? `${thaiIntent} ค้นหากลุ่ม${meta.name[locale]}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
+        : `${englishIntent} filtered by ${filterSummary}, with schedules and contact details. ${seoKeyword}`
       : description;
   const metaDescription = truncateMetaDescription(filteredDescription);
 
@@ -261,9 +290,22 @@ export default async function GroupFinderPage({
     {},
   );
 
+  const thaiIntent = getThaiGroupFinderIntent(
+    resolvedParams.sport,
+    meta.name.th,
+  );
+  const englishIntent = getEnglishGroupFinderIntent(
+    resolvedParams.sport,
+    meta.name.en,
+  );
+  const isThaiLocale = locale === "th";
   const copy = {
-    title: t("groupFinder.title", { sport: meta.name[locale] }),
-    subtitle: t("groupFinder.subtitle"),
+    title: isThaiLocale
+      ? thaiIntent
+      : englishIntent,
+    subtitle: isThaiLocale
+      ? `ค้นหากลุ่ม${meta.name[locale]}ที่เปิดรับสมาชิก พร้อมวันเวลาเล่น สนามประจำ และช่องทางติดต่อ`
+      : `Find ${meta.name[locale]} groups that welcome players, with schedules, regular venues, and contact details.`,
     searchPlaceholder: t("groupFinder.searchPlaceholder"),
     reset: t("groupFinder.reset"),
     emptyTitle: t("groupFinder.emptyTitle"),

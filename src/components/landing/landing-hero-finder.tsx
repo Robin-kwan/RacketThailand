@@ -28,8 +28,8 @@ export function LandingHeroFinder({
   const [sportCode, setSportCode] = useState(sports[0]?.code ?? "badminton");
 
   return (
-    <div className="flex w-full flex-col gap-3 rounded-lg border border-slate-200/90 bg-white p-3 shadow-[0_18px_45px_rgb(15_23_42/0.13)] sm:flex-row sm:items-stretch sm:gap-0 sm:p-2">
-      <div className="relative min-w-0 flex-1 sm:border-r sm:border-slate-200">
+    <div className="flex w-full flex-col gap-3 rounded-lg border border-slate-200/90 bg-white p-3 shadow-[0_18px_45px_rgb(15_23_42/0.13)] sm:flex-row sm:items-stretch sm:gap-3 sm:p-2">
+      <div className="relative min-w-0 flex-1">
         <BaseSelect
           label={sportLabel}
           name="landingSport"
@@ -46,7 +46,7 @@ export function LandingHeroFinder({
         />
       </div>
 
-      <div className="grid shrink-0 gap-2 sm:grid-cols-2 sm:pl-2">
+      <div className="grid shrink-0 gap-2 sm:grid-cols-2">
         <TrackedLink
           href={buildLocalizedPath(`/${sportCode}/group-finder`, locale)}
           eventName="landing_cta_click"
