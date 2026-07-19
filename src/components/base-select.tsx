@@ -23,6 +23,7 @@ type BaseSelectProps = {
   options: Option[];
   required?: boolean;
   helperText?: string;
+  placeholder?: string;
   labelHidden?: boolean;
   className?: string;
   disabled?: boolean;
@@ -80,6 +81,7 @@ export function BaseSelect({
   options,
   required = false,
   helperText,
+  placeholder,
   labelHidden = false,
   className = "",
   disabled = false,
@@ -92,9 +94,10 @@ export function BaseSelect({
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const variantStyles = VARIANT_STYLES[variant] ?? VARIANT_STYLES.dark;
-  const selectedOption =
-    options.find((option) => option.value === value && !option.hidden) ??
-    options.find((option) => !option.hidden);
+  const selectedOption = options.find(
+    (option) => option.value === value && !option.hidden,
+  );
+  const displayLabel = selectedOption?.label ?? placeholder ?? label;
   const resolvedMenuId = menuId ?? generatedMenuId;
   const wrapperClasses = [
     labelPlacement === "above" && !labelHidden ? "space-y-2" : "",
@@ -157,9 +160,11 @@ export function BaseSelect({
           onKeyDown={(event) => {
             if (event.key === "Escape") setOpen(false);
           }}
-          className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm outline-none transition ${
+          className={`flex h-[42px] w-full items-center gap-3 rounded-lg border px-3 text-left text-sm outline-none transition ${
             variantStyles.button
-          } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+          } ${labelPlacement === "inside" ? "py-1" : "py-2.5"} ${
+            disabled ? "cursor-not-allowed opacity-60" : ""
+          }`}
         >
           {selectedOption?.color && (
             <span
@@ -175,7 +180,7 @@ export function BaseSelect({
               </span>
             )}
             <span className="block truncate font-semibold">
-              {selectedOption?.label ?? label}
+              {displayLabel}
             </span>
           </span>
           <ChevronDown

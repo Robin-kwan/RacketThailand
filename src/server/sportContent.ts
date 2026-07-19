@@ -361,6 +361,7 @@ export async function buildSportPagePayload(
     ];
 
     return {
+      id: sportRow.id,
       code: sportRow.code,
       name: meta.name,
       accent: meta.accent,

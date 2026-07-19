@@ -6,8 +6,6 @@ import { ensureUserProfile } from "@/server/profile";
 type UpdatePayload = {
   display_name?: string;
   username?: string;
-  location?: string | null;
-  default_sport?: string | null;
   avatar_url?: string | null;
 };
 
@@ -65,12 +63,6 @@ export async function POST(request: Request) {
   if (sanitizedUsername !== undefined) {
     updates.username = sanitizedUsername;
   }
-  if (body.location !== undefined) {
-    updates.location = body.location?.trim() || null;
-  }
-  if (body.default_sport !== undefined) {
-    updates.default_sport = body.default_sport || null;
-  }
   if (body.avatar_url !== undefined) {
     updates.avatar_url = body.avatar_url;
   }
@@ -78,7 +70,7 @@ export async function POST(request: Request) {
     .from("profiles")
     .update(updates)
     .eq("id", user.id)
-    .select("id, display_name, username, location, default_sport, avatar_url")
+    .select("id, display_name, username, avatar_url")
     .single();
 
   if (error) {

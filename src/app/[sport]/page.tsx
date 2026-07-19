@@ -27,7 +27,19 @@ import { getSeoKeyword } from "@/lib/seoKeywords";
 import { GroupCard } from "@/components/group-card";
 import { CourtCard } from "@/components/court-card";
 import { CasualPlayCard } from "@/components/casual-play-card";
+import {
+  PlayerProfileForm,
+  type ExistingSportProfile,
+} from "@/components/player-finder/player-profile-form";
 import { TrackedLink } from "@/components/analytics/tracked-link";
+import {
+  PLAYER_AVAILABILITY_DAYS,
+  PLAYER_PLAY_FORMATS,
+  PLAYER_SKILL_LEVELS,
+  PLAYER_TIME_PREFERENCES,
+} from "@/lib/player-finder";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { SportFeatureCard } from "@/types/sports";
 
 type Params = {
@@ -260,7 +272,7 @@ function CasualPlayPreviewSection({
             eventName="sport_cta_click"
             eventPayload={{
               surface: "sport_casual_play_preview",
-              cta: "open_casual_plays",
+              cta: "open_play_invitations",
               sport: sportCode,
             }}
             className="inline-flex items-center gap-2 [background-color:transparent] text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
@@ -400,9 +412,34 @@ export default async function SportPage({
     notFound();
   }
 
-  const casualPlayResult = await fetchCasualPlaysBySport(sport.code, {
-    limit: 10,
-  }, locale);
+  const supabase = await createSupabaseServerClient();
+  const [casualPlayResult, authResult] = await Promise.all([
+    fetchCasualPlaysBySport(
+      sport.code,
+      {
+        limit: 10,
+      },
+      locale,
+    ),
+    supabase.auth.getUser(),
+  ]);
+  const user = authResult.data.user;
+  const isAuthenticated = Boolean(user && !user.is_anonymous);
+  let sportProfile: ExistingSportProfile | null = null;
+  let hasSportProfileError = false;
+
+  if (isAuthenticated && user) {
+    const result = await getSupabaseAdminClient()
+      .from("profile_sports")
+      .select(
+        "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites",
+      )
+      .eq("profile_id", user.id)
+      .eq("sport_id", sport.id)
+      .maybeSingle();
+    sportProfile = result.data as ExistingSportProfile | null;
+    hasSportProfileError = Boolean(result.error);
+  }
 
   const courtFeature = sport.features.find((feature) => feature.key === "courts");
   const groupFeature = sport.features.find((feature) => feature.key === "groups");
@@ -411,6 +448,43 @@ export default async function SportPage({
   const carouselEmptyCopy = t("sport.carouselEmpty");
   const viewAllLabel = t("sport.viewAll");
   const boardCta = t("community.boardCta");
+  const sportProfileCopy = {
+    sport: t("playerFinder.profile.sport"),
+    skillLevel: t("playerFinder.profile.skillLevel"),
+    ratingSystem: t("playerFinder.profile.ratingSystem"),
+    ratingSystemPlaceholder: t("playerFinder.profile.ratingSystemPlaceholder"),
+    ratingValue: t("playerFinder.profile.ratingValue"),
+    area: t("playerFinder.profile.area"),
+    areaPlaceholder: t("playerFinder.profile.areaPlaceholder"),
+    availabilityDays: t("playerFinder.profile.availabilityDays"),
+    timePreference: t("playerFinder.profile.timePreference"),
+    playFormat: t("playerFinder.profile.playFormat"),
+    lookingNote: t("playerFinder.profile.lookingNote"),
+    lookingNotePlaceholder: t("playerFinder.profile.lookingNotePlaceholder"),
+    looking: t("playerFinder.profile.looking"),
+    lookingHelp: t("playerFinder.profile.lookingHelp"),
+    allowGroupInvites: t("playerFinder.profile.allowGroupInvites"),
+    save: t("playerFinder.profile.save"),
+    saving: t("playerFinder.profile.saving"),
+    success: t("playerFinder.profile.success"),
+    schemaRequired: t("playerFinder.profile.schemaRequired"),
+    genericError: t("playerFinder.genericError"),
+    add: t("playerFinder.profile.add"),
+    addTitle: t("playerFinder.profile.addTitle"),
+    edit: t("playerFinder.profile.edit"),
+    viewProfile: t("playerFinder.profile.viewProfile"),
+    editTitle: t("playerFinder.profile.editTitle"),
+    active: t("playerFinder.profile.active"),
+    inactive: t("playerFinder.profile.inactive"),
+    statusUpdated: t("playerFinder.profile.statusUpdated"),
+    emptyTitle: t("playerFinder.profile.emptyTitle"),
+    emptyDescription: t("playerFinder.profile.emptyDescription"),
+    allSportsAdded: t("playerFinder.profile.allSportsAdded"),
+    notSet: t("playerFinder.profile.notSet"),
+    yes: t("playerFinder.profile.yes"),
+    no: t("playerFinder.profile.no"),
+    cancel: t("playerFinder.profile.cancel"),
+  };
   const renderStatIcon = (key: string) => {
     const Icon = STAT_ICONS[key] ?? Plus;
     return (
@@ -490,11 +564,14 @@ export default async function SportPage({
 
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-white/80">
             <TrackedLink
-              href={buildLocalizedPath(`/${sport.code}/casual-plays`, locale)}
+              href={buildLocalizedPath(
+                `/${sport.code}/players?view=invitations`,
+                locale,
+              )}
               eventName="sport_cta_click"
               eventPayload={{
                 surface: "sport_hero",
-                cta: "open_casual_plays",
+                cta: "open_play_invitations",
                 sport: sport.code,
               }}
               className="transition hover:text-white"
@@ -552,6 +629,60 @@ export default async function SportPage({
           </div>
         </div>
       </section>
+      {isAuthenticated && (
+        <section className="border-b border-slate-200 bg-white px-6 py-10 text-[var(--foreground)] md:px-10 md:py-12">
+          <div className="mx-auto max-w-screen-xl">
+            <div className="max-w-3xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+                {t("playerFinder.profile.sportPageTitle", {
+                  sport: sport.name[locale],
+                })}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {t("playerFinder.profile.sportPageSubtitle")}
+              </p>
+
+              {hasSportProfileError && (
+                <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  {sportProfileCopy.schemaRequired}
+                </div>
+              )}
+
+              <div className="mt-6">
+                <PlayerProfileForm
+                  sports={[
+                    {
+                      id: sport.id,
+                      code: sport.code,
+                      label: sport.name[locale],
+                    },
+                  ]}
+                  initialSportId={sport.id}
+                  existingProfiles={sportProfile ? [sportProfile] : []}
+                  skillOptions={PLAYER_SKILL_LEVELS.map((value) => ({
+                    value,
+                    label: t(`playerFinder.skills.${value}`),
+                  }))}
+                  timeOptions={PLAYER_TIME_PREFERENCES.map((value) => ({
+                    value,
+                    label: t(`playerFinder.times.${value}`),
+                  }))}
+                  formatOptions={PLAYER_PLAY_FORMATS.map((value) => ({
+                    value,
+                    label: t(`playerFinder.formats.${value}`),
+                  }))}
+                  dayOptions={PLAYER_AVAILABILITY_DAYS.map((value) => ({
+                    value,
+                    label: t(`groups.days.${value}`),
+                  }))}
+                  copy={sportProfileCopy}
+                  singleSportMode
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
       {casualPlayResult.plays.length > 0 && (
         <CasualPlayPreviewSection
           title={t("sport.latestCasualPlaysTitle")}
@@ -559,7 +690,10 @@ export default async function SportPage({
             sport: sport.name[locale],
           })}
           emptyCopy={carouselEmptyCopy}
-          ctaHref={buildLocalizedPath(`/${sport.code}/casual-plays`, locale)}
+          ctaHref={buildLocalizedPath(
+            `/${sport.code}/players?view=invitations`,
+            locale,
+          )}
           ctaLabel={t("sport.casualPlaysCta")}
           locale={locale}
           sportCode={sport.code}

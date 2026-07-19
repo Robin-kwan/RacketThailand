@@ -35,6 +35,7 @@ function createCopy(t: Awaited<ReturnType<typeof getTranslator>>): Notifications
     markRead: t("notifications.markRead"),
     reviewCourt: t("notifications.reviewCourt"),
     reviewCasualPlay: t("notifications.reviewCasualPlay"),
+    reviewConnections: t("notifications.reviewConnections"),
     genericMessage: t("notifications.genericMessage"),
     courtGroupRequest: t("notifications.courtGroupRequest", {
       group: "{group}",

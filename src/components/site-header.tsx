@@ -21,6 +21,10 @@ import type { NotificationCopy } from "@/components/notifications-menu";
 import { SiteHeaderMobileMenu } from "@/components/site-header-mobile-menu";
 import { RacketThailandMark } from "@/components/racketthailand-mark";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
+import {
+  PROFILE_UPDATED_EVENT,
+  type ProfileUpdatedDetail,
+} from "@/lib/profile-events";
 
 type HeaderUser = {
   email: string;
@@ -121,8 +125,12 @@ export function SiteHeader({
         path: `${basePath}/group-finder`,
       },
       {
-        label: labels.casualPlayFinder ?? "Casual plays",
-        path: `${basePath}/casual-plays`,
+        label: labels.playerFinder ?? "Find players",
+        path: `${basePath}/players`,
+      },
+      {
+        label: labels.community ?? "Community",
+        path: `${basePath}/board`,
       },
     ];
     return definitions.map((definition) => ({
@@ -135,8 +143,9 @@ export function SiteHeader({
     labels.sportHome,
     labels.brand,
     labels.courtFinder,
+    labels.playerFinder,
     labels.groupFinder,
-    labels.casualPlayFinder,
+    labels.community,
     locale,
   ]);
   const currentPathWithQuery = useMemo(() => {
@@ -154,6 +163,7 @@ export function SiteHeader({
   const resolvedSubLabel =
     customSubLabel ?? autoSubLabel ?? "racketthailand.com";
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const [liveUser, setLiveUser] = useState(user);
   const [menuOpen, setMenuOpen] = useState(false);
   const [localeMenuOpen, setLocaleMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -161,6 +171,31 @@ export function SiteHeader({
   const localeMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const closeMobileNav = () => setMobileNavOpen(false);
+
+  useEffect(() => {
+    setLiveUser(user);
+  }, [user]);
+
+  useEffect(() => {
+    const handleProfileUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<ProfileUpdatedDetail>).detail;
+      setLiveUser((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          ...(Object.hasOwn(detail, "avatarUrl")
+            ? { avatarUrl: detail.avatarUrl }
+            : {}),
+          ...(Object.hasOwn(detail, "fullName")
+            ? { fullName: detail.fullName }
+            : {}),
+        };
+      });
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdate);
+    return () =>
+      window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdate);
+  }, []);
 
   const handleLocaleSelect = (targetLocale: Locale) => {
     const params = new URLSearchParams(searchParams?.toString());
@@ -183,11 +218,11 @@ export function SiteHeader({
     router.refresh();
   };
   const initials =
-    (user?.fullName?.charAt(0) ||
-      user?.email?.charAt(0) ||
+    (liveUser?.fullName?.charAt(0) ||
+      liveUser?.email?.charAt(0) ||
       labels.brand.charAt(0) ||
       "R").toUpperCase();
-  const isAuthenticated = Boolean(user);
+  const isAuthenticated = Boolean(liveUser);
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       if (
@@ -243,7 +278,7 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 min-[1000px]:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 min-[1000px]:hidden"
               aria-label="Open navigation menu"
             >
               <Menu
@@ -285,30 +320,30 @@ export function SiteHeader({
                 <button
                   type="button"
                   onClick={() => setMenuOpen((prev) => !prev)}
-                  className="flex items-center gap-2 rounded-full border border-[rgb(var(--foreground-rgb)/0.15)] bg-white px-2 py-1 text-left text-sm font-semibold text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.4)]"
+                  className="flex items-center gap-2 rounded-full bg-slate-100 px-2 py-1 text-left text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-slate-200"
                   aria-expanded={menuOpen}
                   aria-haspopup="menu"
                 >
-                  <div className="relative h-10 w-10 overflow-hidden rounded-full bg-[var(--rt-primary-soft)] text-white">
-                    {user?.avatarUrl ? (
+                  <div className="relative h-10 w-10 overflow-hidden rounded-full border-0 text-white">
+                    {liveUser?.avatarUrl ? (
                       <Image
-                        src={user.avatarUrl}
-                        alt={user.fullName ?? user.email}
+                        src={liveUser.avatarUrl}
+                        alt={liveUser.fullName ?? liveUser.email}
                         fill
                         sizes="40px"
-                        className="object-cover"
+                        className="border-0 object-cover"
                       />
                     ) : (
-                      <span className="flex h-full items-center justify-center text-base font-semibold">
+                      <span className="flex h-full items-center justify-center text-base font-semibold text-slate-600">
                         {initials}
                       </span>
                     )}
                   </div>
                   <div className="hidden text-left text-xs sm:block">
                     <p className="text-sm font-semibold">
-                      {user?.fullName ?? user?.email}
+                      {liveUser?.fullName ?? liveUser?.email}
                     </p>
-                    <p className="text-emerald-600">{user?.email}</p>
+                    <p className="text-emerald-600">{liveUser?.email}</p>
                   </div>
                   <ChevronDown
                     className={`h-4 w-4 transition ${menuOpen ? "rotate-180" : ""}`}
@@ -328,6 +363,18 @@ export function SiteHeader({
                         onClick={() => setMenuOpen(false)}
                       >
                         {labels.profile}
+                        <ExternalLink
+                          className="h-4 w-4"
+                          strokeWidth={1.8}
+                          aria-hidden
+                        />
+                      </Link>
+                      <Link
+                        href={buildLocalizedPath("/player-connections", locale)}
+                        className="mt-1 flex items-center justify-between rounded-md px-3 py-2 text-[var(--foreground)] hover:bg-slate-100"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        {labels.connections}
                         <ExternalLink
                           className="h-4 w-4"
                           strokeWidth={1.8}
@@ -376,7 +423,7 @@ export function SiteHeader({
               <div className="hidden items-center gap-2 min-[1000px]:flex">
                 <Link
                   href={loginHref}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-800 transition-colors hover:border-slate-500"
+                  className="rounded-full bg-slate-100 px-4 py-2 font-semibold text-slate-800 transition-colors hover:bg-slate-200"
                 >
                   {labels.login}
                 </Link>
@@ -386,7 +433,7 @@ export function SiteHeader({
               <button
                 type="button"
                 onClick={() => setLocaleMenuOpen((prev) => !prev)}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgb(var(--foreground-rgb)/0.15)] bg-white text-xl text-[var(--foreground)] hover:border-[rgb(var(--foreground-rgb)/0.4)]"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-800 transition-colors hover:bg-slate-200"
                 aria-label={LOCALE_INFO[locale].label}
               >
                 <Image
@@ -439,6 +486,7 @@ export function SiteHeader({
           login: labels.login,
           profile: labels.profile,
           dashboard: labels.dashboard,
+          connections: labels.connections,
           admin: labels.admin,
           logout: labels.logout,
           language: labels.language,
@@ -448,7 +496,7 @@ export function SiteHeader({
         notificationCopy={notificationCopy}
         isAuthenticated={isAuthenticated}
         isAdmin={isAdmin}
-        user={user}
+        user={liveUser}
         localeInfo={LOCALE_INFO}
         mobileMenuRef={mobileMenuRef}
         onClose={closeMobileNav}

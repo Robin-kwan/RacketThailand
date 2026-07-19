@@ -2,22 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { BaseSelect } from "@/components/base-select";
+import { useRouter } from "next/navigation";
 import { BaseTextField } from "@/components/base-text-field";
 import { showToast } from "@/components/toaster";
+import { PROFILE_UPDATED_EVENT } from "@/lib/profile-events";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type Profile = {
   display_name: string | null;
   username: string | null;
-  location: string | null;
-  default_sport: string | null;
   avatar_url: string | null;
-};
-
-type SportOption = {
-  id: string;
-  label: string;
 };
 
 type ProfileCopy = {
@@ -26,9 +20,6 @@ type ProfileCopy = {
   displayName: string;
   username: string;
   usernameHint: string;
-  location: string;
-  defaultSport: string;
-  defaultSportPlaceholder: string;
   avatarLabel: string;
   avatarHelper: string;
   avatarLimit: string;
@@ -43,7 +34,6 @@ type ProfileCopy = {
 type ProfileFormProps = {
   userId: string;
   initialProfile: Profile;
-  sports: SportOption[];
   copy: ProfileCopy;
 };
 
@@ -53,32 +43,19 @@ const AVATAR_BUCKET =
 export function ProfileForm({
   userId,
   initialProfile,
-  sports,
   copy,
 }: ProfileFormProps) {
+  const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [form, setForm] = useState({
     display_name: initialProfile.display_name ?? "",
     username: initialProfile.username ?? "",
-    location: initialProfile.location ?? "",
-    default_sport: initialProfile.default_sport ?? "",
     avatar_url: initialProfile.avatar_url ?? "",
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const defaultSportOptions = useMemo(
-    () => [
-      { value: "", label: copy.defaultSportPlaceholder },
-      ...sports.map((sport) => ({
-        value: sport.id,
-        label: sport.label,
-      })),
-    ],
-    [sports, copy.defaultSportPlaceholder],
-  );
-
   useEffect(() => {
     return () => {
       if (avatarPreview) {
@@ -88,7 +65,7 @@ export function ProfileForm({
   }, [avatarPreview]);
 
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const { name, value } = event.target;
     setForm((prev) => ({
@@ -158,8 +135,6 @@ export function ProfileForm({
       body: JSON.stringify({
         display_name: form.display_name,
         username: form.username,
-        location: form.location,
-        default_sport: form.default_sport || null,
         avatar_url: avatarUrl || null,
       }),
     });
@@ -179,6 +154,15 @@ export function ProfileForm({
       return;
     }
 
+    window.dispatchEvent(
+      new CustomEvent(PROFILE_UPDATED_EVENT, {
+        detail: {
+          avatarUrl: payload?.profile?.avatar_url ?? avatarUrl ?? null,
+          fullName: payload?.profile?.display_name ?? form.display_name ?? null,
+        },
+      }),
+    );
+    router.refresh();
     showToast({ variant: "success", message: copy.success });
   };
 
@@ -192,14 +176,14 @@ export function ProfileForm({
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
       <div className="flex flex-wrap items-center gap-4">
-        <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-slate-200">
+        <div className="relative h-20 w-20 overflow-hidden rounded-lg border-0">
           {avatarPreview || form.avatar_url ? (
             <Image
               src={avatarPreview || form.avatar_url}
               alt="Avatar preview"
               fill
               sizes="80px"
-              className="object-cover"
+              className="border-0 object-cover"
             />
           ) : (
             <span className="flex h-full items-center justify-center text-xl font-semibold text-slate-600">
@@ -227,13 +211,13 @@ export function ProfileForm({
         <label className="block text-sm font-medium text-slate-700">
           {copy.displayName}
         </label>
-        <input
+        <BaseTextField
           type="text"
           name="display_name"
           value={form.display_name}
           onChange={handleInputChange}
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           maxLength={80}
+          variant="light"
         />
       </div>
 
@@ -252,38 +236,15 @@ export function ProfileForm({
           className="lowercase"
           maxLength={32}
           required
-          variant="dark"
+          variant="light"
         />
         <p className="text-xs text-slate-500">{copy.usernameHint}</p>
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
-          {copy.location}
-        </label>
-        <BaseTextField
-          type="text"
-          name="location"
-          value={form.location}
-          onChange={handleInputChange}
-          maxLength={120}
-          variant="dark"
-        />
-      </div>
-
-      <BaseSelect
-        label={copy.defaultSport}
-        name="default_sport"
-        value={form.default_sport}
-        onChange={handleInputChange}
-        options={defaultSportOptions}
-        variant="light"
-      />
-
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-lg bg-emerald-400 px-4 py-3 font-semibold text-slate-900 hover:bg-emerald-300 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+        className="w-full rounded-lg bg-emerald-500 px-4 py-3 font-semibold text-white hover:bg-emerald-600 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
       >
         {saving ? `${copy.saving}...` : copy.save}
       </button>

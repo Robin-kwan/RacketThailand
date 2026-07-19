@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { normalizeOpeningHoursEntries } from "@/lib/opening-hours";
 import { deleteCourtWithAssets } from "@/server/adminDeletion";
 import {
   buildDuplicateCourtMessage,
@@ -20,7 +21,7 @@ type CourtPayload = Partial<{
   provinceId?: number;
   districtId?: number;
   price_note?: string;
-  opening_hours?: OpeningHoursEntry[] | null;
+  opening_hours?: OpeningHoursEntry[] | unknown[] | Record<string, unknown> | null;
   phone?: string;
   line_id?: string;
   lineQrUrl?: string | null;
@@ -124,7 +125,8 @@ export async function PATCH(
     update.price_note = payload.price_note ?? null;
   }
   if (payload.opening_hours !== undefined) {
-    update.opening_hours = payload.opening_hours ?? null;
+    const openingHours = normalizeOpeningHoursEntries(payload.opening_hours);
+    update.opening_hours = openingHours.length > 0 ? openingHours : null;
   }
   if (payload.phone !== undefined) {
     update.phone = payload.phone ?? null;

@@ -37,6 +37,7 @@ export type NotificationsPageCopy = {
   markRead: string;
   reviewCourt: string;
   reviewCasualPlay: string;
+  reviewConnections: string;
   genericMessage: string;
   courtGroupRequest: string;
   casualPlayJoinRequest: string;
@@ -210,6 +211,12 @@ export function NotificationsPageContent({
   };
 
   const buildNotificationHref = (notification: NotificationRecord) => {
+    if (notification.type.startsWith("player-")) {
+      return {
+        href: buildLocalizedPath("/player-connections", locale),
+        label: copy.reviewConnections,
+      };
+    }
     const playId = getMetaString(notification.metadata, "playId");
     if (playId) {
       return {

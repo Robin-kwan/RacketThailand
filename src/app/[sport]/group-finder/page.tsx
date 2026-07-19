@@ -341,6 +341,7 @@ export default async function GroupFinderPage({
     phoneLabel: t("groups.detail.phone"),
     lineLabel: t("groups.detail.line"),
     createGroupCta: t("header.createGroup"),
+    playerFinderCta: t("header.playerFinder"),
     casualPlaysCta: t("sport.casualPlaysCta"),
   };
 
@@ -356,11 +357,14 @@ export default async function GroupFinderPage({
           description={copy.subtitle}
         >
           <TrackedLink
-            href={buildLocalizedPath(`/${resolvedParams.sport}/casual-plays`, locale)}
+            href={buildLocalizedPath(
+              `/${resolvedParams.sport}/players?view=invitations`,
+              locale,
+            )}
             eventName="sport_cta_click"
             eventPayload={{
               surface: "group_finder_header",
-              cta: "open_casual_plays",
+              cta: "open_play_invitations",
               sport: resolvedParams.sport,
             }}
             className="inline-flex items-center justify-center rounded-full border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/80 hover:bg-white/20"

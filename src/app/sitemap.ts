@@ -21,11 +21,6 @@ type CommunityPostEntity = MinimalEntity & {
   } | null;
 };
 
-type SportEntity = {
-  id: string;
-  code: string | null;
-};
-
 type CasualPlayEntity = MinimalEntity & {
   sport_id?: string | null;
 };
@@ -90,7 +85,7 @@ async function fetchEntities<T extends MinimalEntity>(
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const today = getThailandTodayDateString();
-  const [courts, groups, casualPlays, communityPosts, sports] = await Promise.all([
+  const [courts, groups, casualPlays, communityPosts] = await Promise.all([
     fetchEntities("courts", 1000, { is_active: "eq.true" }),
     fetchEntities("groups", 1000, { status: "eq.published" }),
     fetchEntities<CasualPlayEntity>(
@@ -105,24 +100,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { status: "eq.published" },
       "id,created_at,updated_at,sports(code)",
     ),
-    supabaseSelect<SportEntity>("sports", {
-      select: "id,code",
-    })
-      .then((result) => result.data ?? [])
-      .catch(() => [] as SportEntity[]),
   ]);
-  const sportCodeById = new Map(
-    sports
-      .filter((sport) => sport.code)
-      .map((sport) => [sport.id, sport.code as string]),
-  );
-  const sportsWithUpcomingCasualPlays = new Set(
-    casualPlays
-      .map((play) => play.sport_id ? sportCodeById.get(play.sport_id) : null)
-      .filter((code): code is string =>
-        Boolean(code && SUPPORTED_SPORTS.some((sport) => sport === code)),
-      ),
-  );
 
   const staticRoutes = [
     ...buildLocalizedSitemapEntries({
@@ -156,11 +134,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       }),
     ),
-    ...SUPPORTED_SPORTS.filter((code) =>
-      sportsWithUpcomingCasualPlays.has(code),
-    ).flatMap((code) =>
+    ...SUPPORTED_SPORTS.flatMap((code) =>
       buildLocalizedSitemapEntries({
-        path: `/${code}/casual-plays`,
+        path: `/${code}/players`,
         changeFrequency: "daily",
         priority: 0.8,
       }),

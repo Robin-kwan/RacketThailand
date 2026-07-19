@@ -53,7 +53,7 @@ export function CommunityCommentForm({
         <button
           type="submit"
           disabled={pending || !body.trim()}
-          className="rounded-full bg-emerald-400/90 px-4 py-2 font-semibold text-slate-900 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
+          className="rounded-full bg-emerald-500 px-4 py-2 font-semibold text-white hover:bg-emerald-600 disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500 disabled:cursor-not-allowed"
         >
           {submitLabel}
         </button>

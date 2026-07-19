@@ -34,6 +34,7 @@ export type MobileMenuLabels = {
   login: string;
   profile: string;
   dashboard: string;
+  connections: string;
   admin: string;
   logout: string;
   language: string;
@@ -107,7 +108,7 @@ export function SiteHeaderMobileMenu({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-300 p-3 text-slate-500 hover:border-slate-400"
+            className="rounded-lg bg-slate-100 p-3 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
             aria-label="Close menu"
           >
             <X
@@ -151,14 +152,14 @@ export function SiteHeaderMobileMenu({
           {isAuthenticated ? (
             <>
               <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="relative h-12 w-12 overflow-hidden rounded-full bg-slate-200 text-white">
+                <div className="relative h-12 w-12 overflow-hidden rounded-full border-0 text-white">
                   {user?.avatarUrl ? (
                     <Image
                       src={user.avatarUrl}
                       alt={user.fullName ?? user.email}
                       fill
                       sizes="48px"
-                      className="object-cover"
+                      className="border-0 object-cover"
                     />
                   ) : (
                     <span className="flex h-full items-center justify-center text-lg font-semibold text-slate-500">
@@ -189,6 +190,13 @@ export function SiteHeaderMobileMenu({
                 onClick={onClose}
               >
                 {labels.profile}
+              </Link>
+              <Link
+                href={buildLocalizedPath("/player-connections", locale)}
+                className="block rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900"
+                onClick={onClose}
+              >
+                {labels.connections}
               </Link>
               <Link
                 href={buildLocalizedPath("/dashboard", locale)}

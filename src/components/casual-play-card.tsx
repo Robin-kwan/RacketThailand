@@ -48,7 +48,7 @@ export function CasualPlayCard({
   const Wrapper: ElementType = href ? Link : "div";
   const wrapperProps = href ? { href } : {};
   const fallbackTitle =
-    locale === "th" ? "หาเพื่อนตี" : "Casual play";
+    locale === "th" ? "นัดเล่น" : "Play invitation";
   const fallbackVenue = locale === "th" ? "ยังไม่ระบุสถานที่" : "Venue not set";
   const dateLabel = formatCasualPlayDate(playDate, locale, "compact");
   const timeLabel = formatCasualPlayTimeRange(startTime, endTime, locale);

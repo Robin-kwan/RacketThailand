@@ -26,6 +26,7 @@ import {
 import {
   ensureAllDays,
   createAlwaysOpenSchedule,
+  normalizeOpeningHoursEntries,
   type OpeningHoursEntry,
 } from "@/lib/opening-hours";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
@@ -189,14 +190,17 @@ export function CourtEditForm({
     null,
   );
   const [uploading, setUploading] = useState(false);
+  const initialOpeningHours = normalizeOpeningHoursEntries(
+    court.opening_hours,
+  );
   const [openingHours, setOpeningHours] = useState<OpeningHoursEntry[]>(
-    court.opening_hours && court.opening_hours.length > 0
-      ? ensureAllDays(court.opening_hours)
+    initialOpeningHours.length > 0
+      ? ensureAllDays(initialOpeningHours)
       : createAlwaysOpenSchedule(),
   );
   const initialHoursRef = useRef(
     JSON.stringify(
-      (court.opening_hours ?? []).filter(
+      initialOpeningHours.filter(
         (entry) => entry.ranges?.length > 0,
       ),
     ),

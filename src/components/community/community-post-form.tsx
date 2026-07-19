@@ -66,7 +66,7 @@ export function CommunityPostForm({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="flex min-h-12 w-full items-center rounded-full border border-slate-200 bg-slate-50 px-5 text-left text-sm font-medium text-slate-500 transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+        className="flex min-h-[42px] w-full items-center rounded-full border border-slate-200 bg-slate-50 px-5 text-left text-sm font-medium text-slate-500 transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
       >
         {copy.composerPrompt}
       </button>

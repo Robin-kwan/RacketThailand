@@ -80,7 +80,7 @@ export default async function TermsPage({
           eyebrow: "RacketThailand",
           title: "ข้อกำหนดและประกาศเรื่องเนื้อหา",
           intro:
-            "RacketThailand เป็นเพียงไดเรกทอรีและคอมมูนิตี้สำหรับกีฬาประเภทแร็กเกตในประเทศไทย เรารวบรวมข้อมูลสนาม กลุ่ม นัดหาเพื่อนตี และเนื้อหาคอมมูนิตี้เพื่อช่วยให้ผู้เล่นค้นหาและติดต่อกันได้ง่ายขึ้น",
+            "RacketThailand เป็นเพียงไดเรกทอรีและคอมมูนิตี้สำหรับกีฬาประเภทแร็กเกตในประเทศไทย เรารวบรวมข้อมูลสนาม กลุ่ม นัดเล่น และเนื้อหาคอมมูนิตี้เพื่อช่วยให้ผู้เล่นค้นหาและติดต่อกันได้ง่ายขึ้น",
           updated: `อัปเดตล่าสุด ${LAST_UPDATED.th}`,
           contactLabel: "คำขอลบหรือแก้ไขข้อมูล",
           contactBody:
@@ -145,7 +145,7 @@ export default async function TermsPage({
           eyebrow: "RacketThailand",
           title: "Terms & Content Notice",
           intro:
-            "RacketThailand is a directory and community platform for racket sports in Thailand. We list courts, groups, casual plays, and community content to help players discover places and connect more easily.",
+            "RacketThailand is a directory and community platform for racket sports in Thailand. We list courts, groups, play invitations, and community content to help players discover places and connect more easily.",
           updated: `Last updated ${LAST_UPDATED.en}`,
           contactLabel: "Removal or correction requests",
           contactBody:

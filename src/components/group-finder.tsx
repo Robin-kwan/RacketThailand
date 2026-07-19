@@ -54,6 +54,7 @@ type GroupFinderCopy = {
   phoneLabel: string;
   lineLabel: string;
   createGroupCta: string;
+  playerFinderCta: string;
 };
 
 type GroupFinderProps = {
@@ -950,22 +951,37 @@ export function GroupFinder({
             {copy.emptyTitle}
           </p>
           <p className="mt-2 text-sm text-slate-500">{copy.emptyDescription}</p>
-          <Link
-            href={buildLocalizedPath(
-              `/groups/create?sport=${encodeURIComponent(sportCode)}`,
-              locale,
-            )}
-            className="rt-btn-group mt-5 inline-flex items-center justify-center px-4 py-2 text-xs"
-            onClick={() =>
-              track("empty_state_cta_click", {
-                surface: "group_finder",
-                sport: sportCode,
-                cta: "create_group",
-              })
-            }
-          >
-            {copy.createGroupCta}
-          </Link>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <Link
+              href={buildLocalizedPath(`/${sportCode}/players`, locale)}
+              className="rt-btn-primary inline-flex items-center justify-center px-4 py-2 text-xs"
+              onClick={() =>
+                track("empty_state_cta_click", {
+                  surface: "group_finder",
+                  sport: sportCode,
+                  cta: "open_player_finder",
+                })
+              }
+            >
+              {copy.playerFinderCta}
+            </Link>
+            <Link
+              href={buildLocalizedPath(
+                `/groups/create?sport=${encodeURIComponent(sportCode)}`,
+                locale,
+              )}
+              className="rt-btn-group inline-flex items-center justify-center px-4 py-2 text-xs"
+              onClick={() =>
+                track("empty_state_cta_click", {
+                  surface: "group_finder",
+                  sport: sportCode,
+                  cta: "create_group",
+                })
+              }
+            >
+              {copy.createGroupCta}
+            </Link>
+          </div>
         </div>
       ) : (
         <>

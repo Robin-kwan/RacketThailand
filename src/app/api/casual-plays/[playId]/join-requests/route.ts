@@ -71,21 +71,21 @@ export async function POST(
 
   if (playError || !play) {
     return NextResponse.json(
-      { error: "Casual play not found." },
+      { error: "Play invitation not found." },
       { status: 404 },
     );
   }
 
   if (isCasualPlayExpired(play.play_date)) {
     return NextResponse.json(
-      { error: "Expired casual plays can no longer receive join requests." },
+      { error: "Expired play invitations can no longer receive join requests." },
       { status: 400 },
     );
   }
 
   if (play.owner_id === user.id) {
     return NextResponse.json(
-      { error: "Owners cannot request to join their own casual play." },
+      { error: "Organizers cannot request to join their own play invitation." },
       { status: 400 },
     );
   }
@@ -136,7 +136,7 @@ export async function POST(
 
     if ((acceptedCount ?? 0) + 1 >= maxPlayers) {
       return NextResponse.json(
-        { error: "This casual play is full." },
+        { error: "This play invitation is full." },
         { status: 409 },
       );
     }
@@ -190,7 +190,7 @@ export async function POST(
     await adminSupabase.from("notifications").insert({
       recipient_id: play.owner_id,
       type: "casual-play-join-request",
-      message: `${requesterName} requested to join ${play.title ?? "your casual play"}.`,
+      message: `${requesterName} requested to join ${play.title ?? "your play invitation"}.`,
       metadata: {
         playId: resolved.playId,
         playTitle: play.title ?? null,

@@ -25,6 +25,7 @@ export type NotificationCopy = {
   markRead: string;
   reviewCourt: string;
   reviewCasualPlay: string;
+  reviewConnections: string;
   genericMessage: string;
   courtGroupRequest: string;
   casualPlayJoinRequest: string;
@@ -179,6 +180,12 @@ export function NotificationsMenu({
   };
 
   const buildNotificationHref = (notification: NotificationRecord) => {
+    if (notification.type.startsWith("player-")) {
+      return {
+        href: buildLocalizedPath("/player-connections", locale),
+        label: copy.reviewConnections,
+      };
+    }
     const playId = getMetaString(notification.metadata, "playId");
     if (playId) {
       return {
@@ -201,7 +208,7 @@ export function NotificationsMenu({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full border border-[rgb(var(--foreground-rgb)/0.25)] bg-white text-[var(--foreground)] transition hover:border-[rgb(var(--foreground-rgb)/0.5)]"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-800 transition-colors hover:bg-slate-200"
         aria-label={copy.title}
       >
         <Bell
