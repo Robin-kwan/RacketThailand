@@ -60,7 +60,7 @@ export async function GET(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Unable to load casual plays.",
+            : "Unable to load play invitations.",
       },
       { status: 500 },
     );
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
 
   if (insertError || !insertedPlay) {
     return NextResponse.json(
-      { error: insertError?.message ?? "Failed to create casual play." },
+      { error: insertError?.message ?? "Failed to create play invitation." },
       { status: 500 },
     );
   }

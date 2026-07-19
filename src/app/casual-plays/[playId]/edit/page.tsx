@@ -240,7 +240,7 @@ export default async function EditCasualPlayPage({
     deleteCancel: t("casualPlays.edit.deleteCancel"),
   };
   const deleteRedirectHref = buildLocalizedPath(
-    currentSportSlug ? `/${currentSportSlug}/casual-plays` : "/",
+    currentSportSlug ? `/${currentSportSlug}/players?view=invitations` : "/",
     locale,
   );
 

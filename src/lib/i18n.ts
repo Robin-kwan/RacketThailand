@@ -15,8 +15,11 @@ export function buildLocalizedPath(path: string, locale: Locale) {
   if (locale === DEFAULT_LOCALE) {
     return path;
   }
-  const joiner = path.includes("?") ? "&" : "?";
-  return `${path}${joiner}lang=${locale}`;
+  const hashIndex = path.indexOf("#");
+  const basePath = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
+  const hash = hashIndex >= 0 ? path.slice(hashIndex) : "";
+  const joiner = basePath.includes("?") ? "&" : "?";
+  return `${basePath}${joiner}lang=${locale}${hash}`;
 }
 
 async function loadMessages(locale: Locale) {

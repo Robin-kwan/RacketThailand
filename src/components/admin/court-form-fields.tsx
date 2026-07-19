@@ -244,7 +244,7 @@ export function CourtFormFields({
           </span>
           <details className="group relative">
             <summary
-              className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-900 shadow-sm outline-none transition hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-emerald-300"
+              className="flex min-h-[42px] cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-900 shadow-sm outline-none transition hover:border-slate-300 focus-visible:ring-2 focus-visible:ring-emerald-300"
               aria-invalid={sportInvalid}
               data-invalid={sportInvalid ? "true" : undefined}
             >

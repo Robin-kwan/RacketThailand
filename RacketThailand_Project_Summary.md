@@ -32,7 +32,7 @@ Current public discovery flows:
 - Sport portal: `/<sport>`
 - Court finder: `/<sport>/court-finder`
 - Group finder: `/<sport>/group-finder`
-- Casual plays: `/<sport>/casual-plays`
+- Find people to play with: `/<sport>/players` (player profiles and play invitations)
 - Community board: `/<sport>/board`
 - Court detail: `/courts/[courtId]`
 - Group detail: `/groups/[groupId]`

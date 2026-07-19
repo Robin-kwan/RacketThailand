@@ -205,6 +205,9 @@ export default async function DashboardPage({
     inactive: t("dashboard.overview.inactive"),
     published: t("dashboard.overview.published"),
     draft: t("dashboard.overview.draft"),
+    playerFinder: t("header.playerFinder"),
+    connections: t("header.connections"),
+    invitePlayers: t("playerFinder.groupInvite.title"),
   };
   const numberLocale = locale === "th" ? "th-TH" : "en-US";
   const addCourtHref = buildLocalizedPath(
@@ -410,6 +413,18 @@ export default async function DashboardPage({
                 >
                   {ui.editProfile}
                 </Link>
+                <Link
+                  href={buildLocalizedPath("/profile/edit#sport-profile", locale)}
+                  className="rounded-lg border border-slate-200 bg-white px-5 py-2 text-center text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  {ui.playerFinder}
+                </Link>
+                <Link
+                  href={buildLocalizedPath("/player-connections", locale)}
+                  className="rounded-lg border border-slate-200 bg-white px-5 py-2 text-center text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  {ui.connections}
+                </Link>
               </div>
             </BaseCard>
 
@@ -492,6 +507,15 @@ export default async function DashboardPage({
                               className="text-xs font-semibold text-slate-600 hover:text-slate-950"
                             >
                               {ui.edit}
+                            </Link>
+                            <Link
+                              href={buildLocalizedPath(
+                                `/groups/${group.id}/players`,
+                                locale,
+                              )}
+                              className="text-xs font-semibold text-blue-700 hover:text-blue-800"
+                            >
+                              {ui.invitePlayers}
                             </Link>
                           </div>
                         </div>

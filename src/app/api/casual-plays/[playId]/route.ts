@@ -52,14 +52,14 @@ export async function PATCH(
 
   if (playError || !existingPlay) {
     return NextResponse.json(
-      { error: "Casual play not found." },
+      { error: "Play invitation not found." },
       { status: 404 },
     );
   }
 
   if (isCasualPlayExpired(existingPlay.play_date)) {
     return NextResponse.json(
-      { error: "Expired casual plays can no longer be updated." },
+      { error: "Expired play invitations can no longer be updated." },
       { status: 400 },
     );
   }

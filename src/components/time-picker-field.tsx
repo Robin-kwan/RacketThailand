@@ -240,7 +240,7 @@ export function TimePickerField({
               setOpen(false);
             }
           }}
-          className="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:border-[var(--rt-primary)] focus-visible:ring-4 focus-visible:ring-[rgb(var(--rt-primary-rgb)/0.12)] focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-[42px] w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:border-[var(--rt-primary)] focus-visible:ring-4 focus-visible:ring-[rgb(var(--rt-primary-rgb)/0.12)] focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className={`min-w-0 flex-1 ${displayValue ? "" : "text-slate-500"}`}>
             {displayValue || placeholder || ""}

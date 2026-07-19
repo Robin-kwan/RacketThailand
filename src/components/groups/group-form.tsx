@@ -351,13 +351,10 @@ export function GroupForm({
   const firstContactFieldRef = useRef<HTMLInputElement>(null);
   const sportOptions = useMemo(
     () =>
-      [
-        { value: "", label: "", disabled: true, hidden: true },
-        ...sports.map((sport) => ({
-          value: sport.value,
-          label: sport.label,
-        })),
-      ],
+      sports.map((sport) => ({
+        value: sport.value,
+        label: sport.label,
+      })),
     [sports],
   );
   const [courtCache, setCourtCache] = useState<Record<string, Option[]>>(courts);
@@ -909,6 +906,7 @@ export function GroupForm({
             value={form.sportId}
             onChange={updateForm}
             options={sportOptions}
+            placeholder={copy.sport}
             disabled={sportDisabled}
             required
             variant="light"

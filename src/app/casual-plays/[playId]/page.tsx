@@ -141,8 +141,8 @@ export async function generateMetadata({
     return {
       title:
         locale === "th"
-          ? "ไม่พบข้อมูลหาเพื่อนตี | RacketThailand"
-          : "Casual play not found | RacketThailand",
+          ? "ไม่พบนัดเล่น | RacketThailand"
+          : "Play invitation not found | RacketThailand",
     };
   }
 
@@ -341,7 +341,7 @@ export default async function CasualPlayDetailPage({
   const canonicalPath = `/casual-plays/${play.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
   const fallbackTitle =
-    locale === "th" ? "หาเพื่อนตี" : "Casual play";
+    locale === "th" ? "นัดเล่น" : "Play invitation";
   const shareTitle = play.title ?? fallbackTitle;
   const shareText = [
     formatCasualPlayDate(play.play_date, locale),
@@ -356,7 +356,7 @@ export default async function CasualPlayDetailPage({
     "@context": "https://schema.org",
     "@type": "SportsEvent",
     "@id": canonicalUrl,
-    name: play.title ?? (locale === "th" ? "หาเพื่อนตี" : "Casual play"),
+    name: play.title ?? (locale === "th" ? "นัดเล่น" : "Play invitation"),
     description: play.description ?? undefined,
     startDate: `${play.play_date}T${startTimeValue}:00+07:00`,
     endDate: play.end_time

@@ -62,7 +62,7 @@ export async function PATCH(
 
   if (playError || !play) {
     return NextResponse.json(
-      { error: "Casual play not found." },
+      { error: "Play invitation not found." },
       { status: 404 },
     );
   }
@@ -109,7 +109,7 @@ export async function PATCH(
 
     if ((acceptedCount ?? 0) + 1 >= maxPlayers) {
       return NextResponse.json(
-        { error: "This casual play is full." },
+        { error: "This play invitation is full." },
         { status: 409 },
       );
     }
@@ -140,8 +140,8 @@ export async function PATCH(
         : "casual-play-join-rejected",
     message:
       nextStatus === "accepted"
-        ? `Your request to join ${play.title ?? "a casual play"} was accepted.`
-        : `Your request to join ${play.title ?? "a casual play"} was declined.`,
+        ? `Your request to join ${play.title ?? "a play invitation"} was accepted.`
+        : `Your request to join ${play.title ?? "a play invitation"} was declined.`,
     metadata: {
       playId: resolved.playId,
       playTitle: play.title ?? null,

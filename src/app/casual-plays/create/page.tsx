@@ -21,7 +21,7 @@ type SearchParams = { lang?: string; sport?: string };
 type SearchParamsInput = Promise<SearchParams> | undefined;
 
 export const metadata: Metadata = {
-  title: "Create casual play | RacketThailand",
+  title: "Create play invitation | RacketThailand",
   robots: {
     index: false,
     follow: true,

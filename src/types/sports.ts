@@ -51,6 +51,7 @@ export type SportClosing = {
 };
 
 export type SportPagePayload = {
+  id: string;
   code: string;
   name: LocalizedString;
   accent: string;

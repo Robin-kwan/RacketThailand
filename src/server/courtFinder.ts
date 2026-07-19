@@ -3,6 +3,7 @@ import { isPublishedGroupStatus } from "@/lib/group-status";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { normalizeOpeningHoursEntries } from "@/lib/opening-hours";
 import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
 import {
   fetchCourtIdsBySportId,
@@ -106,8 +107,9 @@ function openingHoursMatchTimeWindow(
 ) {
   const window = resolveTimeWindow(filters);
   if (!window) return true;
-  if (!openingHours || openingHours.length === 0) return false;
-  const ranges = openingHours.flatMap((entry) =>
+  const normalizedOpeningHours = normalizeOpeningHoursEntries(openingHours);
+  if (normalizedOpeningHours.length === 0) return false;
+  const ranges = normalizedOpeningHours.flatMap((entry) =>
     (entry.ranges ?? []).map((range) => ({
       day: entry.day,
       startTime: range.open === "Open" && !range.close ? "00:00" : range.open,

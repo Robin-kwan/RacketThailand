@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { track } from "@vercel/analytics";
 import type { CasualPlayRecord } from "@/server/casualPlays";
 import { CasualPlayCard } from "@/components/casual-play-card";
+import { BaseTextField } from "@/components/base-text-field";
 import { DatePickerField } from "@/components/date-picker-field";
 import { NearbyMap, type NearbyMapCourt } from "@/components/nearby-map";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -90,7 +91,7 @@ export function CasualPlayFinder({
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
   const debouncedSearch = useDebounce(search);
   const fallbackTitle =
-    locale === "th" ? "หาเพื่อนตี" : "Casual play";
+    locale === "th" ? "นัดเล่น" : "Play invitation";
   const distanceUnit = locale === "th" ? "กม." : "km";
   const buildCourtHref = useCallback(
     (courtId: string) =>
@@ -251,8 +252,8 @@ export function CasualPlayFinder({
   const count = displayedPlays.length;
   const countSummary =
     locale === "th"
-      ? `${count.toLocaleString("th-TH")} โพสต์ · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
-      : `${count.toLocaleString("en-US")} plays · ${loading ? "loading..." : "live data"}`;
+      ? `${count.toLocaleString("th-TH")} นัดเล่น · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
+      : `${count.toLocaleString("en-US")} invitations · ${loading ? "loading..." : "live data"}`;
 
   return (
     <div className="space-y-6">
@@ -262,7 +263,7 @@ export function CasualPlayFinder({
             <label className="text-sm font-semibold text-slate-700">
               {copy.searchPlaceholder}
             </label>
-            <input
+            <BaseTextField
               type="text"
               value={search}
               onChange={(event) => {
@@ -274,7 +275,7 @@ export function CasualPlayFinder({
                 });
               }}
               placeholder={copy.searchPlaceholder}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
+              variant="light"
             />
           </div>
           <div className="space-y-2">

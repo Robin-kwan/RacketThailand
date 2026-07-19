@@ -18,6 +18,58 @@ export type OpeningHoursEntry = {
   ranges: OpeningHoursRange[];
 };
 
+type GooglePeriod = {
+  open?: { day?: number; time?: string };
+  close?: { day?: number; time?: string };
+};
+
+type GoogleOpeningHoursPayload = {
+  periods?: GooglePeriod[];
+};
+
+function isOpeningHoursEntryArray(
+  entries: unknown,
+): entries is OpeningHoursEntry[] {
+  return (
+    Array.isArray(entries) &&
+    entries.every(
+      (entry) =>
+        entry &&
+        typeof entry === "object" &&
+        typeof (entry as OpeningHoursEntry).day === "string" &&
+        Array.isArray((entry as OpeningHoursEntry).ranges),
+    )
+  );
+}
+
+function isGoogleOpeningHoursPayload(
+  entries: unknown,
+): entries is GoogleOpeningHoursPayload {
+  return Boolean(
+    entries &&
+      typeof entries === "object" &&
+      Array.isArray((entries as GoogleOpeningHoursPayload).periods),
+  );
+}
+
+export function normalizeOpeningHoursEntries(
+  entries?: unknown,
+): OpeningHoursEntry[] {
+  if (isOpeningHoursEntryArray(entries)) {
+    return entries;
+  }
+  if (
+    Array.isArray(entries) &&
+    entries.every((entry) => typeof entry === "string")
+  ) {
+    return parseOpeningHoursText(entries.join("\n"));
+  }
+  if (isGoogleOpeningHoursPayload(entries)) {
+    return googlePeriodsToStructured(entries.periods);
+  }
+  return [];
+}
+
 export function createEmptySchedule(): OpeningHoursEntry[] {
   return WEEK_DAYS.map((day) => ({
     day,
@@ -33,16 +85,17 @@ export function createAlwaysOpenSchedule(): OpeningHoursEntry[] {
 }
 
 export function ensureAllDays(
-  entries?: OpeningHoursEntry[] | null,
+  entries?: unknown,
 ): OpeningHoursEntry[] {
+  const normalizedEntries = normalizeOpeningHoursEntries(entries);
   const map = new Map(
-    entries?.map((entry) => [
+    normalizedEntries.map((entry) => [
       entry.day.toLowerCase(),
       (entry.ranges ?? []).map((range) => ({
         open: range.open,
         close: range.close ?? null,
       })),
-    ]) ?? [],
+    ]),
   );
   return WEEK_DAYS.map((day) => ({
     day,
@@ -51,8 +104,25 @@ export function ensureAllDays(
 }
 
 function normalizeDayLabel(day: string) {
+  const normalizedDay = day.toLowerCase().trim();
+  const thaiDayMap: Array<[string, string]> = [
+    ["\u0e08\u0e31\u0e19\u0e17\u0e23\u0e4c", "monday"],
+    ["\u0e2d\u0e31\u0e07\u0e04\u0e32\u0e23", "tuesday"],
+    ["\u0e1e\u0e38\u0e18", "wednesday"],
+    ["\u0e1e\u0e24\u0e2b\u0e31\u0e2a\u0e1a\u0e14\u0e35", "thursday"],
+    ["\u0e1e\u0e24\u0e2b\u0e31\u0e2a", "thursday"],
+    ["\u0e28\u0e38\u0e01\u0e23\u0e4c", "friday"],
+    ["\u0e40\u0e2a\u0e32\u0e23\u0e4c", "saturday"],
+    ["\u0e2d\u0e32\u0e17\u0e34\u0e15\u0e22\u0e4c", "sunday"],
+  ];
+  const thaiMatch = thaiDayMap.find(([label]) =>
+    normalizedDay.includes(label),
+  );
+  if (thaiMatch) {
+    return thaiMatch[1];
+  }
   return (
-    WEEK_DAYS.find((entry) => day.toLowerCase().startsWith(entry)) ?? day
+    WEEK_DAYS.find((entry) => normalizedDay.startsWith(entry)) ?? day
   );
 }
 
@@ -65,9 +135,12 @@ export function parseOpeningHoursText(
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
-    .forEach((line) => {
+    .forEach((line, index) => {
       const [dayPart, ...rest] = line.split(":");
-      const day = normalizeDayLabel(dayPart?.trim() ?? line);
+      const normalizedDay = normalizeDayLabel(dayPart?.trim() ?? line);
+      const day = WEEK_DAYS.includes(normalizedDay)
+        ? normalizedDay
+        : (WEEK_DAYS[(index + 1) % WEEK_DAYS.length] ?? normalizedDay);
       const rangesText = rest.join(":").trim();
       const ranges =
         rangesText.length > 0
@@ -77,7 +150,9 @@ export function parseOpeningHoursText(
         if (segment.toLowerCase() === "open" || segment === "—") {
           return { open: "Open", close: null };
         }
-        const [start, end] = segment.split("–").map((part) => part.trim());
+        const [start, end] = segment
+          .split(/\s*(?:[-\u2013\u2014]|â€“|â€”)\s*/)
+          .map((part) => part.trim());
         return {
           open: start ?? segment,
           close: end ?? null,
@@ -98,11 +173,6 @@ export function parseOpeningHoursText(
         (WEEK_DAYS.indexOf(b.day.toLowerCase()) ?? 7),
     );
 }
-
-type GooglePeriod = {
-  open?: { day?: number; time?: string };
-  close?: { day?: number; time?: string };
-};
 
 function dayIndexToName(index?: number): string {
   if (typeof index !== "number" || index < 0 || index > 6) {

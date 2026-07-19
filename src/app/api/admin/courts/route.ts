@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { normalizeOpeningHoursEntries } from "@/lib/opening-hours";
 import {
   buildDuplicateCourtMessage,
   findCourtByGooglePlaceId,
@@ -19,7 +20,7 @@ type CourtPayload = {
   provinceId: number;
   districtId: number;
   price_note?: string;
-  opening_hours?: OpeningHoursEntry[] | null;
+  opening_hours?: OpeningHoursEntry[] | unknown[] | Record<string, unknown> | null;
   phone?: string;
   line_id?: string;
   lineQrUrl?: string | null;
@@ -86,6 +87,8 @@ export async function POST(request: Request) {
     );
   }
 
+  const openingHours = normalizeOpeningHoursEntries(payload.opening_hours);
+
   const { data: inserted, error: insertError } = await supabase
     .from("courts")
     .insert({
@@ -97,7 +100,7 @@ export async function POST(request: Request) {
       province_id: payload.provinceId,
       district_id: payload.districtId,
       price_note: payload.price_note || null,
-      opening_hours: payload.opening_hours ?? null,
+      opening_hours: openingHours.length > 0 ? openingHours : null,
       phone: payload.phone || null,
       line_id: payload.line_id || null,
       line_qr_url: payload.lineQrUrl ?? null,

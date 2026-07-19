@@ -7,6 +7,7 @@ import { getAllowPublicCourtPublish } from "@/lib/court-submission-policy";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
+import { normalizeOpeningHoursEntries } from "@/lib/opening-hours";
 import { ensureUserProfile } from "@/server/profile";
 import {
   buildDuplicateCourtMessage,
@@ -26,7 +27,7 @@ type CourtCreatePayload = {
   provinceId?: number;
   districtId?: number;
   price_note?: string;
-  opening_hours?: OpeningHoursEntry[] | null;
+  opening_hours?: OpeningHoursEntry[] | unknown[] | Record<string, unknown> | null;
   phone?: string;
   line_id?: string;
   lineQrUrl?: string | null;
@@ -150,9 +151,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const openingHours = Array.isArray(payload.opening_hours)
-    ? payload.opening_hours
-    : null;
+  const openingHours = normalizeOpeningHoursEntries(payload.opening_hours);
   const allowPublicCourtPublish = await getAllowPublicCourtPublish();
   const adminClient = getSupabaseAdminClient();
   const { error: profileError } = await ensureUserProfile(adminClient, user);
@@ -182,7 +181,7 @@ export async function POST(request: Request) {
       province_id: provinceId,
       district_id: districtId,
       price_note: priceNote || null,
-      opening_hours: openingHours,
+      opening_hours: openingHours.length > 0 ? openingHours : null,
       phone: phone || null,
       line_id: lineId || null,
       line_qr_url: payload.lineQrUrl ?? null,

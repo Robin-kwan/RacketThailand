@@ -925,12 +925,20 @@ export default async function GroupDetailPage({
                 copiedLabel={copy.linkCopiedAction}
               />
               {canEdit && (
-                <Link
-                  href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {copy.edit}
-                </Link>
+                <>
+                  <Link
+                    href={buildLocalizedPath(`/groups/${group.id}/players`, locale)}
+                    className="rt-btn-group inline-flex items-center justify-center px-4 py-2 text-sm"
+                  >
+                    {t("playerFinder.groupInvite.title")}
+                  </Link>
+                  <Link
+                    href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
+                    className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
+                  >
+                    {copy.edit}
+                  </Link>
+                </>
               )}
             </div>
           </div>

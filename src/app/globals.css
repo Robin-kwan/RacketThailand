@@ -85,9 +85,18 @@ input[type="time"] {
   -moz-appearance: textfield;
 }
 
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]),
+select:not([multiple]) {
+  min-height: 42px;
+}
+
 @media (max-width: 767px) {
   input:not([type="checkbox"]):not([type="radio"]),
-  select,
+  select {
+    font-size: 16px !important;
+    line-height: 1rem !important;
+  }
+
   textarea {
     font-size: 16px !important;
     line-height: 1.35rem !important;
@@ -242,7 +251,7 @@ a[class*="bg-transparent"]:not(:hover) {
   background-color: rgb(var(--rt-primary-rgb));
   border: 1px solid rgb(var(--rt-primary-border-rgb));
   border-radius: 999px;
-  color: var(--rt-primary-text);
+  color: #ffffff;
   font-weight: 600;
   transition:
     background-color 0.2s ease,
