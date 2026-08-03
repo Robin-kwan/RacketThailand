@@ -5,11 +5,7 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
 import { SportFinderHero } from "@/components/sport-finder-hero";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { getSportMeta } from "@/data/sportMeta";
-import {
-  buildLocalizedPath,
-  getTranslator,
-  normalizeLocale,
-} from "@/lib/i18n";
+import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
 import {
   buildAbsoluteUrl,
   buildCanonicalUrl,
@@ -69,11 +65,11 @@ function isDayKey(value: string): value is DayKey {
 
 function getThaiGroupFinderIntent(sportCode: string, sportName: string) {
   const intents: Record<string, string> = {
-    badminton: "หาก๊วนตีแบดและหาเพื่อนตีแบด",
-    padel: "หากลุ่มเล่นพาเดลและหาเพื่อนเล่นพาเดล",
-    pickleball: "หากลุ่มเล่นพิคเคิลบอลและหาเพื่อนเล่นพิคเคิลบอล",
-    tennis: "หากลุ่มตีเทนนิสและหาเพื่อนตีเทนนิส",
-    tabletennis: "หากลุ่มตีปิงปองและหาเพื่อนตีปิงปอง",
+    badminton: "ค้นหาก๊วนแบดมินตัน",
+    padel: "ค้นหากลุ่มพาเดล",
+    pickleball: "ค้นหากลุ่มพิคเคิลบอล",
+    tennis: "ค้นหากลุ่มเทนนิส",
+    tabletennis: "ค้นหากลุ่มปิงปอง",
   };
 
   const intent = intents[sportCode];
@@ -81,21 +77,19 @@ function getThaiGroupFinderIntent(sportCode: string, sportName: string) {
     return intent;
   }
 
-  const playVerbSports = new Set(["padel", "pickleball"]);
-  const verb = playVerbSports.has(sportCode) ? "เล่น" : "ตี";
-  return `หาเพื่อน${verb}${sportName}`;
+  return `ค้นหากลุ่ม${sportName}`;
 }
 
 function getEnglishGroupFinderIntent(sportCode: string, sportName: string) {
   const intents: Record<string, string> = {
-    badminton: "Find badminton groups and badminton partners",
-    padel: "Find padel groups and padel partners",
-    pickleball: "Find pickleball groups and pickleball partners",
-    tennis: "Find tennis groups and tennis partners",
-    tabletennis: "Find table tennis groups and table tennis partners",
+    badminton: "Find badminton groups",
+    padel: "Find padel groups",
+    pickleball: "Find pickleball groups",
+    tennis: "Find tennis groups",
+    tabletennis: "Find table tennis groups",
   };
 
-  return intents[sportCode] ?? `Find ${sportName} groups and partners`;
+  return intents[sportCode] ?? `Find ${sportName} groups`;
 }
 
 async function resolveParams(params: ParamsInput): Promise<Params> {
@@ -268,27 +262,28 @@ export default async function GroupFinderPage({
   const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
   const playFormatFilter = sanitizeQueryParam(resolvedSearch?.playFormat);
   const walkInFilter = sanitizeQueryParam(resolvedSearch?.allowWalkIn);
-  const groupData = await fetchGroupsBySport(resolvedParams.sport, {
-    search: searchQuery || undefined,
-    date: dateFilter || undefined,
-    day: isDayKey(dayFilter) ? dayFilter : undefined,
-    startTime: startTimeFilter || undefined,
-    endTime: endTimeFilter || undefined,
-    playFormat: playFormatFilter || undefined,
-    allowWalkIn: walkInFilter || undefined,
-    limit: 12,
-  }, locale);
+  const groupData = await fetchGroupsBySport(
+    resolvedParams.sport,
+    {
+      search: searchQuery || undefined,
+      date: dateFilter || undefined,
+      day: isDayKey(dayFilter) ? dayFilter : undefined,
+      startTime: startTimeFilter || undefined,
+      endTime: endTimeFilter || undefined,
+      playFormat: playFormatFilter || undefined,
+      allowWalkIn: walkInFilter || undefined,
+      limit: 12,
+    },
+    locale,
+  );
   if (!groupData.sport) {
     notFound();
   }
 
-  const dayLabels = DAY_KEYS.reduce<Record<string, string>>(
-    (acc, day) => {
-      acc[day] = t(`groups.days.${day}`);
-      return acc;
-    },
-    {},
-  );
+  const dayLabels = DAY_KEYS.reduce<Record<string, string>>((acc, day) => {
+    acc[day] = t(`groups.days.${day}`);
+    return acc;
+  }, {});
 
   const thaiIntent = getThaiGroupFinderIntent(
     resolvedParams.sport,
@@ -300,12 +295,10 @@ export default async function GroupFinderPage({
   );
   const isThaiLocale = locale === "th";
   const copy = {
-    title: isThaiLocale
-      ? thaiIntent
-      : englishIntent,
+    title: isThaiLocale ? thaiIntent : englishIntent,
     subtitle: isThaiLocale
-      ? `ค้นหากลุ่ม${meta.name[locale]}ที่เปิดรับสมาชิก พร้อมวันเวลาเล่น สนามประจำ และช่องทางติดต่อ`
-      : `Find ${meta.name[locale]} groups that welcome players, with schedules, regular venues, and contact details.`,
+      ? `ดู${resolvedParams.sport === "badminton" ? "ก๊วน" : "กลุ่ม"}${meta.name[locale]} พร้อมวันเวลาเล่น สนามประจำ และช่องทางติดต่อ`
+      : `Browse ${meta.name[locale]} groups with schedules, regular venues, and contact details.`,
     searchPlaceholder: t("groupFinder.searchPlaceholder"),
     reset: t("groupFinder.reset"),
     emptyTitle: t("groupFinder.emptyTitle"),
@@ -342,7 +335,6 @@ export default async function GroupFinderPage({
     lineLabel: t("groups.detail.line"),
     createGroupCta: t("header.createGroup"),
     playerFinderCta: t("header.playerFinder"),
-    casualPlaysCta: t("sport.casualPlaysCta"),
   };
 
   return (
@@ -356,21 +348,6 @@ export default async function GroupFinderPage({
           title={copy.title}
           description={copy.subtitle}
         >
-          <TrackedLink
-            href={buildLocalizedPath(
-              `/${resolvedParams.sport}/players?view=invitations`,
-              locale,
-            )}
-            eventName="sport_cta_click"
-            eventPayload={{
-              surface: "group_finder_header",
-              cta: "open_play_invitations",
-              sport: resolvedParams.sport,
-            }}
-            className="inline-flex items-center justify-center rounded-full border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/80 hover:bg-white/20"
-          >
-            {copy.casualPlaysCta}
-          </TrackedLink>
           <TrackedLink
             href={buildLocalizedPath(
               `/groups/create?sport=${encodeURIComponent(resolvedParams.sport)}`,

@@ -38,6 +38,7 @@ export type AdminResourceRowAction = {
   errorMessage?: string;
   nextStatusLabel?: string;
   nextStatusTone?: AdminResourceRow["statusTone"];
+  nextSortPriority?: number;
   nextActions?: AdminResourceRowAction[];
   nextSortValues?: Partial<Record<AdminResourceSortKey, string>>;
 };
@@ -52,7 +53,9 @@ export type AdminResourceRow = {
   statusTone?: "green" | "yellow" | "slate" | "rose";
   statusAction?: AdminResourceRowAction;
   sortValues?: Partial<Record<AdminResourceSortKey, string>>;
+  sortPriority?: number;
   viewHref: string;
+  viewInNewTab?: boolean;
   editHref: string;
   deleteEndpoint: string;
 };
@@ -169,6 +172,10 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
       : items;
 
     return [...matchedItems].sort((left, right) => {
+      const priorityResult =
+        (left.sortPriority ?? 0) - (right.sortPriority ?? 0);
+      if (priorityResult !== 0) return priorityResult;
+
       const leftValue = buildSortValue(left, sortKey);
       const rightValue = buildSortValue(right, sortKey);
       const result = leftValue.localeCompare(rightValue, undefined, {
@@ -246,6 +253,8 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
                 ...item,
                 statusLabel: action.nextStatusLabel ?? item.statusLabel,
                 statusTone: action.nextStatusTone ?? item.statusTone,
+                sortPriority:
+                  action.nextSortPriority ?? item.sortPriority,
                 statusAction: action.nextActions?.[0] ?? item.statusAction,
                 sortValues: action.nextSortValues
                   ? { ...item.sortValues, ...action.nextSortValues }
@@ -485,6 +494,12 @@ export function AdminResourceTable({ rows, copy }: AdminResourceTableProps) {
                           <div className="flex flex-wrap justify-end gap-2">
                             <Link
                               href={row.viewHref}
+                              target={row.viewInNewTab ? "_blank" : undefined}
+                              rel={
+                                row.viewInNewTab
+                                  ? "noopener noreferrer"
+                                  : undefined
+                              }
                               className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
                             >
                               <Eye

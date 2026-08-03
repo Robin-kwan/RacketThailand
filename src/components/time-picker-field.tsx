@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { X } from "lucide-react";
 import { END_OF_DAY_TIME } from "@/lib/time-range";
 
@@ -121,6 +128,7 @@ export type TimePickerFieldProps = {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
+  error?: boolean;
   options?: TimePickerOption[];
   minuteStep?: number;
   min?: string;
@@ -129,6 +137,7 @@ export type TimePickerFieldProps = {
   labelHidden?: boolean;
   clearLabel?: string;
   className?: string;
+  suffix?: ReactNode;
 };
 
 const formatDisplayTime = (time: string) => {
@@ -147,12 +156,14 @@ export function TimePickerField({
   onChange,
   placeholder,
   disabled = false,
+  error = false,
   options,
   minuteStep = 30,
   allowClear = false,
   labelHidden = false,
   clearLabel = "Clear",
   className,
+  suffix,
 }: TimePickerFieldProps) {
   const generatedId = useId();
   const resolvedId = id ?? generatedId;
@@ -240,9 +251,11 @@ export function TimePickerField({
               setOpen(false);
             }
           }}
-          className="flex h-[42px] w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:border-[var(--rt-primary)] focus-visible:ring-4 focus-visible:ring-[rgb(var(--rt-primary-rgb)/0.12)] focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`flex h-[42px] w-full min-w-0 items-center justify-between gap-3 rounded-lg border bg-white px-4 py-3 text-left text-sm tabular-nums text-slate-900 outline-none transition focus-visible:ring-4 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-60 ${error ? "border-rose-500 focus-visible:border-rose-500 focus-visible:ring-rose-100" : "border-slate-300 focus-visible:border-[var(--rt-primary)] focus-visible:ring-[rgb(var(--rt-primary-rgb)/0.12)]"} ${suffix ? "pr-10" : ""}`}
         >
-          <span className={`min-w-0 flex-1 ${displayValue ? "" : "text-slate-500"}`}>
+          <span
+            className={`min-w-0 flex-1 ${displayValue ? "" : "text-slate-500"}`}
+          >
             {displayValue || placeholder || ""}
           </span>
           {allowClear && value ? (
@@ -261,6 +274,11 @@ export function TimePickerField({
             </span>
           ) : null}
         </button>
+        {(!allowClear || !value) && suffix ? (
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+            {suffix}
+          </span>
+        ) : null}
         {open && (
           <div className="fixed inset-x-3 bottom-4 z-50 flex max-h-[min(400px,calc(100dvh-2rem))] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-3 sm:w-[min(24rem,calc(100vw-3rem))] sm:min-w-full">
             <div className="border-b border-slate-100 px-4 py-3">
@@ -294,7 +312,9 @@ export function TimePickerField({
                       role="option"
                       aria-selected={selected}
                     >
-                      <span className="block font-semibold">{option.label}</span>
+                      <span className="block font-semibold">
+                        {option.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -310,10 +330,7 @@ export function TimePickerField({
                   }}
                   className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                 >
-                  <X
-                    className="h-4 w-4"
-                    aria-hidden="true"
-                  />
+                  <X className="h-4 w-4" aria-hidden="true" />
                   {clearLabel}
                 </button>
               </div>
@@ -325,7 +342,10 @@ export function TimePickerField({
   );
 }
 
-type ClosingTimePickerFieldProps = Omit<TimePickerFieldProps, "options" | "min"> & {
+type ClosingTimePickerFieldProps = Omit<
+  TimePickerFieldProps,
+  "options" | "min"
+> & {
   startTime?: string;
   options?: TimePickerOption[];
   allowOvernight?: boolean;

@@ -25,6 +25,8 @@ type CasualPlayEntity = MinimalEntity & {
   sport_id?: string | null;
 };
 
+type TournamentEntity = MinimalEntity & { tournament_end_at?: string | null };
+
 function toSitemapDate(value?: string | null) {
   if (!value) return undefined;
   const date = new Date(value);
@@ -60,7 +62,7 @@ function buildLocalizedSitemapEntries({
 }
 
 async function fetchEntities<T extends MinimalEntity>(
-  table: "courts" | "groups" | "casual_plays" | "community_posts",
+  table: "courts" | "groups" | "casual_plays" | "community_posts" | "tournaments",
   limit = 1000,
   filters: Record<string, string> = {},
   select = "id,created_at,updated_at",
@@ -85,7 +87,7 @@ async function fetchEntities<T extends MinimalEntity>(
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const today = getThailandTodayDateString();
-  const [courts, groups, casualPlays, communityPosts] = await Promise.all([
+  const [courts, groups, casualPlays, communityPosts, tournaments] = await Promise.all([
     fetchEntities("courts", 1000, { is_active: "eq.true" }),
     fetchEntities("groups", 1000, { status: "eq.published" }),
     fetchEntities<CasualPlayEntity>(
@@ -100,6 +102,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { status: "eq.published" },
       "id,created_at,updated_at,sports(code)",
     ),
+    fetchEntities<TournamentEntity>("tournaments", 1000, {
+      status: "eq.published",
+      tournament_end_at: `gte.${new Date().toISOString()}`,
+    }, "id,created_at,updated_at,tournament_end_at"),
   ]);
 
   const staticRoutes = [
@@ -130,6 +136,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...SUPPORTED_SPORTS.flatMap((code) =>
       buildLocalizedSitemapEntries({
         path: `/${code}/group-finder`,
+        changeFrequency: "daily",
+        priority: 0.8,
+      }),
+    ),
+    ...SUPPORTED_SPORTS.flatMap((code) =>
+      buildLocalizedSitemapEntries({
+        path: `/${code}/tournaments`,
         changeFrequency: "daily",
         priority: 0.8,
       }),
@@ -177,6 +190,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
+  const tournamentRoutes = tournaments.flatMap((tournament) =>
+    buildLocalizedSitemapEntries({
+      path: `/tournaments/${tournament.id}`,
+      lastModified: getEntityLastModified(tournament),
+      changeFrequency: "daily",
+      priority: 0.7,
+    }),
+  );
+
   const communityPostRoutes = communityPosts.flatMap((post) => {
     const sportCode = post.sports?.code;
     if (!sportCode || !SUPPORTED_SPORTS.some((code) => code === sportCode)) {
@@ -196,6 +218,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...courtRoutes,
     ...groupRoutes,
     ...casualPlayRoutes,
+    ...tournamentRoutes,
     ...communityPostRoutes,
   ];
 }

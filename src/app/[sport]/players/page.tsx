@@ -6,15 +6,12 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
 import { BaseCard } from "@/components/base-card";
 import { CasualPlayFinder } from "@/components/casual-play-finder";
 import { HeaderSubLabel } from "@/components/header-sub-label";
+import { SportFinderHero } from "@/components/sport-finder-hero";
 import { PlayerFinderFilters } from "@/components/player-finder/player-finder-filters";
 import { RequestPlayButton } from "@/components/player-finder/request-play-button";
 import { getSportMeta } from "@/data/sportMeta";
 import { buildAuthPagePath } from "@/lib/auth-redirect";
-import {
-  buildLocalizedPath,
-  getTranslator,
-  normalizeLocale,
-} from "@/lib/i18n";
+import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
 import { PLAYER_SKILL_LEVELS } from "@/lib/player-finder";
 import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
@@ -158,60 +155,64 @@ export default async function PlayerFinderPage({
     <div className="rt-page">
       <HeaderSubLabel value={meta.name[locale]} />
       <main>
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto w-full max-w-screen-xl px-6 py-10 md:px-10 md:py-12">
-            <div className="flex flex-wrap items-end justify-between gap-5">
-              <div className="max-w-2xl border-l-2 border-[var(--rt-primary)] pl-5">
-                <h1 className="text-2xl font-semibold text-slate-950">
-                  {t("playerFinder.title", { sport: meta.name[locale] })}
-                </h1>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {t("playerFinder.subtitle")}
-                </p>
-                {view === "players" && playerData && (
-                  <p className="mt-3 text-sm font-semibold text-emerald-700">
-                    {t("playerFinder.activeCount", {
-                      count: playerData.players.length,
-                    })}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={buildLocalizedPath("/player-connections", locale)}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-                >
-                  {t("playerFinder.viewRequests")}
-                </Link>
-                {view === "players" ? (
-                  <Link
-                    href={profileHref}
-                    className="rt-btn-primary inline-flex items-center justify-center px-4 py-2 text-sm"
-                  >
-                    {t("playerFinder.manageProfile")}
-                  </Link>
-                ) : (
-                  <TrackedLink
-                    href={buildLocalizedPath(
-                      `/casual-plays/create?sport=${encodeURIComponent(sport)}`,
-                      locale,
-                    )}
-                    eventName="sport_cta_click"
-                    eventPayload={{
-                      surface: "play_finder_header",
-                      cta: "create_casual_play",
-                      sport,
-                    }}
-                    className="rt-btn-primary inline-flex items-center justify-center px-4 py-2 text-sm"
-                  >
-                    {t("header.createCasualPlay")}
-                  </TrackedLink>
-                )}
-              </div>
-            </div>
+        <SportFinderHero
+          sportName={meta.name[locale]}
+          sportAccent={meta.accent}
+          imageUrl={meta.coverImage}
+          title={
+            view === "invitations"
+              ? t("casualPlays.title", { sport: meta.name[locale] })
+              : t("playerFinder.title", { sport: meta.name[locale] })
+          }
+          description={
+            view === "invitations"
+              ? t("casualPlays.subtitle")
+              : t("playerFinder.subtitle")
+          }
+        >
+          {view === "players" && playerData ? (
+            <span className="inline-flex items-center rounded-lg border border-white/25 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm">
+              {t("playerFinder.activeCount", {
+                count: playerData.players.length,
+              })}
+            </span>
+          ) : null}
+          <Link
+            href={buildLocalizedPath("/player-connections", locale)}
+            className="inline-flex items-center justify-center rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20"
+          >
+            {t("playerFinder.viewRequests")}
+          </Link>
+          {view === "players" ? (
+            <Link
+              href={profileHref}
+              className="rt-btn-primary inline-flex items-center justify-center px-5 py-3 text-sm"
+            >
+              {t("playerFinder.manageProfile")}
+            </Link>
+          ) : (
+            <TrackedLink
+              href={buildLocalizedPath(
+                `/casual-plays/create?sport=${encodeURIComponent(sport)}`,
+                locale,
+              )}
+              eventName="sport_cta_click"
+              eventPayload={{
+                surface: "play_finder_header",
+                cta: "create_casual_play",
+                sport,
+              }}
+              className="rt-btn-primary inline-flex items-center justify-center px-5 py-3 text-sm"
+            >
+              {t("header.createCasualPlay")}
+            </TrackedLink>
+          )}
+        </SportFinderHero>
+        <section className="border-b border-slate-200 bg-white px-6 py-5 md:px-10">
+          <div className="mx-auto w-full max-w-screen-xl">
             <nav
               aria-label={t("playerFinder.viewLabel")}
-              className="mt-8 flex w-full max-w-lg rounded-lg border border-slate-200 bg-slate-50 p-1"
+              className="flex w-full max-w-lg rounded-lg border border-slate-200 bg-slate-50 p-1"
             >
               <Link
                 href={playerViewHref}
@@ -252,158 +253,163 @@ export default async function PlayerFinderPage({
           </section>
         ) : playerData ? (
           <section className="px-6 py-8 md:px-10 md:py-10">
-          <div className="mx-auto w-full max-w-screen-xl">
-            <PlayerFinderFilters
-              locale={locale}
-              area={area}
-              skill={skill}
-              clearHref={buildLocalizedPath(finderPath, locale)}
-              skillOptions={[
-                { value: "", label: t("playerFinder.allSkills") },
-                ...PLAYER_SKILL_LEVELS.map((value) => ({
-                  value,
-                  label: t(`playerFinder.skills.${value}`),
-                })),
-              ]}
-              copy={{
-                area: t("playerFinder.areaFilter"),
-                areaPlaceholder: t("playerFinder.areaPlaceholder"),
-                skill: t("playerFinder.skillFilter"),
-                apply: t("playerFinder.applyFilters"),
-                clear: t("playerFinder.clearFilters"),
-              }}
-            />
+            <div className="mx-auto w-full max-w-screen-xl">
+              <PlayerFinderFilters
+                locale={locale}
+                area={area}
+                skill={skill}
+                clearHref={buildLocalizedPath(finderPath, locale)}
+                skillOptions={[
+                  { value: "", label: t("playerFinder.allSkills") },
+                  ...PLAYER_SKILL_LEVELS.map((value) => ({
+                    value,
+                    label: t(`playerFinder.skills.${value}`),
+                  })),
+                ]}
+                copy={{
+                  area: t("playerFinder.areaFilter"),
+                  areaPlaceholder: t("playerFinder.areaPlaceholder"),
+                  skill: t("playerFinder.skillFilter"),
+                  apply: t("playerFinder.applyFilters"),
+                  clear: t("playerFinder.clearFilters"),
+                }}
+              />
 
-            {!playerData.schemaReady ? (
-              <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50 px-6 py-10 text-center">
-                <h2 className="text-lg font-semibold text-amber-950">
-                  {t("playerFinder.schemaTitle")}
-                </h2>
-                <p className="mt-2 text-sm text-amber-800">
-                  {t("playerFinder.schemaDescription")}
-                </p>
-              </div>
-            ) : playerData.players.length === 0 ? (
-              <div className="mt-8 rounded-lg border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
-                <h2 className="text-xl font-semibold text-slate-950">
-                  {t("playerFinder.emptyTitle")}
-                </h2>
-                <p className="mt-2 text-sm text-slate-600">
-                  {t("playerFinder.emptyDescription")}
-                </p>
-                <Link
-                  href={profileHref}
-                  className="rt-btn-primary mt-5 inline-flex items-center justify-center px-5 py-2.5 text-sm"
-                >
-                  {t("playerFinder.manageProfile")}
-                </Link>
-              </div>
-            ) : (
-              <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {playerData.players.map((player) => {
-                  const availability = [
-                    ...player.availabilityDays.map((day) =>
-                      t(`groups.days.${day}`),
-                    ),
-                    player.timePreference
-                      ? t(`playerFinder.times.${player.timePreference}`)
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ");
-                  return (
-                    <BaseCard
-                      as="article"
-                      key={player.profileId}
-                      className="flex min-h-[20rem] flex-col p-5"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-lg font-semibold text-slate-600">
-                          {player.avatarUrl ? (
-                            <Image
-                              src={player.avatarUrl}
-                              alt=""
-                              fill
-                              sizes="56px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            player.displayName.slice(0, 1).toUpperCase()
+              {!playerData.schemaReady ? (
+                <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50 px-6 py-10 text-center">
+                  <h2 className="text-lg font-semibold text-amber-950">
+                    {t("playerFinder.schemaTitle")}
+                  </h2>
+                  <p className="mt-2 text-sm text-amber-800">
+                    {t("playerFinder.schemaDescription")}
+                  </p>
+                </div>
+              ) : playerData.players.length === 0 ? (
+                <div className="mt-8 rounded-lg border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+                  <h2 className="text-xl font-semibold text-slate-950">
+                    {t("playerFinder.emptyTitle")}
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {t("playerFinder.emptyDescription")}
+                  </p>
+                  <Link
+                    href={profileHref}
+                    className="rt-btn-primary mt-5 inline-flex items-center justify-center px-5 py-2.5 text-sm"
+                  >
+                    {t("playerFinder.manageProfile")}
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {playerData.players.map((player) => {
+                    const availability = [
+                      ...player.availabilityDays.map((day) =>
+                        t(`groups.days.${day}`),
+                      ),
+                      player.timePreference
+                        ? t(`playerFinder.times.${player.timePreference}`)
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ");
+                    return (
+                      <BaseCard
+                        as="article"
+                        key={player.profileId}
+                        className="flex min-h-[20rem] flex-col p-5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-lg font-semibold text-slate-600">
+                            {player.avatarUrl ? (
+                              <Image
+                                src={player.avatarUrl}
+                                alt=""
+                                fill
+                                sizes="56px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              player.displayName.slice(0, 1).toUpperCase()
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h2 className="truncate text-base font-semibold text-slate-950">
+                              {player.displayName}
+                            </h2>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {player.skillLevel && (
+                                <span className="rt-pill px-2.5 py-1 text-xs">
+                                  {t(
+                                    `playerFinder.skills.${player.skillLevel}`,
+                                  )}
+                                </span>
+                              )}
+                              {player.ratingSystem &&
+                                player.ratingValue !== null && (
+                                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                                    {t("playerFinder.rating", {
+                                      system: player.ratingSystem,
+                                      value: player.ratingValue,
+                                    })}
+                                  </span>
+                                )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <dl className="mt-5 space-y-3 text-sm">
+                          {player.area && (
+                            <div>
+                              <dt className="text-xs font-semibold text-slate-500">
+                                {t("playerFinder.profile.area")}
+                              </dt>
+                              <dd className="mt-1 font-medium text-slate-800">
+                                {player.area}
+                              </dd>
+                            </div>
                           )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h2 className="truncate text-base font-semibold text-slate-950">
-                            {player.displayName}
-                          </h2>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {player.skillLevel && (
-                              <span className="rt-pill px-2.5 py-1 text-xs">
-                                {t(`playerFinder.skills.${player.skillLevel}`)}
-                              </span>
-                            )}
-                            {player.ratingSystem && player.ratingValue !== null && (
-                              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                                {t("playerFinder.rating", {
-                                  system: player.ratingSystem,
-                                  value: player.ratingValue,
-                                })}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                          {availability && (
+                            <div>
+                              <dt className="text-xs font-semibold text-slate-500">
+                                {t("playerFinder.availability")}
+                              </dt>
+                              <dd className="mt-1 leading-6 text-slate-700">
+                                {availability}
+                              </dd>
+                            </div>
+                          )}
+                        </dl>
+                        {player.lookingNote && (
+                          <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
+                            {player.lookingNote}
+                          </p>
+                        )}
 
-                      <dl className="mt-5 space-y-3 text-sm">
-                        {player.area && (
-                          <div>
-                            <dt className="text-xs font-semibold text-slate-500">
-                              {t("playerFinder.profile.area")}
-                            </dt>
-                            <dd className="mt-1 font-medium text-slate-800">
-                              {player.area}
-                            </dd>
+                        {player.profileId !== user?.id && (
+                          <div className="mt-auto pt-5">
+                            <RequestPlayButton
+                              recipientId={player.profileId}
+                              sportId={player.sportId}
+                              loginHref={buildAuthPagePath(
+                                "/login",
+                                locale,
+                                finderPath,
+                              )}
+                              profileHref={profileHref}
+                              isAuthenticated={Boolean(
+                                user && !user.is_anonymous,
+                              )}
+                              hasOwnProfile={Boolean(ownSportProfile)}
+                              copy={requestCopy}
+                            />
                           </div>
                         )}
-                        {availability && (
-                          <div>
-                            <dt className="text-xs font-semibold text-slate-500">
-                              {t("playerFinder.availability")}
-                            </dt>
-                            <dd className="mt-1 leading-6 text-slate-700">
-                              {availability}
-                            </dd>
-                          </div>
-                        )}
-                      </dl>
-                      {player.lookingNote && (
-                        <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
-                          {player.lookingNote}
-                        </p>
-                      )}
-
-                      {player.profileId !== user?.id && (
-                        <div className="mt-auto pt-5">
-                          <RequestPlayButton
-                            recipientId={player.profileId}
-                            sportId={player.sportId}
-                            loginHref={buildAuthPagePath(
-                              "/login",
-                              locale,
-                              finderPath,
-                            )}
-                            profileHref={profileHref}
-                            isAuthenticated={Boolean(user && !user.is_anonymous)}
-                            hasOwnProfile={Boolean(ownSportProfile)}
-                            copy={requestCopy}
-                          />
-                        </div>
-                      )}
-                    </BaseCard>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                      </BaseCard>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </section>
         ) : null}
       </main>

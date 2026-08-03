@@ -125,6 +125,10 @@ export function SiteHeader({
         path: `${basePath}/group-finder`,
       },
       {
+        label: locale === "th" ? "การแข่งขัน" : "Tournaments",
+        path: `${basePath}/tournaments`,
+      },
+      {
         label: labels.playerFinder ?? "Find players",
         path: `${basePath}/players`,
       },
@@ -278,7 +282,7 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 min-[1000px]:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 min-[1000px]:hidden"
               aria-label="Open navigation menu"
             >
               <Menu
@@ -290,10 +294,10 @@ export function SiteHeader({
           </div>
           {navLinks.length > 0 && (
             <nav className="hidden flex-wrap items-center gap-5 text-sm font-semibold min-[1000px]:flex">
-              {navLinks.map((link) => {
+              {navLinks.map((link, index) => {
                 const isLinkActive =
                   pathname === link.path ||
-                  (link.path !== "/" && pathname.startsWith(`${link.path}/`));
+                  (index > 0 && pathname.startsWith(`${link.path}/`));
                 return (
                   <Link
                     key={link.path}

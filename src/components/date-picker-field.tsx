@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { BaseTextField } from "@/components/base-text-field";
 import {
@@ -22,6 +29,7 @@ type DatePickerFieldProps = {
   placeholder?: string;
   className?: string;
   inputClassName?: string;
+  suffix?: ReactNode;
 };
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -52,11 +60,15 @@ function startOfMonth(date: Date) {
 }
 
 function endOfMonth(date: Date) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12));
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12),
+  );
 }
 
 function addMonths(date: Date, amount: number) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1, 12));
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1, 12),
+  );
 }
 
 function buildMonthCells(
@@ -68,15 +80,12 @@ function buildMonthCells(
   const firstDay = startOfMonth(month);
   const leadingEmptyCells = firstDay.getUTCDay();
   const totalDays = endOfMonth(month).getUTCDate();
-  const cells: Array<
-    | {
-        key: string;
-        dayNumber: number;
-        disabled: boolean;
-        isToday: boolean;
-      }
-    | null
-  > = [];
+  const cells: Array<{
+    key: string;
+    dayNumber: number;
+    disabled: boolean;
+    isToday: boolean;
+  } | null> = [];
 
   for (let index = 0; index < leadingEmptyCells; index += 1) {
     cells.push(null);
@@ -116,6 +125,7 @@ export function DatePickerField({
   placeholder = "DD/MM/YYYY",
   className,
   inputClassName,
+  suffix,
 }: DatePickerFieldProps) {
   const generatedId = useId();
   const resolvedId = id ?? generatedId;
@@ -129,7 +139,9 @@ export function DatePickerField({
   const [displayValue, setDisplayValue] = useState(() =>
     formatDateInputForDisplay(value),
   );
-  const [viewMonth, setViewMonth] = useState(() => startOfMonth(initialViewDate));
+  const [viewMonth, setViewMonth] = useState(() =>
+    startOfMonth(initialViewDate),
+  );
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -211,13 +223,7 @@ export function DatePickerField({
   );
 
   const monthCells = useMemo(
-    () =>
-      buildMonthCells(
-        viewMonth,
-        min,
-        max,
-        min,
-      ),
+    () => buildMonthCells(viewMonth, min, max, min),
     [max, min, viewMonth],
   );
 
@@ -265,11 +271,26 @@ export function DatePickerField({
           onFocus={() => {
             openCalendar();
           }}
+          onBlur={() => {
+            const parsedValue = parseDisplayDateInput(displayValue);
+            const isWithinRange =
+              parsedValue &&
+              (!min || parsedValue >= min) &&
+              (!max || parsedValue <= max);
+            if (!isWithinRange) {
+              onChange("");
+              setDisplayValue("");
+            }
+          }}
           onChange={(event) => {
             const nextValue = event.target.value;
             setDisplayValue(nextValue);
             const parsedValue = parseDisplayDateInput(nextValue);
             if (!parsedValue) return;
+            if ((min && parsedValue < min) || (max && parsedValue > max)) {
+              onChange("");
+              return;
+            }
             onChange(parsedValue);
             const parsed = parseDateString(parsedValue);
             if (parsed) {
@@ -284,6 +305,11 @@ export function DatePickerField({
           variant="light"
           className={inputClassName}
         />
+        {suffix ? (
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+            {suffix}
+          </span>
+        ) : null}
         {open && (
           <>
             <button
@@ -299,67 +325,70 @@ export function DatePickerField({
               className={`fixed left-1/2 top-1/2 z-50 w-[min(19rem,calc(100vw-1.5rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-slate-200 bg-white p-3 shadow-[0_28px_70px_-30px_rgba(15,23,42,0.45)] sm:absolute sm:left-0 sm:w-[19rem] sm:translate-x-0 sm:translate-y-0 ${desktopPlacementClass}`}
             >
               <div className="flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => canGoPrev && setViewMonth((current) => addMonths(current, -1))}
-                disabled={!canGoPrev}
-                className="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Previous month"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <p className="text-sm font-semibold text-slate-900">
-                {monthLabel}
-              </p>
-              <button
-                type="button"
-                onClick={() => canGoNext && setViewMonth((current) => addMonths(current, 1))}
-                disabled={!canGoNext}
-                className="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Next month"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-              <div className="mt-3 grid grid-cols-7 justify-items-center gap-1">
-              {weekdayLabels.map((weekday) => (
-                <div
-                  key={weekday}
-                  className="flex size-9 items-center justify-center text-center text-[10px] font-semibold text-[rgb(var(--foreground-rgb)/0.45)]"
+                <button
+                  type="button"
+                  onClick={() =>
+                    canGoPrev &&
+                    setViewMonth((current) => addMonths(current, -1))
+                  }
+                  disabled={!canGoPrev}
+                  className="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Previous month"
                 >
-                  {weekday}
-                </div>
-              ))}
-              {monthCells.map((cell, index) =>
-                cell ? (
-                  <button
-                    key={cell.key}
-                    type="button"
-                    disabled={cell.disabled}
-                    onClick={() => {
-                      onChange(cell.key);
-                      setDisplayValue(formatDateInputForDisplay(cell.key));
-                      setOpen(false);
-                    }}
-                    className={`flex size-9 items-center justify-center rounded-lg border text-sm font-semibold transition ${
-                      cell.key === value
-                        ? "border-[rgb(var(--rt-primary-rgb)/0.35)] bg-[rgb(var(--rt-primary-rgb)/0.1)] text-[var(--foreground)]"
-                        : cell.disabled
-                          ? "border-slate-100 bg-slate-50 text-slate-300"
-                          : cell.isToday
-                            ? "border-slate-300 bg-white text-slate-900 hover:border-slate-400"
-                            : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white"
-                    }`}
-                  >
-                    {cell.dayNumber}
-                  </button>
-                ) : (
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <p className="text-sm font-semibold text-slate-900">
+                  {monthLabel}
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    canGoNext &&
+                    setViewMonth((current) => addMonths(current, 1))
+                  }
+                  disabled={!canGoNext}
+                  className="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Next month"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-3 grid grid-cols-7 justify-items-center gap-1">
+                {weekdayLabels.map((weekday) => (
                   <div
-                    key={`empty-${index}`}
-                    className="size-9"
-                  />
-                ),
-              )}
+                    key={weekday}
+                    className="flex size-9 items-center justify-center text-center text-[10px] font-semibold text-[rgb(var(--foreground-rgb)/0.45)]"
+                  >
+                    {weekday}
+                  </div>
+                ))}
+                {monthCells.map((cell, index) =>
+                  cell ? (
+                    <button
+                      key={cell.key}
+                      type="button"
+                      disabled={cell.disabled}
+                      onClick={() => {
+                        onChange(cell.key);
+                        setDisplayValue(formatDateInputForDisplay(cell.key));
+                        setOpen(false);
+                      }}
+                      className={`flex size-9 items-center justify-center rounded-lg border text-sm font-semibold transition ${
+                        cell.key === value
+                          ? "border-[rgb(var(--rt-primary-rgb)/0.35)] bg-[rgb(var(--rt-primary-rgb)/0.1)] text-[var(--foreground)]"
+                          : cell.disabled
+                            ? "border-slate-100 bg-slate-50 text-slate-300"
+                            : cell.isToday
+                              ? "border-slate-300 bg-white text-slate-900 hover:border-slate-400"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white"
+                      }`}
+                    >
+                      {cell.dayNumber}
+                    </button>
+                  ) : (
+                    <div key={`empty-${index}`} className="size-9" />
+                  ),
+                )}
               </div>
             </div>
           </>

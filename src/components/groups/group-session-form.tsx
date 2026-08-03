@@ -4,15 +4,10 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Repeat2 } from "lucide-react";
 import { BaseSelect } from "@/components/base-select";
-import { BaseAutocomplete } from "@/components/base-autocomplete";
+import { CourtPicker } from "@/components/court-picker";
 import { DatePickerField } from "@/components/date-picker-field";
-import { BaseTextField } from "@/components/base-text-field";
 import { BaseTextArea } from "@/components/base-text-area";
-import {
-  PlaceSearchField,
-  type ExistingCourt,
-  type PlaceResolution,
-} from "@/components/admin/place-search-field";
+import { QuickCourtInsert } from "@/components/quick-court-insert";
 import { showToast } from "@/components/toaster";
 import {
   ClosingTimePickerField,
@@ -21,8 +16,6 @@ import {
   createTimeOptions,
 } from "@/components/time-picker-field";
 import type { Locale } from "@/lib/i18n";
-import type { MapCoordinates } from "@/lib/google-maps";
-import type { PlaceDetailsPayload } from "@/lib/google-places";
 
 type Option = {
   value: string;
@@ -86,28 +79,6 @@ const TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
 const CLOSING_TIME_OPTIONS = createClosingTimeOptions({ minuteStep: 30 });
 const QUICK_ADD_COURT_VALUE = "__quick_add_court__";
 
-type QuickCourtDraft = {
-  name: string;
-  place: PlaceDetailsPayload | null;
-  placeId: string;
-  coordinates: MapCoordinates | null;
-  duplicateCourt: ExistingCourt | null;
-  validationVisible: boolean;
-  submitting: boolean;
-  error: string | null;
-};
-
-const createQuickCourtDraft = (): QuickCourtDraft => ({
-  name: "",
-  place: null,
-  placeId: "",
-  coordinates: null,
-  duplicateCourt: null,
-  validationVisible: false,
-  submitting: false,
-  error: null,
-});
-
 function getThailandDate(offsetDays = 0) {
   const date = new Date();
   date.setDate(date.getDate() + offsetDays);
@@ -145,7 +116,7 @@ export function GroupSessionForm({
   const [notes, setNotes] = useState("");
   const [validationVisible, setValidationVisible] = useState(false);
   const [loadingCourts, setLoadingCourts] = useState(false);
-  const [quickCourt, setQuickCourt] = useState<QuickCourtDraft | null>(null);
+  const [quickCourtOpen, setQuickCourtOpen] = useState(false);
 
   const today = useMemo(() => getThailandDate(0), []);
   const maxDate = useMemo(() => getThailandDate(30), []);
@@ -211,128 +182,11 @@ export function GroupSessionForm({
   const handleCourtChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const nextCourtId = event.target.value;
     if (nextCourtId === QUICK_ADD_COURT_VALUE) {
-      setQuickCourt(createQuickCourtDraft());
+      setQuickCourtOpen(true);
       return;
     }
     setCourtId(nextCourtId);
-    setQuickCourt(null);
-  };
-
-  const handleQuickCourtPlaceResolution = (resolution: PlaceResolution) => {
-    setQuickCourt((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        place: resolution.place ?? null,
-        placeId: resolution.place?.placeId ?? resolution.placeId ?? "",
-        coordinates: resolution.coordinates,
-        duplicateCourt: null,
-        name: prev.name.trim() ? prev.name : resolution.place?.name ?? prev.name,
-        error: null,
-      };
-    });
-  };
-
-  const handleQuickCourtSubmit = async () => {
-    if (!quickCourt) return;
-    setQuickCourt((prev) =>
-      prev
-        ? {
-            ...prev,
-            validationVisible: true,
-            error: null,
-          }
-        : prev,
-    );
-
-    const name = quickCourt.name.trim();
-    const place = quickCourt.place;
-    const coordinates = quickCourt.coordinates;
-    const latitude = Number(coordinates?.latitude);
-    const longitude = Number(coordinates?.longitude);
-    const hasCompleteLocation =
-      Boolean(place?.address) &&
-      Boolean(place?.province) &&
-      typeof place?.provinceId === "number" &&
-      typeof place?.districtId === "number" &&
-      Number.isFinite(latitude) &&
-      Number.isFinite(longitude);
-
-    if (
-      !name ||
-      !quickCourt.placeId ||
-      !place ||
-      !coordinates ||
-      quickCourt.duplicateCourt ||
-      !hasCompleteLocation
-    ) {
-      return;
-    }
-
-    setQuickCourt((prev) =>
-      prev
-        ? {
-            ...prev,
-            submitting: true,
-            error: null,
-          }
-        : prev,
-    );
-
-    try {
-      const response = await fetch("/api/courts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sportId,
-          name,
-          address: place.address,
-          district: place.district ?? "",
-          province: place.province,
-          provinceId: place.provinceId,
-          districtId: place.districtId,
-          latitude,
-          longitude,
-          googlePlaceId: quickCourt.placeId,
-          phone: place.phone ?? "",
-          website_url: place.website ?? "",
-          opening_hours: place.openingHoursStructured ?? null,
-        }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data?.courtId) {
-        setQuickCourt((prev) =>
-          prev
-            ? {
-                ...prev,
-                submitting: false,
-                error: data?.error ?? copy.quickCourtCreateError,
-              }
-            : prev,
-        );
-        return;
-      }
-
-      const nextCourtId = data.courtId as string;
-      const label = [name, place.province].filter(Boolean).join(" - ");
-      setCourtOptions((prev) => [
-        { value: nextCourtId, label },
-        ...prev.filter((option) => option.value !== nextCourtId),
-      ]);
-      setCourtId(nextCourtId);
-      setQuickCourt(null);
-      setValidationVisible(false);
-    } catch {
-      setQuickCourt((prev) =>
-        prev
-          ? {
-              ...prev,
-              submitting: false,
-              error: copy.quickCourtCreateError,
-            }
-          : prev,
-      );
-    }
+    setQuickCourtOpen(false);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -438,11 +292,15 @@ export function GroupSessionForm({
           })}
         </div>
 
-        <BaseAutocomplete
+        <CourtPicker
           label={copy.courtLabel}
           name="sessionCourt"
           value={courtId}
-          onChange={handleCourtChange}
+          onValueChange={(value) =>
+            handleCourtChange({
+              target: { value },
+            } as React.ChangeEvent<HTMLSelectElement>)
+          }
           options={courtSelectOptions}
           placeholder={copy.courtPlaceholder}
           helperText={
@@ -461,121 +319,21 @@ export function GroupSessionForm({
               : undefined
           }
         />
-        {quickCourt && (
-          <div className="space-y-4 rounded-lg border border-emerald-100 bg-emerald-50/40 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-semibold text-slate-900">
-                {copy.quickCourtTitle}
-              </p>
-              <button
-                type="button"
-                onClick={() => setQuickCourt(null)}
-                className="text-xs font-semibold text-slate-500 transition hover:text-slate-800"
-              >
-                {copy.quickCourtCancel}
-              </button>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">
-                {copy.quickCourtName}
-              </label>
-              <BaseTextField
-                type="text"
-                value={quickCourt.name}
-                onChange={(event) =>
-                  setQuickCourt((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          name: event.target.value,
-                          error: null,
-                        }
-                      : prev,
-                  )
-                }
-                placeholder={copy.quickCourtNamePlaceholder}
-                variant="light"
-                aria-invalid={
-                  quickCourt.validationVisible && !quickCourt.name.trim()
-                }
-                className={
-                  quickCourt.validationVisible && !quickCourt.name.trim()
-                    ? "border-rose-300 bg-rose-50 focus-visible:border-rose-400 focus-visible:ring-rose-200"
-                    : undefined
-                }
-              />
-              {quickCourt.validationVisible && !quickCourt.name.trim() && (
-                <p className="text-xs font-medium text-rose-600">
-                  {copy.quickCourtNameRequired}
-                </p>
-              )}
-            </div>
-            <PlaceSearchField
-              label={copy.quickCourtPlaceSearch}
-              placeholder={copy.quickCourtPlaceSearch}
-              helper={copy.quickCourtPlaceHelper}
-              noResults={copy.quickCourtNoResults}
-              duplicateLabel={copy.quickCourtDuplicateLabel}
-              duplicateLinkLabel={copy.quickCourtDuplicateLinkLabel}
-              locationPreviewLabel={copy.quickCourtLocationPreview}
-              mapTitle={copy.quickCourtMapTitle}
-              onResolve={handleQuickCourtPlaceResolution}
-              onDuplicateCourtChange={(court) =>
-                setQuickCourt((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        duplicateCourt: court,
-                        error: null,
-                      }
-                    : prev,
-                )
-              }
-              invalid={
-                quickCourt.validationVisible &&
-                (!quickCourt.placeId ||
-                  !quickCourt.coordinates ||
-                  !quickCourt.place ||
-                  Boolean(quickCourt.duplicateCourt) ||
-                  !quickCourt.place.address ||
-                  !quickCourt.place.province ||
-                  typeof quickCourt.place.provinceId !== "number" ||
-                  typeof quickCourt.place.districtId !== "number")
-              }
-              invalidMessage={
-                quickCourt.duplicateCourt
-                  ? copy.quickCourtDuplicateError
-                  : !quickCourt.placeId || !quickCourt.coordinates
-                    ? copy.quickCourtPlaceRequired
-                    : copy.quickCourtLocationIncomplete
-              }
-            />
-            {quickCourt.error && (
-              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
-                {quickCourt.error}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleQuickCourtSubmit}
-                disabled={quickCourt.submitting}
-                className="rt-btn-court inline-flex items-center justify-center px-5 py-2 text-sm disabled:cursor-not-allowed"
-              >
-                {quickCourt.submitting
-                  ? `${copy.quickCourtSaving}...`
-                  : copy.quickCourtSave}
-              </button>
-              <button
-                type="button"
-                onClick={() => setQuickCourt(null)}
-                disabled={quickCourt.submitting}
-                className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:text-slate-400"
-              >
-                {copy.quickCourtCancel}
-              </button>
-            </div>
-          </div>
+        {quickCourtOpen && (
+          <QuickCourtInsert
+            sportId={sportId}
+            locale={locale}
+            onCancel={() => setQuickCourtOpen(false)}
+            onCreated={({ courtId: nextCourtId, label }) => {
+              setCourtOptions((current) => [
+                { value: nextCourtId, label },
+                ...current.filter((option) => option.value !== nextCourtId),
+              ]);
+              setCourtId(nextCourtId);
+              setQuickCourtOpen(false);
+              setValidationVisible(false);
+            }}
+          />
         )}
 
         {mode === "date" && (

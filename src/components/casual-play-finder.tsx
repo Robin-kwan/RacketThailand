@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LocateFixed } from "lucide-react";
 import { track } from "@vercel/analytics";
 import type { CasualPlayRecord } from "@/server/casualPlays";
 import { CasualPlayCard } from "@/components/casual-play-card";
@@ -303,8 +304,9 @@ export function CasualPlayFinder({
               type="button"
               onClick={handleRequestNearby}
               disabled={locatingNearby}
-              className="rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:border-slate-500 disabled:cursor-not-allowed disabled:border-slate-500 disabled:bg-slate-500 disabled:text-white"
+              className="rt-btn-primary inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:border disabled:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:transform-none"
             >
+              <LocateFixed className="h-4 w-4" aria-hidden />
               {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
             </button>
             {prioritizeNearby && (

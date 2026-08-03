@@ -197,7 +197,7 @@ export function BaseSelect({
             id={resolvedMenuId}
             role="listbox"
             aria-label={label}
-            className={`absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-xl border p-1.5 ${variantStyles.menu}`}
+            className={`absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 max-h-64 overflow-y-auto rounded-xl border p-1.5 ${variantStyles.menu}`}
           >
             {options
               .filter((option) => !option.hidden)

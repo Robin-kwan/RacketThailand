@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BaseNumberField } from "@/components/base-number-field";
 import { BaseSelect } from "@/components/base-select";
+import { CourtPicker } from "@/components/court-picker";
 import { BaseTextArea } from "@/components/base-text-area";
 import { BaseTextField } from "@/components/base-text-field";
 import { DatePickerField } from "@/components/date-picker-field";
@@ -304,15 +305,20 @@ export function CasualPlayForm({
           variant="light"
         />
       </div>
-      <BaseSelect
+      <CourtPicker
         label={copy.court}
         name="courtId"
         value={form.courtId}
-        onChange={updateField}
+        onValueChange={(value) =>
+          updateField({
+            target: { name: "courtId", value },
+          } as React.ChangeEvent<HTMLSelectElement>)
+        }
         options={[
           { value: "", label: copy.courtEmpty },
           ...courtOptions,
         ]}
+        placeholder={copy.courtEmpty}
         variant="light"
       />
       <p className="-mt-3 text-xs text-[rgb(var(--foreground-rgb)/0.65)]">

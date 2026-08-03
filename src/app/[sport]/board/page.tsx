@@ -3,12 +3,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { HeaderSubLabel } from "@/components/header-sub-label";
+import { SportFinderHero } from "@/components/sport-finder-hero";
 import { COMMUNITY_CATEGORIES } from "@/data/communityCategories";
-import {
-  buildLocalizedPath,
-  getTranslator,
-  normalizeLocale,
-} from "@/lib/i18n";
+import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
 import { buildAuthPagePath } from "@/lib/auth-redirect";
 import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
 import { SPORT_META } from "@/data/sportMeta";
@@ -128,13 +125,11 @@ export default async function CommunityBoardPage({
     createHeading: t("community.createHeading"),
     loginPrompt: t("community.loginPrompt"),
   };
-  const selectedCategory =
-    resolvedSearch?.category?.toLowerCase() ?? "all";
+  const selectedCategory = resolvedSearch?.category?.toLowerCase() ?? "all";
   const filteredPosts =
     selectedCategory !== "all"
       ? posts.filter(
-          (post) =>
-            post.category?.toLowerCase() === selectedCategory,
+          (post) => post.category?.toLowerCase() === selectedCategory,
         )
       : posts;
   const localizedCategories = COMMUNITY_CATEGORIES.map((category) => ({
@@ -170,93 +165,91 @@ export default async function CommunityBoardPage({
     <div className="min-h-screen bg-[#f7fbf9] text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sportMeta.name[locale]} />
-      <main className="mx-auto flex w-full max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 md:px-10 md:pb-20">
-        <header className="border-b border-slate-200 pb-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="border-l-2 border-[var(--rt-primary)] pl-5">
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-                {copy.title}
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {copy.subtitle}
-              </p>
+      <main>
+        <SportFinderHero
+          sportName={sportMeta.name[locale]}
+          sportAccent={sportMeta.accent}
+          imageUrl={sportMeta.coverImage}
+          title={copy.title}
+          description={copy.subtitle}
+        >
+          {isAuthenticated ? (
+            <Link
+              href={buildLocalizedPath(`/${sport.code}/board/mine`, locale)}
+              className="inline-flex items-center justify-center rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20"
+            >
+              {t("community.myPostsLink")}
+            </Link>
+          ) : null}
+        </SportFinderHero>
+        <div className="mx-auto flex w-full max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-8 md:px-10 md:pb-20 md:pt-10">
+          <header className="border-b border-slate-200 pb-6">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <span className="font-semibold">{copy.filterLabel}</span>
+              <div className="flex flex-wrap gap-2">
+                {categoryFilters.map((category) => {
+                  const isActive = category.key === selectedCategory;
+                  return (
+                    <Link
+                      key={category.key}
+                      href={buildFilterHref(category.key)}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                        isActive
+                          ? "border-[var(--rt-primary)] bg-[var(--rt-primary)] text-[var(--rt-primary-text)]"
+                          : "border-slate-300 text-[var(--foreground)] hover:border-slate-500"
+                      }`}
+                    >
+                      {category.label}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              {isAuthenticated && (
-                <Link
-                  href={buildLocalizedPath(`/${sport.code}/board/mine`, locale)}
-                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-slate-500"
-                >
-                  {t("community.myPostsLink")}
-                </Link>
-              )}
-            </div>
-          </div>
-          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-            <span className="font-semibold">{copy.filterLabel}</span>
-            <div className="flex flex-wrap gap-2">
-              {categoryFilters.map((category) => {
-                const isActive = category.key === selectedCategory;
-                return (
-                  <Link
-                    key={category.key}
-                    href={buildFilterHref(category.key)}
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                      isActive
-                        ? "border-[var(--rt-primary)] bg-[var(--rt-primary)] text-[var(--rt-primary-text)]"
-                        : "border-slate-300 text-[var(--foreground)] hover:border-slate-500"
-                    }`}
-                  >
-                    {category.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </header>
-        {isAuthenticated ? (
-          <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <CommunityPostForm
-              sportCode={sport.code}
-              categories={localizedCategories}
-              copy={formCopy}
-              redirectTo={redirectTarget}
-            />
-          </section>
-        ) : (
-          <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-            <p>
-              {copy.loginPrompt}{" "}
-              <Link
-                href={buildAuthPagePath(
-                  "/login",
-                  locale,
-                  `/${sport.code}/board`,
-                )}
-                className="font-semibold text-[var(--rt-primary)]"
-              >
-                {t("header.login")}
-              </Link>
-            </p>
-          </section>
-        )}
-
-        {filteredPosts.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center text-slate-600 shadow-sm">
-            <p>{copy.empty}</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredPosts.map((post) => (
-              <CommunityPostCard
-                key={post.id}
+          </header>
+          {isAuthenticated ? (
+            <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <CommunityPostForm
                 sportCode={sport.code}
-                locale={locale}
-                post={post}
+                categories={localizedCategories}
+                copy={formCopy}
+                redirectTo={redirectTarget}
               />
-            ))}
-          </div>
-        )}
+            </section>
+          ) : (
+            <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+              <p>
+                {copy.loginPrompt}{" "}
+                <Link
+                  href={buildAuthPagePath(
+                    "/login",
+                    locale,
+                    `/${sport.code}/board`,
+                  )}
+                  className="font-semibold text-[var(--rt-primary)]"
+                >
+                  {t("header.login")}
+                </Link>
+              </p>
+            </section>
+          )}
+
+          {filteredPosts.length === 0 ? (
+            <div className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center text-slate-600 shadow-sm">
+              <p>{copy.empty}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredPosts.map((post) => (
+                <CommunityPostCard
+                  key={post.id}
+                  sportCode={sport.code}
+                  locale={locale}
+                  post={post}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

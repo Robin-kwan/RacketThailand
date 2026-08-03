@@ -48,11 +48,12 @@ npm run dev
 Useful commands:
 
 - `npm run dev` starts the local app
+- `npm test` runs the focused Vitest regression suite once
 - `npm run lint` is the main automated check currently available
 - `npm run build` is the best pre-ship regression check when changes touch routing, metadata, or server components
 - `npm run clean` removes `.next`
 
-There is no dedicated automated test suite in this repository right now, so agents should rely on linting, builds, and targeted manual verification.
+Focused Vitest regression tests cover selected server-side behavior. Continue to use linting, builds, and targeted manual verification for broader coverage.
 
 ## Environment
 
@@ -144,8 +145,16 @@ Prefer existing shared classes and components:
 - `rt-btn-group`
 - `rt-text-muted`
 - `BaseCard`
+- `BaseSelect`
+- `BaseAutocomplete`
 
 Do not reintroduce hard-coded one-off color systems when an existing token already fits.
+
+Form controls must match established product patterns. Before adding a native
+`<select>`, search for and reuse `BaseSelect` or `BaseAutocomplete`. For
+multi-select input, reuse an existing checkbox/card pattern or introduce a
+shared primitive. Tournament components enforce this rule in ESLint, so a raw
+`<select>` in `src/components/tournaments` must fail verification.
 
 ## Key User Flows
 
@@ -255,14 +264,15 @@ Review `proxy.ts` carefully. It contains:
 
 Pick the subset that matches your change:
 
-1. Run `npm run lint`.
-2. Run `npm run build` for route, metadata, or server changes.
-3. Check the relevant public page in both Thai default and `?lang=en`.
-4. Check mobile and desktop layout for visible UI changes.
-5. Confirm links preserve sport scope and locale.
-6. Confirm forms still work for the correct auth state.
-7. Confirm admin-only actions still require admin access.
-8. Confirm analytics hooks still fire at the edited interaction points.
+1. Run `npm test` when the changed behavior has automated coverage.
+2. Run `npm run lint`.
+3. Run `npm run build` for route, metadata, or server changes.
+4. Check the relevant public page in both Thai default and `?lang=en`.
+5. Check mobile and desktop layout for visible UI changes.
+6. Confirm links preserve sport scope and locale.
+7. Confirm forms still work for the correct auth state.
+8. Confirm admin-only actions still require admin access.
+9. Confirm analytics hooks still fire at the edited interaction points.
 
 ## Useful Reference Files
 

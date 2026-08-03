@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
+import { LocateFixed, Search } from "lucide-react";
 import { track } from "@vercel/analytics";
 import type { GroupRecord } from "@/server/groupFinder";
 import {
@@ -12,7 +13,6 @@ import {
 } from "@/lib/i18n";
 import { BaseSelect } from "@/components/base-select";
 import { NearbyMap, type NearbyMapCourt } from "@/components/nearby-map";
-import { useDebounce } from "@/hooks/use-debounce";
 import { GroupCard } from "@/components/group-card";
 import { TimePickerField } from "@/components/time-picker-field";
 import { DatePickerField } from "@/components/date-picker-field";
@@ -120,13 +120,21 @@ export function GroupFinder({
 }: GroupFinderProps) {
   const pathname = usePathname();
   const [search, setSearch] = useState(initialSearch);
-  const debouncedSearch = useDebounce(search);
   const [dateFilter, setDateFilter] = useState(initialDate);
   const [dayFilter, setDayFilter] = useState(initialDay);
   const [startTimeFilter, setStartTimeFilter] = useState(initialStartTime);
   const [endTimeFilter, setEndTimeFilter] = useState(initialEndTime);
   const [playFormatFilter, setPlayFormatFilter] = useState(initialPlayFormat);
   const [walkInFilter, setWalkInFilter] = useState(initialAllowWalkIn);
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: initialSearch,
+    date: initialDate,
+    day: initialDay,
+    startTime: initialStartTime,
+    endTime: initialEndTime,
+    playFormat: initialPlayFormat,
+    allowWalkIn: initialAllowWalkIn,
+  });
   const [serverGroups, setServerGroups] = useState(initialGroups);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -161,13 +169,13 @@ export function GroupFinder({
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const entries = [
-      ["search", debouncedSearch],
-      ["date", dateFilter],
-      ["day", dayFilter],
-      ["startTime", startTimeFilter],
-      ["endTime", endTimeFilter],
-      ["playFormat", playFormatFilter],
-      ["allowWalkIn", walkInFilter],
+      ["search", appliedFilters.search],
+      ["date", appliedFilters.date],
+      ["day", appliedFilters.day],
+      ["startTime", appliedFilters.startTime],
+      ["endTime", appliedFilters.endTime],
+      ["playFormat", appliedFilters.playFormat],
+      ["allowWalkIn", appliedFilters.allowWalkIn],
     ] as const;
     entries.forEach(([key, value]) => {
       if (value) {
@@ -182,14 +190,8 @@ export function GroupFinder({
       window.history.replaceState(null, "", nextUrl);
     }
   }, [
-    dateFilter,
-    dayFilter,
-    debouncedSearch,
-    endTimeFilter,
+    appliedFilters,
     pathname,
-    playFormatFilter,
-    startTimeFilter,
-    walkInFilter,
   ]);
 
   useEffect(() => {
@@ -203,65 +205,63 @@ export function GroupFinder({
         !hasSkippedInitialLoadRef.current &&
         !prioritizeNearby &&
         !userLocation &&
-        debouncedSearch === initialSearch &&
-        dateFilter === initialDate &&
-        dayFilter === initialDay &&
-        startTimeFilter === initialStartTime &&
-        endTimeFilter === initialEndTime &&
-        playFormatFilter === initialPlayFormat &&
-        walkInFilter === initialAllowWalkIn
+        appliedFilters.search === initialSearch &&
+        appliedFilters.date === initialDate &&
+        appliedFilters.day === initialDay &&
+        appliedFilters.startTime === initialStartTime &&
+        appliedFilters.endTime === initialEndTime &&
+        appliedFilters.playFormat === initialPlayFormat &&
+        appliedFilters.allowWalkIn === initialAllowWalkIn
       ) {
         hasSkippedInitialLoadRef.current = true;
         return;
       }
       hasSkippedInitialLoadRef.current = true;
       setLoading(true);
-      const isNearbyMode = prioritizeNearby && Boolean(userLocation);
-      const params = new URLSearchParams({
-        sport: sportCode,
-        lang: locale,
-        limit: (
-          isNearbyMode ? NEARBY_CANDIDATE_LIMIT : PAGE_SIZE
-        ).toString(),
-      });
-      if (isNearbyMode && userLocation) {
-        params.set("nearbyLat", String(userLocation.latitude));
-        params.set("nearbyLng", String(userLocation.longitude));
+      try {
+        const isNearbyMode = prioritizeNearby && Boolean(userLocation);
+        const params = new URLSearchParams({
+          sport: sportCode,
+          lang: locale,
+          limit: (
+            isNearbyMode ? NEARBY_CANDIDATE_LIMIT : PAGE_SIZE
+          ).toString(),
+        });
+        if (isNearbyMode && userLocation) {
+          params.set("nearbyLat", String(userLocation.latitude));
+          params.set("nearbyLng", String(userLocation.longitude));
+        }
+        if (appliedFilters.search) params.set("search", appliedFilters.search);
+        if (appliedFilters.date) params.set("date", appliedFilters.date);
+        if (appliedFilters.day) params.set("day", appliedFilters.day);
+        if (appliedFilters.startTime) params.set("startTime", appliedFilters.startTime);
+        if (appliedFilters.endTime) params.set("endTime", appliedFilters.endTime);
+        if (appliedFilters.playFormat) params.set("playFormat", appliedFilters.playFormat);
+        if (appliedFilters.allowWalkIn) params.set("allowWalkIn", appliedFilters.allowWalkIn);
+        const response = await fetch(`/api/groups?${params.toString()}`, {
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data) return;
+        if (!isActive) return;
+        const nextGroups = (data.groups ?? []) as GroupRecord[];
+        const nextCount = data.count ?? nextGroups.length;
+        setServerGroups(nextGroups);
+        setCount(nextCount);
+        setPage(1);
+        setHasMore(!isNearbyMode && nextGroups.length < nextCount);
+      } finally {
+        if (isActive) setLoading(false);
       }
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      if (dateFilter) params.set("date", dateFilter);
-      if (dayFilter) params.set("day", dayFilter);
-      if (startTimeFilter) params.set("startTime", startTimeFilter);
-      if (endTimeFilter) params.set("endTime", endTimeFilter);
-      if (playFormatFilter) params.set("playFormat", playFormatFilter);
-      if (walkInFilter) params.set("allowWalkIn", walkInFilter);
-      const response = await fetch(`/api/groups?${params.toString()}`, {
-        cache: "no-store",
-      });
-      const data = await response.json();
-      if (!isActive) return;
-      const nextGroups = (data.groups ?? []) as GroupRecord[];
-      const nextCount = data.count ?? nextGroups.length;
-      setServerGroups(nextGroups);
-      setCount(nextCount);
-      setPage(1);
-      setHasMore(!isNearbyMode && nextGroups.length < nextCount);
-      setLoading(false);
     };
-    load();
+    void load();
     return () => {
       isActive = false;
     };
   }, [
     sportCode,
     locale,
-    debouncedSearch,
-    dateFilter,
-    dayFilter,
-    playFormatFilter,
-    walkInFilter,
-    startTimeFilter,
-    endTimeFilter,
+    appliedFilters,
     initialAllowWalkIn,
     initialDate,
     initialDay,
@@ -284,19 +284,19 @@ export function GroupFinder({
         limit: PAGE_SIZE.toString(),
         offset: String((nextPage - 1) * PAGE_SIZE),
       });
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      if (dateFilter) params.set("date", dateFilter);
-      if (dayFilter) params.set("day", dayFilter);
-      if (startTimeFilter) params.set("startTime", startTimeFilter);
-      if (endTimeFilter) params.set("endTime", endTimeFilter);
-      if (playFormatFilter) params.set("playFormat", playFormatFilter);
-      if (walkInFilter) params.set("allowWalkIn", walkInFilter);
+      if (appliedFilters.search) params.set("search", appliedFilters.search);
+      if (appliedFilters.date) params.set("date", appliedFilters.date);
+      if (appliedFilters.day) params.set("day", appliedFilters.day);
+      if (appliedFilters.startTime) params.set("startTime", appliedFilters.startTime);
+      if (appliedFilters.endTime) params.set("endTime", appliedFilters.endTime);
+      if (appliedFilters.playFormat) params.set("playFormat", appliedFilters.playFormat);
+      if (appliedFilters.allowWalkIn) params.set("allowWalkIn", appliedFilters.allowWalkIn);
 
       const response = await fetch(`/api/groups?${params.toString()}`, {
         cache: "no-store",
       });
-      const data = await response.json();
-      if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data) {
         return;
       }
 
@@ -316,20 +316,14 @@ export function GroupFinder({
     }
   }, [
     count,
-    dateFilter,
-    dayFilter,
-    debouncedSearch,
+    appliedFilters,
     hasMore,
     loading,
     loadingMore,
     locale,
     page,
-    playFormatFilter,
     prioritizeNearby,
     sportCode,
-    startTimeFilter,
-    endTimeFilter,
-    walkInFilter,
   ]);
 
   useEffect(() => {
@@ -364,6 +358,27 @@ export function GroupFinder({
     setEndTimeFilter("");
     setPlayFormatFilter("");
     setWalkInFilter("");
+    setUserLocation(null);
+    setPrioritizeNearby(false);
+    setNearbyStatus(null);
+    setExpandedNearbyCourtIds(new Set());
+    setAppliedFilters({
+      search: "", date: "", day: "", startTime: "", endTime: "",
+      playFormat: "", allowWalkIn: "",
+    });
+  };
+
+  const handleSearch = () => {
+    track("finder_filter_used", {
+      surface: "group_finder",
+      sport: sportCode,
+      cta: "search",
+    });
+    setAppliedFilters({
+      search: search.trim(), date: dateFilter, day: dayFilter,
+      startTime: startTimeFilter, endTime: endTimeFilter,
+      playFormat: playFormatFilter, allowWalkIn: walkInFilter,
+    });
     setUserLocation(null);
     setPrioritizeNearby(false);
     setNearbyStatus(null);
@@ -427,6 +442,11 @@ export function GroupFinder({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         };
+        setAppliedFilters({
+          search: search.trim(), date: dateFilter, day: dayFilter,
+          startTime: startTimeFilter, endTime: endTimeFilter,
+          playFormat: playFormatFilter, allowWalkIn: walkInFilter,
+        });
         setUserLocation(coords);
         setPrioritizeNearby(true);
         setNearbyStatus(copy.nearbyActive);
@@ -637,13 +657,9 @@ export function GroupFinder({
             <input
               type="text"
               value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                track("finder_filter_used", {
-                  surface: "group_finder",
-                  sport: sportCode,
-                  cta: "search",
-                });
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") handleSearch();
               }}
               placeholder={copy.searchPlaceholder}
               className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
@@ -747,6 +763,25 @@ export function GroupFinder({
             variant="light"
           />
         </div>
+        <div className="mt-5 flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300"
+          >
+            <Search className="h-4 w-4" aria-hidden />
+            {locale === "th" ? "ค้นหา" : "Search"}
+          </button>
+          <button
+            type="button"
+            onClick={handleRequestNearby}
+            disabled={locatingNearby}
+            className="rt-btn-primary inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:border disabled:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:transform-none"
+          >
+            <LocateFixed className="h-4 w-4" aria-hidden />
+            {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
+          </button>
+        </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
           <p className="inline-flex items-center gap-2">
             <span>{countSummary}</span>
@@ -764,14 +799,6 @@ export function GroupFinder({
             )}
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleRequestNearby}
-              disabled={locatingNearby}
-              className="rt-btn-primary rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500"
-            >
-              {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
-            </button>
             {prioritizeNearby && (
               <button
                 type="button"
@@ -1007,7 +1034,7 @@ export function GroupFinder({
                   imageAlt={group.name ?? fallbackGroupPhotoAlt}
                   description={group.description}
                   sessions={
-                    dateFilter
+                    appliedFilters.date
                       ? group.matched_sessions ?? []
                       : group.group_sessions ?? []
                   }
@@ -1016,7 +1043,7 @@ export function GroupFinder({
                   dayLabels={dayLabels}
                   scheduleAnytime={copy.scheduleAnytime}
                   locale={locale}
-                  showSessions={Boolean(dateFilter)}
+                  showSessions={Boolean(appliedFilters.date)}
                   showDescription
                   showLocation={false}
                   distanceLabel={distanceLabel}

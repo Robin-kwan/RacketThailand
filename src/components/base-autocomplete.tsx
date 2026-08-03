@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -80,6 +81,8 @@ export function BaseAutocomplete({
   variant = "dark",
 }: BaseAutocompleteProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const generatedId = useId();
+  const inputId = `${generatedId}-input`;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const variantStyles = VARIANT_STYLES[variant] ?? VARIANT_STYLES.dark;
@@ -138,18 +141,22 @@ export function BaseAutocomplete({
 
   return (
     <div className={`space-y-2 ${className}`} ref={containerRef}>
-      <label className={`text-sm font-semibold ${variantStyles.label}`}>
+      <label
+        htmlFor={inputId}
+        className={`block text-sm font-semibold ${variantStyles.label}`}
+      >
         {label}
       </label>
       <div className="relative">
         <input
+          id={inputId}
           type="text"
           name={`${name}-display`}
           value={inputValue}
           placeholder={placeholder ?? label}
           onFocus={() => {
             setOpen(true);
-            setQuery(displayValue);
+            setQuery("");
           }}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -159,6 +166,19 @@ export function BaseAutocomplete({
             if (event.key === "Escape") {
               setOpen(false);
               setQuery("");
+              return;
+            }
+            if (event.key === "Enter" && open) {
+              event.preventDefault();
+              const normalizedQuery = query.trim().toLowerCase();
+              const firstOption = normalizedQuery
+                ? filteredOptions.find((option) =>
+                    option.label.toLowerCase().includes(normalizedQuery),
+                  )
+                : filteredOptions[0];
+              if (firstOption) {
+                handleSelect(firstOption.value);
+              }
             }
           }}
           className={variantStyles.input}
@@ -169,7 +189,7 @@ export function BaseAutocomplete({
           className={`absolute inset-y-0 right-0 flex w-12 items-center justify-center ${variantStyles.toggle}`}
           onClick={() => {
             setOpen((prev) => !prev);
-            setQuery(displayValue);
+            setQuery("");
           }}
           aria-label="Toggle options"
         >
