@@ -20,6 +20,15 @@ type MultiImageInputProps = {
   makePrimaryLabel: string;
   helperText: string;
   processErrorLabel: string;
+  existingImages?: {
+    id: string;
+    imageUrl: string;
+    alt?: string;
+    isPrimary?: boolean;
+  }[];
+  onRemoveExisting?: (id: string) => void;
+  onSetExistingPrimary?: (id: string) => void;
+  onSetNewPrimary?: () => void;
   onChange(images: File[]): void;
 };
 
@@ -53,6 +62,10 @@ export function MultiImageInput({
   makePrimaryLabel,
   helperText,
   processErrorLabel,
+  existingImages = [],
+  onRemoveExisting,
+  onSetExistingPrimary,
+  onSetNewPrimary,
   onChange,
 }: MultiImageInputProps) {
   const [internalFiles, setInternalFiles] = useState<File[]>([]);
@@ -61,7 +74,8 @@ export function MultiImageInput({
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  const fileId = (file: File) => `${file.name}-${file.lastModified}`;
+  const fileId = (file: File) =>
+    `${file.name}-${file.size}-${file.lastModified}`;
 
   const previews = useMemo(
     () =>
@@ -69,9 +83,10 @@ export function MultiImageInput({
         id: fileId(file),
         url: URL.createObjectURL(file),
         name: file.name,
-        isPrimary: index === 0,
+        isPrimary:
+          index === 0 && !existingImages.some((image) => image.isPrimary),
       })),
-    [files],
+    [existingImages, files],
   );
 
   useEffect(
@@ -90,10 +105,15 @@ export function MultiImageInput({
     }
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const incoming = Array.from(event.target.files ?? []);
     if (incoming.length === 0) return;
-    const availableSlots = Math.max(limit - files.length, 0);
+    const availableSlots = Math.max(
+      limit - files.length - existingImages.length,
+      0,
+    );
     if (availableSlots === 0) {
       event.target.value = "";
       return;
@@ -115,7 +135,16 @@ export function MultiImageInput({
 
     setError(errors[0] ?? null);
     if (optimizedFiles.length > 0) {
-      updateFiles([...files, ...optimizedFiles]);
+      const knownFileIds = new Set(files.map(fileId));
+      const uniqueFiles = optimizedFiles.filter((file) => {
+        const id = fileId(file);
+        if (knownFileIds.has(id)) return false;
+        knownFileIds.add(id);
+        return true;
+      });
+      if (uniqueFiles.length > 0) {
+        updateFiles([...files, ...uniqueFiles]);
+      }
     }
     setProcessing(false);
     if (event.target.value) {
@@ -134,7 +163,9 @@ export function MultiImageInput({
 
   const handleSetPrimary = (id: string) => {
     const index = files.findIndex((file) => fileId(file) === id);
-    if (index <= 0) return;
+    if (index < 0) return;
+    onSetNewPrimary?.();
+    if (index === 0) return;
     const selected = files[index];
     const others = files.filter((_, idx) => idx !== index);
     updateFiles([selected, ...others]);
@@ -154,18 +185,41 @@ export function MultiImageInput({
         onChange={handleFileChange}
       />
       {error && <p className={`text-xs ${styles.error}`}>{error}</p>}
-      <p className={`text-xs ${styles.helper}`}>
-        {helperText}
-      </p>
+      <p className={`text-xs ${styles.helper}`}>{helperText}</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {existingImages.map((existingImage) => (
+          <BaseImageCard
+            key={existingImage.id}
+            imageUrl={existingImage.imageUrl}
+            alt={existingImage.alt}
+            onRemove={
+              removable && onRemoveExisting
+                ? () => onRemoveExisting(existingImage.id)
+                : undefined
+            }
+            heightClass={cardHeightClass}
+            variant={variant}
+            footer={
+              existingImage.isPrimary ? (
+                primaryLabel
+              ) : onSetExistingPrimary ? (
+                <button
+                  type="button"
+                  onClick={() => onSetExistingPrimary(existingImage.id)}
+                  className="font-semibold text-slate-100"
+                >
+                  {makePrimaryLabel}
+                </button>
+              ) : undefined
+            }
+          />
+        ))}
         {previews.map((preview) => (
           <BaseImageCard
             key={preview.id}
             imageUrl={preview.url}
             alt={preview.name}
-            onRemove={
-              removable ? () => handleRemove(preview.id) : undefined
-            }
+            onRemove={removable ? () => handleRemove(preview.id) : undefined}
             heightClass={cardHeightClass}
             variant={variant}
             footer={
@@ -174,9 +228,7 @@ export function MultiImageInput({
                   type="button"
                   onClick={() => handleSetPrimary(preview.id)}
                   className={`font-semibold ${
-                    preview.isPrimary
-                      ? "text-emerald-300"
-                      : "text-slate-100"
+                    preview.isPrimary ? "text-emerald-300" : "text-slate-100"
                   }`}
                   disabled={preview.isPrimary}
                 >
@@ -186,7 +238,7 @@ export function MultiImageInput({
             }
           />
         ))}
-        {files.length < limit && (
+        {files.length + existingImages.length < limit && (
           <button
             type="button"
             onClick={handleAddClick}

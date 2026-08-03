@@ -306,28 +306,17 @@ export async function generateMetadata({
     detail.photos?.[0]?.image_url ??
     sportMeta?.coverImage ??
     undefined;
+  const metadataTitle = `RacketThailand • ${court.name ?? sportName}`;
 
   return {
-    title: `${court.name ?? sportName}${
-      locationParts
-        ? locale === "th"
-          ? ` ที่ ${locationParts}`
-          : ` in ${locationParts}`
-        : ""
-    } | ${sportName} | RacketThailand`,
+    title: metadataTitle,
     description,
     alternates: {
       canonical,
       languages: alternateLanguages,
     },
     openGraph: {
-      title: `${court.name ?? sportName}${
-        locationParts
-          ? locale === "th"
-            ? ` ที่ ${locationParts}`
-            : ` in ${locationParts}`
-          : ""
-      } | RacketThailand`,
+      title: metadataTitle,
       description,
       url: canonical,
       type: "website",
@@ -345,7 +334,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${court.name ?? sportName} | RacketThailand`,
+      title: metadataTitle,
       description,
       images: heroImage ? [heroImage] : undefined,
     },

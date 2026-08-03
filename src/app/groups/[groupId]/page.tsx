@@ -89,6 +89,16 @@ function formatTimeRange(start: string, end: string, locale: string) {
   return `${formatTimeValue(start, locale)} – ${formatTimeValue(end, locale)}`;
 }
 
+function getSportGroupLabel(
+  sportCode: string | undefined,
+  sportName: string,
+  locale: "th" | "en",
+) {
+  if (locale === "en") return `${sportName} group`;
+  if (sportCode === "badminton") return "ก๊วนแบดมินตัน";
+  return `กลุ่ม${sportName}`;
+}
+
 type Params = {
   groupId: string;
 };
@@ -127,12 +137,6 @@ type GroupRow = {
   line_id: string | null;
   website_url: string | null;
   line_qr_url: string | null;
-};
-
-type OwnerProfile = {
-  id: string;
-  display_name: string | null;
-  username: string | null;
 };
 
 type GroupPhotoRow = {
@@ -318,12 +322,17 @@ export async function generateMetadata({
   const resolvedParams = await resolveParams(params);
   const resolvedSearch = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedSearch?.lang);
-  const { data } = await supabaseSelect<GroupMetadataRow>("groups", {
-    select:
+  const supabase = await createSupabaseServerClient();
+  const { data: metadataGroup } = await supabase
+    .from("groups")
+    .select(
       "id,name,description,status,play_format,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,district_id,province,province_id))",
-    id: `eq.${resolvedParams.groupId}`,
-    limit: "1",
-  });
+    )
+    .eq("id", resolvedParams.groupId)
+    .maybeSingle();
+  const data = metadataGroup
+    ? [metadataGroup as unknown as GroupMetadataRow]
+    : [];
   const group =
     data?.[0]
       ? {
@@ -380,13 +389,6 @@ export async function generateMetadata({
       )
       .filter((value): value is string => Boolean(value && value.trim()))[0] ??
     null;
-  const titleLocation = courtSeoLabel
-    ? ` @ ${courtSeoLabel}`
-    : location
-      ? locale === "th"
-        ? ` ที่ ${location}`
-        : ` in ${location}`
-      : "";
   const descriptionParts = [
     group.description,
     courtSeoLabel
@@ -414,16 +416,22 @@ export async function generateMetadata({
     group.group_photos?.[0]?.image_url ??
     sportMeta?.coverImage ??
     undefined;
+  const sportGroupLabel = getSportGroupLabel(
+    group.sports?.code,
+    sportName,
+    locale,
+  );
+  const metadataTitle = `${group.name ?? sportName} - ${sportGroupLabel} | RacketThailand`;
 
   return {
-    title: `${group.name ?? sportName}${titleLocation} | ${sportName} | RacketThailand`,
+    title: metadataTitle,
     description,
     alternates: {
       canonical,
       languages: alternates,
     },
     openGraph: {
-      title: `${group.name ?? sportName}${titleLocation} | RacketThailand`,
+      title: metadataTitle,
       description,
       url: canonical,
       type: "website",
@@ -441,7 +449,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${group.name ?? sportName}${titleLocation} | RacketThailand`,
+      title: metadataTitle,
       description,
       images: heroImage ? [heroImage] : undefined,
     },
@@ -512,19 +520,11 @@ export default async function GroupDetailPage({
   const displayGroup = { ...group, line_qr_url: resolvedLineQrUrl };
 
   const [
-    { data: owners },
     { data: photoRows },
     { data: sessionRows },
     { data: linkedCourtRows },
   ] =
     await Promise.all([
-      group.owner_id
-        ? supabaseSelect<OwnerProfile>("profiles", {
-            select: "id,display_name,username",
-            id: `eq.${group.owner_id}`,
-            limit: "1",
-          })
-        : Promise.resolve({ data: [] as OwnerProfile[] }),
       supabaseSelect<GroupPhotoRow>("group_photos", {
         select: "id,image_url,is_primary",
         group_id: `eq.${group.id}`,
@@ -545,7 +545,6 @@ export default async function GroupDetailPage({
     ]);
   const upcomingEventRows = await fetchUpcomingGroupEvents(group.id);
 
-  const owner = owners?.[0] ?? null;
   const sportCode = group.sports?.code;
   const fallbackImage =
     SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.png";
@@ -730,12 +729,6 @@ export default async function GroupDetailPage({
           },
         ]
       : undefined,
-    organizer: owner
-      ? {
-          "@type": "Person",
-          name: owner.display_name ?? owner.username ?? undefined,
-        }
-      : undefined,
     location: primarySessionCourt
       ? {
           "@type": "SportsActivityLocation",
@@ -753,7 +746,6 @@ export default async function GroupDetailPage({
   };
 
   const copy = {
-    createdBy: t("groups.detail.createdBy"),
     scheduleAny: t("groups.detail.scheduleAny"),
     edit: t("groups.detail.edit"),
     upcomingTitle: t("groups.detail.upcomingTitle"),
@@ -879,7 +871,6 @@ export default async function GroupDetailPage({
   const canEdit = Boolean(isGroupOwner || isAdminViewer);
   const sportName = group.sports?.name ?? undefined;
   const playFormatLabel = getPlayFormatLabel(group.play_format, locale);
-  const ownerName = owner?.display_name ?? owner?.username ?? null;
   const shareTitle = group.name ?? fallbackGroupName;
   const shareText =
     group.description ??
@@ -951,16 +942,6 @@ export default async function GroupDetailPage({
                 {playFormatLabel}
               </p>
             </div>
-            {ownerName && (
-              <div>
-                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                  {copy.createdBy}
-                </p>
-                <p className="text-base font-semibold text-[var(--foreground)]">
-                  {ownerName}
-                </p>
-              </div>
-            )}
             {typeof group.player_amount === "number" &&
               Number.isFinite(group.player_amount) && (
                 <div>

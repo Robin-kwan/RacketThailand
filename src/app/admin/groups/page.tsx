@@ -102,7 +102,7 @@ export default async function AdminGroupsPage({
     supabaseSelect<GroupManagementRow>("groups", {
       select:
         "id,name,description,owner_id,play_format,player_amount,phone,line_id,website_url,status,updated_at,sports(code,name),group_photos(id),group_sessions(day,start_time,end_time,courts(name,province))",
-      order: "updated_at.desc.nullslast",
+      order: "status.asc.nullslast,updated_at.desc.nullslast",
       limit: "100",
     }),
     supabaseSelect<ProfileRow>("profiles", {
@@ -217,6 +217,7 @@ export default async function AdminGroupsPage({
         ],
         statusLabel,
         statusTone,
+        sortPriority: status === "draft" ? 0 : 1,
         statusAction: {
           key: "toggle-status",
           label: `${statusLabel} -> ${nextStatusLabel}`,
@@ -231,6 +232,7 @@ export default async function AdminGroupsPage({
           errorMessage: t("admin.feedbackTable.error"),
           nextStatusLabel,
           nextStatusTone,
+          nextSortPriority: nextStatus === "draft" ? 0 : 1,
           nextActions: [
             {
               key: "toggle-status",
@@ -246,6 +248,7 @@ export default async function AdminGroupsPage({
               errorMessage: t("admin.feedbackTable.error"),
               nextStatusLabel: statusLabel,
               nextStatusTone: statusTone,
+              nextSortPriority: status === "draft" ? 0 : 1,
               nextSortValues: {
                 status: statusLabel,
                 actions: statusLabel,
@@ -262,6 +265,7 @@ export default async function AdminGroupsPage({
           actions: statusLabel,
         },
         viewHref: buildLocalizedPath(`/groups/${group.id}`, locale),
+        viewInNewTab: true,
         editHref: buildLocalizedPath(`/groups/${group.id}/edit`, locale),
         deleteEndpoint: `/api/admin/groups/${group.id}`,
       };

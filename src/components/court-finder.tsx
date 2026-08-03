@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LocateFixed, Search } from "lucide-react";
 import { track } from "@vercel/analytics";
 import type { CourtProvinceOption, CourtRecord } from "@/server/courtFinder";
 import {
@@ -11,7 +12,6 @@ import {
 } from "@/lib/i18n";
 import { BaseSelect } from "@/components/base-select";
 import { NearbyMap } from "@/components/nearby-map";
-import { useDebounce } from "@/hooks/use-debounce";
 import { CourtCard } from "@/components/court-card";
 import { TimePickerField } from "@/components/time-picker-field";
 
@@ -21,6 +21,7 @@ type CourtFinderCopy = {
   startTimeLabel: string;
   endTimeLabel: string;
   timeClearLabel: string;
+  allProvincesLabel: string;
   resetFilters: string;
   emptyTitle: string;
   emptyDescription: string;
@@ -98,10 +99,15 @@ export function CourtFinder({
 }: CourtFinderProps) {
   const pathname = usePathname();
   const [search, setSearch] = useState(initialSearch);
-  const debouncedSearch = useDebounce(search);
   const [province, setProvince] = useState<string>(initialProvince);
   const [startTimeFilter, setStartTimeFilter] = useState(initialStartTime);
   const [endTimeFilter, setEndTimeFilter] = useState(initialEndTime);
+  const [appliedFilters, setAppliedFilters] = useState({
+    search: initialSearch,
+    province: initialProvince,
+    startTime: initialStartTime,
+    endTime: initialEndTime,
+  });
   const [courts, setCourts] = useState(initialCourts);
   const [availableProvinces, setAvailableProvinces] =
     useState<CourtProvinceOption[]>(provinces);
@@ -117,6 +123,7 @@ export function CourtFinder({
   const [allowAutoLoadMore, setAllowAutoLoadMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const lastLoadedRequestKeyRef = useRef<string | null>(null);
+  const [searchRevision, setSearchRevision] = useState(0);
   const buildCourtHref = useCallback(
     (courtId: string) =>
       buildLocalizedPath(
@@ -127,10 +134,10 @@ export function CourtFinder({
   );
   const provinceOptions = useMemo(
     () => [
-      { value: "", label: copy.resetFilters },
+      { value: "", label: copy.allProvincesLabel },
       ...availableProvinces,
     ],
-    [availableProvinces, copy.resetFilters],
+    [availableProvinces, copy.allProvincesLabel],
   );
   const fallbackCourtName =
     locale === "th" ? "ยังไม่ระบุชื่อสนาม" : "Unnamed court";
@@ -151,10 +158,10 @@ export function CourtFinder({
       limit: PAGE_SIZE.toString(),
       page: "1",
     });
-    if (debouncedSearch) params.set("search", debouncedSearch);
-    if (province) params.set("province", province);
-    if (startTimeFilter) params.set("startTime", startTimeFilter);
-    if (endTimeFilter) params.set("endTime", endTimeFilter);
+    if (appliedFilters.search) params.set("search", appliedFilters.search);
+    if (appliedFilters.province) params.set("province", appliedFilters.province);
+    if (appliedFilters.startTime) params.set("startTime", appliedFilters.startTime);
+    if (appliedFilters.endTime) params.set("endTime", appliedFilters.endTime);
     if (prioritizeNearby && userLocation) {
       params.set("nearbyLat", String(userLocation.latitude));
       params.set("nearbyLng", String(userLocation.longitude));
@@ -162,36 +169,33 @@ export function CourtFinder({
     }
     return params.toString();
   }, [
-    debouncedSearch,
+    appliedFilters,
     locale,
     prioritizeNearby,
-    province,
     sportCode,
-    startTimeFilter,
-    endTimeFilter,
     userLocation,
   ]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (debouncedSearch) {
-      params.set("search", debouncedSearch);
+    if (appliedFilters.search) {
+      params.set("search", appliedFilters.search);
     } else {
       params.delete("search");
     }
-    if (province) {
-      params.set("province", province);
+    if (appliedFilters.province) {
+      params.set("province", appliedFilters.province);
     } else {
       params.delete("province");
     }
-    if (startTimeFilter) {
-      params.set("startTime", startTimeFilter);
+    if (appliedFilters.startTime) {
+      params.set("startTime", appliedFilters.startTime);
     } else {
       params.delete("startTime");
     }
-    if (endTimeFilter) {
-      params.set("endTime", endTimeFilter);
+    if (appliedFilters.endTime) {
+      params.set("endTime", appliedFilters.endTime);
     } else {
       params.delete("endTime");
     }
@@ -200,16 +204,13 @@ export function CourtFinder({
     if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
       window.history.replaceState(null, "", nextUrl);
     }
-  }, [debouncedSearch, endTimeFilter, pathname, province, startTimeFilter]);
+  }, [appliedFilters, pathname]);
 
   useEffect(() => {
     let isActive = true;
     const load = async () => {
       if (lastLoadedRequestKeyRef.current === null) {
         lastLoadedRequestKeyRef.current = courtListRequestQuery;
-        return;
-      }
-      if (lastLoadedRequestKeyRef.current === courtListRequestQuery) {
         return;
       }
       lastLoadedRequestKeyRef.current = courtListRequestQuery;
@@ -238,11 +239,11 @@ export function CourtFinder({
         }
       }
     };
-    load();
+    void load();
     return () => {
       isActive = false;
     };
-  }, [courtListRequestQuery]);
+  }, [courtListRequestQuery, searchRevision]);
 
   const loadMoreCourts = useCallback(async () => {
     if (loading || loadingMore || !hasMore) return;
@@ -256,10 +257,10 @@ export function CourtFinder({
         page: nextPage.toString(),
         includeProvinces: "false",
       });
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      if (province) params.set("province", province);
-      if (startTimeFilter) params.set("startTime", startTimeFilter);
-      if (endTimeFilter) params.set("endTime", endTimeFilter);
+      if (appliedFilters.search) params.set("search", appliedFilters.search);
+      if (appliedFilters.province) params.set("province", appliedFilters.province);
+      if (appliedFilters.startTime) params.set("startTime", appliedFilters.startTime);
+      if (appliedFilters.endTime) params.set("endTime", appliedFilters.endTime);
       if (prioritizeNearby && userLocation) {
         params.set("nearbyLat", String(userLocation.latitude));
         params.set("nearbyLng", String(userLocation.longitude));
@@ -267,8 +268,8 @@ export function CourtFinder({
       const response = await fetch(`/api/courts?${params.toString()}`, {
         cache: "no-store",
       });
-      const data = await response.json();
-      if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data) {
         return;
       }
       const nextCourts = (data.courts ?? []) as CourtRecord[];
@@ -287,17 +288,14 @@ export function CourtFinder({
     }
   }, [
     count,
-    debouncedSearch,
+    appliedFilters,
     hasMore,
     loading,
     loadingMore,
     page,
-    province,
     prioritizeNearby,
     sportCode,
     locale,
-    startTimeFilter,
-    endTimeFilter,
     userLocation,
   ]);
 
@@ -328,6 +326,25 @@ export function CourtFinder({
     setProvince("");
     setStartTimeFilter("");
     setEndTimeFilter("");
+    setAppliedFilters({ search: "", province: "", startTime: "", endTime: "" });
+    setSearchRevision((current) => current + 1);
+  };
+
+  const handleSearch = () => {
+    track("finder_filter_used", {
+      surface: "court_finder",
+      sport: sportCode,
+      cta: "search",
+    });
+    setAppliedFilters({
+      search: search.trim(),
+      province,
+      startTime: startTimeFilter,
+      endTime: endTimeFilter,
+    });
+    setSearchRevision((current) => current + 1);
+    setPrioritizeNearby(false);
+    setNearbyStatus(null);
   };
 
   const requestCurrentLocation = useCallback(
@@ -365,8 +382,15 @@ export function CourtFinder({
     setNearbyStatus(copy.nearbyFinding);
     try {
       const location = await requestCurrentLocation();
+      setAppliedFilters({
+        search: search.trim(),
+        province,
+        startTime: startTimeFilter,
+        endTime: endTimeFilter,
+      });
       setUserLocation(location);
       setPrioritizeNearby(true);
+      setSearchRevision((current) => current + 1);
       setNearbyStatus(copy.nearbyActive);
     } catch (error) {
       const errorCode =
@@ -483,13 +507,9 @@ export function CourtFinder({
             <input
               type="text"
               value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                track("finder_filter_used", {
-                  surface: "court_finder",
-                  sport: sportCode,
-                  cta: "search",
-                });
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") handleSearch();
               }}
               placeholder={copy.searchPlaceholder}
               className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
@@ -500,14 +520,7 @@ export function CourtFinder({
               label={copy.provinceLabel}
               name="province"
               value={province}
-              onChange={(event) => {
-                setProvince(event.target.value);
-                track("finder_filter_used", {
-                  surface: "court_finder",
-                  sport: sportCode,
-                  cta: "province",
-                });
-              }}
+              onChange={(event) => setProvince(event.target.value)}
               options={provinceOptions}
               variant="light"
             />
@@ -518,14 +531,7 @@ export function CourtFinder({
             label={copy.startTimeLabel}
             value={startTimeFilter}
             placeholder="--:--"
-            onChange={(value) => {
-              setStartTimeFilter(value);
-              track("finder_filter_used", {
-                surface: "court_finder",
-                sport: sportCode,
-                cta: "start_time",
-              });
-            }}
+            onChange={setStartTimeFilter}
             allowClear
             clearLabel={copy.timeClearLabel}
             className="min-w-0"
@@ -534,30 +540,34 @@ export function CourtFinder({
             label={copy.endTimeLabel}
             value={endTimeFilter}
             placeholder="--:--"
-            onChange={(value) => {
-              setEndTimeFilter(value);
-              track("finder_filter_used", {
-                surface: "court_finder",
-                sport: sportCode,
-                cta: "end_time",
-              });
-            }}
+            onChange={setEndTimeFilter}
             allowClear
             clearLabel={copy.timeClearLabel}
             className="min-w-0"
           />
         </div>
+        <div className="mt-5 flex flex-wrap justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300"
+          >
+            <Search className="h-4 w-4" aria-hidden />
+            {locale === "th" ? "ค้นหา" : "Search"}
+          </button>
+          <button
+            type="button"
+            onClick={handleRequestNearby}
+            disabled={locatingNearby}
+            className="rt-btn-primary inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:border disabled:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:transform-none"
+          >
+            <LocateFixed className="h-4 w-4" aria-hidden />
+            {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
+          </button>
+        </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
           <p>{countSummary}</p>
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleRequestNearby}
-              disabled={locatingNearby}
-              className="rt-btn-primary rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-white disabled:border disabled:border-slate-500"
-            >
-              {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
-            </button>
             {prioritizeNearby && (
               <button
                 type="button"
@@ -613,15 +623,15 @@ export function CourtFinder({
               .map((entry) => (
                 <div
                   key={`nearby-${entry.court.id}`}
-                  className="flex flex-wrap items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                  className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
                 >
                   <Link
                     href={buildCourtHref(entry.court.id)}
                     target="_blank"
                     rel="noreferrer"
-                    className="group block"
+                    className="group min-w-0 flex-1"
                   >
-                    <p className="font-semibold text-slate-900 group-hover:text-slate-700">
+                    <p className="break-words font-semibold text-slate-900 group-hover:text-slate-700">
                       {entry.court.name ?? fallbackCourtName}
                     </p>
                     <p className="text-xs text-slate-500 group-hover:text-slate-700">
@@ -633,7 +643,7 @@ export function CourtFinder({
                       href={`https://www.google.com/maps/dir/?api=1&origin=${userLocation.latitude},${userLocation.longitude}&destination=${entry.court.latitude},${entry.court.longitude}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800"
+                      className="shrink-0 whitespace-nowrap rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800"
                     >
                       {copy.openMaps}
                     </a>

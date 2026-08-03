@@ -272,6 +272,7 @@ export default async function CourtFinderPage({
     startTimeLabel: t("courtFinder.startTimeLabel"),
     endTimeLabel: t("courtFinder.endTimeLabel"),
     timeClearLabel: t("courtFinder.timeClearLabel"),
+    allProvincesLabel: t("courtFinder.allProvinces"),
     resetFilters: t("courtFinder.reset"),
     emptyTitle: t("courtFinder.emptyTitle"),
     emptyDescription: t("courtFinder.emptyDescription"),

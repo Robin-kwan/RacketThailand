@@ -85,13 +85,13 @@ export function SiteHeaderMobileMenu({
     <div className="fixed inset-0 z-[999] flex min-[1000px]:hidden">
       <button
         type="button"
-        className="absolute inset-0 bg-transparent"
+        className="absolute inset-0 bg-slate-950/35 backdrop-blur-[1px]"
         aria-label="Close menu overlay"
         onClick={onClose}
       />
       <aside
         ref={mobileMenuRef}
-        className="relative ml-auto flex h-full w-80 flex-col gap-6 border-l border-slate-200 bg-white p-6 text-slate-900 shadow-[-16px_0_36px_rgb(15_23_42/0.12)]"
+        className="relative ml-auto flex h-full w-[min(20rem,calc(100vw-3rem))] flex-col gap-6 border-l border-slate-200 bg-white p-6 text-slate-900 shadow-[-16px_0_36px_rgb(15_23_42/0.12)]"
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -108,7 +108,7 @@ export function SiteHeaderMobileMenu({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-slate-100 p-3 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
             aria-label="Close menu"
           >
             <X
@@ -120,10 +120,10 @@ export function SiteHeaderMobileMenu({
         </div>
         {navLinks.length > 0 && (
           <nav className="space-y-3">
-            {navLinks.map((link) => {
+            {navLinks.map((link, index) => {
               const isLinkActive =
                 pathname === link.path ||
-                (link.path !== "/" && pathname.startsWith(`${link.path}/`));
+                (index > 0 && pathname.startsWith(`${link.path}/`));
               return (
                 <Link
                   key={link.path}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { BaseSelect } from "@/components/base-select";
-import { BaseAutocomplete } from "@/components/base-autocomplete";
+import { CourtPicker } from "@/components/court-picker";
 import { showToast } from "@/components/toaster";
 
 type Option = {
@@ -61,11 +61,11 @@ export function CourtOwnerForm({
         options={profiles}
         variant="light"
       />
-      <BaseAutocomplete
+      <CourtPicker
         label={copy.courtLabel}
         name="courtId"
         value={courtId}
-        onChange={(event) => setCourtId(event.target.value)}
+        onValueChange={setCourtId}
         options={courts}
         variant="light"
       />
