@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { GroupFinder } from "@/components/group-finder";
+import {
+  GroupFinder,
+  GroupFinderNearbyTodayButton,
+} from "@/components/group-finder";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { SportFinderHero } from "@/components/sport-finder-hero";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -14,8 +17,6 @@ import {
 } from "@/lib/seo";
 import { getSeoKeyword } from "@/lib/seoKeywords";
 import { fetchGroupsBySport } from "@/server/groupFinder";
-
-const FINDER_PREVIEW_IMAGE = buildAbsoluteUrl("/sports/badminton.png");
 
 type Params = { sport: string };
 type ParamsInput = Promise<Params>;
@@ -33,18 +34,6 @@ type SearchParamsInput = Promise<SearchParams> | undefined;
 
 function sanitizeQueryParam(value?: string) {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function buildFinderPath(
-  basePath: string,
-  query: Record<string, string | undefined>,
-) {
-  const params = new URLSearchParams();
-  Object.entries(query).forEach(([key, value]) => {
-    if (value) params.set(key, value);
-  });
-  const queryString = params.toString();
-  return queryString ? `${basePath}?${queryString}` : basePath;
 }
 
 const DAY_KEYS = [
@@ -65,7 +54,7 @@ function isDayKey(value: string): value is DayKey {
 
 function getThaiGroupFinderIntent(sportCode: string, sportName: string) {
   const intents: Record<string, string> = {
-    badminton: "ค้นหาก๊วนแบดมินตัน",
+    badminton: "ค้นหาก๊วนแบด",
     padel: "ค้นหากลุ่มพาเดล",
     pickleball: "ค้นหากลุ่มพิคเคิลบอล",
     tennis: "ค้นหากลุ่มเทนนิส",
@@ -123,7 +112,6 @@ export async function generateMetadata({
       },
     };
   }
-  const t = await getTranslator(locale);
   const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
   const dateFilter = sanitizeQueryParam(resolvedSearch?.date);
   const dayFilter = sanitizeQueryParam(resolvedSearch?.day);
@@ -131,27 +119,16 @@ export async function generateMetadata({
   const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
   const playFormatFilter = sanitizeQueryParam(resolvedSearch?.playFormat);
   const walkInFilter = sanitizeQueryParam(resolvedSearch?.allowWalkIn);
-  const hasFreeTextSearch = Boolean(searchQuery);
-  const stableQuery = hasFreeTextSearch
-    ? {}
-    : {
-        date: dateFilter || undefined,
-        day: isDayKey(dayFilter) ? dayFilter : undefined,
-        startTime: startTimeFilter || undefined,
-        endTime: endTimeFilter || undefined,
-        playFormat:
-          playFormatFilter === "single" || playFormatFilter === "double"
-            ? playFormatFilter
-            : undefined,
-        allowWalkIn:
-          walkInFilter === "true" || walkInFilter === "false"
-            ? walkInFilter
-            : undefined,
-      };
-  const canonicalPath = buildFinderPath(
-    `/${resolvedParams.sport}/group-finder`,
-    stableQuery,
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+      dateFilter ||
+      dayFilter ||
+      startTimeFilter ||
+      endTimeFilter ||
+      playFormatFilter ||
+      walkInFilter,
   );
+  const canonicalPath = `/${resolvedParams.sport}/group-finder`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
   const thaiIntent = getThaiGroupFinderIntent(
@@ -169,46 +146,22 @@ export async function generateMetadata({
   const seoKeyword = getSeoKeyword(resolvedParams.sport, locale, "groups");
   const description =
     locale === "th"
-      ? `${thaiIntent} ค้นหากลุ่ม${meta.name[locale]}ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย ${seoKeyword}`
+      ? resolvedParams.sport === "badminton"
+        ? "ค้นหาก๊วนแบดและก๊วนตีแบดที่เปิดรับสมาชิก พร้อมสนาม วันเวลาเล่น ระดับฝีมือ และช่องทางติดต่อผู้จัดก๊วนทั่วไทย"
+        : `${thaiIntent} ค้นหากลุ่ม${meta.name[locale]}ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย ${seoKeyword}`
       : `${englishIntent} in Thailand with schedules, contacts, and nearby map context. ${seoKeyword}`;
 
-  const validDayFilter = isDayKey(dayFilter) ? dayFilter : "";
-  const filterParts = [
-    dateFilter,
-    validDayFilter ? t(`groups.days.${validDayFilter}`) : "",
-    playFormatFilter === "single" ? t("groups.form.playFormatSingle") : "",
-    playFormatFilter === "double" ? t("groups.form.playFormatDouble") : "",
-    walkInFilter === "true" ? t("groups.detail.walkInsWelcome") : "",
-    walkInFilter === "false" ? t("groups.detail.walkInsClosed") : "",
-    startTimeFilter && endTimeFilter
-      ? `${startTimeFilter}-${endTimeFilter}`
-      : startTimeFilter || endTimeFilter,
-  ].filter(Boolean);
-  const filterSummary = filterParts.join(locale === "th" ? " • " : " • ");
-  const filteredTitle = searchQuery
-    ? locale === "th"
-      ? `ผลการค้นหากลุ่ม${meta.name[locale]} "${searchQuery}" | RacketThailand`
-      : `${englishIntent} matching "${searchQuery}" | RacketThailand`
-    : filterSummary
-      ? locale === "th"
-        ? `กลุ่ม${meta.name[locale]}: ${filterSummary} | RacketThailand`
-        : `${englishIntent}: ${filterSummary} | RacketThailand`
-      : title;
-  const filteredDescription = searchQuery
-    ? locale === "th"
-      ? `${thaiIntent} ดูผลการค้นหากลุ่ม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
-      : `${englishIntent} matching "${searchQuery}" with schedules and contact details. ${seoKeyword}`
-    : filterSummary
-      ? locale === "th"
-        ? `${thaiIntent} ค้นหากลุ่ม${meta.name[locale]}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
-        : `${englishIntent} filtered by ${filterSummary}, with schedules and contact details. ${seoKeyword}`
-      : description;
-  const metaDescription = truncateMetaDescription(filteredDescription);
+  const metaDescription = truncateMetaDescription(description);
+  const finderPreviewImage = buildAbsoluteUrl(meta.coverImage);
+  const finderPreviewAlt =
+    locale === "th"
+      ? `${thaiIntent}บน RacketThailand`
+      : `${englishIntent} on RacketThailand`;
 
   return {
-    title: filteredTitle,
+    title,
     description: metaDescription,
-    robots: hasFreeTextSearch
+    robots: hasActiveFilters
       ? {
           index: false,
           follow: true,
@@ -219,22 +172,22 @@ export async function generateMetadata({
       languages: alternates,
     },
     openGraph: {
-      title: filteredTitle,
+      title,
       description: metaDescription,
       url: canonical,
       type: "website",
       images: [
         {
-          url: FINDER_PREVIEW_IMAGE,
-          alt: "RacketThailand badminton court preview",
+          url: finderPreviewImage,
+          alt: finderPreviewAlt,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: filteredTitle,
+      title,
       description: metaDescription,
-      images: [FINDER_PREVIEW_IMAGE],
+      images: [finderPreviewImage],
     },
   };
 }
@@ -262,6 +215,15 @@ export default async function GroupFinderPage({
   const endTimeFilter = sanitizeQueryParam(resolvedSearch?.endTime);
   const playFormatFilter = sanitizeQueryParam(resolvedSearch?.playFormat);
   const walkInFilter = sanitizeQueryParam(resolvedSearch?.allowWalkIn);
+  const hasFinderFilters = Boolean(
+    searchQuery ||
+      dateFilter ||
+      dayFilter ||
+      startTimeFilter ||
+      endTimeFilter ||
+      playFormatFilter ||
+      walkInFilter,
+  );
   const groupData = await fetchGroupsBySport(
     resolvedParams.sport,
     {
@@ -321,6 +283,7 @@ export default async function GroupFinderPage({
     walkInsWelcome: t("groups.detail.walkInsWelcome"),
     walkInsClosed: t("groups.detail.walkInsClosed"),
     nearbyButton: t("groupFinder.nearbyButton"),
+    nearbyTodayButton: t("groupFinder.nearbyTodayButton"),
     nearbyFinding: t("groupFinder.nearbyFinding"),
     nearbyClear: t("groupFinder.nearbyClear"),
     nearbyUnsupported: t("groupFinder.nearbyUnsupported"),
@@ -336,11 +299,86 @@ export default async function GroupFinderPage({
     createGroupCta: t("header.createGroup"),
     playerFinderCta: t("header.playerFinder"),
   };
+  const isBadmintonThai = isThaiLocale && resolvedParams.sport === "badminton";
+  const groupFinderUrl = buildCanonicalUrl(
+    `/${resolvedParams.sport}/group-finder`,
+    locale,
+  );
+  const collectionSchema = isBadmintonThai && !hasFinderFilters
+    ? {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "ก๊วนแบดและก๊วนตีแบดที่เปิดรับสมาชิก",
+        description:
+          "ค้นหาก๊วนแบดตามสนาม วันเวลาเล่น รูปแบบการเล่น และช่องทางติดต่อผู้จัดก๊วน",
+        url: groupFinderUrl,
+        inLanguage: "th-TH",
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: groupData.groups.length,
+          itemListElement: groupData.groups.map((group, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: group.name ?? "ก๊วนแบด",
+            url: buildAbsoluteUrl(`/groups/${group.id}`),
+          })),
+        },
+      }
+    : null;
+  const faqItems = isBadmintonThai
+    ? [
+        {
+          question: "ก๊วนแบดคืออะไร?",
+          answer:
+            "ก๊วนแบดคือกลุ่มผู้เล่นแบดมินตันที่นัดเล่นเป็นประจำ โดยแต่ละก๊วนอาจกำหนดสนาม วันเวลา ระดับฝีมือ ค่าใช้จ่าย และรูปแบบการเล่นแตกต่างกัน",
+        },
+        {
+          question: "เลือกก๊วนตีแบดอย่างไรให้เหมาะกับตัวเอง?",
+          answer:
+            "ตรวจสอบสนามและพื้นที่ วันเวลาเล่น ระดับฝีมือ รูปแบบเดี่ยวหรือคู่ และเงื่อนไขการรับผู้เล่นใหม่ก่อนติดต่อผู้จัดก๊วน",
+        },
+        {
+          question: "ติดต่อเข้าร่วมก๊วนแบดได้อย่างไร?",
+          answer:
+            "เปิดหน้ารายละเอียดก๊วนที่สนใจ แล้วใช้หมายเลขโทรศัพท์ LINE หรือลิงก์ติดต่อที่ผู้จัดก๊วนระบุไว้เพื่อสอบถามที่ว่างและค่าใช้จ่าย",
+        },
+      ]
+    : [];
+  const faqSchema = faqItems.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      }
+    : null;
 
   return (
     <div className="min-h-screen bg-[#f7fbf9] text-slate-900">
       <HeaderSubLabel value={meta.name[locale]} />
       <main>
+        {collectionSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(collectionSchema).replace(/</g, "\\u003c"),
+            }}
+          />
+        )}
+        {faqSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(faqSchema).replace(/</g, "\\u003c"),
+            }}
+          />
+        )}
         <SportFinderHero
           sportName={meta.name[locale]}
           sportAccent={meta.accent}
@@ -348,6 +386,7 @@ export default async function GroupFinderPage({
           title={copy.title}
           description={copy.subtitle}
         >
+          <GroupFinderNearbyTodayButton label={copy.nearbyTodayButton} />
           <TrackedLink
             href={buildLocalizedPath(
               `/groups/create?sport=${encodeURIComponent(resolvedParams.sport)}`,
@@ -384,6 +423,65 @@ export default async function GroupFinderPage({
             />
           </div>
         </section>
+        {isBadmintonThai && (
+          <section className="border-t border-slate-200 bg-white px-6 py-10 md:px-10 md:py-12">
+            <div className="mx-auto max-w-screen-xl">
+              <div className="max-w-3xl">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
+                  หาก๊วนแบดที่เหมาะกับวัน เวลา และระดับการเล่นของคุณ
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-slate-600 md:text-base">
+                  รวมก๊วนแบดและก๊วนตีแบดที่เปิดรับสมาชิกจากหลายสนามทั่วไทย
+                  พร้อมตารางเล่นประจำ รูปแบบการเล่น และช่องทางติดต่อผู้จัดก๊วน
+                  เพื่อช่วยให้คุณเลือกกลุ่มที่เข้ากับพื้นที่และเวลาที่สะดวกได้ง่ายขึ้น
+                </p>
+                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold">
+                  <TrackedLink
+                    href={buildLocalizedPath("/badminton/court-finder", locale)}
+                    eventName="sport_cta_click"
+                    eventPayload={{
+                      surface: "group_finder_seo_links",
+                      cta: "open_court_finder",
+                      sport: "badminton",
+                    }}
+                    className="text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
+                  >
+                    ค้นหาสนามแบด
+                  </TrackedLink>
+                  <TrackedLink
+                    href={buildLocalizedPath("/badminton/players", locale)}
+                    eventName="sport_cta_click"
+                    eventPayload={{
+                      surface: "group_finder_seo_links",
+                      cta: "open_player_finder",
+                      sport: "badminton",
+                    }}
+                    className="text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
+                  >
+                    หาเพื่อนตีแบด
+                  </TrackedLink>
+                </div>
+                <div className="mt-10 border-t border-slate-200 pt-8">
+                  <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+                    คำถามเกี่ยวกับการหาก๊วนแบด
+                  </h2>
+                  <div className="mt-5 space-y-6">
+                    {faqItems.map((item) => (
+                      <div key={item.question}>
+                        <h3 className="font-semibold text-slate-900">
+                          {item.question}
+                        </h3>
+                        <p className="mt-2 text-sm leading-7 text-slate-600">
+                          {item.answer}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

@@ -365,15 +365,19 @@ export async function generateMetadata({
   const alternates = buildLocaleAlternates(canonicalPath);
   const previewImage = buildAbsoluteUrl(meta.coverImage);
   const previewAlt = `${meta.name[locale]} RacketThailand`;
+  const metadataTitle =
+    locale === "th" && resolvedParamsValue.sport === "badminton"
+      ? "แบดมินตัน: หาก๊วนแบดและสนามแบด | RacketThailand"
+      : `${meta.name[locale]} | RacketThailand`;
   return {
-    title: `${meta.name[locale]} | RacketThailand`,
+    title: metadataTitle,
     description,
     alternates: {
       canonical,
       languages: alternates,
     },
     openGraph: {
-      title: `${meta.name[locale]} | RacketThailand`,
+      title: metadataTitle,
       description,
       url: canonical,
       type: "website",
@@ -388,7 +392,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${meta.name[locale]} | RacketThailand`,
+      title: metadataTitle,
       description,
       images: [previewImage],
     },

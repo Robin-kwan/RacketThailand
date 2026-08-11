@@ -181,6 +181,7 @@ type GroupMetadataRow = {
   name: string | null;
   description: string | null;
   status: string | null;
+  owner_id: string | null;
   sports: { code: string; name: string | null } | null;
   play_format?: "single" | "double" | null;
   group_photos?: { image_url: string | null; is_primary: boolean | null }[] | null;
@@ -323,16 +324,28 @@ export async function generateMetadata({
   const resolvedSearch = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedSearch?.lang);
   const supabase = await createSupabaseServerClient();
-  const { data: metadataGroup } = await supabase
-    .from("groups")
-    .select(
-      "id,name,description,status,play_format,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,district_id,province,province_id))",
-    )
-    .eq("id", resolvedParams.groupId)
-    .maybeSingle();
-  const data = metadataGroup
-    ? [metadataGroup as unknown as GroupMetadataRow]
-    : [];
+  let data: GroupMetadataRow[] = [];
+  try {
+    const result = await supabaseSelect<GroupMetadataRow>("groups", {
+      select:
+        "id,name,description,status,owner_id,play_format,sports(code,name),group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(name,district,district_id,province,province_id))",
+      id: `eq.${resolvedParams.groupId}`,
+      limit: "1",
+    });
+    data = result.data;
+  } catch (error) {
+    console.error("Unable to load group metadata.", error);
+    return {
+      title:
+        locale === "th"
+          ? "ข้อมูลกลุ่ม | RacketThailand"
+          : "Group details | RacketThailand",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
   const group =
     data?.[0]
       ? {
@@ -369,6 +382,33 @@ export async function generateMetadata({
     };
   }
   const groupStatus = normalizeGroupStatus(group.status);
+  if (groupStatus === "draft") {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const isGroupOwner = Boolean(user?.id && user.id === group.owner_id);
+    const { data: viewerProfile } = user
+      ? await supabase
+          .from("profiles")
+          .select("status")
+          .eq("id", user.id)
+          .maybeSingle()
+      : { data: null };
+    const isAdminViewer = viewerProfile?.status === "admin";
+
+    if (!isGroupOwner && !isAdminViewer) {
+      return {
+        title:
+          locale === "th"
+            ? "ไม่พบข้อมูลกลุ่ม | RacketThailand"
+            : "Group not found | RacketThailand",
+        robots: {
+          index: false,
+          follow: false,
+        },
+      };
+    }
+  }
   const sportMeta = group.sports?.code
     ? SPORT_META[group.sports.code]
     : undefined;

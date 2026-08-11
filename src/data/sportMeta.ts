@@ -29,9 +29,9 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f766e",
     gradient: "from-rose-500/30 via-orange-500/20 to-amber-500/10",
     coverImage: "/sports/badminton.png",
-    heroHeadline: l("หาก๊วนตีแบดและสนามแบดในที่เดียว", "Badminton courts & groups in one place."),
+    heroHeadline: l("หาก๊วนแบด ก๊วนตีแบด และสนามแบดในที่เดียว", "Badminton courts & groups in one place."),
     heroDescription: l(
-      "หาก๊วนตีแบด ดูก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด ค้นหาสนามแบดมินตัน และช่องทางติดต่อ",
+      "ค้นหาก๊วนแบดและก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด ค้นหาสนามแบดมินตัน และช่องทางติดต่อ",
       "Find badminton partners, join local badminton groups, explore verified venues, and contact organizers directly from the same portal.",
     ),
     closingTitle: l("มีสนามหรือก๊วนตีแบดใหม่?", "Have new badminton courts or groups?"),

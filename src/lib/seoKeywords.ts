@@ -7,7 +7,7 @@ type KeywordEntry = Partial<Record<KeywordType, Record<Locale, string>>>;
 const KEYWORDS: Record<string, KeywordEntry> = {
   badminton: {
     hero: {
-      th: "ค้นหาสนามแบดมินตันใกล้ฉัน คอร์ทแบดใกล้ฉัน หาก๊วนตีแบด ก๊วนแบด หาเพื่อนตีแบด และช่องทางติดต่อเพื่อสอบถามการจองสนาม",
+      th: "ก๊วนแบด หาก๊วนตีแบด ค้นหาสนามแบดมินตันใกล้ฉัน คอร์ทแบดใกล้ฉัน หาเพื่อนตีแบด และช่องทางติดต่อเพื่อสอบถามการจองสนาม",
       en: "Find badminton courts near me, find badminton partners, and join local badminton groups in minutes.",
     },
     courts: {
@@ -15,7 +15,7 @@ const KEYWORDS: Record<string, KeywordEntry> = {
       en: "Find badminton courts near me",
     },
     groups: {
-      th: "หาก๊วนตีแบด ก๊วนแบด หาเพื่อนตีแบด และกลุ่มแบดมินตันที่เปิดรับสมาชิก",
+      th: "ก๊วนแบด หาก๊วนตีแบด ก๊วนตีแบดใกล้ฉัน หาเพื่อนตีแบด และกลุ่มแบดมินตันที่เปิดรับสมาชิก",
       en: "Find badminton groups near me and find badminton partners",
     },
   },

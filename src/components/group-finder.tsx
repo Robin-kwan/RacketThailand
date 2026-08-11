@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { LocateFixed, Search } from "lucide-react";
+import { CalendarDays, LocateFixed, Search } from "lucide-react";
 import { track } from "@vercel/analytics";
 import type { GroupRecord } from "@/server/groupFinder";
 import {
@@ -41,6 +41,7 @@ type GroupFinderCopy = {
   walkInsWelcome: string;
   walkInsClosed: string;
   nearbyButton: string;
+  nearbyTodayButton: string;
   nearbyFinding: string;
   nearbyClear: string;
   nearbyUnsupported: string;
@@ -77,6 +78,7 @@ type GroupFinderProps = {
 const PAGE_SIZE = 12;
 const NEARBY_CANDIDATE_LIMIT = 300;
 const TODAY_DATE = getThailandTodayDateString();
+const NEARBY_TODAY_EVENT = "racketthailand:group-finder-nearby-today";
 type LocationState = { latitude: number; longitude: number };
 type NearbyCourtGroup = {
   court: NearbyMapCourt;
@@ -101,6 +103,27 @@ const parseCoordinate = (value?: number | string | null) => {
   }
   return null;
 };
+
+export function GroupFinderNearbyTodayButton({ label }: { label: string }) {
+  const handleClick = () => {
+    window.dispatchEvent(new Event(NEARBY_TODAY_EVENT));
+    document.getElementById("group-finder-results")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="rt-btn-primary inline-flex items-center justify-center gap-2 px-5 py-3 text-sm"
+    >
+      <CalendarDays className="h-4 w-4" aria-hidden />
+      {label}
+    </button>
+  );
+}
 
 export function GroupFinder({
   sportCode,
@@ -150,6 +173,7 @@ export function GroupFinder({
   >(new Set());
   const [allowAutoLoadMore, setAllowAutoLoadMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const nearbyTodayHandlerRef = useRef<() => void>(() => undefined);
   const hasSkippedInitialLoadRef = useRef(false);
   const fallbackGroupName =
     locale === "th" ? "กลุ่มชุมชน" : "Community group";
@@ -424,11 +448,17 @@ export function GroupFinder({
   const loadingMoreLabel =
     locale === "th" ? "กำลังโหลดกลุ่มเพิ่ม..." : "Loading more groups...";
 
-  const handleRequestNearby = () => {
+  const requestNearby = ({
+    cta,
+    date,
+  }: {
+    cta: "nearby" | "nearby_today";
+    date?: string;
+  }) => {
     track("finder_filter_used", {
       surface: "group_finder",
       sport: sportCode,
-      cta: "nearby",
+      cta,
     });
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setNearbyStatus(copy.nearbyUnsupported);
@@ -442,8 +472,13 @@ export function GroupFinder({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         };
+        if (date) {
+          setDateFilter(date);
+          setDayFilter("");
+        }
         setAppliedFilters({
-          search: search.trim(), date: dateFilter, day: dayFilter,
+          search: search.trim(), date: date ?? dateFilter,
+          day: date ? "" : dayFilter,
           startTime: startTimeFilter, endTime: endTimeFilter,
           playFormat: playFormatFilter, allowWalkIn: walkInFilter,
         });
@@ -462,6 +497,24 @@ export function GroupFinder({
       },
     );
   };
+
+  const handleRequestNearby = () => {
+    requestNearby({ cta: "nearby" });
+  };
+
+  const handleRequestNearbyToday = () => {
+    const today = getThailandTodayDateString();
+    requestNearby({ cta: "nearby_today", date: today });
+  };
+  nearbyTodayHandlerRef.current = handleRequestNearbyToday;
+
+  useEffect(() => {
+    const handleNearbyTodayEvent = () => nearbyTodayHandlerRef.current();
+    window.addEventListener(NEARBY_TODAY_EVENT, handleNearbyTodayEvent);
+    return () => {
+      window.removeEventListener(NEARBY_TODAY_EVENT, handleNearbyTodayEvent);
+    };
+  }, []);
 
   const handleClearNearby = () => {
     setUserLocation(null);
@@ -647,7 +700,7 @@ export function GroupFinder({
   };
 
   return (
-    <div className="space-y-6">
+    <div id="group-finder-results" className="scroll-mt-24 space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem_16rem] md:items-end">
           <div className="space-y-2">
