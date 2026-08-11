@@ -112,7 +112,6 @@ export async function generateMetadata({
       },
     };
   }
-  const t = await getTranslator(locale);
   const searchQuery = sanitizeQueryParam(resolvedSearch?.search);
   const dateFilter = sanitizeQueryParam(resolvedSearch?.date);
   const dayFilter = sanitizeQueryParam(resolvedSearch?.day);
@@ -152,42 +151,7 @@ export async function generateMetadata({
         : `${thaiIntent} ค้นหากลุ่ม${meta.name[locale]}ที่เปิดรับสมาชิก พร้อมวันเวลาเล่นและข้อมูลติดต่อจากทั่วประเทศไทย ${seoKeyword}`
       : `${englishIntent} in Thailand with schedules, contacts, and nearby map context. ${seoKeyword}`;
 
-  const validDayFilter = isDayKey(dayFilter) ? dayFilter : "";
-  const filterParts = [
-    dateFilter,
-    validDayFilter ? t(`groups.days.${validDayFilter}`) : "",
-    playFormatFilter === "single" ? t("groups.form.playFormatSingle") : "",
-    playFormatFilter === "double" ? t("groups.form.playFormatDouble") : "",
-    walkInFilter === "true" ? t("groups.detail.walkInsWelcome") : "",
-    walkInFilter === "false" ? t("groups.detail.walkInsClosed") : "",
-    startTimeFilter && endTimeFilter
-      ? `${startTimeFilter}-${endTimeFilter}`
-      : startTimeFilter || endTimeFilter,
-  ].filter(Boolean);
-  const filterSummary = filterParts.join(locale === "th" ? " • " : " • ");
-  const filteredTitle = searchQuery
-    ? locale === "th"
-      ? `ผลการค้นหากลุ่ม${meta.name[locale]} "${searchQuery}" | RacketThailand`
-      : `${englishIntent} matching "${searchQuery}" | RacketThailand`
-    : filterSummary
-      ? locale === "th"
-        ? `กลุ่ม${meta.name[locale]}: ${filterSummary} | RacketThailand`
-        : `${englishIntent}: ${filterSummary} | RacketThailand`
-      : title;
-  const filteredDescription = searchQuery
-    ? locale === "th"
-      ? resolvedParams.sport === "badminton"
-        ? `ผลการค้นหาก๊วนแบดที่เกี่ยวข้องกับ "${searchQuery}" พร้อมสนาม วันเวลาเล่น และช่องทางติดต่อผู้จัดก๊วน`
-        : `${thaiIntent} ดูผลการค้นหากลุ่ม${meta.name[locale]}ที่เกี่ยวข้องกับ "${searchQuery}" พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
-      : `${englishIntent} matching "${searchQuery}" with schedules and contact details. ${seoKeyword}`
-    : filterSummary
-      ? locale === "th"
-        ? resolvedParams.sport === "badminton"
-          ? `ค้นหาก๊วนแบดตามตัวกรอง ${filterSummary} พร้อมสนาม วันเวลาเล่น และช่องทางติดต่อผู้จัดก๊วน`
-          : `${thaiIntent} ค้นหากลุ่ม${meta.name[locale]}ตามตัวกรอง ${filterSummary} พร้อมวันเวลาเล่นและข้อมูลติดต่อ ${seoKeyword}`
-        : `${englishIntent} filtered by ${filterSummary}, with schedules and contact details. ${seoKeyword}`
-      : description;
-  const metaDescription = truncateMetaDescription(filteredDescription);
+  const metaDescription = truncateMetaDescription(description);
   const finderPreviewImage = buildAbsoluteUrl(meta.coverImage);
   const finderPreviewAlt =
     locale === "th"
@@ -195,7 +159,7 @@ export async function generateMetadata({
       : `${englishIntent} on RacketThailand`;
 
   return {
-    title: filteredTitle,
+    title,
     description: metaDescription,
     robots: hasActiveFilters
       ? {
@@ -208,7 +172,7 @@ export async function generateMetadata({
       languages: alternates,
     },
     openGraph: {
-      title: filteredTitle,
+      title,
       description: metaDescription,
       url: canonical,
       type: "website",
@@ -221,7 +185,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: filteredTitle,
+      title,
       description: metaDescription,
       images: [finderPreviewImage],
     },
