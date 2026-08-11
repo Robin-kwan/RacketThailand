@@ -308,6 +308,7 @@
     "walkInFilterLabel": "วอล์กอิน",
     "anyWalkInLabel": "ทุกสถานะวอล์กอิน",
     "nearbyButton": "ค้นหาใกล้ฉัน",
+    "nearbyTodayButton": "ค้นหาใกล้ฉันวันนี้",
     "nearbyFinding": "กำลังระบุตำแหน่ง…",
     "nearbyClear": "ยกเลิกโหมดใกล้ฉัน",
     "nearbyUnsupported": "เบราว์เซอร์นี้ยังไม่รองรับการระบุตำแหน่ง",

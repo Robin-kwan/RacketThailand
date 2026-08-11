@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { GroupFinder } from "@/components/group-finder";
+import {
+  GroupFinder,
+  GroupFinderNearbyTodayButton,
+} from "@/components/group-finder";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { SportFinderHero } from "@/components/sport-finder-hero";
 import { HeaderSubLabel } from "@/components/header-sub-label";
@@ -51,7 +54,7 @@ function isDayKey(value: string): value is DayKey {
 
 function getThaiGroupFinderIntent(sportCode: string, sportName: string) {
   const intents: Record<string, string> = {
-    badminton: "ก๊วนแบด: ค้นหาก๊วนตีแบด",
+    badminton: "ค้นหาก๊วนแบด",
     padel: "ค้นหากลุ่มพาเดล",
     pickleball: "ค้นหากลุ่มพิคเคิลบอล",
     tennis: "ค้นหากลุ่มเทนนิส",
@@ -316,6 +319,7 @@ export default async function GroupFinderPage({
     walkInsWelcome: t("groups.detail.walkInsWelcome"),
     walkInsClosed: t("groups.detail.walkInsClosed"),
     nearbyButton: t("groupFinder.nearbyButton"),
+    nearbyTodayButton: t("groupFinder.nearbyTodayButton"),
     nearbyFinding: t("groupFinder.nearbyFinding"),
     nearbyClear: t("groupFinder.nearbyClear"),
     nearbyUnsupported: t("groupFinder.nearbyUnsupported"),
@@ -418,6 +422,7 @@ export default async function GroupFinderPage({
           title={copy.title}
           description={copy.subtitle}
         >
+          <GroupFinderNearbyTodayButton label={copy.nearbyTodayButton} />
           <TrackedLink
             href={buildLocalizedPath(
               `/groups/create?sport=${encodeURIComponent(resolvedParams.sport)}`,

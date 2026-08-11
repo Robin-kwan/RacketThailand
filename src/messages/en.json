@@ -308,6 +308,7 @@
     "walkInFilterLabel": "Walk-in",
     "anyWalkInLabel": "Any walk-in status",
     "nearbyButton": "Search nearby",
+    "nearbyTodayButton": "Search near me today",
     "nearbyFinding": "Locating your position…",
     "nearbyClear": "Clear nearby",
     "nearbyUnsupported": "Location not supported in this browser.",
