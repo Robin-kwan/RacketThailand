@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import {
-  buildLocalizedPath,
-  getTranslator,
-  normalizeLocale,
-} from "@/lib/i18n";
+import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
 import {
   buildAbsoluteUrl,
   buildCanonicalUrl,
@@ -22,16 +18,26 @@ import { fetchCourtDetail } from "@/server/courtFinder";
 import { CourtMap } from "@/components/court-map";
 import { ensureAllDays } from "@/lib/opening-hours";
 import { ViewTracker } from "@/components/view-tracker";
-import { GroupCard, type GroupCardSession } from "@/components/group-card";
+import type { GroupCardSession } from "@/components/group-card";
+import { CourtGroupRow } from "@/components/court-group-row";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
 import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
 import type { Locale } from "@/lib/i18n";
-import { CalendarDays, Clock3 } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  Clock3,
+  Images,
+  MapPin,
+  Navigation,
+  Users,
+} from "lucide-react";
 
 function getGroupCover(group: {
   sports?: { code: string } | null;
-  group_photos?: { image_url: string | null; is_primary: boolean | null }[] | null;
+  group_photos?:
+    { image_url: string | null; is_primary: boolean | null }[] | null;
 }) {
   const primary =
     group.group_photos?.find((photo) => photo.is_primary)?.image_url ??
@@ -288,9 +294,7 @@ export async function generateMetadata({
     court.price_note
       ? `${locale === "th" ? "ราคา" : "Pricing"}: ${court.price_note}`
       : null,
-    court.phone
-      ? `${locale === "th" ? "โทร" : "Phone"}: ${court.phone}`
-      : null,
+    court.phone ? `${locale === "th" ? "โทร" : "Phone"}: ${court.phone}` : null,
   ].filter(Boolean);
   const rawDescription =
     descriptionParts.join(" · ") ||
@@ -447,9 +451,7 @@ export default async function CourtPage({
     const display =
       entry.ranges?.length > 0
         ? entry.ranges
-            .map((range) =>
-              formatRangeDisplay(range.open, range.close, locale),
-            )
+            .map((range) => formatRangeDisplay(range.open, range.close, locale))
             .join(", ")
         : locale === "th"
           ? "ปิด"
@@ -490,17 +492,20 @@ export default async function CourtPage({
     edit: t("courtPage.edit"),
     createGroup: t("header.createGroup"),
     groupScheduleAny: t("groups.detail.scheduleAny"),
+    walkInsWelcome: t("groups.detail.walkInsWelcome"),
+    walkInsClosed: t("groups.detail.walkInsClosed"),
     backToGroupFinder: t("courtPage.backToGroupFinder"),
     mapDirections: t("courtPage.mapDirections"),
     mapDescription: t("courtPage.mapDescription"),
     openGoogleMaps: t("courtPage.openGoogleMaps"),
+    courtPhotos: t("courtPage.courtPhotos"),
+    courtDetails: t("courtPage.courtDetails"),
+    directions: t("courtPage.directions"),
   };
   const fallbackCourtName =
     locale === "th" ? "ยังไม่ระบุชื่อสนาม" : "Unnamed court";
-  const fallbackGroupName =
-    locale === "th" ? "กลุ่มชุมชน" : "Community group";
-  const fallbackGroupPhotoAlt =
-    locale === "th" ? "รูปกลุ่ม" : "Group photo";
+  const fallbackGroupName = locale === "th" ? "กลุ่มชุมชน" : "Community group";
+  const fallbackGroupPhotoAlt = locale === "th" ? "รูปกลุ่ม" : "Group photo";
   const availableSports = detail.sports.length
     ? detail.sports
     : activeSport
@@ -563,363 +568,470 @@ export default async function CourtPage({
       ? openingHoursSpecification
       : undefined,
   };
+  const mapsHref = hasMapCoordinates
+    ? detail.court.google_place_id
+      ? `https://www.google.com/maps/search/?${new URLSearchParams({
+          api: "1",
+          query: `${numericLatitude},${numericLongitude}`,
+          query_place_id: detail.court.google_place_id,
+        }).toString()}`
+      : `https://www.google.com/maps/search/?${new URLSearchParams({
+          api: "1",
+          query: `${detail.court.name ?? shareTitle} ${numericLatitude},${numericLongitude}`,
+        }).toString()}`
+    : null;
 
   return (
     <div className="min-h-screen bg-[#f7fbf9] text-slate-900">
-      <ViewTracker
-        event="court_view"
-        payload={{ courtId: detail.court.id }}
-      />
+      <ViewTracker event="court_view" payload={{ courtId: detail.court.id }} />
       <HeaderSportScope sportSlug={activeSportCode ?? undefined} />
       <HeaderSubLabel value={getSportDisplayName(activeSport, locale)} />
-      <main className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 md:px-10 md:pb-20">
-        <CourtGallery gallery={gallery} courtName={detail.court.name} />
-
-        <section className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
-            <div className="max-w-3xl">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
-                {detail.court.name ?? fallbackCourtName}
-              </h1>
-              <p className="mt-2 text-sm text-slate-600">
-                {[detail.court.district, detail.court.province]
-                  .filter(Boolean)
-                  .join(" - ")}
-              </p>
-              {detail.court.description && (
-                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600 md:text-base">
-                  {detail.court.description}
-                </p>
-              )}
-              {availableSports.length > 0 && (
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500">
-                    {copy.availableSports}
-                  </span>
-                  {availableSports.map((sport) => {
-                    const sportCode = sport.code ?? "";
-                    const isActive = sportCode === activeSportCode;
-                    return (
-                      <Link
-                        key={sport.id ?? sportCode}
-                        href={buildLocalizedPath(
-                          `/courts/${detail.court.id}${
-                            sportCode
-                              ? `?sport=${encodeURIComponent(sportCode)}`
-                              : ""
-                          }`,
-                          locale,
-                        )}
-                        className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                          isActive
-                            ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
-                        }`}
-                        aria-current={isActive ? "page" : undefined}
-                      >
-                        {getSportDisplayName(sport, locale)}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <ShareButton
-                title={shareTitle}
-                text={shareText}
-                url={canonicalUrl}
-                label={copy.shareAction}
-                copiedLabel={copy.linkCopiedAction}
-              />
-              {canEdit && (
-                <Link
-                  href={buildLocalizedPath(
-                    `/courts/${resolvedParams.courtId}/edit`,
-                    locale,
-                  )}
-                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                >
-                  {copy.edit}
-                </Link>
-              )}
-            </div>
+      <main className="pb-16 md:pb-20">
+        <section className="relative overflow-hidden bg-[#071b14] text-white">
+          <div className="absolute inset-0">
+            <CourtGallery
+              gallery={gallery}
+              courtName={detail.court.name}
+              variant="hero"
+            />
           </div>
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900">
-              {copy.contact}
-            </h2>
-            <ul className="space-y-3 text-sm text-slate-600">
-              {detail.court.address && (
-                <li>
-                  <strong className="text-slate-900">
-                    {copy.address}:
-                  </strong>{" "}
-                  {detail.court.address}
-                </li>
-              )}
-              {detail.court.price_note && (
-                <li>
-                  <strong className="text-slate-900">
-                    {copy.price}:
-                  </strong>
-                  <div
-                    className="prose prose-sm mt-1 max-w-none whitespace-pre-line text-slate-600"
-                    dangerouslySetInnerHTML={{
-                      __html: detail.court.price_note,
-                    }}
-                  />
-                </li>
-              )}
-              {hasAnyHours && (
-                <li>
-              <strong className="text-slate-900">
-                {copy.hours}:
-              </strong>
-                  <BaseScheduleList entries={openingHourRows} className="mt-2" />
-                </li>
-              )}
-              {detail.court.phone && (
-                <li className="min-w-0 space-y-1">
-                  <strong className="text-slate-900">
-                    {copy.phone}:
-                  </strong>
-                  <ContactActionValue
-                    mode="phone"
-                    value={detail.court.phone}
-                    copyLabel={copy.copyAction}
-                    copiedLabel={copy.copiedAction}
-                    callLabel={copy.callAction}
-                  />
-                </li>
-              )}
-              {detail.court.line_id && (
-                <li className="min-w-0 space-y-1">
-                  <strong className="text-slate-900">
-                    {copy.line}:
-                  </strong>
-                  <ContactActionValue
-                    mode="line"
-                    value={detail.court.line_id}
-                    copyLabel={copy.copyAction}
-                    copiedLabel={copy.copiedAction}
-                    callLabel={copy.callAction}
-                  />
-                </li>
-              )}
-              {detail.court.line_qr_url && (
-                <li className="space-y-2">
-                  <strong className="text-slate-900">{copy.lineQr}:</strong>
-                  <LineQrLightboxImage
-                    src={detail.court.line_qr_url}
-                    alt="LINE QR"
-                    sizes="144px"
-                    className="relative h-36 w-36 overflow-hidden rounded-lg border border-slate-200 bg-white"
-                  />
-                </li>
-              )}
-              {detail.court.website_url && (
-                <li className="min-w-0">
-                  <strong className="text-slate-900">
-                    {copy.website}:
-                  </strong>{" "}
+          <div className="pointer-events-none absolute inset-0 bg-[#04130e]/40" />
+          <div className="pointer-events-none absolute inset-0 bg-[#04130e]/20" />
+          <div className="pointer-events-none relative mx-auto flex min-h-[240px] max-w-screen-xl items-end px-6 py-5 md:min-h-[300px] md:px-10 md:py-8">
+            <div className="flex w-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
+                  {detail.court.name ?? fallbackCourtName}
+                </h1>
+                <p className="mt-2 text-sm font-medium text-white/80 md:text-base">
+                  {[detail.court.district, detail.court.province]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                {availableSports.length > 0 ? (
+                  <div className="pointer-events-auto mt-4 flex flex-wrap gap-2">
+                    {availableSports.map((sport) => {
+                      const sportCode = sport.code ?? "";
+                      const isActive = sportCode === activeSportCode;
+                      const sportLabel = getSportDisplayName(sport, locale);
+                      const chipClassName = `rounded-full border px-3 py-1 text-xs font-semibold text-white transition ${
+                        isActive
+                          ? "border-white/80 bg-white/25"
+                          : "border-white/35 bg-black/20 hover:border-white/60 hover:bg-black/30"
+                      }`;
+
+                      if (availableSports.length === 1) {
+                        return (
+                          <span
+                            key={sport.id ?? sportCode}
+                            className={chipClassName}
+                          >
+                            {sportLabel}
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={sport.id ?? sportCode}
+                          href={buildLocalizedPath(
+                            `/courts/${detail.court.id}${sportCode ? `?sport=${encodeURIComponent(sportCode)}` : ""}`,
+                            locale,
+                          )}
+                          aria-current={isActive ? "page" : undefined}
+                          className={chipClassName}
+                        >
+                          {sportLabel}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+              <div className="pointer-events-auto flex shrink-0 flex-wrap items-center gap-3">
+                {mapsHref ? (
                   <a
-                    href={detail.court.website_url}
+                    href={mapsHref}
                     target="_blank"
                     rel="noreferrer"
-                    title={detail.court.website_url}
-                    className="inline-block min-w-0 max-w-full truncate align-bottom text-slate-900 underline sm:max-w-[22rem]"
+                    className="rt-btn-court inline-flex items-center gap-2 px-5 py-2.5 text-sm"
                   >
-                    {detail.court.website_url}
+                    <Navigation className="size-4" aria-hidden />
+                    {copy.directions}
                   </a>
-                </li>
-              )}
-            </ul>
+                ) : null}
+                <ShareButton
+                  title={shareTitle}
+                  text={shareText}
+                  url={canonicalUrl}
+                  label={copy.shareAction}
+                  copiedLabel={copy.linkCopiedAction}
+                  className="!border-white/40 !bg-black/20 !text-white hover:!border-white/70 hover:!bg-black/30"
+                />
+                {canEdit ? (
+                  <Link
+                    href={buildLocalizedPath(
+                      `/courts/${resolvedParams.courtId}/edit`,
+                      locale,
+                    )}
+                    className="rounded-full border border-white/40 bg-black/20 px-4 py-2 text-sm font-semibold text-white hover:border-white/70"
+                  >
+                    {copy.edit}
+                  </Link>
+                ) : null}
+              </div>
+            </div>
           </div>
         </section>
 
-        {hasMapCoordinates && (
-          <CourtMap
-            name={detail.court.name ?? (locale === "th" ? "ตำแหน่งสนาม" : "Court location")}
-            latitude={numericLatitude as number}
-            longitude={numericLongitude as number}
-            placeId={detail.court.google_place_id}
-            locale={locale}
-            eyebrow={copy.mapDirections}
-            description={copy.mapDescription}
-            openMapsLabel={copy.openGoogleMaps}
-          />
-        )}
-
-        {upcomingEvents.length > 0 && (
-          <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                <CalendarDays className="size-4" aria-hidden />
-              </span>
-              <h2 className="text-lg font-semibold text-slate-900">
-                {copy.upcomingSessionsTitle}
-              </h2>
-            </div>
-            <div className="space-y-3">
-              {upcomingEvents.map((event) => {
-                const eventGroup = event.groups;
-                if (!eventGroup) return null;
-                const eventSportCode = eventGroup.sports?.code ?? null;
-                const eventDate = formatUpcomingEventDateParts(
-                  event.starts_at,
-                  locale,
-                );
-                return (
-                  <Link
-                    key={event.id}
-                    href={buildLocalizedPath(
-                      `/groups/${eventGroup.id}${
-                        eventSportCode
-                          ? `?sport=${encodeURIComponent(eventSportCode)}`
-                          : ""
-                      }`,
-                      locale,
-                    )}
-                    className="flex items-start gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 transition-[border-color,box-shadow] hover:border-slate-300 hover:shadow-sm sm:p-5"
-                  >
-                    <div className="flex w-[4.5rem] shrink-0 flex-col items-center border-r border-slate-200 pr-4 text-center">
-                      <span className="text-[11px] font-semibold uppercase text-blue-700">
-                        {eventDate.weekday}
-                      </span>
-                      <span className="mt-1 text-3xl font-semibold leading-none text-slate-950">
-                        {eventDate.day}
-                      </span>
-                      <span className="mt-1 text-xs font-medium text-slate-500">
-                        {eventDate.month}
-                      </span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 text-base font-semibold text-slate-950">
-                        <Clock3 className="size-4 text-blue-700" aria-hidden />
-                        {formatUpcomingEventTime(
-                          event.starts_at,
-                          event.ends_at,
-                          locale,
-                        )}
-                      </p>
-                      <h3 className="mt-2 truncate text-sm font-semibold text-slate-800">
-                        {eventGroup.name ?? fallbackGroupName}
-                      </h3>
-                      {event.notes && (
-                        <p className="mt-2 line-clamp-2 whitespace-pre-line text-sm text-slate-600">
-                          {event.notes}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        <section className="rounded-lg border border-slate-200 bg-white px-6 py-8 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-slate-900">
-              {copy.groupsTitle}
-            </h2>
-            <Link
-              href={buildLocalizedPath(
-                `/groups/create?${new URLSearchParams({
-                  ...(activeSportCode ? { sport: activeSportCode } : {}),
-                  court: detail.court.id,
-                }).toString()}`,
-                locale,
-              )}
-              className="rt-btn-group inline-flex items-center justify-center px-4 py-2 text-sm"
-            >
-              {copy.createGroup}
-            </Link>
-          </div>
-          {detail.groups.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-600">{copy.groupsEmpty}</p>
-          ) : (
-            <div className="mt-5 space-y-8">
-              {groupSections.map((section) => (
-                <section key={section.code} className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-base font-semibold text-slate-900">
-                      {section.label}
-                    </h3>
-                    <span className="text-xs font-semibold text-slate-500">
-                      {locale === "th"
-                        ? `${section.groups.length.toLocaleString("th-TH")} กลุ่ม`
-                        : `${section.groups.length.toLocaleString("en-US")} groups`}
+        <div className="mx-auto max-w-screen-xl px-6 pt-8 md:px-10 md:pt-9">
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="min-w-0 space-y-4">
+              {detail.photos.length > 0 ? (
+                <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                      <Images className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                      {copy.courtPhotos}
+                    </h2>
+                    <span className="text-sm text-slate-500">
+                      {detail.photos.length}
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {section.groups.map((group) => {
-                      const status = group.verification_status ?? "pending";
-                      const statusLabel =
-                        status === "verified" ? copy.verified : null;
-                      const groupSportCode = group.groups?.sports?.code ?? null;
-                      const groupLink = group.groups?.id
-                        ? buildLocalizedPath(
-                            `/groups/${group.groups.id}${
-                              groupSportCode
-                                ? `?sport=${encodeURIComponent(groupSportCode)}`
-                                : ""
-                            }`,
-                            locale,
-                          )
-                        : null;
-                      const coverImage = group.groups
-                        ? getGroupCover(group.groups)
-                        : "/sports/badminton.png";
-                      const scheduleEntries =
-                        group.groups?.group_sessions &&
-                        Array.isArray(group.groups.group_sessions)
-                          ? group.groups.group_sessions.filter(
-                              (session) => session.court_id === detail.court.id,
-                            )
-                          : [];
-                      const sessionsForCourt: GroupCardSession[] =
-                        scheduleEntries.map((session) => ({
-                          day: session.day,
-                          start_time: session.start_time,
-                          end_time: session.end_time,
-                          courts: null,
-                        }));
+                  <CourtGallery
+                    gallery={detail.photos}
+                    courtName={detail.court.name}
+                    variant="court-grid"
+                  />
+                </section>
+              ) : null}
+
+              {detail.court.description ? (
+                <section
+                  className={
+                    detail.photos.length > 0
+                      ? "border-t border-slate-200 pt-8"
+                      : ""
+                  }
+                >
+                  <p className="whitespace-pre-wrap text-base leading-8 text-slate-700">
+                    {detail.court.description}
+                  </p>
+                </section>
+              ) : null}
+
+              {hasAnyHours ? (
+                <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+                      <Clock3 className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                      {copy.hours}
+                    </h2>
+                  </div>
+                  <BaseScheduleList
+                    entries={openingHourRows}
+                    variant="responsive"
+                  />
+                </section>
+              ) : null}
+
+              {upcomingEvents.length > 0 ? (
+                <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+                      <CalendarDays className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                      {copy.upcomingSessionsTitle}
+                    </h2>
+                  </div>
+                  <div className="divide-y divide-slate-200 border-y border-slate-200">
+                    {upcomingEvents.map((event) => {
+                      const eventGroup = event.groups;
+                      if (!eventGroup) return null;
+                      const eventDate = formatUpcomingEventDateParts(
+                        event.starts_at,
+                        locale,
+                      );
                       return (
-                        <GroupCard
-                          key={group.id}
-                          href={groupLink}
-                          name={group.groups?.name ?? fallbackGroupName}
-                          imageUrl={coverImage}
-                          imageAlt={group.groups?.name ?? fallbackGroupPhotoAlt}
-                          sessions={sessionsForCourt}
-                          playFormat={group.groups?.play_format ?? null}
-                          allowWalkIn={group.groups?.allow_walk_in ?? null}
-                          verifiedLabel={statusLabel}
-                          verifiedTooltip={
-                            statusLabel ? copy.verifiedTooltip : null
-                          }
-                          dayLabels={dayLabels}
-                          scheduleAnytime={copy.groupScheduleAny}
-                          locale={locale as Locale}
-                          sessionLimit={3}
-                          showSessions
-                          className="text-sm text-[var(--foreground)]"
-                          titleClassName="text-sm font-medium text-[var(--foreground)] sm:text-base"
-                          imageAspectClass="aspect-[4/3]"
-                          description={group.groups?.description ?? null}
-                          showDescription
-                          showLocation={false}
-                        />
+                        <Link
+                          key={event.id}
+                          href={buildLocalizedPath(
+                            `/groups/${eventGroup.id}${eventGroup.sports?.code ? `?sport=${encodeURIComponent(eventGroup.sports.code)}` : ""}`,
+                            locale,
+                          )}
+                          className="flex items-center gap-4 py-4"
+                        >
+                          <div className="w-16 shrink-0 text-center">
+                            <p className="text-xs font-semibold text-violet-700">
+                              {eventDate.weekday}
+                            </p>
+                            <p className="text-2xl font-semibold text-slate-950">
+                              {eventDate.day}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {eventDate.month}
+                            </p>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-slate-950">
+                              {eventGroup.name ?? fallbackGroupName}
+                            </p>
+                            <p className="mt-1 text-sm text-slate-600">
+                              {formatUpcomingEventTime(
+                                event.starts_at,
+                                event.ends_at,
+                                locale,
+                              )}
+                            </p>
+                            {event.notes ? (
+                              <p className="mt-2 line-clamp-2 whitespace-pre-line text-sm text-slate-600">
+                                {event.notes}
+                              </p>
+                            ) : null}
+                          </div>
+                        </Link>
                       );
                     })}
                   </div>
                 </section>
-              ))}
+              ) : null}
+
+              <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+                      <Users className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                      {copy.groupsTitle}
+                    </h2>
+                  </div>
+                  <Link
+                    href={buildLocalizedPath(
+                      `/groups/create?${new URLSearchParams({ ...(activeSportCode ? { sport: activeSportCode } : {}), court: detail.court.id }).toString()}`,
+                      locale,
+                    )}
+                    className="rt-btn-group inline-flex items-center justify-center px-4 py-2 text-sm"
+                  >
+                    {copy.createGroup}
+                  </Link>
+                </div>
+                {detail.groups.length === 0 ? (
+                  <p className="text-sm text-slate-600">{copy.groupsEmpty}</p>
+                ) : (
+                  <div className="space-y-6">
+                    {groupSections.map((section) => (
+                      <section key={section.code}>
+                        {groupSections.length > 1 ? (
+                          <h3 className="pb-2 text-sm font-semibold text-slate-500">
+                            {section.label}
+                          </h3>
+                        ) : null}
+                        <div className="divide-y divide-slate-200 border-y border-slate-200">
+                          {section.groups.map((group) => {
+                            const groupSportCode =
+                              group.groups?.sports?.code ?? null;
+                            const sessionsForCourt: GroupCardSession[] = (
+                              Array.isArray(group.groups?.group_sessions)
+                                ? group.groups.group_sessions
+                                : []
+                            )
+                              .filter(
+                                (session) =>
+                                  session.court_id === detail.court.id,
+                              )
+                              .map((session) => ({
+                                day: session.day,
+                                start_time: session.start_time,
+                                end_time: session.end_time,
+                                courts: null,
+                              }));
+                            return (
+                              <CourtGroupRow
+                                key={group.id}
+                                href={
+                                  group.groups?.id
+                                    ? buildLocalizedPath(
+                                        `/groups/${group.groups.id}${groupSportCode ? `?sport=${encodeURIComponent(groupSportCode)}` : ""}`,
+                                        locale,
+                                      )
+                                    : null
+                                }
+                                name={group.groups?.name ?? fallbackGroupName}
+                                imageUrl={
+                                  group.groups
+                                    ? getGroupCover(group.groups)
+                                    : "/sports/badminton.png"
+                                }
+                                imageAlt={
+                                  group.groups?.name ?? fallbackGroupPhotoAlt
+                                }
+                                sessions={sessionsForCourt}
+                                dayLabels={dayLabels}
+                                scheduleAnytime={copy.groupScheduleAny}
+                                locale={locale as Locale}
+                                description={group.groups?.description ?? null}
+                                playFormat={group.groups?.play_format ?? null}
+                                allowWalkIn={group.groups?.allow_walk_in ?? null}
+                                walkInsWelcome={copy.walkInsWelcome}
+                                walkInsClosed={copy.walkInsClosed}
+                                verifiedLabel={
+                                  group.verification_status === "verified"
+                                    ? copy.verified
+                                    : null
+                                }
+                                verifiedTooltip={
+                                  group.verification_status === "verified"
+                                    ? copy.verifiedTooltip
+                                    : null
+                                }
+                              />
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                )}
+              </section>
             </div>
-          )}
-        </section>
+
+            <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">
+              <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+                  <span className="flex size-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700">
+                    <Building2 className="size-4" aria-hidden />
+                  </span>
+                  <h2 className="text-lg font-semibold text-slate-950">
+                    {copy.courtDetails}
+                  </h2>
+                </div>
+                <div className="space-y-5 pt-5 text-sm text-slate-600">
+                  {detail.court.address ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        {copy.address}
+                      </p>
+                      <p className="mt-1 leading-6 text-slate-700">
+                        {detail.court.address}
+                      </p>
+                    </div>
+                  ) : null}
+                  {availableSports.length > 0 ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        {copy.availableSports}
+                      </p>
+                      <p className="mt-1 font-semibold text-slate-800">
+                        {availableSports
+                          .map((sport) => getSportDisplayName(sport, locale))
+                          .join(", ")}
+                      </p>
+                    </div>
+                  ) : null}
+                  {detail.court.price_note ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        {copy.price}
+                      </p>
+                      <div
+                        className="prose prose-sm mt-1 max-w-none whitespace-pre-line text-slate-700"
+                        dangerouslySetInnerHTML={{
+                          __html: detail.court.price_note,
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                  {detail.court.phone ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        {copy.phone}
+                      </p>
+                      <ContactActionValue
+                        mode="phone"
+                        value={detail.court.phone}
+                        copyLabel={copy.copyAction}
+                        copiedLabel={copy.copiedAction}
+                        callLabel={copy.callAction}
+                      />
+                    </div>
+                  ) : null}
+                  {detail.court.line_id ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        {copy.line}
+                      </p>
+                      <ContactActionValue
+                        mode="line"
+                        value={detail.court.line_id}
+                        copyLabel={copy.copyAction}
+                        copiedLabel={copy.copiedAction}
+                        callLabel={copy.callAction}
+                      />
+                    </div>
+                  ) : null}
+                  {detail.court.line_qr_url ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        {copy.lineQr}
+                      </p>
+                      <LineQrLightboxImage
+                        src={detail.court.line_qr_url}
+                        alt="LINE QR"
+                        sizes="128px"
+                        className="relative mt-2 h-32 w-32 overflow-hidden rounded-lg border border-slate-200 bg-white"
+                      />
+                    </div>
+                  ) : null}
+                  {detail.court.website_url ? (
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase text-slate-400">
+                        {copy.website}
+                      </p>
+                      <a
+                        href={detail.court.website_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 block truncate font-semibold text-slate-800 underline decoration-dotted underline-offset-4"
+                      >
+                        {detail.court.website_url}
+                      </a>
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+
+              {hasMapCoordinates ? (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-rose-50 text-rose-700">
+                      <MapPin className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-lg font-semibold text-slate-950">
+                      {copy.mapDirections}
+                    </h2>
+                  </div>
+                  <CourtMap
+                    name={detail.court.name ?? fallbackCourtName}
+                    latitude={numericLatitude as number}
+                    longitude={numericLongitude as number}
+                    placeId={detail.court.google_place_id}
+                    locale={locale}
+                    eyebrow={copy.mapDirections}
+                    description={copy.mapDescription}
+                    openMapsLabel={copy.openGoogleMaps}
+                    compact
+                  />
+                </section>
+              ) : null}
+            </aside>
+          </div>
+        </div>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

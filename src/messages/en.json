@@ -822,7 +822,10 @@
     "edit": "Edit court",
     "updated": "Last updated",
     "backToFinder": "Back to court finder",
-    "backToGroupFinder": "Back to group finder"
+    "backToGroupFinder": "Back to group finder",
+    "courtPhotos": "Court photos",
+    "courtDetails": "Court details",
+    "directions": "Directions"
   },
   "dashboard": {
     "courtRequests": {

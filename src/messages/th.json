@@ -822,7 +822,10 @@
     "edit": "แก้ไขข้อมูลสนาม",
     "updated": "อัปเดตล่าสุด",
     "backToFinder": "กลับไปหน้าค้นหาสนาม",
-    "backToGroupFinder": "กลับไปหน้าค้นหากลุ่ม"
+    "backToGroupFinder": "กลับไปหน้าค้นหากลุ่ม",
+    "courtPhotos": "รูปภาพสนาม",
+    "courtDetails": "ข้อมูลสนาม",
+    "directions": "นำทาง"
   },
   "dashboard": {
     "courtRequests": {

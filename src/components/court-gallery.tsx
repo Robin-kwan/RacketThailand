@@ -15,7 +15,7 @@ type GalleryImage = {
 type CourtGalleryProps = {
   gallery: GalleryImage[];
   courtName?: string | null;
-  variant?: "default" | "hero" | "grid";
+  variant?: "default" | "hero" | "grid" | "court-grid";
 };
 
 type ImagePresentation = "cover" | "contain";
@@ -141,40 +141,22 @@ export function CourtGallery({
 
   if (variant === "hero") {
     return (
-      <>
-        <button
-          type="button"
-          onClick={() =>
-            primaryCanOpen && setLightbox({ open: true, index: 0 })
-          }
-          className="relative block h-full min-h-[260px] w-full overflow-hidden md:min-h-[390px]"
-          disabled={!primaryCanOpen}
-        >
-          <Image
-            src={primaryImage.image_url}
-            alt={courtName ?? "Court photo"}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-        </button>
-        {lightbox.open && (
-          <ImageLightbox
-            images={ordered.map((photo) => ({
-              id: photo.id,
-              src: photo.image_url,
-              alt: courtName ?? "Court photo",
-            }))}
-            initialIndex={lightbox.index}
-            onClose={() => setLightbox({ open: false, index: 0 })}
-          />
-        )}
-      </>
+      <div className="relative h-full min-h-[240px] w-full overflow-hidden md:min-h-[300px]">
+        <Image
+          src={primaryImage.image_url}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
     );
   }
 
-  if (variant === "grid") {
+  if (variant === "grid" || variant === "court-grid") {
+    const isCompactCourtGrid = variant === "court-grid";
+
     return (
       <>
         <div
@@ -184,7 +166,7 @@ export function CourtGallery({
             const canOpen = photo.allowFullscreen !== false;
             const media = (
               <div
-                className={`relative w-full overflow-hidden rounded-lg bg-slate-100 ${ordered.length === 1 ? "aspect-[16/9] max-h-[380px]" : index === 0 ? "col-span-2 aspect-[16/9] md:row-span-2 md:aspect-auto md:min-h-[320px]" : "aspect-[4/3]"}`}
+                className={`relative w-full overflow-hidden rounded-lg bg-slate-100 ${ordered.length === 1 ? (isCompactCourtGrid ? "h-[190px] md:h-[210px]" : "aspect-[16/9] max-h-[380px]") : index === 0 ? `col-span-2 aspect-[16/9] md:row-span-2 md:aspect-auto ${isCompactCourtGrid ? "md:min-h-[260px]" : "md:min-h-[320px]"}` : "aspect-[4/3]"}`}
               >
                 <Image
                   src={photo.image_url}

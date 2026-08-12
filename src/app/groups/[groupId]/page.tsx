@@ -982,12 +982,12 @@ export default async function GroupDetailPage({
                   variant="hero"
                 />
               </div>
-              <div className="absolute inset-0 bg-[#05140f]/55" />
-              <div className="absolute inset-y-0 left-0 w-full bg-[#05140f]/45 md:w-3/4" />
+              <div className="pointer-events-none absolute inset-0 bg-[#05140f]/55" />
+              <div className="pointer-events-none absolute inset-0 bg-[#05140f]/45" />
             </>
           ) : null}
           <div
-            className={`relative mx-auto flex max-w-screen-xl items-end px-6 py-6 md:px-10 md:py-10 ${gallery.length > 0 ? "min-h-[260px] md:min-h-[390px]" : "min-h-[220px] md:min-h-[340px]"}`}
+            className={`pointer-events-none relative mx-auto flex max-w-screen-xl items-end px-6 py-5 md:px-10 md:py-8 ${gallery.length > 0 ? "min-h-[240px] md:min-h-[300px]" : "min-h-[200px] md:min-h-[300px]"}`}
           >
             <div className="flex w-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div className="max-w-2xl">
@@ -995,7 +995,7 @@ export default async function GroupDetailPage({
                   {group.name ?? fallbackGroupName}
                 </h1>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-3">
+              <div className="pointer-events-auto flex shrink-0 flex-wrap items-center gap-3">
                 {primaryContact && (
                   <a
                     href={primaryContact.href}
@@ -1022,7 +1022,7 @@ export default async function GroupDetailPage({
                         `/groups/${group.id}/players`,
                         locale,
                       )}
-                      className="rt-btn-group inline-flex items-center justify-center px-4 py-2 text-sm"
+                      className="inline-flex items-center justify-center rounded-full border border-emerald-400/60 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:border-emerald-300 hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#081f17]"
                     >
                       {t("playerFinder.groupInvite.title")}
                     </Link>
@@ -1052,9 +1052,9 @@ export default async function GroupDetailPage({
               </p>
             </section>
           ) : null}
-          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="min-w-0 space-y-8">
-              {gallery.length > 0 && (
+              {filteredPhotos.length > 0 && (
                 <section className="space-y-5">
                   <div className="flex items-center gap-3">
                     <span className="flex size-10 items-center justify-center rounded-full bg-blue-50 text-blue-700">
@@ -1064,11 +1064,11 @@ export default async function GroupDetailPage({
                       {copy.groupPhotos}
                     </h2>
                     <span className="text-sm text-slate-500">
-                      {gallery.length}
+                      {filteredPhotos.length}
                     </span>
                   </div>
                   <CourtGallery
-                    gallery={gallery}
+                    gallery={filteredPhotos}
                     courtName={group.name ?? fallbackGroupName}
                     variant="grid"
                   />
@@ -1076,7 +1076,9 @@ export default async function GroupDetailPage({
               )}
 
               {group.description && (
-                <section className="space-y-4 border-t border-slate-200 pt-8">
+                <section
+                  className={`space-y-4 ${filteredPhotos.length > 0 ? "border-t border-slate-200 pt-8" : ""}`}
+                >
                   <div className="flex items-center gap-3">
                     <span className="flex size-10 items-center justify-center rounded-full bg-amber-50 text-amber-700">
                       <Info className="size-4" aria-hidden />
@@ -1407,7 +1409,7 @@ export default async function GroupDetailPage({
               )}
             </div>
 
-            <aside className="space-y-6 lg:sticky lg:top-24">
+            <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">
               <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
                   <span className="flex size-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700">
