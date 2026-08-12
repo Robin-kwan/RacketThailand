@@ -1014,6 +1014,12 @@
       "line": "LINE",
       "website": "Website",
       "lineQr": "LINE QR code",
+      "groupDetails": "Group details",
+      "regularVenues": "Regular venues",
+      "contactGroup": "Contact group",
+      "viewCourt": "View court",
+      "aboutGroup": "About this group",
+      "groupPhotos": "Group photos",
       "sessionForm": {
         "title": "Add a session",
         "description": "Use weekly for fixed bookings, or specific date for rotating groups and one-off upcoming sessions.",
