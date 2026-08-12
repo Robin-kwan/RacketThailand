@@ -21,6 +21,7 @@
 /build
 
 # generated design artifacts
+/output/
 /outputs/
 /design-qa.md
 

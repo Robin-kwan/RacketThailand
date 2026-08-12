@@ -15,11 +15,15 @@ type GalleryImage = {
 type CourtGalleryProps = {
   gallery: GalleryImage[];
   courtName?: string | null;
+  variant?: "default" | "hero" | "grid" | "court-grid";
 };
 
 type ImagePresentation = "cover" | "contain";
 
-function getPresentationFromSize(width: number, height: number): ImagePresentation {
+function getPresentationFromSize(
+  width: number,
+  height: number,
+): ImagePresentation {
   if (!width || !height) return "cover";
 
   const aspectRatio = width / height;
@@ -36,6 +40,7 @@ function isTallImage(width: number, height: number) {
 export function CourtGallery({
   gallery,
   courtName,
+  variant = "default",
 }: CourtGalleryProps) {
   const ordered = useMemo(() => {
     return gallery
@@ -64,13 +69,12 @@ export function CourtGallery({
   const primaryImage = ordered[0];
   const thumbnails = ordered.slice(1);
   const primaryCanOpen = primaryImage.allowFullscreen !== false;
-  const primaryPresentation = primaryImage.allowFullscreen === false
-    ? "cover"
-    : (presentationById[primaryImage.id] ?? "cover");
+  const primaryPresentation =
+    primaryImage.allowFullscreen === false
+      ? "cover"
+      : (presentationById[primaryImage.id] ?? "cover");
   const primaryImageClass =
-    primaryPresentation === "contain"
-      ? "object-contain"
-      : "object-cover";
+    primaryPresentation === "contain" ? "object-contain" : "object-cover";
   const primaryIsTall =
     primaryCanOpen && (tallImageById[primaryImage.id] ?? false);
   const primaryAspectRatio = aspectRatioById[primaryImage.id] ?? null;
@@ -90,8 +94,8 @@ export function CourtGallery({
       : "h-[280px] md:h-[420px]";
   const primaryMediaStyle =
     (useNaturalWideAspect || useConstrainedImageStage) && primaryAspectRatio
-    ? { aspectRatio: primaryAspectRatio }
-    : undefined;
+      ? { aspectRatio: primaryAspectRatio }
+      : undefined;
   const constrainedMaxWidth = primaryAspectRatio
     ? Math.round(Math.min(640, 760 * primaryAspectRatio))
     : undefined;
@@ -102,9 +106,10 @@ export function CourtGallery({
           ? "bg-[linear-gradient(135deg,#f8fafc_0%,#eef8f4_100%)]"
           : "bg-white"
       }`;
-  const primaryFrameStyle = useConstrainedImageStage && constrainedMaxWidth
-    ? { maxWidth: `${constrainedMaxWidth}px` }
-    : undefined;
+  const primaryFrameStyle =
+    useConstrainedImageStage && constrainedMaxWidth
+      ? { maxWidth: `${constrainedMaxWidth}px` }
+      : undefined;
   const primaryMediaClass = `${
     useConstrainedImageStage ? "rounded-lg shadow-sm" : ""
   } relative block w-full overflow-hidden ${primaryHeightClass}`;
@@ -134,13 +139,92 @@ export function CourtGallery({
     });
   };
 
+  if (variant === "hero") {
+    return (
+      <div className="relative h-full min-h-[240px] w-full overflow-hidden md:min-h-[300px]">
+        <Image
+          src={primaryImage.image_url}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
+    );
+  }
+
+  if (variant === "grid" || variant === "court-grid") {
+    const isCompactCourtGrid = variant === "court-grid";
+
+    return (
+      <>
+        <div
+          className={`grid gap-3 ${ordered.length === 1 ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3"}`}
+        >
+          {ordered.map((photo, index) => {
+            const canOpen = photo.allowFullscreen !== false;
+            const media = (
+              <div
+                className={`relative w-full overflow-hidden rounded-lg bg-slate-100 ${ordered.length === 1 ? (isCompactCourtGrid ? "h-[190px] md:h-[210px]" : "aspect-[16/9] max-h-[380px]") : index === 0 ? `col-span-2 aspect-[16/9] md:row-span-2 md:aspect-auto ${isCompactCourtGrid ? "md:min-h-[260px]" : "md:min-h-[320px]"}` : "aspect-[4/3]"}`}
+              >
+                <Image
+                  src={photo.image_url}
+                  alt={`${courtName ?? "Court photo"} ${index + 1}`}
+                  fill
+                  sizes={
+                    ordered.length === 1
+                      ? "(max-width: 1024px) calc(100vw - 3rem), 760px"
+                      : "(max-width: 768px) 50vw, 33vw"
+                  }
+                  className="object-cover transition duration-300 group-hover:scale-[1.02]"
+                />
+              </div>
+            );
+
+            return canOpen ? (
+              <button
+                type="button"
+                key={photo.id}
+                onClick={() => setLightbox({ open: true, index })}
+                className={`group text-left ${ordered.length > 1 && index === 0 ? "col-span-2 md:row-span-2" : ""}`}
+                aria-label={`${courtName ?? "Court photo"} ${index + 1}`}
+              >
+                {media}
+              </button>
+            ) : (
+              <div
+                key={photo.id}
+                className={
+                  ordered.length > 1 && index === 0
+                    ? "col-span-2 md:row-span-2"
+                    : undefined
+                }
+              >
+                {media}
+              </div>
+            );
+          })}
+        </div>
+        {lightbox.open && (
+          <ImageLightbox
+            images={ordered.map((photo) => ({
+              id: photo.id,
+              src: photo.image_url,
+              alt: courtName ?? "Court photo",
+            }))}
+            initialIndex={lightbox.index}
+            onClose={() => setLightbox({ open: false, index: 0 })}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <section className="space-y-3">
-        <div
-          className={primaryFrameClass}
-          style={primaryFrameStyle}
-        >
+        <div className={primaryFrameClass} style={primaryFrameStyle}>
           {primaryCanOpen ? (
             <button
               type="button"
@@ -158,10 +242,7 @@ export function CourtGallery({
               />
             </button>
           ) : (
-            <div
-              className={primaryMediaClass}
-              style={primaryMediaStyle}
-            >
+            <div className={primaryMediaClass} style={primaryMediaStyle}>
               <Image
                 src={primaryImage.image_url}
                 alt={courtName ?? "Court photo"}
@@ -174,7 +255,7 @@ export function CourtGallery({
         </div>
         {thumbnails.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {thumbnails.map((photo, index) => (
+            {thumbnails.map((photo, index) =>
               photo.allowFullscreen !== false ? (
                 <button
                   type="button"
@@ -212,8 +293,8 @@ export function CourtGallery({
                     />
                   </div>
                 </div>
-              )
-            ))}
+              ),
+            )}
           </div>
         )}
       </section>

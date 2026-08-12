@@ -822,7 +822,10 @@
     "edit": "แก้ไขข้อมูลสนาม",
     "updated": "อัปเดตล่าสุด",
     "backToFinder": "กลับไปหน้าค้นหาสนาม",
-    "backToGroupFinder": "กลับไปหน้าค้นหากลุ่ม"
+    "backToGroupFinder": "กลับไปหน้าค้นหากลุ่ม",
+    "courtPhotos": "รูปภาพสนาม",
+    "courtDetails": "ข้อมูลสนาม",
+    "directions": "นำทาง"
   },
   "dashboard": {
     "courtRequests": {
@@ -1014,6 +1017,12 @@
       "line": "LINE",
       "website": "เว็บไซต์",
       "lineQr": "คิวอาร์โค้ด LINE",
+      "groupDetails": "ข้อมูลก๊วน",
+      "regularVenues": "สนามที่เล่นประจำ",
+      "contactGroup": "ติดต่อก๊วน",
+      "viewCourt": "ดูสนาม",
+      "aboutGroup": "เกี่ยวกับก๊วน",
+      "groupPhotos": "รูปภาพก๊วน",
       "sessionForm": {
         "title": "เพิ่มรอบเล่น",
         "description": "ใช้รอบประจำสำหรับเวลาที่จองทุกสัปดาห์ หรือเลือกวันที่เฉพาะสำหรับกลุ่มที่หมุนเวียนสนามและรอบเล่นถัดไป",

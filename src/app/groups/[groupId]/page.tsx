@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { SPORT_META } from "@/data/sportMeta";
-import {
-  buildLocalizedPath,
-  getTranslator,
-  normalizeLocale,
-} from "@/lib/i18n";
+import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
 import {
   buildCanonicalUrl,
   buildLocaleAlternates,
@@ -30,7 +27,16 @@ import {
 import { GroupSessionForm } from "@/components/groups/group-session-form";
 import { getPlayFormatLabel } from "@/lib/play-format";
 import { localizeThailandLocation } from "@/server/thailand-location";
-import { CalendarDays, Clock3, MapPin, Repeat2 } from "lucide-react";
+import {
+  CalendarDays,
+  Clock3,
+  ExternalLink,
+  Images,
+  Info,
+  MapPin,
+  Repeat2,
+  Users,
+} from "lucide-react";
 
 const WEEKDAY_ORDER = [
   "monday",
@@ -67,7 +73,9 @@ function compareWeeklySessions(
     (aDay === -1 ? WEEKDAY_ORDER.length : aDay) -
     (bDay === -1 ? WEEKDAY_ORDER.length : bDay);
 
-  return dayComparison || (a.start_time ?? "").localeCompare(b.start_time ?? "");
+  return (
+    dayComparison || (a.start_time ?? "").localeCompare(b.start_time ?? "")
+  );
 }
 
 function formatTimeValue(value: string, locale: string) {
@@ -184,28 +192,29 @@ type GroupMetadataRow = {
   owner_id: string | null;
   sports: { code: string; name: string | null } | null;
   play_format?: "single" | "double" | null;
-  group_photos?: { image_url: string | null; is_primary: boolean | null }[] | null;
-  group_sessions?: {
-    day: string;
-    start_time: string | null;
-    end_time: string | null;
-    courts: {
-      name: string | null;
-      district: string | null;
-      province: string | null;
-      district_id?: number | null;
-      province_id?: number | null;
-    } | null;
-  }[] | null;
+  group_photos?:
+    { image_url: string | null; is_primary: boolean | null }[] | null;
+  group_sessions?:
+    | {
+        day: string;
+        start_time: string | null;
+        end_time: string | null;
+        courts: {
+          name: string | null;
+          district: string | null;
+          province: string | null;
+          district_id?: number | null;
+          province_id?: number | null;
+        } | null;
+      }[]
+    | null;
 };
 
 type GroupMetadataCourt = NonNullable<
   NonNullable<GroupMetadataRow["group_sessions"]>[number]["courts"]
 >;
 
-function getPrimaryMetadataCourt(
-  sessions: GroupMetadataRow["group_sessions"],
-) {
+function getPrimaryMetadataCourt(sessions: GroupMetadataRow["group_sessions"]) {
   return (
     sessions?.find((session) => session.courts?.name)?.courts ??
     sessions?.find((session) => session.courts)?.courts ??
@@ -231,11 +240,7 @@ function buildCourtSeoLabel(
   const sportCourtKeyword =
     locale === "th" ? `สนาม${sportName}` : `${sportName} court`;
 
-  return [
-    hasCourtKeyword ? null : sportCourtKeyword,
-    courtName,
-    region,
-  ]
+  return [hasCourtKeyword ? null : sportCourtKeyword, courtName, region]
     .filter(Boolean)
     .join(" ");
 }
@@ -266,17 +271,26 @@ function formatEventDateParts(value: string, locale: "th" | "en") {
     { timeZone: "Asia/Bangkok" },
   );
   return {
-    weekday: new Intl.DateTimeFormat(
-      locale === "th" ? "th-TH" : "en-US",
-      { timeZone: "Asia/Bangkok", weekday: "short" },
-    ).format(date),
+    weekday: new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
+      timeZone: "Asia/Bangkok",
+      weekday: "short",
+    }).format(date),
     day: formatter.formatToParts(date).find((part) => part.type === "day")
       ?.value,
-    month: new Intl.DateTimeFormat(
-      locale === "th" ? "th-TH" : "en-US",
-      { timeZone: "Asia/Bangkok", month: "short" },
-    ).format(date),
+    month: new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
+      timeZone: "Asia/Bangkok",
+      month: "short",
+    }).format(date),
   };
+}
+
+function normalizeLineHref(value: string) {
+  const normalized = value.trim();
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  if (normalized.startsWith("@")) {
+    return `https://line.me/R/ti/p/${encodeURIComponent(normalized)}`;
+  }
+  return `https://line.me/ti/p/~${encodeURIComponent(normalized)}`;
 }
 
 function formatEventTime(value: string, locale: "th" | "en") {
@@ -346,33 +360,32 @@ export async function generateMetadata({
       },
     };
   }
-  const group =
-    data?.[0]
-      ? {
-          ...data[0],
-          group_sessions: data[0].group_sessions
-            ? await Promise.all(
-                data[0].group_sessions.map(async (session) => {
-                  if (!session.courts) {
-                    return session;
-                  }
-                  const localized = await localizeThailandLocation(
-                    session.courts,
-                    locale,
-                  );
-                  return {
-                    ...session,
-                    courts: {
-                      ...session.courts,
-                      district: localized.district,
-                      province: localized.province,
-                    },
-                  };
-                }),
-              )
-            : data[0].group_sessions,
-        }
-      : null;
+  const group = data?.[0]
+    ? {
+        ...data[0],
+        group_sessions: data[0].group_sessions
+          ? await Promise.all(
+              data[0].group_sessions.map(async (session) => {
+                if (!session.courts) {
+                  return session;
+                }
+                const localized = await localizeThailandLocation(
+                  session.courts,
+                  locale,
+                );
+                return {
+                  ...session,
+                  courts: {
+                    ...session.courts,
+                    district: localized.district,
+                    province: localized.province,
+                  },
+                };
+              }),
+            )
+          : data[0].group_sessions,
+      }
+    : null;
   if (!group) {
     return {
       title:
@@ -434,8 +447,8 @@ export async function generateMetadata({
     courtSeoLabel
       ? `${locale === "th" ? "สนาม" : "Court"}: ${courtSeoLabel}`
       : location
-      ? `${locale === "th" ? "สถานที่" : "Location"}: ${location}`
-      : null,
+        ? `${locale === "th" ? "สถานที่" : "Location"}: ${location}`
+        : null,
     group.group_sessions?.length
       ? `${
           locale === "th" ? "รอบเล่นต่อสัปดาห์" : "Sessions per week"
@@ -563,26 +576,25 @@ export default async function GroupDetailPage({
     { data: photoRows },
     { data: sessionRows },
     { data: linkedCourtRows },
-  ] =
-    await Promise.all([
-      supabaseSelect<GroupPhotoRow>("group_photos", {
-        select: "id,image_url,is_primary",
-        group_id: `eq.${group.id}`,
-        order: "is_primary.desc,created_at.asc",
-      }),
-      supabaseSelect<GroupSessionRow>("group_sessions", {
-        select:
-          "id,court_id,day,start_time,end_time,courts(id,name,district,district_id,province,province_id)",
-        group_id: `eq.${group.id}`,
-        order: "day.asc,start_time.asc",
-      }),
-      supabaseSelect<GroupCourtLinkRow>("court_groups", {
-        select:
-          "court_id,courts(id,name,district,district_id,province,province_id)",
-        group_id: `eq.${group.id}`,
-        order: "created_at.asc",
-      }),
-    ]);
+  ] = await Promise.all([
+    supabaseSelect<GroupPhotoRow>("group_photos", {
+      select: "id,image_url,is_primary",
+      group_id: `eq.${group.id}`,
+      order: "is_primary.desc,created_at.asc",
+    }),
+    supabaseSelect<GroupSessionRow>("group_sessions", {
+      select:
+        "id,court_id,day,start_time,end_time,courts(id,name,district,district_id,province,province_id)",
+      group_id: `eq.${group.id}`,
+      order: "day.asc,start_time.asc",
+    }),
+    supabaseSelect<GroupCourtLinkRow>("court_groups", {
+      select:
+        "court_id,courts(id,name,district,district_id,province,province_id)",
+      group_id: `eq.${group.id}`,
+      order: "created_at.asc",
+    }),
+  ]);
   const upcomingEventRows = await fetchUpcomingGroupEvents(group.id);
 
   const sportCode = group.sports?.code;
@@ -592,8 +604,13 @@ export default async function GroupDetailPage({
     photoRows && photoRows.length > 0
       ? photoRows
           .filter(
-            (photo): photo is { id: string; image_url: string; is_primary: boolean | null } =>
-              Boolean(photo.image_url),
+            (
+              photo,
+            ): photo is {
+              id: string;
+              image_url: string;
+              is_primary: boolean | null;
+            } => Boolean(photo.image_url),
           )
           .map((photo) => ({
             id: photo.id,
@@ -664,13 +681,19 @@ export default async function GroupDetailPage({
   );
 
   const sessionCourtIds = Array.from(
-    new Set([
-      ...localizedSessionRows.map((session) => session.court_id),
-      ...localizedLinkedCourtRows.map((link) => link.court_id),
-    ].filter(Boolean)),
+    new Set(
+      [
+        ...localizedSessionRows.map((session) => session.court_id),
+        ...localizedLinkedCourtRows.map((link) => link.court_id),
+      ].filter(Boolean),
+    ),
   ) as string[];
 
-  let courtPhotos: { court_id: string; image_url: string | null; is_primary: boolean | null }[] = [];
+  let courtPhotos: {
+    court_id: string;
+    image_url: string | null;
+    is_primary: boolean | null;
+  }[] = [];
   if (sessionCourtIds.length > 0) {
     const { data: courtPhotoRows } = await supabaseSelect<{
       court_id: string;
@@ -747,13 +770,14 @@ export default async function GroupDetailPage({
     "@context": "https://schema.org",
     "@type": "SportsClub",
     "@id": canonicalUrl,
-    name: displayGroup.name ?? (locale === "th" ? "กลุ่มชุมชน" : "Community group"),
+    name:
+      displayGroup.name ?? (locale === "th" ? "กลุ่มชุมชน" : "Community group"),
     description: displayGroup.description ?? undefined,
     url: canonicalUrl,
     sport:
       sportCode && SPORT_META[sportCode]
-        ? SPORT_META[sportCode]?.name?.[locale] ??
-          SPORT_META[sportCode]?.name?.en
+        ? (SPORT_META[sportCode]?.name?.[locale] ??
+          SPORT_META[sportCode]?.name?.en)
         : undefined,
     image: primaryImage ?? undefined,
     sameAs: displayGroup.website_url
@@ -801,6 +825,12 @@ export default async function GroupDetailPage({
     line: t("groups.detail.line"),
     website: t("groups.detail.website"),
     lineQr: t("groups.detail.lineQr"),
+    groupDetails: t("groups.detail.groupDetails"),
+    regularVenues: t("groups.detail.regularVenues"),
+    contactGroup: t("groups.detail.contactGroup"),
+    viewCourt: t("groups.detail.viewCourt"),
+    aboutGroup: t("groups.detail.aboutGroup"),
+    groupPhotos: t("groups.detail.groupPhotos"),
     back: t("groups.detail.back"),
     copyAction: t("contactActions.copy"),
     copiedAction: t("contactActions.copied"),
@@ -837,7 +867,9 @@ export default async function GroupDetailPage({
       quickCourtPlaceHelper: t("groups.form.quickCourtPlaceHelper"),
       quickCourtNoResults: t("groups.form.quickCourtNoResults"),
       quickCourtDuplicateLabel: t("groups.form.quickCourtDuplicateLabel"),
-      quickCourtDuplicateLinkLabel: t("groups.form.quickCourtDuplicateLinkLabel"),
+      quickCourtDuplicateLinkLabel: t(
+        "groups.form.quickCourtDuplicateLinkLabel",
+      ),
       quickCourtLocationPreview: t("groups.form.quickCourtLocationPreview"),
       quickCourtMapTitle: t("groups.form.quickCourtMapTitle"),
       quickCourtSave: t("groups.form.quickCourtSave"),
@@ -846,7 +878,9 @@ export default async function GroupDetailPage({
       quickCourtNameRequired: t("groups.form.quickCourtNameRequired"),
       quickCourtPlaceRequired: t("groups.form.quickCourtPlaceRequired"),
       quickCourtDuplicateError: t("groups.form.quickCourtDuplicateError"),
-      quickCourtLocationIncomplete: t("groups.form.quickCourtLocationIncomplete"),
+      quickCourtLocationIncomplete: t(
+        "groups.form.quickCourtLocationIncomplete",
+      ),
       quickCourtCreateError: t("groups.form.quickCourtCreateError"),
     },
     sessionEdit: {
@@ -877,9 +911,7 @@ export default async function GroupDetailPage({
       deleteEventConfirm: t("groups.detail.sessionEdit.deleteEventConfirm"),
       deleteEventSuccess: t("groups.detail.sessionEdit.deleteEventSuccess"),
       deleteEventError: t("groups.detail.sessionEdit.deleteEventError"),
-      deleteWeeklySession: t(
-        "groups.detail.sessionEdit.deleteWeeklySession",
-      ),
+      deleteWeeklySession: t("groups.detail.sessionEdit.deleteWeeklySession"),
       deleteWeeklySessionConfirm: t(
         "groups.detail.sessionEdit.deleteWeeklySessionConfirm",
       ),
@@ -904,8 +936,7 @@ export default async function GroupDetailPage({
     value: day,
     label: t(`groups.days.${day}`),
   }));
-  const fallbackGroupName =
-    locale === "th" ? "กลุ่มชุมชน" : "Community group";
+  const fallbackGroupName = locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackCourtName =
     locale === "th" ? "สนามที่เชื่อมไว้" : "Linked court";
   const canEdit = Boolean(isGroupOwner || isAdminViewer);
@@ -917,423 +948,575 @@ export default async function GroupDetailPage({
     (locale === "th"
       ? `ดูรายละเอียดกลุ่ม ${shareTitle} บน RacketThailand`
       : `View ${shareTitle} on RacketThailand`);
+  const primaryContact = displayGroup.line_id
+    ? {
+        href: normalizeLineHref(displayGroup.line_id),
+        external: true,
+      }
+    : group.phone
+      ? {
+          href: `tel:${group.phone.replace(/[^\d+]/g, "") || group.phone}`,
+          external: false,
+        }
+      : displayGroup.website_url
+        ? {
+            href: normalizeExternalHref(displayGroup.website_url),
+            external: true,
+          }
+        : null;
   return (
     <div className="min-h-screen bg-[#f7fbf9] text-[var(--foreground)]">
-      <ViewTracker
-        event="group_view"
-        payload={{ groupId: group.id }}
-      />
+      <ViewTracker event="group_view" payload={{ groupId: group.id }} />
       <HeaderSportScope sportSlug={sportCode ?? undefined} />
       <HeaderSubLabel value={sportName} />
-      <main className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pb-16 pt-10 text-[var(--foreground)] md:px-10 md:pb-20">
-        <CourtGallery gallery={gallery} courtName={group.name ?? fallbackGroupName} />
-        {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
-          <section className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900">
-            <p className="font-semibold">Draft preview</p>
-            <p className="mt-1">
-              This group is hidden from the public website until an admin changes it to published.
-            </p>
-          </section>
-        ) : null}
-        <section className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
-            <div className="max-w-3xl">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl">
-                {group.name ?? fallbackGroupName}
-              </h1>
-              {group.description && (
-                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[rgb(var(--foreground-rgb)/0.75)] md:text-base">
-                  {group.description}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <ShareButton
-                title={shareTitle}
-                text={shareText}
-                url={canonicalUrl}
-                label={copy.shareAction}
-                copiedLabel={copy.linkCopiedAction}
-              />
-              {canEdit && (
-                <>
-                  <Link
-                    href={buildLocalizedPath(`/groups/${group.id}/players`, locale)}
-                    className="rt-btn-group inline-flex items-center justify-center px-4 py-2 text-sm"
+      <main className="pb-16 text-[var(--foreground)] md:pb-20">
+        <section
+          className={`relative overflow-hidden bg-[#081f17] text-white ${gallery.length === 0 ? "border-y border-white/10" : ""}`}
+        >
+          {gallery.length > 0 ? (
+            <>
+              <div className="absolute inset-0">
+                <CourtGallery
+                  gallery={gallery}
+                  courtName={group.name ?? fallbackGroupName}
+                  variant="hero"
+                />
+              </div>
+              <div className="pointer-events-none absolute inset-0 bg-[#05140f]/55" />
+              <div className="pointer-events-none absolute inset-0 bg-[#05140f]/45" />
+            </>
+          ) : null}
+          <div
+            className={`pointer-events-none relative mx-auto flex max-w-screen-xl items-end px-6 py-5 md:px-10 md:py-8 ${gallery.length > 0 ? "min-h-[240px] md:min-h-[300px]" : "min-h-[200px] md:min-h-[300px]"}`}
+          >
+            <div className="flex w-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
+              <div className="max-w-2xl">
+                <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
+                  {group.name ?? fallbackGroupName}
+                </h1>
+              </div>
+              <div className="pointer-events-auto flex shrink-0 flex-wrap items-center gap-3">
+                {primaryContact && (
+                  <a
+                    href={primaryContact.href}
+                    target={primaryContact.external ? "_blank" : undefined}
+                    rel={primaryContact.external ? "noreferrer" : undefined}
+                    className="rt-btn-group inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm"
                   >
-                    {t("playerFinder.groupInvite.title")}
-                  </Link>
-                  <Link
-                    href={buildLocalizedPath(`/groups/${group.id}/edit`, locale)}
-                    className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-500"
-                  >
-                    {copy.edit}
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="grid gap-5 rounded-lg border border-slate-200 bg-slate-50 px-5 py-5 sm:grid-cols-2">
-            <div>
-              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                {copy.playFormat}
-              </p>
-              <p className="text-base font-semibold text-[var(--foreground)]">
-                {playFormatLabel}
-              </p>
-            </div>
-            {typeof group.player_amount === "number" &&
-              Number.isFinite(group.player_amount) && (
-                <div>
-                  <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                    {copy.playerAmount}
-                  </p>
-                  <p className="text-base font-semibold text-[var(--foreground)]">
-                    {group.player_amount}
-                  </p>
-                </div>
-              )}
-            <div>
-              <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                {copy.walkIn}
-              </p>
-              <p className="text-base font-semibold text-[var(--foreground)]">
-                {group.allow_walk_in === false
-                  ? copy.walkInsClosed
-                  : copy.walkInsWelcome}
-              </p>
-            </div>
-            {group.phone && (
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                  {copy.phone}
-                </p>
-                <ContactActionValue
-                  mode="phone"
-                  value={group.phone}
-                  copyLabel={copy.copyAction}
-                  copiedLabel={copy.copiedAction}
-                  callLabel={copy.callAction}
+                    {copy.contactGroup}
+                    <ExternalLink className="size-4" aria-hidden />
+                  </a>
+                )}
+                <ShareButton
+                  title={shareTitle}
+                  text={shareText}
+                  url={canonicalUrl}
+                  label={copy.shareAction}
+                  copiedLabel={copy.linkCopiedAction}
+                  className="border-white/35 bg-white/10 text-white hover:border-white/70 hover:bg-white/15"
                 />
+                {canEdit && (
+                  <>
+                    <Link
+                      href={buildLocalizedPath(
+                        `/groups/${group.id}/players`,
+                        locale,
+                      )}
+                      className="inline-flex items-center justify-center rounded-full border border-emerald-400/60 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:border-emerald-300 hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#081f17]"
+                    >
+                      {t("playerFinder.groupInvite.title")}
+                    </Link>
+                    <Link
+                      href={buildLocalizedPath(
+                        `/groups/${group.id}/edit`,
+                        locale,
+                      )}
+                      className="inline-flex items-center justify-center rounded-full border border-white/35 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/70 hover:bg-white/15"
+                    >
+                      {copy.edit}
+                    </Link>
+                  </>
+                )}
               </div>
-            )}
-            {displayGroup.line_id && (
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                  {copy.line}
-                </p>
-                <ContactActionValue
-                  mode="line"
-                  value={displayGroup.line_id}
-                  copyLabel={copy.copyAction}
-                  copiedLabel={copy.copiedAction}
-                  callLabel={copy.callAction}
-                />
-              </div>
-            )}
-            {displayGroup.website_url && (
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                  {copy.website}
-                </p>
-                <a
-                  href={normalizeExternalHref(displayGroup.website_url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={displayGroup.website_url}
-                  className="mt-1 block min-w-0 max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[22rem]"
-                >
-                  {displayGroup.website_url}
-                </a>
-              </div>
-            )}
-            {displayGroup.line_qr_url && (
-              <div>
-                <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                  {copy.lineQr}
-                </p>
-                <LineQrLightboxImage
-                  src={displayGroup.line_qr_url}
-                  alt="LINE QR"
-                  sizes="128px"
-                  className="relative mt-2 h-32 w-32 overflow-hidden rounded-lg border border-slate-200 bg-white"
-                />
-              </div>
-            )}
+            </div>
           </div>
         </section>
 
-        {canEdit && group.sport_id && (
-          <GroupSessionForm
-            groupId={group.id}
-            sportId={group.sport_id}
-            locale={locale}
-            dayOptions={dayOptions}
-            copy={copy.sessionForm}
-          />
-        )}
+        <div className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pt-8 md:px-10 md:pt-9">
+          {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
+            <section className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900">
+              <p className="font-semibold">Draft preview</p>
+              <p className="mt-1">
+                This group is hidden from the public website until an admin
+                changes it to published.
+              </p>
+            </section>
+          ) : null}
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="min-w-0 space-y-8">
+              {filteredPhotos.length > 0 && (
+                <section className="space-y-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                      <Images className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                      {copy.groupPhotos}
+                    </h2>
+                    <span className="text-sm text-slate-500">
+                      {filteredPhotos.length}
+                    </span>
+                  </div>
+                  <CourtGallery
+                    gallery={filteredPhotos}
+                    courtName={group.name ?? fallbackGroupName}
+                    variant="grid"
+                  />
+                </section>
+              )}
 
-        {localizedUpcomingEvents.length > 0 && (
-          <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-            <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                <CalendarDays className="size-4" aria-hidden />
-              </span>
-              <h2 className="text-lg font-semibold text-[var(--foreground)]">
-                {copy.upcomingTitle}
-              </h2>
-            </div>
-            <div className="space-y-3">
-              {localizedUpcomingEvents.map((event) => {
-                const locationLabel = [
-                  event.courts?.district,
-                  event.courts?.province,
-                ]
-                  .filter(
-                    (value): value is string =>
-                      Boolean(value && value.trim()),
-                  )
-                  .join(", ");
-                const venueLabel =
-                  event.courts?.name ??
-                  event.venue_name ??
-                  copy.upcomingVenueFallback;
-                const eventDate = formatEventDateParts(
-                  event.starts_at,
-                  locale,
-                );
-                return (
-                  <article
-                    key={event.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex w-[4.5rem] shrink-0 flex-col items-center border-r border-slate-200 pr-4 text-center">
-                        <span className="text-[11px] font-semibold uppercase text-blue-700">
-                          {eventDate.weekday}
-                        </span>
-                        <span className="mt-1 text-3xl font-semibold leading-none text-slate-950">
-                          {eventDate.day ?? "-"}
-                        </span>
-                        <span className="mt-1 text-xs font-medium text-slate-500">
-                          {eventDate.month}
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0 space-y-2">
-                            <p className="inline-flex items-center gap-2 text-base font-semibold text-slate-950">
-                              <Clock3 className="size-4 text-blue-700" aria-hidden />
-                              {formatEventTimeRange(
-                                event.starts_at,
-                                event.ends_at,
-                                locale,
-                              )}
-                            </p>
-                            {event.courts?.id ? (
-                              <Link
-                                href={buildLocalizedPath(
-                                  `/courts/${event.courts.id}${
-                                    sportCode
-                                      ? `?sport=${encodeURIComponent(sportCode)}`
-                                      : ""
-                                  }`,
-                                  locale,
+              {group.description && (
+                <section
+                  className={`space-y-4 ${filteredPhotos.length > 0 ? "border-t border-slate-200 pt-8" : ""}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+                      <Info className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                      {copy.aboutGroup}
+                    </h2>
+                  </div>
+                  <p className="whitespace-pre-wrap text-base leading-8 text-slate-700">
+                    {group.description}
+                  </p>
+                </section>
+              )}
+
+              {canEdit && group.sport_id && (
+                <GroupSessionForm
+                  groupId={group.id}
+                  sportId={group.sport_id}
+                  locale={locale}
+                  dayOptions={dayOptions}
+                  copy={copy.sessionForm}
+                />
+              )}
+
+              {localizedUpcomingEvents.length > 0 && (
+                <section className="space-y-4 border-b border-slate-200 pb-8">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+                      <CalendarDays className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                      {copy.upcomingTitle}
+                    </h2>
+                  </div>
+                  <div className="divide-y divide-slate-200 border-y border-slate-200">
+                    {localizedUpcomingEvents.map((event) => {
+                      const locationLabel = [
+                        event.courts?.district,
+                        event.courts?.province,
+                      ]
+                        .filter((value): value is string =>
+                          Boolean(value && value.trim()),
+                        )
+                        .join(", ");
+                      const venueLabel =
+                        event.courts?.name ??
+                        event.venue_name ??
+                        copy.upcomingVenueFallback;
+                      const eventDate = formatEventDateParts(
+                        event.starts_at,
+                        locale,
+                      );
+                      return (
+                        <article
+                          key={event.id}
+                          className="flex items-start gap-5 py-5"
+                        >
+                          <div className="flex w-16 shrink-0 flex-col items-center rounded-lg bg-slate-50 px-2 py-3 text-center">
+                            <span className="text-[11px] font-semibold text-blue-700">
+                              {eventDate.weekday}
+                            </span>
+                            <span className="mt-1 text-2xl font-semibold leading-none text-slate-950">
+                              {eventDate.day ?? "-"}
+                            </span>
+                            <span className="mt-1 text-xs text-slate-500">
+                              {eventDate.month}
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="flex items-center gap-2 font-semibold text-slate-950">
+                                  <Clock3
+                                    className="size-4 text-blue-700"
+                                    aria-hidden
+                                  />
+                                  {formatEventTimeRange(
+                                    event.starts_at,
+                                    event.ends_at,
+                                    locale,
+                                  )}
+                                </p>
+                                {event.courts?.id ? (
+                                  <Link
+                                    href={buildLocalizedPath(
+                                      `/courts/${event.courts.id}${sportCode ? `?sport=${encodeURIComponent(sportCode)}` : ""}`,
+                                      locale,
+                                    )}
+                                    className="mt-2 block truncate text-sm font-semibold text-slate-800 hover:text-blue-700"
+                                  >
+                                    {venueLabel}
+                                  </Link>
+                                ) : (
+                                  <p className="mt-2 truncate text-sm font-semibold text-slate-800">
+                                    {venueLabel}
+                                  </p>
                                 )}
-                                className="block truncate text-sm font-semibold text-slate-800 hover:text-blue-700"
-                              >
-                                {venueLabel}
-                              </Link>
-                            ) : (
-                              <p className="truncate text-sm font-semibold text-slate-800">
-                                {venueLabel}
-                              </p>
-                            )}
-                            {locationLabel && (
-                              <p className="flex items-center gap-1.5 text-xs text-slate-500">
-                                <MapPin className="size-3.5" aria-hidden />
-                                {locationLabel}
+                                {locationLabel && (
+                                  <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                                    <MapPin className="size-3.5" aria-hidden />
+                                    {locationLabel}
+                                  </p>
+                                )}
+                              </div>
+                              {canEdit && event.court_id && (
+                                <GroupEventEditor
+                                  groupId={group.id}
+                                  eventId={event.id}
+                                  courtId={event.court_id}
+                                  startsAt={event.starts_at}
+                                  endsAt={event.ends_at}
+                                  notes={event.notes}
+                                  locale={locale}
+                                  copy={copy.sessionEdit}
+                                />
+                              )}
+                            </div>
+                            {event.notes && (
+                              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">
+                                {event.notes}
                               </p>
                             )}
                           </div>
-                          {canEdit && event.court_id && (
-                            <GroupEventEditor
-                              groupId={group.id}
-                              eventId={event.id}
-                              courtId={event.court_id}
-                              startsAt={event.starts_at}
-                              endsAt={event.ends_at}
-                              notes={event.notes}
-                              locale={locale}
-                              copy={copy.sessionEdit}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    {event.notes && (
-                      <p className="mt-4 border-t border-slate-200 pt-3 whitespace-pre-line text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
-                        {event.notes}
-                      </p>
-                    )}
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="flex items-center gap-3">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-emerald-50 text-[var(--rt-primary)]">
-              <Repeat2 className="size-4" aria-hidden />
-            </span>
-            <h2 className="text-lg font-semibold text-[var(--foreground)]">
-              {copy.sessionsTitle}
-            </h2>
-          </div>
-          {weeklyTimetable.length === 0 ? (
-            <p className="text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
-              {copy.sessionsEmpty}
-            </p>
-          ) : (
-            <div className="grid gap-3 lg:grid-cols-2">
-              {weeklyTimetable.map((dayEntry) => (
-                <section
-                  key={dayEntry.day}
-                  className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
-                >
-                  <div className="border-b border-slate-200 bg-white px-4 py-3">
-                    <p className="text-sm font-semibold text-slate-950">
-                      {dayEntry.label}
-                    </p>
+                        </article>
+                      );
+                    })}
                   </div>
-                  <div className="divide-y divide-slate-200">
-                    {dayEntry.sessions.map((session) => {
-                      const locationLabel = [
-                        session.courts?.district,
-                        session.courts?.province,
-                      ]
-                        .filter(
-                          (value): value is string =>
-                            Boolean(value && value.trim()),
-                        )
-                        .join(", ");
-                      const courtLabel =
-                        session.courts?.name ?? fallbackCourtName;
-                      const courtHref = session.courts?.id
+                </section>
+              )}
+
+              <section className="space-y-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                    <Repeat2 className="size-4" aria-hidden />
+                  </span>
+                  <h2 className="text-xl font-semibold text-slate-950">
+                    {copy.sessionsTitle}
+                  </h2>
+                </div>
+                {weeklyTimetable.length === 0 ? (
+                  <p className="text-sm text-slate-600">{copy.sessionsEmpty}</p>
+                ) : (
+                  <div className="divide-y divide-slate-200 border-y border-slate-200">
+                    {weeklyTimetable.map((dayEntry) => (
+                      <section
+                        key={dayEntry.day}
+                        className="grid gap-3 py-5 sm:grid-cols-[7rem_minmax(0,1fr)]"
+                      >
+                        <p className="text-base font-semibold text-[var(--rt-primary)]">
+                          {dayEntry.label}
+                        </p>
+                        <div className="space-y-4">
+                          {dayEntry.sessions.map((session) => {
+                            const locationLabel = [
+                              session.courts?.district,
+                              session.courts?.province,
+                            ]
+                              .filter((value): value is string =>
+                                Boolean(value && value.trim()),
+                              )
+                              .join(", ");
+                            const courtLabel =
+                              session.courts?.name ?? fallbackCourtName;
+                            const courtHref = session.courts?.id
+                              ? buildLocalizedPath(
+                                  `/courts/${session.courts.id}${sportCode ? `?sport=${encodeURIComponent(sportCode)}` : ""}`,
+                                  locale,
+                                )
+                              : null;
+                            return (
+                              <div
+                                key={session.id}
+                                className="grid gap-2 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-start"
+                              >
+                                <p className="font-semibold text-slate-950">
+                                  {session.start_time && session.end_time
+                                    ? formatTimeRange(
+                                        session.start_time,
+                                        session.end_time,
+                                        locale,
+                                      )
+                                    : copy.scheduleAny}
+                                </p>
+                                <div className="min-w-0">
+                                  {courtHref ? (
+                                    <Link
+                                      href={courtHref}
+                                      className="block truncate text-sm font-semibold text-slate-700 hover:text-[var(--rt-primary)]"
+                                    >
+                                      {courtLabel}
+                                    </Link>
+                                  ) : (
+                                    <p className="truncate text-sm font-semibold text-slate-700">
+                                      {courtLabel}
+                                    </p>
+                                  )}
+                                  {locationLabel && (
+                                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                                      <MapPin
+                                        className="size-3.5"
+                                        aria-hidden
+                                      />
+                                      {locationLabel}
+                                    </p>
+                                  )}
+                                </div>
+                                {canEdit && (
+                                  <GroupWeeklySessionEditor
+                                    groupId={group.id}
+                                    sessionId={session.id}
+                                    courtId={session.court_id}
+                                    day={session.day}
+                                    startTime={session.start_time}
+                                    endTime={session.end_time}
+                                    dayOptions={dayOptions}
+                                    copy={copy.sessionEdit}
+                                  />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                )}
+                {linkedCourtsWithoutSessions.length > 0 && (
+                  <div className="grid gap-2 border-t border-slate-200 pt-4 sm:grid-cols-2">
+                    {linkedCourtsWithoutSessions.map((entry, index) => {
+                      const court = entry.court;
+                      const courtHref = court?.id
                         ? buildLocalizedPath(
-                            `/courts/${session.courts.id}${
-                              sportCode
-                                ? `?sport=${encodeURIComponent(sportCode)}`
-                                : ""
-                            }`,
+                            `/courts/${court.id}${sportCode ? `?sport=${encodeURIComponent(sportCode)}` : ""}`,
                             locale,
                           )
                         : null;
                       return (
                         <div
-                          key={session.id}
-                          className="flex items-start gap-3 px-4 py-3"
+                          key={court?.id ?? `linked-court-${index}`}
+                          className="flex items-center justify-between gap-3 py-2"
                         >
-                          <p className="w-24 shrink-0 text-sm font-semibold text-slate-950">
-                            {session.start_time && session.end_time
-                              ? formatTimeRange(
-                                  session.start_time,
-                                  session.end_time,
-                                  locale,
-                                )
-                              : copy.scheduleAny}
-                          </p>
+                          {courtHref ? (
+                            <Link
+                              href={courtHref}
+                              className="truncate text-sm font-semibold text-slate-700 hover:text-[var(--rt-primary)]"
+                            >
+                              {court?.name ?? fallbackCourtName}
+                            </Link>
+                          ) : (
+                            <p className="truncate text-sm font-semibold text-slate-700">
+                              {court?.name ?? fallbackCourtName}
+                            </p>
+                          )}
+                          <span className="shrink-0 text-xs text-slate-500">
+                            {copy.scheduleAny}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {sessionGroups.length > 0 && (
+                <section className="space-y-5 border-t border-slate-200 pt-8">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 items-center justify-center rounded-full bg-rose-50 text-rose-700">
+                      <MapPin className="size-4" aria-hidden />
+                    </span>
+                    <h2 className="text-xl font-semibold text-slate-950">
+                      {copy.regularVenues}
+                    </h2>
+                  </div>
+                  <div className="divide-y divide-slate-200 border-y border-slate-200">
+                    {sessionGroups.map((entry, index) => {
+                      const court = entry.court;
+                      const courtHref = court?.id
+                        ? buildLocalizedPath(
+                            `/courts/${court.id}${sportCode ? `?sport=${encodeURIComponent(sportCode)}` : ""}`,
+                            locale,
+                          )
+                        : null;
+                      const location = [court?.district, court?.province]
+                        .filter(Boolean)
+                        .join(", ");
+                      return (
+                        <div
+                          key={court?.id ?? index}
+                          className="flex items-center gap-4 py-4"
+                        >
+                          <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                            {entry.photoUrl ? (
+                              <Image
+                                src={entry.photoUrl}
+                                alt={court?.name ?? fallbackCourtName}
+                                fill
+                                sizes="64px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <MapPin className="absolute inset-0 m-auto size-5 text-slate-400" />
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              {courtHref ? (
-                                <Link
-                                  href={courtHref}
-                                  className="block min-w-0 truncate text-sm font-semibold text-slate-700 hover:text-[var(--rt-primary)]"
-                                >
-                                  {courtLabel}
-                                </Link>
-                              ) : (
-                                <p className="min-w-0 truncate text-sm font-semibold text-slate-700">
-                                  {courtLabel}
-                                </p>
-                              )}
-                              {canEdit && (
-                                <GroupWeeklySessionEditor
-                                  groupId={group.id}
-                                  sessionId={session.id}
-                                  courtId={session.court_id}
-                                  day={session.day}
-                                  startTime={session.start_time}
-                                  endTime={session.end_time}
-                                  dayOptions={dayOptions}
-                                  copy={copy.sessionEdit}
-                                />
-                              )}
-                            </div>
-                            {locationLabel && (
-                              <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                                <MapPin className="size-3.5" aria-hidden />
-                                {locationLabel}
+                            <p className="truncate font-semibold text-slate-950">
+                              {court?.name ?? fallbackCourtName}
+                            </p>
+                            {location && (
+                              <p className="mt-1 text-sm text-slate-500">
+                                {location}
                               </p>
                             )}
                           </div>
+                          {courtHref && (
+                            <Link
+                              href={courtHref}
+                              className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
+                            >
+                              {copy.viewCourt}
+                              <ExternalLink className="size-3.5" aria-hidden />
+                            </Link>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 </section>
-              ))}
+              )}
             </div>
-          )}
-          {linkedCourtsWithoutSessions.length > 0 && (
-            <div className="border-t border-slate-200 pt-4">
-              <div className="grid gap-2 sm:grid-cols-2">
-                {linkedCourtsWithoutSessions.map((entry, index) => {
-                  const court = entry.court;
-                  const courtHref = court?.id
-                    ? buildLocalizedPath(
-                        `/courts/${court.id}${
-                          sportCode
-                            ? `?sport=${encodeURIComponent(sportCode)}`
-                            : ""
-                        }`,
-                        locale,
-                      )
-                    : null;
-                  return (
-                    <div
-                      key={court?.id ?? `linked-court-${index}`}
-                      className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3"
-                    >
-                      {courtHref ? (
-                        <Link
-                          href={courtHref}
-                          className="truncate text-sm font-semibold text-slate-700 hover:text-[var(--rt-primary)]"
-                        >
-                          {court?.name ?? fallbackCourtName}
-                        </Link>
-                      ) : (
-                        <p className="truncate text-sm font-semibold text-slate-700">
-                          {court?.name ?? fallbackCourtName}
+
+            <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">
+              <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+                  <span className="flex size-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700">
+                    <Users className="size-4" aria-hidden />
+                  </span>
+                  <h2 className="text-lg font-semibold text-slate-950">
+                    {copy.groupDetails}
+                  </h2>
+                </div>
+                <div className="grid gap-5 pt-5 sm:grid-cols-2 lg:grid-cols-1">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                      {copy.playFormat}
+                    </p>
+                    <p className="text-base font-semibold text-[var(--foreground)]">
+                      {playFormatLabel}
+                    </p>
+                  </div>
+                  {typeof group.player_amount === "number" &&
+                    Number.isFinite(group.player_amount) && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                          {copy.playerAmount}
                         </p>
-                      )}
-                      <span className="shrink-0 text-xs text-slate-500">
-                        {copy.scheduleAny}
-                      </span>
+                        <p className="text-base font-semibold text-[var(--foreground)]">
+                          {group.player_amount}
+                        </p>
+                      </div>
+                    )}
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                      {copy.walkIn}
+                    </p>
+                    <p className="text-base font-semibold text-[var(--foreground)]">
+                      {group.allow_walk_in === false
+                        ? copy.walkInsClosed
+                        : copy.walkInsWelcome}
+                    </p>
+                  </div>
+                  {group.phone && (
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                        {copy.phone}
+                      </p>
+                      <ContactActionValue
+                        mode="phone"
+                        value={group.phone}
+                        copyLabel={copy.copyAction}
+                        copiedLabel={copy.copiedAction}
+                        callLabel={copy.callAction}
+                      />
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </section>        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
-          }}
-        />
+                  )}
+                  {displayGroup.line_id && (
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                        {copy.line}
+                      </p>
+                      <ContactActionValue
+                        mode="line"
+                        value={displayGroup.line_id}
+                        copyLabel={copy.copyAction}
+                        copiedLabel={copy.copiedAction}
+                        callLabel={copy.callAction}
+                      />
+                    </div>
+                  )}
+                  {displayGroup.website_url && (
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                        {copy.website}
+                      </p>
+                      <a
+                        href={normalizeExternalHref(displayGroup.website_url)}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={displayGroup.website_url}
+                        className="mt-1 block min-w-0 max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[22rem]"
+                      >
+                        {displayGroup.website_url}
+                      </a>
+                    </div>
+                  )}
+                  {displayGroup.line_qr_url && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
+                        {copy.lineQr}
+                      </p>
+                      <LineQrLightboxImage
+                        src={displayGroup.line_qr_url}
+                        alt="LINE QR"
+                        sizes="128px"
+                        className="relative mt-2 h-32 w-32 overflow-hidden rounded-lg border border-slate-200 bg-white"
+                      />
+                    </div>
+                  )}
+                </div>
+              </section>
+            </aside>
+          </div>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(structuredData),
+            }}
+          />
+        </div>
       </main>
     </div>
   );

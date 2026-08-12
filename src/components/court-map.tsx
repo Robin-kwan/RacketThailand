@@ -11,6 +11,7 @@ type CourtMapProps = {
   eyebrow: string;
   description: string;
   openMapsLabel: string;
+  compact?: boolean;
 };
 
 export function CourtMap({
@@ -22,6 +23,7 @@ export function CourtMap({
   eyebrow,
   description,
   openMapsLabel,
+  compact = false,
 }: CourtMapProps) {
   const normalizedPlaceId = placeId?.trim() || null;
   const mapUrl = useMemo(() => {
@@ -46,26 +48,37 @@ export function CourtMap({
   }, [latitude, longitude, name, normalizedPlaceId]);
 
   return (
-    <section className="space-y-4 rounded-lg bg-white/90 p-6">
-      <header className="space-y-1">
-        <p className="text-xs font-semibold uppercase text-slate-400">
-          {eyebrow}
-        </p>
-        <h2 className="text-xl font-semibold text-slate-900">{name}</h2>
-        <p className="text-sm text-slate-600">{description}</p>
-      </header>
+    <section
+      className={compact ? "space-y-3" : "space-y-4 rounded-lg bg-white/90 p-6"}
+    >
+      {!compact ? (
+        <header className="space-y-1">
+          <p className="text-xs font-semibold uppercase text-slate-400">
+            {eyebrow}
+          </p>
+          <h2 className="text-xl font-semibold text-slate-900">{name}</h2>
+          <p className="text-sm text-slate-600">{description}</p>
+        </header>
+      ) : null}
       <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-transparent via-transparent to-white/15" />
         <iframe
           title={`${name} location`}
           src={mapUrl}
-          height="380"
-          className="h-[380px] w-full border-0"
+          height={compact ? "230" : "380"}
+          className={
+            compact ? "h-[230px] w-full border-0" : "h-[380px] w-full border-0"
+          }
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         />
       </div>
-      <div className="rounded-lg bg-slate-50/70 px-4 py-3 text-sm text-slate-600">
+      <div
+        className={
+          compact
+            ? "text-sm text-slate-600"
+            : "rounded-lg bg-slate-50/70 px-4 py-3 text-sm text-slate-600"
+        }
+      >
         <a
           href={mapsUrl}
           target="_blank"
