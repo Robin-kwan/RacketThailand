@@ -1,0 +1,134 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Revenue That Builds the Network",
+    "description": "A staged growth and monetization strategy for RacketThailand while non-badminton supply remains thin.",
+    "generatedAt": "2026-08-21T12:00:00+07:00",
+    "sources": [
+      {"id":"growth_playbook","label":"RacketThailand Growth + Design Playbook","path":"docs/growth-design-playbook.md"},
+      {"id":"project_summary","label":"RacketThailand Project Summary","path":"RacketThailand_Project_Summary.md"},
+      {"id":"playtomic_payments","label":"Playtomic payment methods","url":"https://playerhelp.playtomic.com/hc/en-gb/articles/19831969439761-Payment-Methods-in-Playtomic"},
+      {"id":"playtomic_memberships","label":"Playtomic club memberships","url":"https://helpmanager.playtomic.com/hc/en-gb/articles/46374805007761-Benefits-update-Sell-memberships-onsite-online-with-new-payment-options"},
+      {"id":"racketr_model","label":"Racketr player and club platform","url":"https://app.racketr.app/"},
+      {"id":"fip_padel","label":"FIP World Padel Report 2025","url":"https://www.padelfip.com/wp-content/uploads/2025/12/FIP-WPR-2025_DIGITAL.pdf"},
+      {"id":"prioritization_method","label":"Opportunity scoring notes","path":"docs/strategy/profit-and-growth-2026-08-21/scoring-notes.md"}
+    ],
+    "charts": [
+      {
+        "id":"opportunity_priority",
+        "title":"Near-term opportunity priority",
+        "subtitle":"Directional 1–5 strategy score; higher combines supply creation, revenue potential, and ease of testing",
+        "type":"bar",
+        "dataset":"opportunity_scores",
+        "sourceId":"prioritization_method",
+        "valueFormat":"number",
+        "layout":"half",
+        "encodings":{
+          "x":{"field":"opportunity","type":"nominal","label":"Opportunity"},
+          "y":{"field":"priority_score","type":"quantitative","label":"Score"},
+          "tooltip":[
+            {"field":"supply_creation","type":"quantitative","label":"Supply creation"},
+            {"field":"revenue_potential","type":"quantitative","label":"Revenue potential"},
+            {"field":"ease_of_test","type":"quantitative","label":"Ease of test"}
+          ]
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id":"title",
+        "type":"markdown",
+        "body":"# Revenue That Builds the Network\n\nA staged growth and monetization strategy for RacketThailand — August 2026"
+      },
+      {
+        "id":"executive_summary",
+        "type":"markdown",
+        "body":"## Executive Summary\n\n- **Do not charge players for discovery yet.** Non-badminton portals need more supply and repeat activity before a consumer subscription can work. Keep browsing, posting, creating groups, and casual-play matching free.\n- **Sell outcomes to venues and organizers first.** Verified profiles, qualified leads, promoted sessions, and simple organizer tools can earn early revenue while directly adding courts, groups, and events.\n- **Focus supply-building on pickleball and padel first, tennis second.** These sports are more commercially concentrated around venues and organized sessions, making venue partnerships a faster path to useful inventory. Continue using badminton as the high-volume test market.\n- **The best first offer is a paid founding-partner package, not a full booking system.** Manually onboard 10–20 venues, build their listings and recurring activities, and charge only after demonstrating measurable leads or attendance."
+      },
+      {
+        "id":"core_strategy",
+        "type":"markdown",
+        "sourceId":"growth_playbook",
+        "body":"## The revenue engine should create the missing supply\n\nRacketThailand's current milestone is **weekly new content supply** across courts, groups, and community posts. That means the wrong early monetization is anything that adds friction to posting or discovery.\n\nThe right early customers are businesses and organizers who already earn money when more people play: courts, clubs, coaches, tournament operators, equipment brands, and recurring group hosts. Sell them visibility, verified information, lead generation, and operational convenience. Their paid participation makes each sport portal more useful, which attracts players, which makes the next venue easier to sell.\n\n**The flywheel:** onboard venue → publish courts and recurring sessions → bring players to a useful page → generate inquiries or attendance → prove value to the venue → attract more organizers and venues."
+      },
+      {"id":"priority_chart","type":"chart","chartId":"opportunity_priority","layout":"half"},
+      {
+        "id":"priority_interpretation",
+        "type":"markdown",
+        "sourceId":"prioritization_method",
+        "body":"## Venue partnerships are the strongest first move\n\nThe directional scoring favors **founding venue partnerships** because one sale can add a court, photos, contacts, and recurring activities while also creating an accountable business customer. Hosted open play ranks next because it creates immediate player activity and validates event economics.\n\nThe score is a prioritization aid, not measured market demand. Its purpose is to make the assumptions inspectable and identify what to test first."
+      },
+      {
+        "id":"monetization_ladder",
+        "type":"markdown",
+        "body":"## A monetization ladder that matches the current stage\n\n### 1. Founding venue partners — start now\n\nOffer a manually serviced package to padel, pickleball, and tennis venues. Include a verified badge, complete bilingual profile, photos, current prices/hours, recurring activity listings, a prominent LINE/contact action, monthly lead reporting, and one featured placement.\n\n**Pricing hypothesis:** free 60-day pilot for the first 5–10 venues, then ฿990–฿1,990 per venue/month. A higher tier around ฿2,990 can include content updates and promoted activities. Treat these as willingness-to-pay tests, not final pricing.\n\n### 2. Sponsored discovery — after traffic is measurable\n\nSell clearly labeled featured court, group, or event positions by sport and province. Keep ranking relevance-based outside the sponsored slot. This is easier to build than booking and gives venues a reason to maintain accurate listings.\n\n**Pricing hypothesis:** ฿1,500–฿5,000 per month depending on sport, city, impressions, and exclusivity. Do not sell until you can report views and contact clicks.\n\n### 3. Paid open-play and event transactions — next product bet\n\nHelp partners publish open play, clinics, ladders, and beginner sessions with capacity, join requests, reminders, and optional prepayment. Charge a service fee only when money moves. Established racket platforms combine discovery with court/activity payments, split payments, club wallets, and memberships; this validates the direction, but RacketThailand should begin with a narrow event checkout rather than recreate a club-management suite.\n\n**Pricing hypothesis:** 5–8% platform fee or a ฿20–฿40 attendee fee, tested against PromptPay/payment processing costs and organizer preference.\n\n### 4. Organizer Pro — only after organizers return weekly\n\nAdd attendance lists, recurring-session cloning, waitlists, announcements, QR check-in, and simple member dues. Charge the organizer, not ordinary group members.\n\n**Pricing hypothesis:** ฿199–฿499 per organizer/month, free below a usage threshold.\n\n### 5. Affiliate and qualified-lead revenue — opportunistic\n\nEquipment, coaching, and venue offers can monetize high-intent pages without gating community access. Prefer a fixed qualified-lead fee or tracked affiliate commission. Avoid generic display ads while traffic is small; they add clutter and produce little revenue."
+      },
+      {
+        "id":"sport_focus",
+        "type":"markdown",
+        "sourceId":"project_summary",
+        "body":"## Build each thin sport around a repeatable weekly reason to return\n\n**Pickleball:** recruit venues and named open-play sessions. Beginner-friendly sessions, level-based open play, and recurring social nights are stronger acquisition units than a bare court directory.\n\n**Padel:** sell venue partnerships and hosted open matches. The sport is venue-concentrated and commercially organized; FIP's 2025 report identifies Thailand among expanding Asian padel markets. Every venue onboarded can supply courts, activities, photos, and contacts at once.\n\n**Tennis:** prioritize recurring groups, public courts with reliable information, and partner-finding. Supply is fragmented, so use local ambassadors and club captains rather than trying to scrape scale from social posts alone.\n\n**Table tennis:** start city by city around clubs, university/community venues, leagues, and regular training nights. Do not spread operations nationally until one city shows repeat activity.\n\n**Badminton:** use the strongest existing inventory as the laboratory for analytics, organizer tools, featured placement, and lead conversion before deploying those features to thinner sports."
+      },
+      {
+        "id":"ninety_day_plan",
+        "type":"markdown",
+        "body":"## A practical 90-day sequence\n\n1. **Weeks 1–2: package the offer.** Create a one-page founding-partner pitch, a verified-venue badge, UTM/contact-click tracking, and a manual monthly report. Define one promise: more discoverability and measurable player inquiries.\n2. **Weeks 2–6: seed two sports deeply.** Choose Bangkok pickleball and padel. Personally onboard 10 venues and 20 recurring sessions; ask each venue to nominate organizers and share its RacketThailand page.\n3. **Weeks 4–8: run owned open-play events.** Co-host one beginner or social session per week with partners. RacketThailand supplies the listing and acquisition; the venue supplies the court and operations. Capture registrations in the product so every event grows profiles and repeat usage.\n4. **Weeks 6–10: test willingness to pay.** Offer pilot partners three choices: free basic listing, ฿990 verified/analytics plan, or performance pricing per qualified inquiry/paid attendee. Record objections rather than discounting automatically.\n5. **Weeks 8–12: double down on the winning motion.** If venues pay for leads, build lead reporting and sponsored slots. If organizers pull harder, build recurring-event and attendance tools. If neither pays, keep supply growth free and pursue event sponsorship rather than forcing subscription revenue.\n\n**Weekly scoreboard:** new verified venues, new recurring sessions, active organizers, player registrations from partner pages, contact clicks, event joins, 4-week repeat players, partner conversion to paid, and gross profit after payment/operating costs."
+      },
+      {
+        "id":"what_not_to_do",
+        "type":"markdown",
+        "body":"## Avoid these traps at this stage\n\n- Do not charge users to see contact information or join basic groups; it weakens the network before it is dense.\n- Do not build a complete court-booking SaaS before venues ask for it and agree to integrate inventory.\n- Do not sell undifferentiated banner ads; small traffic produces weak revenue and damages trust.\n- Do not expand every sport and province equally. Win one sport-city cell at a time.\n- Do not measure success mainly by total listings. Measure current, contactable listings with recurring sessions and resulting player actions."
+      },
+      {
+        "id":"further_questions",
+        "type":"markdown",
+        "body":"## Questions that should decide the next build\n\n- Which sport-city pair already has the most monthly finder visits and contact clicks per live listing?\n- Can the team reach and service 10 venue owners personally for three months?\n- Are partners more willing to pay for visibility, qualified leads, or completed registrations?\n- What is a qualified lead worth to a Thai venue compared with one hour of court utilization?\n- Which existing badminton organizers return often enough to test Organizer Pro without incentives?"
+      },
+      {
+        "id":"caveats",
+        "type":"markdown",
+        "body":"## Caveats and Assumptions\n\nThis is a stage-based strategy, not a forecast. The suggested prices are test ranges and should be validated through partner conversations and pilot conversion. No live traffic, conversion, booking-value, or retention dataset was supplied for this analysis; those figures could change the order of opportunities. Current product documentation shows discovery, contribution, events, profiles, and analytics hooks, but not a mature booking/payment system. External platform examples establish viable business-model patterns, not guaranteed demand in Thailand."
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-21T12:00:00+07:00",
+    "status": "ready",
+    "datasets": {
+      "opportunity_scores": [
+        {"opportunity":"Venue partners","priority_score":5.0,"supply_creation":5,"revenue_potential":4,"ease_of_test":5},
+        {"opportunity":"Open play","priority_score":4.3,"supply_creation":5,"revenue_potential":3,"ease_of_test":5},
+        {"opportunity":"Sponsored slots","priority_score":3.7,"supply_creation":3,"revenue_potential":4,"ease_of_test":4},
+        {"opportunity":"Event checkout","priority_score":3.3,"supply_creation":4,"revenue_potential":4,"ease_of_test":2},
+        {"opportunity":"Organizer Pro","priority_score":3.0,"supply_creation":4,"revenue_potential":3,"ease_of_test":2},
+        {"opportunity":"Display ads","priority_score":1.7,"supply_creation":1,"revenue_potential":2,"ease_of_test":2}
+      ]
+    },
+    "accessIssues": []
+  },
+  "sources": [
+    {"id":"growth_playbook","path":"docs/growth-design-playbook.md","description":"Defines the current primary KPI as weekly new content supply and documents implemented growth events."},
+    {"id":"project_summary","path":"RacketThailand_Project_Summary.md","description":"Documents the live product surface, supported sports, and available court, group, event, profile, and analytics capabilities."},
+    {"id":"playtomic_payments","url":"https://playerhelp.playtomic.com/hc/en-gb/articles/19831969439761-Payment-Methods-in-Playtomic","description":"Current example of court and activity payments, service charges, and club wallets on a racket-sport platform."},
+    {"id":"playtomic_memberships","url":"https://helpmanager.playtomic.com/hc/en-gb/articles/46374805007761-Benefits-update-Sell-memberships-onsite-online-with-new-payment-options","description":"Current example of clubs selling recurring memberships through a racket-sport platform."},
+    {"id":"racketr_model","url":"https://app.racketr.app/","description":"Current example of a free player product paired with paid club booking, membership, class, and administration tools."},
+    {"id":"fip_padel","url":"https://www.padelfip.com/wp-content/uploads/2025/12/FIP-WPR-2025_DIGITAL.pdf","description":"2025 federation report noting Thailand within Asian padel-court growth."},
+    {
+      "id":"prioritization_method",
+      "path":"docs/strategy/profit-and-growth-2026-08-21/scoring-notes.md",
+      "description":"Analyst-authored directional scoring rubric derived from current product capability, the supply KPI, implementation effort, and external business-model examples.",
+      "query":{
+        "engine":"postgresql",
+        "language":"sql",
+        "description":"Reproduces the reviewed directional opportunity scoring rows documented in scoring-notes.md.",
+        "sql":"select * from (values ('Venue partners',5.0,5,4,5),('Open play',4.3,5,3,5),('Sponsored slots',3.7,3,4,4),('Event checkout',3.3,4,4,2),('Organizer Pro',3.0,4,3,2),('Display ads',1.7,1,2,2)) as scores(opportunity,priority_score,supply_creation,revenue_potential,ease_of_test)",
+        "executed_at":"2026-08-21T12:00:00+07:00",
+        "filters":{"scale":"1 to 5 directional analyst score","method":"simple mean, rounded to one decimal except the venue-partner judgment was set at 5.0 as documented"},
+        "metric_definitions":{"priority_score":"Directional prioritization score combining supply creation, revenue potential, and ease of test; not observed market performance."}
+      }
+    }
+  ]
+}

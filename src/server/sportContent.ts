@@ -253,23 +253,7 @@ export async function buildSportPagePayload(
     }
 
     const sportId = sportRow.id;
-    const multiSportCourtIds = await fetchCourtIdsBySportId(sportId);
-
-    const courtParams: Record<string, string> = {
-      select:
-        "id,name,description,address,district,province,district_id,province_id,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
-      is_active: "eq.true",
-      order: "created_at.desc",
-      limit: FINDER_PREVIEW_LIMIT,
-    };
-    if (multiSportCourtIds.length > 0) {
-      courtParams.id = `in.(${multiSportCourtIds.join(",")})`;
-    } else {
-      courtParams.id = "eq.00000000-0000-0000-0000-000000000000";
-    }
-
-    const courtsPromise = supabaseSelect<CourtRow>("courts", courtParams);
-
+    const courtIdsPromise = fetchCourtIdsBySportId(sportId);
     const groupsPromise = supabaseSelect<GroupRow>("groups", {
       select:
         "id,name,description,status,created_at,play_format,allow_walk_in,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,courts(id,name))",
@@ -299,6 +283,21 @@ export async function buildSportPagePayload(
       sport_id: `eq.${sportId}`,
       order: "created_at.desc",
       limit: "4",
+    });
+
+    const courtsPromise = courtIdsPromise.then((multiSportCourtIds) => {
+      const courtParams: Record<string, string> = {
+        select:
+          "id,name,description,address,district,province,district_id,province_id,price_note,phone,line_id,website_url,created_at,court_photos(image_url,is_primary)",
+        is_active: "eq.true",
+        order: "created_at.desc",
+        limit: FINDER_PREVIEW_LIMIT,
+        id: multiSportCourtIds.length > 0
+          ? `in.(${multiSportCourtIds.join(",")})`
+          : "eq.00000000-0000-0000-0000-000000000000",
+      };
+
+      return supabaseSelect<CourtRow>("courts", courtParams);
     });
 
     const [

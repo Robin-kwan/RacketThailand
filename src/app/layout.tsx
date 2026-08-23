@@ -6,7 +6,10 @@ import { HeaderConfigProvider } from "@/components/header-context";
 import { RacketThailandMark } from "@/components/racketthailand-mark";
 import { SiteHeader } from "@/components/site-header";
 import { ToasterProvider } from "@/components/toaster-provider";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import {
+  getRequestSupabaseClient,
+  getRequestUser,
+} from "@/lib/supabase-server-auth";
 import { getSiteUrl } from "@/lib/seo";
 import { ScrollReset } from "@/components/scroll-reset";
 import { Analytics } from "@vercel/analytics/next";
@@ -147,10 +150,8 @@ export default async function RootLayout({
   let isAdmin = false;
 
   if (!isRecoveryMode) {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const supabase = await getRequestSupabaseClient();
+    const user = await getRequestUser();
     if (user) {
       const { data } = await supabase
         .from("profiles")

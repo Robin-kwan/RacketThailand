@@ -30,6 +30,8 @@ import { localizeThailandLocation } from "@/server/thailand-location";
 import {
   CalendarDays,
   Clock3,
+  Eye,
+  EyeOff,
   ExternalLink,
   Images,
   Info,
@@ -113,6 +115,8 @@ type Params = {
 
 type SearchParams = {
   lang?: string;
+  sport?: string;
+  guest?: string;
 };
 
 type ParamsInput = Promise<Params>;
@@ -831,6 +835,8 @@ export default async function GroupDetailPage({
     viewCourt: t("groups.detail.viewCourt"),
     aboutGroup: t("groups.detail.aboutGroup"),
     groupPhotos: t("groups.detail.groupPhotos"),
+    viewAsGuest: t("groups.detail.viewAsGuest"),
+    exitGuestView: t("groups.detail.exitGuestView"),
     back: t("groups.detail.back"),
     copyAction: t("contactActions.copy"),
     copiedAction: t("contactActions.copied"),
@@ -939,7 +945,9 @@ export default async function GroupDetailPage({
   const fallbackGroupName = locale === "th" ? "กลุ่มชุมชน" : "Community group";
   const fallbackCourtName =
     locale === "th" ? "สนามที่เชื่อมไว้" : "Linked court";
-  const canEdit = Boolean(isGroupOwner || isAdminViewer);
+  const canManage = Boolean(isGroupOwner || isAdminViewer);
+  const isGuestView = canManage && resolvedSearch?.guest === "1";
+  const canEdit = canManage && !isGuestView;
   const sportName = group.sports?.name ?? undefined;
   const playFormatLabel = getPlayFormatLabel(group.play_format, locale);
   const shareTitle = group.name ?? fallbackGroupName;
@@ -964,6 +972,13 @@ export default async function GroupDetailPage({
             external: true,
           }
         : null;
+  const detailQuery = new URLSearchParams({
+    ...(sportCode ? { sport: sportCode } : {}),
+  });
+  const guestViewQuery = new URLSearchParams(detailQuery);
+  guestViewQuery.set("guest", "1");
+  const detailPath = `/groups/${group.id}${detailQuery.size ? `?${detailQuery.toString()}` : ""}`;
+  const guestViewPath = `/groups/${group.id}?${guestViewQuery.toString()}`;
   return (
     <div className="min-h-screen bg-[#f7fbf9] text-[var(--foreground)]">
       <ViewTracker event="group_view" payload={{ groupId: group.id }} />
@@ -1018,6 +1033,13 @@ export default async function GroupDetailPage({
                 {canEdit && (
                   <>
                     <Link
+                      href={buildLocalizedPath(guestViewPath, locale)}
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/70 hover:bg-white/15"
+                    >
+                      <Eye className="size-4" aria-hidden />
+                      {copy.viewAsGuest}
+                    </Link>
+                    <Link
                       href={buildLocalizedPath(
                         `/groups/${group.id}/players`,
                         locale,
@@ -1043,7 +1065,7 @@ export default async function GroupDetailPage({
         </section>
 
         <div className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pt-8 md:px-10 md:pt-9">
-          {groupStatus === "draft" && (isGroupOwner || isAdminViewer) ? (
+          {groupStatus === "draft" && canManage && !isGuestView ? (
             <section className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900">
               <p className="font-semibold">Draft preview</p>
               <p className="mt-1">
@@ -1518,6 +1540,15 @@ export default async function GroupDetailPage({
           />
         </div>
       </main>
+      {isGuestView ? (
+        <Link
+          href={buildLocalizedPath(detailPath, locale)}
+          className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_32px_rgb(15_23_42/0.3)] transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 sm:bottom-7 sm:right-7"
+        >
+          <EyeOff className="size-4" aria-hidden />
+          {copy.exitGuestView}
+        </Link>
+      ) : null}
     </div>
   );
 }
