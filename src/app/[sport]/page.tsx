@@ -39,7 +39,7 @@ import {
   PLAYER_TIME_PREFERENCES,
 } from "@/lib/player-finder";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { getRequestUser } from "@/lib/supabase-server-auth";
 import type { SportFeatureCard } from "@/types/sports";
 
 type Params = {
@@ -410,24 +410,22 @@ export default async function SportPage({
   const locale = normalizeLocale(resolvedParams?.lang);
   const resolvedParamsValue = await resolveParams(params);
   const t = await getTranslator(locale);
-  const sport = await buildSportPagePayload(resolvedParamsValue.sport, locale);
-
-  if (!sport) {
-    notFound();
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const [casualPlayResult, authResult] = await Promise.all([
+  const [sport, casualPlayResult, user] = await Promise.all([
+    buildSportPagePayload(resolvedParamsValue.sport, locale),
     fetchCasualPlaysBySport(
-      sport.code,
+      resolvedParamsValue.sport,
       {
         limit: 10,
       },
       locale,
     ),
-    supabase.auth.getUser(),
+    getRequestUser(),
   ]);
-  const user = authResult.data.user;
+
+  if (!sport) {
+    notFound();
+  }
+
   const isAuthenticated = Boolean(user && !user.is_anonymous);
   let sportProfile: ExistingSportProfile | null = null;
   let hasSportProfileError = false;
