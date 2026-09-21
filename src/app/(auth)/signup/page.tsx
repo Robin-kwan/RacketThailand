@@ -61,6 +61,7 @@ export default async function SignupPage({
     namePlaceholder: t("auth.namePlaceholder"),
     googleButton: t("auth.signupGoogleButton"),
     lineButton: t("auth.signupLineButton"),
+    captchaRequired: t("auth.captchaRequired"),
   };
   const inAppBrowserCopy = {
     title: t("auth.inAppBrowser.title"),

@@ -57,6 +57,7 @@ export default async function LoginPage({
     googleButton: t("auth.googleButton"),
     lineButton: t("auth.lineButton"),
     success: t("auth.loginSuccess"),
+    captchaRequired: t("auth.captchaRequired"),
   };
   const inAppBrowserCopy = {
     title: t("auth.inAppBrowser.title"),

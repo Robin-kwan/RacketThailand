@@ -19,6 +19,7 @@ import {
   OAuthButtons,
   type AuthOAuthProvider,
 } from "@/components/auth/oauth-buttons";
+import { isTurnstileEnabled, TurnstileChallenge } from "@/components/auth/turnstile-challenge";
 
 type LoginCopy = {
   emailLabel: string;
@@ -33,6 +34,7 @@ type LoginCopy = {
   googleButton: string;
   lineButton: string;
   success: string;
+  captchaRequired: string;
 };
 
 type LoginFormProps = {
@@ -54,6 +56,7 @@ export function LoginForm({
   const [isMounted, setIsMounted] = useState(false);
   const [oauthLoading, setOauthLoading] =
     useState<AuthOAuthProvider | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Set once so the server HTML matches the first client render.
@@ -66,6 +69,10 @@ export function LoginForm({
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
+    if (isTurnstileEnabled && !captchaToken) {
+      showToast({ variant: "error", message: copy.captchaRequired });
+      return;
+    }
 
     setSubmitting(true);
 
@@ -76,6 +83,7 @@ export function LoginForm({
       await supabase.auth.signInWithPassword({
         email,
         password,
+        options: captchaToken ? { captchaToken } : undefined,
       });
     setSubmitting(false);
 
@@ -224,6 +232,7 @@ export function LoginForm({
         >
           {submitting ? `${copy.button}...` : copy.button}
         </button>
+        <TurnstileChallenge onTokenChange={setCaptchaToken} />
         <p className="text-sm text-slate-500">{copy.agreeTerms}</p>
       </form>
       <div className="mt-6">

@@ -214,6 +214,7 @@
     "agreeTerms": "By continuing you agree to RacketThailand’s community guidelines and privacy terms.",
     "verifyNotice": "Please verify your email before signing in. Check your inbox for a confirmation link.",
     "emailNotVerified": "Email not verified. Please check your inbox for the confirmation link.",
+    "captchaRequired": "Complete the security check before continuing.",
     "pendingTitle": "Check your inbox",
     "pendingDescription": "We sent a verification email to {email}. Click the link inside to activate your account. Can’t find it? Check spam or resend below.",
     "pendingResend": "Resend verification email",

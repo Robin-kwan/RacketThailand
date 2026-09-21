@@ -85,6 +85,7 @@ export default async function VerifyPage({
                 label={t("auth.pendingResend")}
                 successMessage={t("auth.pendingResendSuccess")}
                 errorMessage={t("auth.pendingResendError")}
+                captchaRequired={t("auth.captchaRequired")}
               />
             )}
           </div>

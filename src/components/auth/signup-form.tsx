@@ -14,6 +14,7 @@ import {
   OAuthButtons,
   type AuthOAuthProvider,
 } from "@/components/auth/oauth-buttons";
+import { isTurnstileEnabled, TurnstileChallenge } from "@/components/auth/turnstile-challenge";
 
 type SignupCopy = {
   nameLabel: string;
@@ -32,6 +33,7 @@ type SignupCopy = {
   namePlaceholder: string;
   googleButton: string;
   lineButton: string;
+  captchaRequired: string;
 };
 
 type SignupFormProps = {
@@ -53,6 +55,7 @@ export function SignupForm({
   const [isMounted, setIsMounted] = useState(false);
   const [oauthLoading, setOauthLoading] =
     useState<AuthOAuthProvider | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const passwordPattern =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
@@ -81,6 +84,10 @@ export function SignupForm({
       });
       return;
     }
+    if (isTurnstileEnabled && !captchaToken) {
+      showToast({ variant: "error", message: copy.captchaRequired });
+      return;
+    }
 
     setSubmitting(true);
     const callbackUrl = new URL("/auth/callback", window.location.origin);
@@ -96,6 +103,7 @@ export function SignupForm({
           full_name: name,
         },
         emailRedirectTo: callbackUrl.toString(),
+        ...(captchaToken ? { captchaToken } : {}),
       },
     });
     setSubmitting(false);
@@ -273,6 +281,7 @@ export function SignupForm({
       >
         {submitting ? `${copy.button}...` : copy.button}
       </button>
+      <TurnstileChallenge onTokenChange={setCaptchaToken} />
       <p className="text-sm text-slate-500">{copy.agreeTerms}</p>
       <p className="text-sm text-slate-500">{copy.verifyNotice}</p>
       </form>
