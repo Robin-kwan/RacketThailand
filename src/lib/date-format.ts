@@ -1,5 +1,23 @@
 export const THAILAND_TIMEZONE = "Asia/Bangkok";
 
+const SESSION_DAYS = {
+  th: ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"],
+  en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+};
+const SESSION_MONTHS = {
+  th: ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."],
+  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+};
+
+export function formatGroupSessionDate(date: string, locale: "th" | "en") {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return date;
+  const [, year, month, day] = match;
+  const parsed = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (parsed.getUTCFullYear() !== Number(year) || parsed.getUTCMonth() !== Number(month) - 1 || parsed.getUTCDate() !== Number(day)) return date;
+  return `${SESSION_DAYS[locale][parsed.getUTCDay()]} ${Number(day)} ${SESSION_MONTHS[locale][parsed.getUTCMonth()]}`;
+}
+
 const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DISPLAY_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
 
@@ -20,6 +38,11 @@ function getDateParts(value: Date) {
     month: parts.find((part) => part.type === "month")?.value ?? "01",
     year: parts.find((part) => part.type === "year")?.value ?? "0000",
   };
+}
+
+export function getThailandTodayDateString(now = new Date()) {
+  const { year, month, day } = getDateParts(now);
+  return `${year}-${month}-${day}`;
 }
 
 function getTimeParts(value: Date) {

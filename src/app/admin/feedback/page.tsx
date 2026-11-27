@@ -3,7 +3,7 @@ import {
   AdminPortalShell,
   buildAdminPortalNav,
 } from "@/components/admin/admin-portal-shell";
-import { getTranslator, normalizeLocale } from "@/lib/i18n";
+import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { requireAdminPageAccess } from "@/server/admin";
 
@@ -30,6 +30,10 @@ type FeedbackRow = {
   checked: boolean | null;
   created_at: string;
   reporter_id: string | null;
+  court_id: string | null;
+  group_id: string | null;
+  court?: { id: string; name: string | null } | null;
+  group?: { id: string; name: string | null } | null;
   reporter?: {
     display_name: string | null;
     username: string | null;
@@ -49,7 +53,7 @@ export default async function AdminFeedbackPage({
 
   const feedbackQuery = await supabaseSelect<FeedbackRow>("feedback", {
     select:
-      "id,subject,message,type,status,priority,checked,created_at,reporter_id,reporter:profiles!feedback_reporter_id_fkey(display_name,username)",
+      "id,subject,message,type,status,priority,checked,created_at,reporter_id,court_id,group_id,reporter:profiles!feedback_reporter_id_fkey(display_name,username),court:courts!feedback_court_id_fkey(id,name),group:groups!feedback_group_id_fkey(id,name)",
     order: "created_at.desc",
     limit: "50",
   });
@@ -70,6 +74,19 @@ export default async function AdminFeedbackPage({
         row.reporter_id?.slice(0, 6) ??
         t("admin.feedbackTable.anonymous"),
       reporterEmail: null,
+      reporterId: row.reporter_id,
+      listingType: row.court_id
+        ? ("court" as const)
+        : row.group_id
+          ? ("group" as const)
+          : null,
+      listingId: row.court_id ?? row.group_id,
+      listingName: row.court?.name ?? row.group?.name ?? null,
+      listingHref: row.court_id
+        ? buildLocalizedPath(`/courts/${row.court_id}`, locale)
+        : row.group_id
+          ? buildLocalizedPath(`/groups/${row.group_id}`, locale)
+          : null,
     })) ?? [];
 
   const tableCopy = {
@@ -91,6 +108,7 @@ export default async function AdminFeedbackPage({
     statusDismissed: t("admin.feedbackTable.statusDismissed"),
     noSubject: t("admin.feedbackTable.noSubject"),
     noMessage: t("admin.feedbackTable.noMessage"),
+    messageLabel: t("admin.feedbackTable.message"),
     typeLabel: t("admin.feedbackTable.type"),
     statusLabel: t("admin.feedbackTable.status"),
     priorityLabel: t("admin.feedbackTable.priority"),
@@ -103,6 +121,17 @@ export default async function AdminFeedbackPage({
     updating: t("admin.feedbackTable.updating"),
     empty: t("admin.feedbackTable.empty"),
     error: t("admin.feedbackTable.error"),
+    listing: t("admin.feedbackTable.listing"),
+    viewListing: t("admin.feedbackTable.viewListing"),
+    assignToReporter: t("admin.feedbackTable.assignToReporter"),
+    assignConfirmTitle: t("admin.feedbackTable.assignConfirmTitle"),
+    assignConfirmMessage: t("admin.feedbackTable.assignConfirmMessage"),
+    assignConfirm: t("admin.feedbackTable.assignConfirm"),
+    cancel: t("admin.feedbackTable.cancel"),
+    assignmentSuccess: t("admin.feedbackTable.assignmentSuccess"),
+    assignmentError: t("admin.feedbackTable.assignmentError"),
+    details: t("admin.feedbackTable.details"),
+    hideDetails: t("admin.feedbackTable.hideDetails"),
   };
 
   return (

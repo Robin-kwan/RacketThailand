@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -9,6 +9,7 @@ import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { fetchActivePlayersBySport } from "@/server/playerFinder";
 import { requireGroupAccess } from "@/server/groupAccess";
+import { playerTrackingAllowed } from "@/server/playerAnalytics";
 
 export const metadata: Metadata = {
   title: "Invite players | RacketThailand",
@@ -38,16 +39,22 @@ export default async function GroupPlayerInvitesPage({
   }
 
   const adminSupabase = getSupabaseAdminClient();
+  const trackingEnabled = await playerTrackingAllowed(access.user.id);
   const { data: group } = await adminSupabase
     .from("groups")
     .select("id,name,sport_id,sports(code,name)")
     .eq("id", groupId)
     .maybeSingle();
   if (!group) redirect(buildLocalizedPath("/dashboard", locale));
-  const sportRelation = Array.isArray(group.sports) ? group.sports[0] : group.sports;
-  const playerData = await fetchActivePlayersBySport(sportRelation?.code ?? "", {
-    limit: 80,
-  });
+  const sportRelation = Array.isArray(group.sports)
+    ? group.sports[0]
+    : group.sports;
+  const playerData = await fetchActivePlayersBySport(
+    sportRelation?.code ?? "",
+    {
+      limit: 80,
+    },
+  );
   const { data: pendingInvitations } = await adminSupabase
     .from("player_group_invitations")
     .select("recipient_id")
@@ -127,7 +134,12 @@ export default async function GroupPlayerInvitesPage({
                       {player.displayName}
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      {[player.area, player.skillLevel ? t(`playerFinder.skills.${player.skillLevel}`) : null]
+                      {[
+                        player.area,
+                        player.skillLevel
+                          ? t(`playerFinder.skills.${player.skillLevel}`)
+                          : null,
+                      ]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
@@ -140,6 +152,8 @@ export default async function GroupPlayerInvitesPage({
                 )}
                 <div className="mt-auto pt-5">
                   <GroupInviteButton
+                    sportCode={sportRelation?.code ?? ""}
+                    trackingEnabled={trackingEnabled}
                     groupId={groupId}
                     recipientId={player.profileId}
                     alreadySent={invitedIds.has(player.profileId)}

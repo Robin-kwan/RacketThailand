@@ -3,17 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LocateFixed, Search } from "lucide-react";
+import { ChevronDown, LoaderCircle, LocateFixed, Search } from "lucide-react";
 import { track } from "@vercel/analytics";
 import type { CourtProvinceOption, CourtRecord } from "@/server/courtFinder";
-import {
-  buildLocalizedPath,
-  type Locale,
-} from "@/lib/i18n";
+import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { BaseSelect } from "@/components/base-select";
 import { NearbyMap } from "@/components/nearby-map";
 import { CourtCard } from "@/components/court-card";
+import { courtPriceSummary } from "@/lib/court-price-summary";
 import { TimePickerField } from "@/components/time-picker-field";
+import {
+  FinderFilterButton,
+  FinderFilterChip,
+  FinderFilterPanel,
+  FinderSearchField,
+  FinderRequestError,
+} from "@/components/finder-filter-ui";
 
 type CourtFinderCopy = {
   searchPlaceholder: string;
@@ -37,6 +42,19 @@ type CourtFinderCopy = {
   mapHeading: string;
   openMaps: string;
   addCourtCta: string;
+  filtersLabel: string;
+  moreFiltersTitle: string;
+  applyFiltersLabel: string;
+  closeFiltersLabel: string;
+  removeFilterLabel: string;
+  loadMoreLabel: string;
+  loadingMoreLabel: string;
+  noPhotoLabel: string;
+  priceLabel: string;
+  searchError: string;
+  loadMoreError: string;
+  retryLabel: string;
+  loadingLabel: string;
 };
 
 type CourtFinderProps = {
@@ -79,8 +97,7 @@ const haversineDistance = (a: LocationState, b: LocationState) => {
   const sinLat = Math.sin(dLat / 2);
   const sinLon = Math.sin(dLon / 2);
   const haversine =
-    sinLat * sinLat +
-    Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon;
+    sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon;
   const c = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
   return EARTH_RADIUS_KM * c;
 };
@@ -102,6 +119,7 @@ export function CourtFinder({
   const [province, setProvince] = useState<string>(initialProvince);
   const [startTimeFilter, setStartTimeFilter] = useState(initialStartTime);
   const [endTimeFilter, setEndTimeFilter] = useState(initialEndTime);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({
     search: initialSearch,
     province: initialProvince,
@@ -120,10 +138,10 @@ export function CourtFinder({
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
-  const [allowAutoLoadMore, setAllowAutoLoadMore] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const lastLoadedRequestKeyRef = useRef<string | null>(null);
   const [searchRevision, setSearchRevision] = useState(0);
+  const [loadError, setLoadError] = useState<"search" | "more" | null>(null);
+  const loadMoreAbortRef = useRef<AbortController | null>(null);
   const buildCourtHref = useCallback(
     (courtId: string) =>
       buildLocalizedPath(
@@ -133,24 +151,17 @@ export function CourtFinder({
     [locale, sportCode],
   );
   const provinceOptions = useMemo(
-    () => [
-      { value: "", label: copy.allProvincesLabel },
-      ...availableProvinces,
-    ],
+    () => [{ value: "", label: copy.allProvincesLabel }, ...availableProvinces],
     [availableProvinces, copy.allProvincesLabel],
   );
   const fallbackCourtName =
     locale === "th" ? "ยังไม่ระบุชื่อสนาม" : "Unnamed court";
-  const fallbackCourtImageAlt =
-    locale === "th" ? "รูปสนาม" : "Court image";
+  const fallbackCourtImageAlt = locale === "th" ? "รูปสนาม" : "Court image";
   const countSummary =
     locale === "th"
-      ? `${count.toLocaleString("th-TH")} สนาม · ${loading ? "กำลังอัปเดตข้อมูล" : "ข้อมูลล่าสุด"}`
-      : `${count.toLocaleString("en-US")} courts · ${loading ? "loading..." : "live data"}`;
+      ? `${count.toLocaleString("th-TH")} สนาม`
+      : `${count.toLocaleString("en-US")} courts`;
   const distanceUnit = locale === "th" ? "กม." : "km";
-  const loadingMoreLabel =
-    locale === "th" ? "กำลังโหลดสนามเพิ่มเติม..." : "Loading more courts...";
-
   const courtListRequestQuery = useMemo(() => {
     const params = new URLSearchParams({
       sport: sportCode,
@@ -159,8 +170,10 @@ export function CourtFinder({
       page: "1",
     });
     if (appliedFilters.search) params.set("search", appliedFilters.search);
-    if (appliedFilters.province) params.set("province", appliedFilters.province);
-    if (appliedFilters.startTime) params.set("startTime", appliedFilters.startTime);
+    if (appliedFilters.province)
+      params.set("province", appliedFilters.province);
+    if (appliedFilters.startTime)
+      params.set("startTime", appliedFilters.startTime);
     if (appliedFilters.endTime) params.set("endTime", appliedFilters.endTime);
     if (prioritizeNearby && userLocation) {
       params.set("nearbyLat", String(userLocation.latitude));
@@ -168,13 +181,7 @@ export function CourtFinder({
       params.set("includeProvinces", "false");
     }
     return params.toString();
-  }, [
-    appliedFilters,
-    locale,
-    prioritizeNearby,
-    sportCode,
-    userLocation,
-  ]);
+  }, [appliedFilters, locale, prioritizeNearby, sportCode, userLocation]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -208,24 +215,31 @@ export function CourtFinder({
 
   useEffect(() => {
     let isActive = true;
+    const controller = new AbortController();
     const load = async () => {
       if (lastLoadedRequestKeyRef.current === null) {
         lastLoadedRequestKeyRef.current = courtListRequestQuery;
         return;
       }
       lastLoadedRequestKeyRef.current = courtListRequestQuery;
+      loadMoreAbortRef.current?.abort();
+      loadMoreAbortRef.current = null;
+      setLoadingMore(false);
+      setLoadError(null);
       setLoading(true);
       try {
         const response = await fetch(`/api/courts?${courtListRequestQuery}`, {
           cache: "no-store",
+          signal: controller.signal,
         });
         const data = await response.json().catch(() => null);
         if (!isActive) return;
-        if (!response.ok || !data) {
-          return;
-        }
+        if (!response.ok || !Array.isArray(data?.courts)) throw new Error("Court search failed");
         const nextCourts = (data.courts ?? []) as CourtRecord[];
-        const nextCount = Math.max(data.count ?? nextCourts.length, nextCourts.length);
+        const nextCount = Math.max(
+          data.count ?? nextCourts.length,
+          nextCourts.length,
+        );
         setCourts(nextCourts);
         setCount(nextCount);
         setPage(1);
@@ -233,6 +247,8 @@ export function CourtFinder({
         if (Array.isArray(data.provinces)) {
           setAvailableProvinces(data.provinces);
         }
+      } catch {
+        if (isActive && !controller.signal.aborted) setLoadError("search");
       } finally {
         if (isActive) {
           setLoading(false);
@@ -242,12 +258,18 @@ export function CourtFinder({
     void load();
     return () => {
       isActive = false;
+      controller.abort();
+      loadMoreAbortRef.current?.abort();
+      loadMoreAbortRef.current = null;
     };
   }, [courtListRequestQuery, searchRevision]);
 
   const loadMoreCourts = useCallback(async () => {
     if (loading || loadingMore || !hasMore) return;
     const nextPage = page + 1;
+    const controller = new AbortController();
+    loadMoreAbortRef.current = controller;
+    setLoadError(null);
     setLoadingMore(true);
     try {
       const params = new URLSearchParams({
@@ -258,8 +280,10 @@ export function CourtFinder({
         includeProvinces: "false",
       });
       if (appliedFilters.search) params.set("search", appliedFilters.search);
-      if (appliedFilters.province) params.set("province", appliedFilters.province);
-      if (appliedFilters.startTime) params.set("startTime", appliedFilters.startTime);
+      if (appliedFilters.province)
+        params.set("province", appliedFilters.province);
+      if (appliedFilters.startTime)
+        params.set("startTime", appliedFilters.startTime);
       if (appliedFilters.endTime) params.set("endTime", appliedFilters.endTime);
       if (prioritizeNearby && userLocation) {
         params.set("nearbyLat", String(userLocation.latitude));
@@ -267,11 +291,11 @@ export function CourtFinder({
       }
       const response = await fetch(`/api/courts?${params.toString()}`, {
         cache: "no-store",
+        signal: controller.signal,
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok || !data) {
-        return;
-      }
+      if (controller.signal.aborted) return;
+      if (!response.ok || !Array.isArray(data?.courts)) throw new Error("Court pagination failed");
       const nextCourts = (data.courts ?? []) as CourtRecord[];
       const nextCount = Math.max(data.count ?? count, nextCourts.length);
       setCount(nextCount);
@@ -283,8 +307,13 @@ export function CourtFinder({
         setHasMore(values.length < nextCount);
         return values;
       });
+    } catch {
+      if (!controller.signal.aborted) setLoadError("more");
     } finally {
-      setLoadingMore(false);
+      if (loadMoreAbortRef.current === controller) {
+        loadMoreAbortRef.current = null;
+        setLoadingMore(false);
+      }
     }
   }, [
     count,
@@ -299,23 +328,6 @@ export function CourtFinder({
     userLocation,
   ]);
 
-  useEffect(() => {
-    const target = sentinelRef.current;
-    if (!target || !hasMore || !allowAutoLoadMore) return undefined;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const firstEntry = entries[0];
-        if (firstEntry?.isIntersecting) {
-          void loadMoreCourts();
-        }
-      },
-      { rootMargin: "500px 0px" },
-    );
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [allowAutoLoadMore, hasMore, loadMoreCourts]);
-
   const handleReset = () => {
     track("finder_filter_used", {
       surface: "court_finder",
@@ -327,7 +339,11 @@ export function CourtFinder({
     setStartTimeFilter("");
     setEndTimeFilter("");
     setAppliedFilters({ search: "", province: "", startTime: "", endTime: "" });
+    setUserLocation(null);
+    setPrioritizeNearby(false);
+    setNearbyStatus(null);
     setSearchRevision((current) => current + 1);
+    setFiltersOpen(false);
   };
 
   const handleSearch = () => {
@@ -345,6 +361,7 @@ export function CourtFinder({
     setSearchRevision((current) => current + 1);
     setPrioritizeNearby(false);
     setNearbyStatus(null);
+    setFiltersOpen(false);
   };
 
   const requestCurrentLocation = useCallback(
@@ -412,34 +429,6 @@ export function CourtFinder({
     setNearbyStatus(null);
   };
 
-  useEffect(() => {
-    if (typeof window === "undefined" || allowAutoLoadMore) return undefined;
-    if (window.scrollY > 0) {
-      setAllowAutoLoadMore(true);
-      return undefined;
-    }
-
-    const enableAutoLoadMore = () => setAllowAutoLoadMore(true);
-    window.addEventListener("scroll", enableAutoLoadMore, {
-      passive: true,
-      once: true,
-    });
-    window.addEventListener("wheel", enableAutoLoadMore, {
-      passive: true,
-      once: true,
-    });
-    window.addEventListener("touchmove", enableAutoLoadMore, {
-      passive: true,
-      once: true,
-    });
-
-    return () => {
-      window.removeEventListener("scroll", enableAutoLoadMore);
-      window.removeEventListener("wheel", enableAutoLoadMore);
-      window.removeEventListener("touchmove", enableAutoLoadMore);
-    };
-  }, [allowAutoLoadMore]);
-
   const courtsWithDistance = useMemo(() => {
     return courts.map((court) => {
       const courtLat = parseCoordinate(court.latitude);
@@ -484,7 +473,9 @@ export function CourtFinder({
           };
         })
         .filter(
-          (value): value is {
+          (
+            value,
+          ): value is {
             id: string;
             name: string | null;
             latitude: number;
@@ -495,27 +486,60 @@ export function CourtFinder({
         .slice(0, 15),
     [buildCourtHref, displayedCourts],
   );
+  const advancedFilterCount = Number(
+    Boolean(appliedFilters.startTime || appliedFilters.endTime),
+  );
+  const hasActiveFilters =
+    Object.values(appliedFilters).some(Boolean) || prioritizeNearby;
+  const activeFilterChips = [
+    appliedFilters.province
+      ? {
+          key: "province",
+          label: `${copy.provinceLabel}: ${
+            provinceOptions.find(
+              (option) => option.value === appliedFilters.province,
+            )?.label ?? appliedFilters.province
+          }`,
+        }
+      : null,
+    appliedFilters.startTime || appliedFilters.endTime
+      ? {
+          key: "time",
+          label: `${copy.startTimeLabel}: ${appliedFilters.startTime || "--:--"}–${appliedFilters.endTime || "--:--"}`,
+        }
+      : null,
+  ].filter((item): item is { key: string; label: string } => item !== null);
+
+  const clearAppliedFilter = (key: string) => {
+    const nextFilters = { ...appliedFilters };
+    if (key === "time") {
+      nextFilters.startTime = "";
+      nextFilters.endTime = "";
+      setStartTimeFilter("");
+      setEndTimeFilter("");
+    } else if (key === "province") {
+      nextFilters.province = "";
+      setProvince("");
+    }
+    setAppliedFilters(nextFilters);
+    setSearchRevision((current) => current + 1);
+    setPrioritizeNearby(false);
+    setNearbyStatus(null);
+  };
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem] md:items-end">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">
-              {copy.searchPlaceholder}
-            </label>
-            <input
-              type="text"
+      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(20rem,1fr)_14rem_10rem_auto_auto] lg:items-center">
+          <div className="col-span-2 lg:col-span-1">
+            <FinderSearchField
+              label={copy.searchPlaceholder}
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch();
-              }}
-              placeholder={copy.searchPlaceholder}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
+              onChange={setSearch}
+              onSubmit={handleSearch}
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <BaseSelect
               label={copy.provinceLabel}
               name="province"
@@ -523,50 +547,107 @@ export function CourtFinder({
               onChange={(event) => setProvince(event.target.value)}
               options={provinceOptions}
               variant="light"
+              labelPlacement="inside"
+              className="[&>div>button]:h-12 md:[&>div>button]:h-14"
             />
           </div>
-        </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <TimePickerField
-            label={copy.startTimeLabel}
-            value={startTimeFilter}
-            placeholder="--:--"
-            onChange={setStartTimeFilter}
-            allowClear
-            clearLabel={copy.timeClearLabel}
-            className="min-w-0"
+          <FinderFilterButton
+            label={copy.filtersLabel}
+            open={filtersOpen}
+            activeCount={advancedFilterCount}
+            onClick={() => setFiltersOpen((current) => !current)}
           />
-          <TimePickerField
-            label={copy.endTimeLabel}
-            value={endTimeFilter}
-            placeholder="--:--"
-            onChange={setEndTimeFilter}
-            allowClear
-            clearLabel={copy.timeClearLabel}
-            className="min-w-0"
-          />
-        </div>
-        <div className="mt-5 flex flex-wrap justify-end gap-3">
-          <button
-            type="button"
-            onClick={handleSearch}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300"
-          >
-            <Search className="h-4 w-4" aria-hidden />
-            {locale === "th" ? "ค้นหา" : "Search"}
-          </button>
           <button
             type="button"
             onClick={handleRequestNearby}
             disabled={locatingNearby}
-            className="rt-btn-primary inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:border disabled:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:transform-none"
+            className="rt-btn-primary inline-flex h-12 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:border disabled:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:transform-none md:h-14"
           >
             <LocateFixed className="h-4 w-4" aria-hidden />
             {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
           </button>
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300 md:h-14"
+          >
+            <Search className="h-4 w-4" aria-hidden />
+            {locale === "th" ? "ค้นหา" : "Search"}
+          </button>
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-          <p>{countSummary}</p>
+
+        <FinderFilterPanel
+          open={filtersOpen}
+          title={copy.moreFiltersTitle}
+          closeLabel={copy.closeFiltersLabel}
+          onClose={() => setFiltersOpen(false)}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TimePickerField
+              label={copy.startTimeLabel}
+              value={startTimeFilter}
+              placeholder="--:--"
+              onChange={setStartTimeFilter}
+              allowClear
+              clearLabel={copy.timeClearLabel}
+              className="min-w-0"
+            />
+            <TimePickerField
+              label={copy.endTimeLabel}
+              value={endTimeFilter}
+              placeholder="--:--"
+              onChange={setEndTimeFilter}
+              allowClear
+              clearLabel={copy.timeClearLabel}
+              className="min-w-0"
+            />
+          </div>
+          <div className="mt-5 flex items-center justify-end gap-3">
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
+              >
+                {copy.resetFilters}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="inline-flex h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              {copy.applyFiltersLabel}
+            </button>
+          </div>
+        </FinderFilterPanel>
+
+        {activeFilterChips.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {activeFilterChips.map((filter) => (
+              <FinderFilterChip
+                key={filter.key}
+                label={filter.label}
+                removeLabel={copy.removeFilterLabel}
+                onRemove={() => clearAppliedFilter(filter.key)}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-slate-500">
+          <p className="inline-flex items-center gap-2">
+            <span>{countSummary}</span>
+            {loading ? (
+              <span
+                aria-label={
+                  locale === "th" ? "กำลังอัปเดตข้อมูล" : "Updating data"
+                }
+                className="inline-block size-3 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600"
+                role="status"
+              />
+            ) : null}
+          </p>
           <div className="flex flex-wrap items-center gap-3">
             {prioritizeNearby && (
               <button
@@ -577,13 +658,15 @@ export function CourtFinder({
                 {copy.nearbyClear}
               </button>
             )}
-            <button
-              type="button"
-              onClick={handleReset}
-              className="text-slate-700 underline-offset-4 hover:underline"
-            >
-              {copy.resetFilters}
-            </button>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="text-slate-700 underline-offset-4 hover:underline"
+              >
+                {copy.resetFilters}
+              </button>
+            ) : null}
           </div>
         </div>
         {nearbyStatus && (
@@ -599,6 +682,14 @@ export function CourtFinder({
         )}
       </div>
 
+      {loadError === "search" && !loading && (
+        <FinderRequestError
+          message={copy.searchError}
+          retryLabel={copy.retryLabel}
+          onRetry={() => setSearchRevision((current) => current + 1)}
+        />
+      )}
+
       {prioritizeNearby && userLocation && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
           <p className="text-xs font-semibold uppercase text-slate-400">
@@ -609,7 +700,7 @@ export function CourtFinder({
               <NearbyMap userLocation={userLocation} courts={mapCourts} />
             ) : (
               <div
-              className="flex w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500"
+                className="flex w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500"
                 style={{ aspectRatio: "4 / 3" }}
               >
                 {copy.nearbyEmpty}
@@ -654,28 +745,37 @@ export function CourtFinder({
         </div>
       )}
 
-      {courts.length === 0 ? (
+      {loading && courts.length === 0 ? (
+        <p role="status" className="py-12 text-center text-sm text-slate-600">{copy.loadingLabel}</p>
+      ) : courts.length === 0 && loadError !== "search" ? (
         <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-slate-600">
           <p className="text-xl font-semibold text-slate-900">
             {copy.emptyTitle}
           </p>
           <p className="mt-2 text-sm text-slate-500">{copy.emptyDescription}</p>
-          <Link
-            href={buildLocalizedPath(
-              `/courts/new?sport=${encodeURIComponent(sportCode)}`,
-              locale,
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            {hasActiveFilters && (
+              <button type="button" onClick={handleReset} className="rt-btn-primary min-h-11 px-4 py-2 text-sm">
+                {copy.resetFilters}
+              </button>
             )}
-            className="rt-btn-court mt-5 inline-flex items-center justify-center px-4 py-2 text-xs"
-            onClick={() =>
-              track("empty_state_cta_click", {
-                surface: "court_finder",
-                sport: sportCode,
-                cta: "add_court",
-              })
-            }
-          >
-            {copy.addCourtCta}
-          </Link>
+            <Link
+              href={buildLocalizedPath(
+                `/courts/new?sport=${encodeURIComponent(sportCode)}`,
+                locale,
+              )}
+              className="rt-btn-court inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm"
+              onClick={() =>
+                track("empty_state_cta_click", {
+                  surface: "court_finder",
+                  sport: sportCode,
+                  cta: "add_court",
+                })
+              }
+            >
+              {copy.addCourtCta}
+            </Link>
+          </div>
         </div>
       ) : (
         <>
@@ -683,9 +783,9 @@ export function CourtFinder({
             {displayedCourts.map(({ court, distanceKm }) => {
               const photo =
                 court.court_photos?.find((p) => p.is_primary)?.image_url ??
-                court.court_photos?.[0]?.image_url ??
-                `/sports/${sportCode}.png`;
+                court.court_photos?.[0]?.image_url;
               const locationText = court.district ?? "";
+              const priceSummary = courtPriceSummary(court.price_note);
               const distanceLabel =
                 distanceKm !== null
                   ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
@@ -695,21 +795,37 @@ export function CourtFinder({
                   key={court.id}
                   href={buildCourtHref(court.id)}
                   name={court.name ?? fallbackCourtName}
-                  imageUrl={photo}
+                  imageUrl={photo ?? `/sports/${sportCode}.png`}
                   imageAlt={court.name ?? fallbackCourtImageAlt}
+                  imagePlaceholderLabel={photo ? undefined : copy.noPhotoLabel}
+                  imageAspectClass="aspect-[8/5]"
                   location={locationText}
+                  details={priceSummary ? [`${copy.priceLabel}: ${priceSummary}`] : []}
                   primaryBadge={court.province || "TH"}
                   secondaryBadge={distanceLabel}
                 />
               );
             })}
           </div>
-          {hasMore && (
-            <div
-              ref={sentinelRef}
-              className="flex min-h-16 items-center justify-center text-sm text-slate-500"
-            >
-              {loadingMore ? loadingMoreLabel : ""}
+          {loadError === "more" && (
+            <FinderRequestError message={copy.loadMoreError} retryLabel={copy.retryLabel} onRetry={() => void loadMoreCourts()} />
+          )}
+          {hasMore && !loading && !loadError && (
+            <div className="flex min-h-20 items-center justify-center pt-4">
+              <button
+                type="button"
+                onClick={() => void loadMoreCourts()}
+                disabled={loadingMore}
+                aria-busy={loadingMore}
+                className="rt-btn-primary inline-flex min-w-40 items-center justify-center gap-2 px-5 py-2.5 text-sm disabled:cursor-wait disabled:opacity-70"
+              >
+                {loadingMore ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <ChevronDown className="h-4 w-4" aria-hidden />
+                )}
+                {loadingMore ? copy.loadingMoreLabel : copy.loadMoreLabel}
+              </button>
             </div>
           )}
         </>

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { CommunityComment } from "@/server/communityBoard";

@@ -36,6 +36,7 @@ export default async function LoginPage({
   const resolvedParams = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedParams?.lang);
   const redirectTo = sanitizeAuthRedirectPath(resolvedParams?.redirectTo);
+  const creatingGroup = redirectTo.split("?")[0] === "/groups/create";
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -57,6 +58,7 @@ export default async function LoginPage({
     googleButton: t("auth.googleButton"),
     lineButton: t("auth.lineButton"),
     success: t("auth.loginSuccess"),
+    captchaRequired: t("auth.captchaRequired"),
   };
   const inAppBrowserCopy = {
     title: t("auth.inAppBrowser.title"),
@@ -77,6 +79,9 @@ export default async function LoginPage({
           <h1 className="text-xl font-semibold text-[var(--foreground)]">
             {t("auth.loginTitle")}
           </h1>
+          {creatingGroup && (
+            <p className="mt-3 text-sm text-slate-600">{t("auth.createGroupIntent")}</p>
+          )}
           <LoginForm locale={locale} copy={formCopy} redirectTo={redirectTo} />
           <p className="mt-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
             {t("auth.switchToSignup")}{" "}

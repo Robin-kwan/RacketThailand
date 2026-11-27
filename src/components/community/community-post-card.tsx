@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import { formatDistanceToNow } from "date-fns";
 import { enUS, th as thLocale } from "date-fns/locale";
 import type { Locale } from "@/lib/i18n";

@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import { formatDistanceToNow } from "date-fns";
 import { enUS, th as thLocale } from "date-fns/locale";
 import { HeaderSportScope } from "@/components/header-sport-scope";

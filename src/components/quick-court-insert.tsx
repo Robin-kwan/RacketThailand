@@ -237,6 +237,12 @@ export function QuickCourtInsert({
                 </p>
               </div>
               <PlaceSearchField
+                locale={locale}
+                onSelectionClear={() => setDraft((current) => ({
+                  ...current,
+                  name: current.name === current.place?.name ? "" : current.name,
+                  place: null, placeId: "", coordinates: null, duplicateCourt: null,
+                }))}
                 label={
                   th
                     ? "ค้นหาสถานที่จาก Google Maps"

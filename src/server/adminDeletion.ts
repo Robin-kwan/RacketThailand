@@ -118,22 +118,10 @@ export async function deleteCourtWithAssets(courtId: string): Promise<DeleteResu
     return { ok: false, status: 500, error: storageError };
   }
 
-  const fallbackVenueName = court.name?.trim() || "Deleted court";
-  const { error: casualVenueError } = await supabase
-    .from("casual_plays")
-    .update({ venue_name: fallbackVenueName })
-    .eq("court_id", courtId)
-    .is("venue_name", null);
-
-  if (casualVenueError) {
-    return { ok: false, status: 500, error: casualVenueError.message };
-  }
-
   const cleanupOperations = [
     supabase.from("court_photos").delete().eq("court_id", courtId),
     supabase.from("court_groups").delete().eq("court_id", courtId),
     supabase.from("group_sessions").delete().eq("court_id", courtId),
-    supabase.from("casual_plays").update({ court_id: null }).eq("court_id", courtId),
   ];
 
   for (const operation of cleanupOperations) {
@@ -204,39 +192,6 @@ export async function deleteGroupWithAssets(groupId: string): Promise<DeleteResu
     .from("groups")
     .delete()
     .eq("id", groupId);
-
-  if (deleteError) {
-    return { ok: false, status: 500, error: deleteError.message };
-  }
-
-  return { ok: true };
-}
-
-export async function deleteCasualPlay(playId: string): Promise<DeleteResult> {
-  const supabase = getSupabaseAdminClient();
-  const { data: play, error: playError } = await supabase
-    .from("casual_plays")
-    .select("id")
-    .eq("id", playId)
-    .single();
-
-  if (playError || !play) {
-    return { ok: false, status: 404, error: "Casual play not found." };
-  }
-
-  const { error: joinRequestsError } = await supabase
-    .from("casual_play_join_requests")
-    .delete()
-    .eq("play_id", playId);
-
-  if (joinRequestsError) {
-    return { ok: false, status: 500, error: joinRequestsError.message };
-  }
-
-  const { error: deleteError } = await supabase
-    .from("casual_plays")
-    .delete()
-    .eq("id", playId);
 
   if (deleteError) {
     return { ok: false, status: 500, error: deleteError.message };

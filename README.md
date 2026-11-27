@@ -10,12 +10,10 @@ The platform uses one Supabase project for all sports, with sport context select
 - `/[sport]`: Public sport portal.
 - `/[sport]/court-finder`: Public court discovery.
 - `/[sport]/group-finder`: Public group discovery.
-- `/[sport]/players`: Public player discovery and one-off play invitations.
-- `/[sport]/casual-plays`: Legacy redirect to the play-invitations view.
+- `/[sport]/players`: Public player discovery.
 - `/[sport]/board`: Public community board by sport.
 - `/courts/new`: Authenticated public court submission form (publish mode follows admin policy toggle).
 - `/groups/create`: Authenticated group creation form.
-- `/casual-plays/create`: Authenticated one-off play invitation form.
 - `/admin`: Admin dashboard with court submission mode toggle.
 - `/admin/courts`: Admin court tools plus pending court request moderation queue.
 - `/api/sports/[code]`: Aggregated sport payload for reusable clients.
@@ -67,6 +65,10 @@ cp .env.local.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase URL (client) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key (client) |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps key for map/places features |
+| `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID` | GA4 web stream Measurement ID (`G-...`); enables consent-based tracking |
+| `GOOGLE_ANALYTICS_PROPERTY_ID` | Numeric GA4 Property ID used by the admin analytics dashboard |
+| `GOOGLE_ANALYTICS_CLIENT_EMAIL` | Service-account email with Viewer access to the GA4 property |
+| `GOOGLE_ANALYTICS_PRIVATE_KEY` | Service-account private key stored as a Vercel secret |
 
 4. Run dev server:
 

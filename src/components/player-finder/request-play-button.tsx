@@ -5,6 +5,7 @@ import { useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { BaseTextArea } from "@/components/base-text-area";
 import { showToast } from "@/components/toaster";
+import { trackPlayerEvent } from "@/lib/player-analytics-client";
 
 type Copy = {
   requestToPlay: string;
@@ -19,6 +20,8 @@ type Copy = {
 };
 
 type Props = {
+  sportCode: string;
+  trackingEnabled: boolean;
   recipientId: string;
   sportId: string;
   loginHref: string;
@@ -29,6 +32,8 @@ type Props = {
 };
 
 export function RequestPlayButton({
+  sportCode,
+  trackingEnabled,
   recipientId,
   sportId,
   loginHref,
@@ -46,6 +51,9 @@ export function RequestPlayButton({
     return (
       <Link
         href={loginHref}
+        onClick={() =>
+          trackPlayerEvent("login_gate", sportCode, trackingEnabled)
+        }
         className="rt-btn-primary inline-flex min-h-10 items-center justify-center gap-2 px-4 py-2 text-xs"
       >
         <MessageCircle className="h-4 w-4" aria-hidden />
@@ -58,6 +66,9 @@ export function RequestPlayButton({
     return (
       <Link
         href={profileHref}
+        onClick={() =>
+          trackPlayerEvent("profile_gate", sportCode, trackingEnabled)
+        }
         className="rt-btn-primary inline-flex min-h-10 items-center justify-center gap-2 px-4 py-2 text-xs"
       >
         {copy.profileRequired}
@@ -66,7 +77,11 @@ export function RequestPlayButton({
   }
 
   if (sent) {
-    return <p className="text-xs font-semibold text-emerald-700">{copy.requestSent}</p>;
+    return (
+      <p className="text-xs font-semibold text-emerald-700">
+        {copy.requestSent}
+      </p>
+    );
   }
 
   return (
@@ -74,7 +89,10 @@ export function RequestPlayButton({
       {!open ? (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            trackPlayerEvent("request_open", sportCode, trackingEnabled);
+          }}
           className="rt-btn-primary inline-flex min-h-10 items-center justify-center gap-2 px-4 py-2 text-xs"
         >
           <MessageCircle className="h-4 w-4" aria-hidden />
@@ -98,22 +116,33 @@ export function RequestPlayButton({
               disabled={sending}
               onClick={async () => {
                 setSending(true);
-                const response = await fetch("/api/play-requests", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ recipientId, sportId, message }),
-                });
-                const payload = await response.json().catch(() => ({}));
-                setSending(false);
-                if (!response.ok) {
-                  showToast({
-                    variant: "error",
-                    message: payload?.error || copy.genericError,
+                try {
+                  const response = await fetch("/api/play-requests", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ recipientId, sportId, message }),
                   });
-                  return;
+                  const payload = await response.json().catch(() => ({}));
+                  if (!response.ok) {
+                    trackPlayerEvent(
+                      "request_error",
+                      sportCode,
+                      trackingEnabled,
+                    );
+                    showToast({
+                      variant: "error",
+                      message: payload?.error || copy.genericError,
+                    });
+                    return;
+                  }
+                  setSent(true);
+                  showToast({ variant: "success", message: copy.requestSent });
+                } catch {
+                  trackPlayerEvent("request_error", sportCode, trackingEnabled);
+                  showToast({ variant: "error", message: copy.genericError });
+                } finally {
+                  setSending(false);
                 }
-                setSent(true);
-                showToast({ variant: "success", message: copy.requestSent });
               }}
               className="rt-btn-primary inline-flex min-h-10 items-center justify-center px-4 py-2 text-xs disabled:opacity-60"
             >

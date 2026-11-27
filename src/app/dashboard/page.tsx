@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -12,6 +12,12 @@ import {
   normalizeLocale,
 } from "@/lib/i18n";
 import { formatDateForDisplay } from "@/lib/date-format";
+import {
+  buildAddGroupSessionHref,
+  buildNewGroupHref,
+  getGroupContributionAction,
+  type OwnedGroupSummary,
+} from "@/lib/group-contribution";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 
@@ -49,6 +55,7 @@ type OwnedCourtRow = {
 
 type OwnedGroupRow = {
   id: string;
+  sport_id: string;
   name: string | null;
   description: string | null;
   status: string | null;
@@ -157,7 +164,7 @@ export default async function DashboardPage({
       }),
       supabaseSelect<OwnedGroupRow>("groups", {
         select:
-          "id,name,description,status,updated_at,sports!inner(code),group_photos(image_url,is_primary)",
+          "id,name,description,status,updated_at,sport_id,sports!inner(code),group_photos(image_url,is_primary)",
         owner_id: `eq.${user.id}`,
         order: "updated_at.desc.nullslast",
       }),
@@ -201,6 +208,8 @@ export default async function DashboardPage({
     requestsCount: t("dashboard.overview.requestsCount"),
     addCourt: t("dashboard.overview.addCourt"),
     createGroup: t("dashboard.overview.createGroup"),
+    addSession: t("groups.contribution.addSession"),
+    createAnotherGroup: t("groups.contribution.createAnother"),
     active: t("dashboard.overview.active"),
     inactive: t("dashboard.overview.inactive"),
     published: t("dashboard.overview.published"),
@@ -214,6 +223,29 @@ export default async function DashboardPage({
     canAddCourts ? "/dashboard/courts/new" : "/courts/new",
     locale,
   );
+  const ownedGroupSummaries: OwnedGroupSummary[] = ownedGroups.map((group) => ({
+    id: group.id,
+    name: group.name,
+    sportCode: group.sports?.code ?? null,
+    sportId: group.sport_id,
+    status: group.status,
+    updatedAt: group.updated_at,
+  }));
+  const ownedGroupSummaryById = new Map(
+    ownedGroupSummaries.map((group) => [group.id, group] as const),
+  );
+  const groupContributionAction = getGroupContributionAction({
+    ownedGroups: ownedGroupSummaries,
+    locale,
+  });
+  const groupContributionLabel =
+    groupContributionAction.kind === "create_group"
+      ? ui.createGroup
+      : ui.addSession;
+  const createAnotherGroupHref = buildNewGroupHref({
+    locale,
+    explicit: true,
+  });
   const stats = [
     {
       label: ui.courtsCount,
@@ -248,10 +280,10 @@ export default async function DashboardPage({
                   {ui.addCourt}
                 </Link>
                 <Link
-                  href={buildLocalizedPath("/groups/create", locale)}
+                  href={groupContributionAction.href}
                   className="rt-btn-group inline-flex items-center justify-center px-5 py-2 text-sm"
                 >
-                  {ui.createGroup}
+                  {groupContributionLabel}
                 </Link>
               </div>
             </div>
@@ -402,10 +434,10 @@ export default async function DashboardPage({
                   {ui.addCourt}
                 </Link>
                 <Link
-                  href={buildLocalizedPath("/groups/create", locale)}
+                  href={groupContributionAction.href}
                   className="rt-btn-group inline-flex items-center justify-center px-5 py-2 text-center text-sm"
                 >
-                  {ui.createGroup}
+                  {groupContributionLabel}
                 </Link>
                 <Link
                   href={buildLocalizedPath("/profile/edit", locale)}
@@ -429,9 +461,19 @@ export default async function DashboardPage({
             </BaseCard>
 
             <BaseCard as="article" className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--foreground)]">
-                {copy.ownedGroupsTitle}
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-[var(--foreground)]">
+                  {copy.ownedGroupsTitle}
+                </h2>
+                {ownedGroups.length > 0 ? (
+                  <Link
+                    href={createAnotherGroupHref}
+                    className="text-xs font-semibold text-slate-600 hover:text-slate-950"
+                  >
+                    {ui.createAnotherGroup}
+                  </Link>
+                ) : null}
+              </div>
               {ownedGroups.length === 0 ? (
                 <p className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-5 text-sm rt-text-muted">
                   {copy.ownedGroupsEmpty}
@@ -439,6 +481,7 @@ export default async function DashboardPage({
               ) : (
                 <div className="mt-5 divide-y divide-slate-100">
                   {ownedGroups.map((group) => {
+                    const groupSummary = ownedGroupSummaryById.get(group.id);
                     const sportCode = group.sports?.code;
                     const sportLabel = sportCode
                       ? SPORT_META[sportCode]?.name[locale] ?? sportCode
@@ -488,6 +531,17 @@ export default async function DashboardPage({
                             {ui.updated}: {formatDate(group.updated_at, locale)}
                           </p>
                           <div className="mt-3 flex flex-wrap gap-2">
+                            {groupSummary ? (
+                              <Link
+                                href={buildAddGroupSessionHref(
+                                  groupSummary,
+                                  locale,
+                                )}
+                                className="text-xs font-semibold text-blue-700 hover:text-blue-800"
+                              >
+                                {ui.addSession}
+                              </Link>
+                            ) : null}
                             <Link
                               href={buildLocalizedPath(
                                 `/groups/${group.id}`,

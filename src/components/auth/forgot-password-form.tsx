@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { showToast } from "@/components/toaster";
+import { isTurnstileEnabled, TurnstileChallenge } from "@/components/auth/turnstile-challenge";
 
 type ForgotCopy = {
   emailLabel: string;
@@ -13,6 +14,7 @@ type ForgotCopy = {
   helper: string;
   cooldown: string;
   error: string;
+  captchaRequired: string;
 };
 
 type ForgotPasswordFormProps = {
@@ -53,6 +55,7 @@ export function ForgotPasswordForm({ copy }: ForgotPasswordFormProps) {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const isCoolingDown = cooldownRemaining > 0;
 
   const normalizedEmail = email.trim().toLowerCase();
@@ -91,11 +94,15 @@ export function ForgotPasswordForm({ copy }: ForgotPasswordFormProps) {
       });
       return;
     }
+    if (isTurnstileEnabled && !captchaToken) {
+      showToast({ variant: "error", message: copy.captchaRequired });
+      return;
+    }
     setSubmitting(true);
     const redirectTo = `${window.location.origin}/auth/reset`;
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
-      { redirectTo },
+      { redirectTo, ...(captchaToken ? { captchaToken } : {}) },
     );
     setSubmitting(false);
     if (resetError) {
@@ -133,6 +140,7 @@ export function ForgotPasswordForm({ copy }: ForgotPasswordFormProps) {
       >
         {submitting ? copy.submitting : copy.submit}
       </button>
+      <TurnstileChallenge onTokenChange={setCaptchaToken} />
       <p className="text-xs text-slate-400">
         {isCoolingDown
           ? copy.cooldown.replace(

@@ -3,6 +3,7 @@ export const PHOTO_ORIGINAL_MAX_MB = 20;
 export const PHOTO_OUTPUT_MAX_MB = 3;
 export const PHOTO_MAX_DIMENSION = 1800;
 export const PHOTO_OUTPUT_QUALITY = 0.82;
+const PHOTO_PASSTHROUGH_MAX_BYTES = 256 * 1024;
 
 export const LINE_QR_UPLOAD_ACCEPT = "image/jpeg,image/png,image/webp";
 export const LINE_QR_MAX_MB = 2;
@@ -174,7 +175,7 @@ export async function optimizePhotoFile(
   const targetHeight = Math.max(1, Math.round(size.height * scale));
 
   if (
-    file.size <= maxOutputBytes &&
+    file.size <= Math.min(maxOutputBytes, PHOTO_PASSTHROUGH_MAX_BYTES) &&
     scale === 1 &&
     PHOTO_SUPPORTED_TYPES.has(file.type)
   ) {
@@ -186,11 +187,20 @@ export async function optimizePhotoFile(
   let bestBlob: Blob | null = null;
 
   for (const nextQuality of qualities) {
-    const blob = await canvasToBlob(canvas, "image/jpeg", nextQuality);
+    let blob = await canvasToBlob(canvas, "image/webp", nextQuality);
+    // Older browsers may return PNG when WebP encoding is unsupported.
+    if (blob.type !== "image/webp") {
+      blob = await canvasToBlob(canvas, "image/jpeg", nextQuality);
+    }
     bestBlob = blob;
     if (blob.size <= maxOutputBytes) {
-      return new File([blob], replaceExtension(file.name, ".jpg"), {
-        type: "image/jpeg",
+      // Keep an already smaller source when no resizing was necessary.
+      if (scale === 1 && file.size <= maxOutputBytes && file.size <= blob.size) {
+        return file;
+      }
+      const extension = blob.type === "image/webp" ? ".webp" : ".jpg";
+      return new File([blob], replaceExtension(file.name, extension), {
+        type: blob.type,
         lastModified: Date.now(),
       });
     }

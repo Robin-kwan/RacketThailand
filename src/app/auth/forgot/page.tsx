@@ -47,6 +47,7 @@ export default async function ForgotPasswordPage({
       helper: t("auth.forgot.helper"),
       cooldown: t("auth.forgot.cooldown", { time: "{time}" }),
       error: t("auth.forgot.error"),
+      captchaRequired: t("auth.captchaRequired"),
     },
   };
 

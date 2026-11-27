@@ -940,7 +940,138 @@ export function GroupForm({
       </section>
       )}
       {currentStepId === "courts" && (
-      <div className="space-y-3">
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">
+                {copy.upcomingLabel}
+              </p>
+              <p className="mt-1 text-xs text-[rgb(var(--foreground-rgb)/0.65)]">
+                {copy.upcomingHelp}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addUpcomingEvent}
+              className="text-xs font-semibold text-[rgb(var(--rt-primary-rgb))] hover:text-[rgb(var(--rt-primary-rgb)/0.75)]"
+            >
+              {copy.upcomingAdd}
+            </button>
+          </div>
+          {upcomingEvents.length > 0 && (
+            <div className="space-y-4">
+              {upcomingEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="relative space-y-4 rounded-lg border border-slate-200 bg-white p-4 pt-11"
+                >
+                  <button
+                    type="button"
+                    onClick={() => removeUpcomingEvent(event.id)}
+                    className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-slate-400 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 hover:text-rose-500"
+                    aria-label={copy.upcomingRemove}
+                    title={copy.upcomingRemove}
+                  >
+                    <X
+                      className="h-4 w-4"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                  </button>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <CourtPicker
+                      label={copy.upcomingCourt}
+                      name={`upcoming-court-${event.id}`}
+                      value={event.courtId}
+                      onValueChange={(value) =>
+                        updateUpcomingEvent(
+                          event.id,
+                          "courtId",
+                          value,
+                        )
+                      }
+                      options={[
+                        { value: "", label: copy.upcomingNoCourt },
+                        ...courtOptions,
+                      ]}
+                      variant="light"
+                    />
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-[var(--foreground)]">
+                        {copy.upcomingVenueName}
+                      </label>
+                      <BaseTextField
+                        type="text"
+                        value={event.venueName}
+                        onChange={(changeEvent) =>
+                          updateUpcomingEvent(
+                            event.id,
+                            "venueName",
+                            changeEvent.target.value,
+                          )
+                        }
+                        placeholder={copy.upcomingVenuePlaceholder}
+                        variant="light"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <DatePickerField
+                      label={copy.upcomingDate}
+                      value={event.date}
+                      onChange={(next) =>
+                        updateUpcomingEvent(event.id, "date", next)
+                      }
+                      locale={locale}
+                    />
+                    <TimePickerField
+                      id={`upcoming-${event.id}-start`}
+                      label={copy.upcomingStart}
+                      value={event.start}
+                      options={GROUP_TIME_OPTIONS}
+                      className="min-w-0"
+                      onChange={(next) =>
+                        updateUpcomingEvent(event.id, "start", next)
+                      }
+                    />
+                    <ClosingTimePickerField
+                      id={`upcoming-${event.id}-end`}
+                      label={copy.upcomingEnd}
+                      value={event.end}
+                      options={GROUP_CLOSING_TIME_OPTIONS}
+                      startTime={event.start}
+                      allowOvernight
+                      className="min-w-0"
+                      onChange={(next) =>
+                        updateUpcomingEvent(event.id, "end", next)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[var(--foreground)]">
+                      {copy.upcomingNotes}
+                    </label>
+                    <BaseTextArea
+                      value={event.notes}
+                      onChange={(changeEvent) =>
+                        updateUpcomingEvent(
+                          event.id,
+                          "notes",
+                          changeEvent.target.value,
+                        )
+                      }
+                      placeholder={copy.upcomingNotesPlaceholder}
+                      rows={2}
+                      variant="light"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="space-y-3 border-t border-slate-100 pt-6">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">
             {copy.sessionsLabel}
@@ -1112,135 +1243,6 @@ export function GroupForm({
             ))}
           </div>
         )}
-        <div className="mt-8 space-y-4 border-t border-slate-100 pt-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold">
-                {copy.upcomingLabel}
-              </p>
-              <p className="mt-1 text-xs text-[rgb(var(--foreground-rgb)/0.65)]">
-                {copy.upcomingHelp}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={addUpcomingEvent}
-              className="text-xs font-semibold text-[rgb(var(--rt-primary-rgb))] hover:text-[rgb(var(--rt-primary-rgb)/0.75)]"
-            >
-              {copy.upcomingAdd}
-            </button>
-          </div>
-          {upcomingEvents.length > 0 && (
-            <div className="space-y-4">
-              {upcomingEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="relative space-y-4 rounded-lg border border-slate-200 bg-white p-4 pt-11"
-                >
-                  <button
-                    type="button"
-                    onClick={() => removeUpcomingEvent(event.id)}
-                    className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-slate-400 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100 hover:text-rose-500"
-                    aria-label={copy.upcomingRemove}
-                    title={copy.upcomingRemove}
-                  >
-                    <X
-                      className="h-4 w-4"
-                      strokeWidth={2}
-                      aria-hidden
-                    />
-                  </button>
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <CourtPicker
-                      label={copy.upcomingCourt}
-                      name={`upcoming-court-${event.id}`}
-                      value={event.courtId}
-                      onValueChange={(value) =>
-                        updateUpcomingEvent(
-                          event.id,
-                          "courtId",
-                          value,
-                        )
-                      }
-                      options={[
-                        { value: "", label: copy.upcomingNoCourt },
-                        ...courtOptions,
-                      ]}
-                      variant="light"
-                    />
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-[var(--foreground)]">
-                        {copy.upcomingVenueName}
-                      </label>
-                      <BaseTextField
-                        type="text"
-                        value={event.venueName}
-                        onChange={(changeEvent) =>
-                          updateUpcomingEvent(
-                            event.id,
-                            "venueName",
-                            changeEvent.target.value,
-                          )
-                        }
-                        placeholder={copy.upcomingVenuePlaceholder}
-                        variant="light"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <DatePickerField
-                      label={copy.upcomingDate}
-                      value={event.date}
-                      onChange={(next) =>
-                        updateUpcomingEvent(event.id, "date", next)
-                      }
-                      locale={locale}
-                    />
-                    <TimePickerField
-                      id={`upcoming-${event.id}-start`}
-                      label={copy.upcomingStart}
-                      value={event.start}
-                      options={GROUP_TIME_OPTIONS}
-                      className="min-w-0"
-                      onChange={(next) =>
-                        updateUpcomingEvent(event.id, "start", next)
-                      }
-                    />
-                    <ClosingTimePickerField
-                      id={`upcoming-${event.id}-end`}
-                      label={copy.upcomingEnd}
-                      value={event.end}
-                      options={GROUP_CLOSING_TIME_OPTIONS}
-                      startTime={event.start}
-                      allowOvernight
-                      className="min-w-0"
-                      onChange={(next) =>
-                        updateUpcomingEvent(event.id, "end", next)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[var(--foreground)]">
-                      {copy.upcomingNotes}
-                    </label>
-                    <BaseTextArea
-                      value={event.notes}
-                      onChange={(changeEvent) =>
-                        updateUpcomingEvent(
-                          event.id,
-                          "notes",
-                          changeEvent.target.value,
-                        )
-                      }
-                      placeholder={copy.upcomingNotesPlaceholder}
-                      rows={2}
-                      variant="light"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
       )}

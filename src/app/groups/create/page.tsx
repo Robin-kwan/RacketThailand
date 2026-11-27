@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { GroupCreationForm } from "@/components/groups/group-creation-form";
 import type { Option } from "@/components/groups/group-form";
@@ -13,8 +14,18 @@ import { buildLineQrUploaderCopy } from "@/lib/line-qr-uploader-copy";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchSportIdsByCourtIds } from "@/server/courtSports";
+import { fetchOwnedGroupSummaries } from "@/server/ownedGroups";
+import {
+  buildAddGroupSessionHref,
+  buildNewGroupHref,
+} from "@/lib/group-contribution";
 
-type SearchParams = { lang?: string; sport?: string; court?: string };
+type SearchParams = {
+  lang?: string;
+  sport?: string;
+  court?: string;
+  new?: string;
+};
 type SearchParamsInput = Promise<SearchParams> | undefined;
 
 export const metadata: Metadata = {
@@ -60,7 +71,7 @@ export default async function CreateGroupPage({
     redirect(buildAuthPagePath("/login", locale, redirectTo));
   }
 
-  const [sportsRes, courtsRes] = await Promise.all([
+  const [sportsRes, courtsRes, ownedGroups] = await Promise.all([
     supabaseSelect<{ id: string; name: string | null; code: string }>(
       "sports",
       { select: "id,name,code", order: "name.asc.nullslast" },
@@ -75,6 +86,7 @@ export default async function CreateGroupPage({
       is_active: "eq.true",
       order: "name.asc.nullslast",
     }),
+    fetchOwnedGroupSummaries(user.id),
   ]);
 
   const sports =
@@ -220,6 +232,7 @@ export default async function CreateGroupPage({
     makePrimaryPhoto: t("groups.form.makePrimaryPhoto"),
     photoUploadHelper: t("groups.form.photoUploadHelper"),
     photoProcessError: t("groups.form.photoProcessError"),
+    existingGroupError: t("groups.contribution.existingGroupError"),
   };
   const requestedSport = resolved?.sport?.trim().toLowerCase();
   const sourceSport = requestedSport
@@ -236,6 +249,87 @@ export default async function CreateGroupPage({
     courts[defaultSportId]?.some((court) => court.value === resolved.court)
       ? resolved.court
       : undefined;
+  const relevantOwnedGroups = requestedSport
+    ? defaultSportId
+      ? ownedGroups.filter((group) => group.sportId === defaultSportId)
+      : []
+    : ownedGroups;
+  const explicitlyCreatingNewGroup = resolved?.new === "1";
+  const showExistingGroupChoice =
+    relevantOwnedGroups.length > 0 && !explicitlyCreatingNewGroup;
+  const newGroupHref = buildNewGroupHref({
+    locale,
+    sportCode: sourceSport?.code,
+    courtId: defaultCourtId,
+    explicit: true,
+  });
+
+  if (showExistingGroupChoice) {
+    return (
+      <div className="rt-page">
+        <main className="mx-auto flex max-w-3xl flex-col gap-8 px-6 pb-20 pt-10 md:px-10">
+          <BaseCard
+            as="section"
+            className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm md:p-8"
+          >
+            <h1 className="text-xl font-semibold text-[var(--foreground)]">
+              {t("groups.contribution.chooseTitle")}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {t("groups.contribution.chooseDescription")}
+            </p>
+
+            <div className="mt-6 divide-y divide-slate-200 border-y border-slate-200">
+              {relevantOwnedGroups.map((group) => {
+                const sportLabel = group.sportCode
+                  ? SPORT_META[group.sportCode]?.name[locale] ?? group.sportCode
+                  : null;
+                return (
+                  <article
+                    key={group.id}
+                    className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <h2 className="truncate text-sm font-semibold text-slate-950">
+                        {group.name ?? t("dashboard.overview.unnamedGroup")}
+                      </h2>
+                      {sportLabel ? (
+                        <p className="mt-1 text-xs text-slate-500">
+                          {sportLabel}
+                        </p>
+                      ) : null}
+                    </div>
+                    <Link
+                      href={buildAddGroupSessionHref(
+                        group,
+                        locale,
+                        defaultCourtId,
+                      )}
+                      className="rt-btn-group inline-flex shrink-0 items-center justify-center px-4 py-2 text-sm"
+                    >
+                      {t("groups.contribution.addSession")}
+                    </Link>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <Link
+                href={newGroupHref}
+                className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+              >
+                {t("groups.contribution.createAnother")}
+              </Link>
+              <p className="mt-1 text-xs text-slate-500">
+                {t("groups.contribution.createAnotherHelp")}
+              </p>
+            </div>
+          </BaseCard>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="rt-page">
@@ -265,6 +359,7 @@ export default async function CreateGroupPage({
                 defaultSportId={defaultSportId}
                 preselectFirstSport={Boolean(defaultSportId)}
                 defaultCourtId={defaultCourtId}
+                confirmNewGroup={explicitlyCreatingNewGroup}
               />
             </div>
           )}

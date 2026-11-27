@@ -19,6 +19,7 @@ import {
   OAuthButtons,
   type AuthOAuthProvider,
 } from "@/components/auth/oauth-buttons";
+import { isTurnstileEnabled, TurnstileChallenge } from "@/components/auth/turnstile-challenge";
 
 type LoginCopy = {
   emailLabel: string;
@@ -33,6 +34,7 @@ type LoginCopy = {
   googleButton: string;
   lineButton: string;
   success: string;
+  captchaRequired: string;
 };
 
 type LoginFormProps = {
@@ -54,6 +56,7 @@ export function LoginForm({
   const [isMounted, setIsMounted] = useState(false);
   const [oauthLoading, setOauthLoading] =
     useState<AuthOAuthProvider | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
     // Set once so the server HTML matches the first client render.
@@ -66,6 +69,10 @@ export function LoginForm({
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
+    if (isTurnstileEnabled && !captchaToken) {
+      showToast({ variant: "error", message: copy.captchaRequired });
+      return;
+    }
 
     setSubmitting(true);
 
@@ -76,6 +83,7 @@ export function LoginForm({
       await supabase.auth.signInWithPassword({
         email,
         password,
+        options: captchaToken ? { captchaToken } : undefined,
       });
     setSubmitting(false);
 
@@ -164,11 +172,12 @@ export function LoginForm({
     <>
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700">
+          <label htmlFor="login-email" className="block text-sm font-medium text-slate-700">
             {copy.emailLabel}
           </label>
           <input
             type="email"
+            id="login-email"
             name="email"
             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             placeholder="name@email.com"
@@ -176,12 +185,13 @@ export function LoginForm({
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700">
+          <label htmlFor="login-password" className="block text-sm font-medium text-slate-700">
             {copy.passwordLabel}
           </label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
+              id="login-password"
               name="password"
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
               placeholder="••••••••"
@@ -224,6 +234,7 @@ export function LoginForm({
         >
           {submitting ? `${copy.button}...` : copy.button}
         </button>
+        <TurnstileChallenge onTokenChange={setCaptchaToken} />
         <p className="text-sm text-slate-500">{copy.agreeTerms}</p>
       </form>
       <div className="mt-6">

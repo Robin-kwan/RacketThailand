@@ -30,6 +30,11 @@ export function buildAdminPortalNav(locale: Locale, t: Translate) {
       label: t("admin.dashboardNavTitle"),
     },
     {
+      path: "/admin/analytics",
+      href: buildLocalizedPath("/admin/analytics", locale),
+      label: t("admin.analytics.navTitle"),
+    },
+    {
       path: "/admin/courts",
       href: buildLocalizedPath("/admin/courts", locale),
       label: t("admin.panelFeatures.courts.title"),
@@ -43,11 +48,6 @@ export function buildAdminPortalNav(locale: Locale, t: Translate) {
       path: "/admin/group-imports",
       href: buildLocalizedPath("/admin/group-imports", locale),
       label: "Group imports",
-    },
-    {
-      path: "/admin/casual-plays",
-      href: buildLocalizedPath("/admin/casual-plays", locale),
-      label: t("admin.panelFeatures.casualPlays.title"),
     },
     {
       path: "/admin/court-owners",

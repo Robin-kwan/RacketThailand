@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Thai } from "next/font/google";
-import Link from "next/link";
 import "./globals.css";
 import { HeaderConfigProvider } from "@/components/header-context";
-import { RacketThailandMark } from "@/components/racketthailand-mark";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ToasterProvider } from "@/components/toaster-provider";
 import {
@@ -15,6 +14,7 @@ import { ScrollReset } from "@/components/scroll-reset";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SupabaseAuthListener } from "@/components/supabase-auth-listener";
+import { GoogleAnalyticsConsent } from "@/components/analytics/google-analytics-consent";
 import { cookies } from "next/headers";
 
 const geistSans = Geist({
@@ -34,6 +34,8 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 const SITE_URL = getSiteUrl();
+const GOOGLE_ANALYTICS_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID?.trim() ?? "";
 const PENDING_AUTH_REDIRECT_SCRIPT = `
   (function () {
     try {
@@ -195,32 +197,12 @@ export default async function RootLayout({
           </div>
           <div className="w-full" aria-hidden="true" />
           <main className="rt-main-shell flex-1 text-slate-900">{children}</main>
-          <footer className="border-t border-slate-200 bg-white text-slate-600">
-            <div className="mx-auto flex max-w-screen-xl flex-col gap-5 px-6 py-7 text-sm md:flex-row md:items-center md:justify-between md:px-10">
-              <div className="flex items-center gap-3">
-                <RacketThailandMark className="h-9 w-11 shrink-0 overflow-hidden rounded-md" />
-                <p className="font-medium text-slate-700">
-                  RacketThailand | © {new Date().getFullYear()}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-x-6 gap-y-2 md:justify-end">
-                <Link
-                  href="/terms"
-                  className="transition-colors hover:text-slate-950"
-                >
-                  Terms & conditions
-                </Link>
-                <a
-                  href="mailto:racketthailand@gmail.com"
-                  className="transition-colors hover:text-slate-950"
-                >
-                  Contact us: racketthailand@gmail.com
-                </a>
-              </div>
-            </div>
-          </footer>
+          <SiteFooter year={new Date().getFullYear()} />
           <Analytics />
           <SpeedInsights />
+          {/^G-[A-Z0-9]+$/i.test(GOOGLE_ANALYTICS_ID) ? (
+            <GoogleAnalyticsConsent gaId={GOOGLE_ANALYTICS_ID} />
+          ) : null}
         </HeaderConfigProvider>
       </body>
     </html>

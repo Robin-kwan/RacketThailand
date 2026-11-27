@@ -24,13 +24,9 @@ export type NotificationCopy = {
   markAll: string;
   markRead: string;
   reviewCourt: string;
-  reviewCasualPlay: string;
   reviewConnections: string;
   genericMessage: string;
   courtGroupRequest: string;
-  casualPlayJoinRequest: string;
-  casualPlayJoinAccepted: string;
-  casualPlayJoinRejected: string;
   deleteNotification: string;
 };
 
@@ -155,27 +151,6 @@ export function NotificationsMenu({
           .replace("{court}", courtName);
       }
     }
-    if (notification.type === "casual-play-join-request") {
-      const requesterName = getMetaString(notification.metadata, "requesterName");
-      const playTitle = getMetaString(notification.metadata, "playTitle");
-      if (requesterName && playTitle) {
-        return copy.casualPlayJoinRequest
-          .replace("{requester}", requesterName)
-          .replace("{play}", playTitle);
-      }
-    }
-    if (notification.type === "casual-play-join-accepted") {
-      const playTitle = getMetaString(notification.metadata, "playTitle");
-      if (playTitle) {
-        return copy.casualPlayJoinAccepted.replace("{play}", playTitle);
-      }
-    }
-    if (notification.type === "casual-play-join-rejected") {
-      const playTitle = getMetaString(notification.metadata, "playTitle");
-      if (playTitle) {
-        return copy.casualPlayJoinRejected.replace("{play}", playTitle);
-      }
-    }
     return notification.message ?? copy.genericMessage;
   };
 
@@ -184,13 +159,6 @@ export function NotificationsMenu({
       return {
         href: buildLocalizedPath("/player-connections", locale),
         label: copy.reviewConnections,
-      };
-    }
-    const playId = getMetaString(notification.metadata, "playId");
-    if (playId) {
-      return {
-        href: buildLocalizedPath(`/casual-plays/${playId}`, locale),
-        label: copy.reviewCasualPlay,
       };
     }
     const courtId = getMetaString(notification.metadata, "courtId");

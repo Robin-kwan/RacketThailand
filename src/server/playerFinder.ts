@@ -138,7 +138,7 @@ export async function fetchOwnPlayerSportProfile(
   const { data, error } = await supabase
     .from("profile_sports")
     .select(
-      "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites",
+      "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites,contact_methods,contact_visibility,preferred_contact",
     )
     .eq("profile_id", profileId)
     .eq("sport_id", sportId)

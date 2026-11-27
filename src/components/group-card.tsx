@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, MapPin } from "lucide-react";
 import type { ReactNode, ElementType } from "react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import {
@@ -12,6 +12,7 @@ import {
   type PlayFormat,
 } from "@/lib/play-format";
 import { formatSimpleTimeRange } from "@/lib/time-range";
+import { formatGroupSessionDate } from "@/lib/date-format";
 
 type SessionCourt = { id?: string | null; name?: string | null } | null;
 
@@ -31,6 +32,7 @@ type GroupCardProps = {
   description?: string | null;
   location?: string | null;
   sessions?: GroupCardSession[] | null;
+  featuredSession?: GroupCardSession | null;
   playFormat?: PlayFormat | null;
   allowWalkIn?: boolean | null;
   verifiedLabel?: string | null;
@@ -41,9 +43,12 @@ type GroupCardProps = {
   courtSportCode?: string | null;
   sessionLimit?: number;
   showSessions?: boolean;
+  compactSessions?: boolean;
+  weeklySessionCount?: number;
   showDescription?: boolean;
   showLocation?: boolean;
   distanceLabel?: string | null;
+  distanceValue?: string | null;
   className?: string;
   titleClassName?: string;
   imageAspectClass?: string;
@@ -83,12 +88,7 @@ function SessionList({
       <ul className="space-y-1">
         {visible.map((session, index) => {
           const dayLabel = session.date
-            ? new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-US", {
-                weekday: "short",
-                day: "numeric",
-                month: "short",
-                timeZone: "UTC",
-              }).format(new Date(`${session.date}T12:00:00Z`))
+            ? formatGroupSessionDate(session.date, locale)
             : dayLabels[session.day] ?? session.day;
           const timeRange =
             session.start_time && session.end_time
@@ -149,6 +149,61 @@ function SessionList({
   );
 }
 
+function CompactSessionSummary({
+  featuredSession,
+  weeklySessionCount,
+  dayLabels,
+  scheduleAnytime,
+  locale,
+  distanceLabel,
+  distanceValue,
+}: {
+  featuredSession?: GroupCardSession | null;
+  weeklySessionCount: number;
+  dayLabels: Record<string, string>;
+  scheduleAnytime: string;
+  locale: Locale;
+  distanceLabel?: string | null;
+  distanceValue?: string | null;
+}) {
+  const dateLabel = featuredSession?.date
+    ? formatGroupSessionDate(featuredSession.date, locale)
+    : null;
+  const nextWeeklyLabel = featuredSession?.day && !featuredSession.date
+    ? `${dayLabels[featuredSession.day] ?? featuredSession.day}${featuredSession.start_time ? ` ${featuredSession.start_time.slice(0, 5)}` : ""}`
+    : null;
+  const courtName = featuredSession?.courts?.name;
+  const scheduleLabel = dateLabel
+    ? `${dateLabel}${featuredSession?.start_time ? ` · ${featuredSession.start_time.slice(0, 5)}` : ""}`
+    : weeklySessionCount > 0
+    ? locale === "th"
+      ? `เล่นประจำ ${weeklySessionCount} ครั้ง/สัปดาห์${nextWeeklyLabel ? ` · ถัดไป ${nextWeeklyLabel}` : ""}`
+      : `${weeklySessionCount} weekly session${weeklySessionCount === 1 ? "" : "s"}${nextWeeklyLabel ? ` · Next ${nextWeeklyLabel}` : ""}`
+    : featuredSession?.day
+        ? `${dayLabels[featuredSession.day] ?? featuredSession.day}${featuredSession.start_time ? ` · ${featuredSession.start_time.slice(0, 5)}` : ""}`
+        : scheduleAnytime;
+
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5 text-xs font-medium text-slate-600 sm:text-sm">
+      <p className="inline-flex min-w-0 items-center gap-1.5">
+        <CalendarDays className="size-3.5 shrink-0 text-emerald-700" aria-hidden />
+        <span>{scheduleLabel}</span>
+      </p>
+      {(courtName || distanceValue) && (
+        <div className="flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+          <MapPin className="size-3.5 shrink-0" aria-hidden />
+          {courtName && <span className="min-w-0 truncate" title={courtName}>{courtName}</span>}
+          {distanceValue && (
+            <span aria-label={distanceLabel ?? undefined} className="ml-auto shrink-0 whitespace-nowrap">
+              {distanceValue}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function GroupCard({
   name,
   href,
@@ -157,6 +212,7 @@ export function GroupCard({
   description,
   location,
   sessions,
+  featuredSession,
   playFormat,
   allowWalkIn,
   verifiedLabel = null,
@@ -167,9 +223,12 @@ export function GroupCard({
   courtSportCode,
   sessionLimit = 3,
   showSessions = false,
+  compactSessions = false,
+  weeklySessionCount = 0,
   showDescription = true,
   showLocation = false,
   distanceLabel = null,
+  distanceValue = null,
   className,
   titleClassName,
   imageAspectClass = "aspect-[4/3]",
@@ -216,7 +275,7 @@ export function GroupCard({
   return (
     <Wrapper
       {...wrapperProps}
-      className={`group flex h-full w-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_34px_rgb(15_23_42/0.12)] focus-visible:ring-2 focus-visible:ring-[var(--rt-primary)] ${className ?? ""}`}
+      className={["group flex h-full w-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_16px_34px_rgb(15_23_42/0.12)] focus-visible:ring-2 focus-visible:ring-[var(--rt-primary)]", className].filter(Boolean).join(" ")}
     >
       <div className="overflow-hidden border-b border-slate-100 bg-slate-100">
         <div className={`relative ${imageAspectClass} w-full`}>
@@ -233,7 +292,7 @@ export function GroupCard({
       <div className="flex flex-1 flex-col gap-2 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
         <div className="text-left">
           <p
-            className={`line-clamp-2 text-sm font-semibold leading-snug text-slate-900 sm:text-base ${titleClassName ?? ""}`}
+            className={["line-clamp-2 text-sm font-semibold leading-snug text-slate-900 sm:text-base", titleClassName].filter(Boolean).join(" ")}
           >
             {name || fallbackGroupName}
             {verifiedText && (
@@ -271,17 +330,29 @@ export function GroupCard({
           </p>
         )}
         {showSessions && (
-          <SessionList
-            sessions={sessions}
-            dayLabels={dayLabels}
-            scheduleAnytime={scheduleAnytime}
-            sessionLimit={sessionLimit}
-            locale={locale}
-            courtSportCode={courtSportCode}
-            onCourtClick={handleCourtNavigate}
-          />
+          compactSessions ? (
+            <CompactSessionSummary
+              featuredSession={featuredSession}
+              weeklySessionCount={weeklySessionCount}
+              dayLabels={dayLabels}
+              scheduleAnytime={scheduleAnytime}
+              locale={locale}
+              distanceLabel={distanceLabel}
+              distanceValue={distanceValue}
+            />
+          ) : (
+            <SessionList
+              sessions={sessions}
+              dayLabels={dayLabels}
+              scheduleAnytime={scheduleAnytime}
+              sessionLimit={sessionLimit}
+              locale={locale}
+              courtSportCode={courtSportCode}
+              onCourtClick={handleCourtNavigate}
+            />
+          )
         )}
-        {distanceLabel && (
+        {distanceLabel && !compactSessions && (
           <div className="text-xs font-semibold text-slate-500">{distanceLabel}</div>
         )}
         <div className="mt-auto flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">

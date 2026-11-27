@@ -2,7 +2,7 @@
 
 import type { SyntheticEvent } from "react";
 import { useMemo, useState } from "react";
-import Image from "next/image";
+import { ResilientImage as Image } from "./resilient-image";
 import { ImageLightbox } from "./image-lightbox";
 
 type GalleryImage = {

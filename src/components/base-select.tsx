@@ -105,6 +105,27 @@ export function BaseSelect({
   ]
     .filter(Boolean)
     .join(" ");
+  const labelClasses = [
+    "text-sm font-semibold",
+    variantStyles.label,
+    (labelHidden || labelPlacement === "inside") && "sr-only",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const buttonClasses = [
+    "flex h-[42px] w-full items-center gap-3 rounded-lg border px-3 text-left text-sm outline-none transition",
+    variantStyles.button,
+    labelPlacement === "inside" ? "py-1" : "py-2.5",
+    disabled && "cursor-not-allowed opacity-60",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const chevronClasses = [
+    "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+    open && "rotate-180",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   useEffect(() => {
     const closeOnOutsidePress = (event: MouseEvent) => {
@@ -135,9 +156,7 @@ export function BaseSelect({
     <div ref={wrapperRef} className={wrapperClasses}>
       <label
         htmlFor={selectId}
-        className={`text-sm font-semibold ${variantStyles.label} ${
-          labelHidden || labelPlacement === "inside" ? "sr-only" : ""
-        }`}
+        className={labelClasses}
       >
         {label}
       </label>
@@ -160,11 +179,7 @@ export function BaseSelect({
           onKeyDown={(event) => {
             if (event.key === "Escape") setOpen(false);
           }}
-          className={`flex h-[42px] w-full items-center gap-3 rounded-lg border px-3 text-left text-sm outline-none transition ${
-            variantStyles.button
-          } ${labelPlacement === "inside" ? "py-1" : "py-2.5"} ${
-            disabled ? "cursor-not-allowed opacity-60" : ""
-          }`}
+          className={buttonClasses}
         >
           {selectedOption?.color && (
             <span
@@ -184,9 +199,7 @@ export function BaseSelect({
             </span>
           </span>
           <ChevronDown
-            className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
-              open ? "rotate-180" : ""
-            }`}
+            className={chevronClasses}
             strokeWidth={2}
             aria-hidden
           />

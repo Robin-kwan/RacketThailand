@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
-import { getThailandTodayDateString } from "@/lib/casual-play";
 import { supabaseSelect } from "@/lib/supabaseRest";
 import { SUPPORTED_SPORTS } from "@/data/sportMeta";
 import { SUPPORTED_LOCALES, type Locale } from "@/lib/i18n";
 import { buildCanonicalUrl, buildLocaleAlternates } from "@/lib/seo";
+import { PRODUCT_UPDATES } from "@/data/productUpdates";
+import { fetchLocationNavigation } from "@/server/locationDirectory";
+import { locationPath } from "@/lib/location-directory";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +21,6 @@ type CommunityPostEntity = MinimalEntity & {
   sports?: {
     code: string | null;
   } | null;
-};
-
-type CasualPlayEntity = MinimalEntity & {
-  sport_id?: string | null;
 };
 
 type TournamentEntity = MinimalEntity & { tournament_end_at?: string | null };
@@ -62,7 +60,7 @@ function buildLocalizedSitemapEntries({
 }
 
 async function fetchEntities<T extends MinimalEntity>(
-  table: "courts" | "groups" | "casual_plays" | "community_posts" | "tournaments",
+  table: "courts" | "groups" | "community_posts" | "tournaments",
   limit = 1000,
   filters: Record<string, string> = {},
   select = "id,created_at,updated_at",
@@ -86,16 +84,9 @@ async function fetchEntities<T extends MinimalEntity>(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const today = getThailandTodayDateString();
-  const [courts, groups, casualPlays, communityPosts, tournaments] = await Promise.all([
+  const [courts, groups, communityPosts, tournaments, locations] = await Promise.all([
     fetchEntities("courts", 1000, { is_active: "eq.true" }),
     fetchEntities("groups", 1000, { status: "eq.published" }),
-    fetchEntities<CasualPlayEntity>(
-      "casual_plays",
-      1000,
-      { play_date: `gte.${today}` },
-      "id,created_at,updated_at,sport_id",
-    ),
     fetchEntities<CommunityPostEntity>(
       "community_posts",
       1000,
@@ -106,6 +97,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       status: "eq.published",
       tournament_end_at: `gte.${new Date().toISOString()}`,
     }, "id,created_at,updated_at,tournament_end_at"),
+    fetchLocationNavigation(),
   ]);
 
   const staticRoutes = [
@@ -118,6 +110,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       path: "/terms",
       changeFrequency: "monthly",
       priority: 0.3,
+    }),
+    ...buildLocalizedSitemapEntries({
+      path: "/updates",
+      lastModified: new Date(PRODUCT_UPDATES[0].releasedAt),
+      changeFrequency: "weekly",
+      priority: 0.4,
     }),
     ...SUPPORTED_SPORTS.flatMap((code) =>
       buildLocalizedSitemapEntries({
@@ -181,15 +179,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   );
 
-  const casualPlayRoutes = casualPlays.flatMap((play) =>
-    buildLocalizedSitemapEntries({
-      path: `/casual-plays/${play.id}`,
-      lastModified: getEntityLastModified(play),
-      changeFrequency: "daily",
-      priority: 0.6,
-    }),
-  );
-
   const tournamentRoutes = tournaments.flatMap((tournament) =>
     buildLocalizedSitemapEntries({
       path: `/tournaments/${tournament.id}`,
@@ -215,9 +204,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes,
+    ...locations.flatMap((location) => [
+      ...(location.courtIds.length > 0 ? buildLocalizedSitemapEntries({
+        path: locationPath(location.sport, "courts", location.slug),
+        changeFrequency: "weekly", priority: 0.75,
+      }) : []),
+      ...(location.groupIds.length > 0 ? buildLocalizedSitemapEntries({
+        path: locationPath(location.sport, "groups", location.slug),
+        changeFrequency: "weekly", priority: 0.7,
+      }) : []),
+    ]),
     ...courtRoutes,
     ...groupRoutes,
-    ...casualPlayRoutes,
     ...tournamentRoutes,
     ...communityPostRoutes,
   ];

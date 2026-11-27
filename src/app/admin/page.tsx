@@ -4,11 +4,6 @@ import {
   AdminPortalShell,
   buildAdminPortalNav,
 } from "@/components/admin/admin-portal-shell";
-import {
-  formatCasualPlayDate,
-  formatCasualPlayTimeRange,
-  getThailandTodayDateString,
-} from "@/lib/casual-play";
 import { getAllowPublicCourtPublish } from "@/lib/court-submission-policy";
 import {
   buildLocalizedPath,
@@ -42,23 +37,6 @@ type FeedbackRow = {
   reporter?: {
     display_name: string | null;
     username: string | null;
-  } | null;
-};
-
-type CasualPlayRow = {
-  id: string;
-  title: string | null;
-  play_date: string;
-  start_time: string | null;
-  end_time: string | null;
-  venue_name: string | null;
-  sports: {
-    code: string | null;
-    name: string | null;
-  } | null;
-  courts: {
-    id: string;
-    name: string | null;
   } | null;
 };
 
@@ -135,7 +113,6 @@ function buildMetricCards(t: Awaited<ReturnType<typeof getTranslator>>) {
     t("admin.metrics.pendingCourts"),
     t("admin.metrics.managedCourts"),
     t("admin.metrics.unreadFeedback"),
-    t("admin.metrics.upcomingCasualPlays"),
   ];
 }
 
@@ -149,7 +126,6 @@ export default async function AdminPanel({
   const t = await getTranslator(locale);
   await requireAdminPageAccess(locale);
   const navItems = buildAdminPortalNav(locale, t);
-  const today = getThailandTodayDateString();
   const growthWindow = resolveGrowthWindow(resolved?.growthWindow);
   const growthCutoff = getGrowthCutoffISOString(growthWindow);
 
@@ -159,7 +135,6 @@ export default async function AdminPanel({
     assignedCourtsRes,
     pendingCourtsRes,
     unreadFeedbackRes,
-    upcomingCasualPlaysRes,
     recentCourtsRes,
     recentGroupsRes,
   ] = await Promise.all([
@@ -186,13 +161,6 @@ export default async function AdminPanel({
       order: "created_at.desc",
       limit: "4",
     }),
-    supabaseSelect<CasualPlayRow>("casual_plays", {
-      select:
-        "id,title,play_date,start_time,end_time,venue_name,sports(code,name),courts(id,name)",
-      play_date: `gte.${today}`,
-      order: "play_date.asc",
-      limit: "4",
-    }),
     supabaseSelect<RecentCourtRow>("courts", {
       select: "id,name,district,province,created_at,is_active",
       created_at: `gte.${growthCutoff}`,
@@ -213,7 +181,6 @@ export default async function AdminPanel({
     pendingCourtsRes.count ?? pendingCourtsRes.data.length,
     assignedCourtsRes.count ?? assignedCourtsRes.data.length,
     unreadFeedbackRes.count ?? unreadFeedbackRes.data.length,
-    upcomingCasualPlaysRes.count ?? upcomingCasualPlaysRes.data.length,
   ];
   const quickActions = [
     {
@@ -223,10 +190,6 @@ export default async function AdminPanel({
     {
       href: buildLocalizedPath("/admin/groups", locale),
       title: t("admin.quickActions.groupsTitle"),
-    },
-    {
-      href: buildLocalizedPath("/admin/casual-plays", locale),
-      title: t("admin.quickActions.casualPlaysTitle"),
     },
     {
       href: buildLocalizedPath("/admin/court-owners", locale),
@@ -258,7 +221,7 @@ export default async function AdminPanel({
             </h2>
           </div>
         </div>
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {quickActions.map((action) => (
             <Link
               key={action.href}
@@ -273,7 +236,7 @@ export default async function AdminPanel({
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
+      <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
         {metricCards.map((label, index) => (
           <div
             key={label}
@@ -465,7 +428,7 @@ export default async function AdminPanel({
         }}
       />
 
-      <section className="grid gap-6 xl:grid-cols-3">
+      <section className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -577,53 +540,6 @@ export default async function AdminPanel({
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                {t("admin.sections.casualPlaysLabel")}
-              </p>
-              <h2 className="mt-2 text-xl font-semibold text-slate-900">
-                {t("admin.sections.casualPlaysTitle")}
-              </h2>
-            </div>
-          </div>
-          <div className="mt-5 space-y-3">
-            {upcomingCasualPlaysRes.data.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-600">
-                {t("admin.sections.casualPlaysEmpty")}
-              </p>
-            ) : (
-              upcomingCasualPlaysRes.data.map((play) => (
-                <Link
-                  key={play.id}
-                  href={buildLocalizedPath(`/casual-plays/${play.id}`, locale)}
-                  className="block rounded-lg border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
-                >
-                  <p className="font-semibold text-slate-900">
-                    {play.title?.trim() || t("admin.sections.casualPlayFallback")}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {play.courts?.name ??
-                      play.venue_name ??
-                      t("admin.sections.venueMissing")}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {play.sports?.name ?? play.sports?.code ?? "Racket sport"}
-                  </p>
-                  <p className="mt-3 text-xs text-slate-500">
-                    {formatCasualPlayDate(play.play_date, locale)} ·{" "}
-                    {formatCasualPlayTimeRange(
-                      play.start_time,
-                      play.end_time,
-                      locale,
-                    )}
-                  </p>
-                </Link>
-              ))
-            )}
-          </div>
-        </div>
       </section>
     </AdminPortalShell>
   );

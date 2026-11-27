@@ -41,6 +41,12 @@ function sanitizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function parseOptionalCoordinate(value: string | null) {
+  if (!value?.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sport = searchParams.get("sport");
@@ -54,8 +60,8 @@ export async function GET(request: Request) {
 
   const page = Number(searchParams.get("page") ?? "1");
   const limit = Number(searchParams.get("limit") ?? "12");
-  const nearbyLat = Number(searchParams.get("nearbyLat"));
-  const nearbyLng = Number(searchParams.get("nearbyLng"));
+  const nearbyLat = parseOptionalCoordinate(searchParams.get("nearbyLat"));
+  const nearbyLng = parseOptionalCoordinate(searchParams.get("nearbyLng"));
   const locale = normalizeLocale(searchParams.get("lang"));
   const filters: CourtFilterOptions = {
     search: searchParams.get("search") ?? undefined,
@@ -67,7 +73,12 @@ export async function GET(request: Request) {
       Number.isFinite(page) && page > 1 ? (page - 1) * (limit || 12) : 0,
     includeProvinces: searchParams.get("includeProvinces") !== "false",
     nearby:
-      Number.isFinite(nearbyLat) && Number.isFinite(nearbyLng)
+      nearbyLat !== null &&
+      nearbyLng !== null &&
+      nearbyLat >= -90 &&
+      nearbyLat <= 90 &&
+      nearbyLng >= -180 &&
+      nearbyLng <= 180
         ? {
             latitude: nearbyLat,
             longitude: nearbyLng,

@@ -1,10 +1,10 @@
 "use client";
 
-import type { MouseEvent, ReactNode } from "react";
+import type { AnchorHTMLAttributes, MouseEvent, ReactNode } from "react";
 import Link, { type LinkProps } from "next/link";
 import { track } from "@vercel/analytics";
 
-type TrackedLinkProps = LinkProps & {
+type TrackedLinkProps = LinkProps & Pick<AnchorHTMLAttributes<HTMLAnchorElement>, "target" | "rel" | "title"> & {
   eventName: string;
   eventPayload?: Record<string, string | number | boolean | null | undefined>;
   className?: string;

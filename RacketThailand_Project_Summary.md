@@ -1,5 +1,7 @@
 # RacketThailand.com - Project Summary
 
+This is a historical snapshot. Standalone Casual Plays routes and application code have been retired; one-time play sessions now live in groups. Casual Plays references below describe the earlier design and database schema.
+
 RacketThailand is a Thai-first multi-sport community platform for racket sports in Thailand.
 
 Supported sports:

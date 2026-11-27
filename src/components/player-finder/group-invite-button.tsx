@@ -4,8 +4,11 @@ import { useState } from "react";
 import { Send } from "lucide-react";
 import { BaseTextArea } from "@/components/base-text-area";
 import { showToast } from "@/components/toaster";
+import { trackPlayerEvent } from "@/lib/player-analytics-client";
 
 type Props = {
+  sportCode: string;
+  trackingEnabled: boolean;
   groupId: string;
   recipientId: string;
   alreadySent: boolean;
@@ -20,6 +23,8 @@ type Props = {
 };
 
 export function GroupInviteButton({
+  sportCode,
+  trackingEnabled,
   groupId,
   recipientId,
   alreadySent,
@@ -31,7 +36,9 @@ export function GroupInviteButton({
   const [sent, setSent] = useState(alreadySent);
 
   if (sent) {
-    return <p className="text-xs font-semibold text-blue-700">{copy.alreadySent}</p>;
+    return (
+      <p className="text-xs font-semibold text-blue-700">{copy.alreadySent}</p>
+    );
   }
 
   return (
@@ -39,7 +46,10 @@ export function GroupInviteButton({
       {!open ? (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            trackPlayerEvent("invite_open", sportCode, trackingEnabled);
+          }}
           className="rt-btn-group inline-flex min-h-10 items-center justify-center gap-2 px-4 py-2 text-xs"
         >
           <Send className="h-4 w-4" aria-hidden />
@@ -62,25 +72,32 @@ export function GroupInviteButton({
             disabled={sending}
             onClick={async () => {
               setSending(true);
-              const response = await fetch(
-                `/api/groups/${groupId}/player-invitations`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ recipientId, message }),
-                },
-              );
-              const payload = await response.json().catch(() => ({}));
-              setSending(false);
-              if (!response.ok) {
-                showToast({
-                  variant: "error",
-                  message: payload?.error || copy.genericError,
-                });
-                return;
+              try {
+                const response = await fetch(
+                  `/api/groups/${groupId}/player-invitations`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ recipientId, message }),
+                  },
+                );
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                  trackPlayerEvent("invite_error", sportCode, trackingEnabled);
+                  showToast({
+                    variant: "error",
+                    message: payload?.error || copy.genericError,
+                  });
+                  return;
+                }
+                setSent(true);
+                showToast({ variant: "success", message: copy.sent });
+              } catch {
+                trackPlayerEvent("invite_error", sportCode, trackingEnabled);
+                showToast({ variant: "error", message: copy.genericError });
+              } finally {
+                setSending(false);
               }
-              setSent(true);
-              showToast({ variant: "success", message: copy.sent });
             }}
             className="rt-btn-group inline-flex min-h-10 items-center justify-center px-4 py-2 text-xs disabled:opacity-60"
           >

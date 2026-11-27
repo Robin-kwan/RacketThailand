@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {

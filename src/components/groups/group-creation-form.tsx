@@ -26,6 +26,7 @@ type GroupCreationCopy = GroupFormCopy & {
   makePrimaryPhoto: string;
   photoUploadHelper: string;
   photoProcessError: string;
+  existingGroupError: string;
 };
 
 type GroupCreationFormProps = {
@@ -37,6 +38,7 @@ type GroupCreationFormProps = {
   defaultSportId?: string;
   preselectFirstSport?: boolean;
   defaultCourtId?: string;
+  confirmNewGroup?: boolean;
 };
 
 const GROUP_BUCKET =
@@ -50,6 +52,7 @@ export function GroupCreationForm({
   defaultSportId,
   preselectFirstSport = true,
   defaultCourtId,
+  confirmNewGroup = false,
 }: GroupCreationFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -131,13 +134,23 @@ export function GroupCreationForm({
     const response = await fetch("/api/groups", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, confirmNewGroup }),
     });
 
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       setSubmitting(false);
+      if (data?.code === "EXISTING_GROUPS") {
+        showToast({ variant: "error", message: copy.existingGroupError });
+        router.push(
+          buildLocalizedPath(
+            `/groups/create?sport=${encodeURIComponent(payload.sportId)}`,
+            locale,
+          ),
+        );
+        return;
+      }
       showToast({
         variant: "error",
         message:
@@ -209,7 +222,9 @@ export function GroupCreationForm({
     });
     showToast({ variant: "success", message: copy.success });
     if (groupId) {
-      router.push(buildLocalizedPath(`/groups/${groupId}`, locale));
+      router.push(
+        buildLocalizedPath(`/groups/${groupId}?created=1`, locale),
+      );
       return;
     }
     setImages([]);

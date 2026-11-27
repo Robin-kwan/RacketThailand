@@ -10,6 +10,8 @@ import { BaseTextArea } from "@/components/base-text-area";
 import { BaseTextField } from "@/components/base-text-field";
 import { showToast } from "@/components/toaster";
 
+import { CONTACT_METHODS, type PlayerContacts, type ContactMethod, type ContactVisibility } from "@/lib/player-contacts";
+
 type SportOption = { id: string; code: string; label: string };
 
 export type ExistingSportProfile = {
@@ -25,9 +27,13 @@ export type ExistingSportProfile = {
   looking_note: string | null;
   looking_until: string | null;
   allow_group_invites: boolean | null;
+  contact_methods?: PlayerContacts;
+  contact_visibility?: ContactVisibility;
+  preferred_contact?: ContactMethod | null;
 };
 
 type Copy = {
+  contacts: { title: string; help: string; visibility: string; public: string; accepted: string; private: string; preferred: string; invalid: string; labels: Record<ContactMethod,string>; hints: Record<ContactMethod,string> };
   sport: string;
   skillLevel: string;
   ratingSystem: string;
@@ -105,6 +111,9 @@ function createForm(
     lookingNote: profile?.looking_note ?? "",
     looking: profile ? isActive(profile) : true,
     allowGroupInvites: profile?.allow_group_invites ?? true,
+    contactMethods: profile?.contact_methods ?? {},
+    contactVisibility: profile?.contact_visibility ?? "private",
+    preferredContact: profile?.preferred_contact ?? "line",
   };
 }
 
@@ -220,7 +229,7 @@ export function PlayerProfileForm({
         message:
           payload?.error === "PLAYER_FINDER_SCHEMA_REQUIRED"
             ? copy.schemaRequired
-            : payload?.error || copy.genericError,
+            : payload?.error === "INVALID_CONTACT" ? copy.contacts.invalid : payload?.error || copy.genericError,
       });
       return;
     }
@@ -551,6 +560,24 @@ export function PlayerProfileForm({
                     variant="light"
                   />
                 </div>
+
+                <fieldset className="space-y-4 rounded-lg border border-slate-200 p-4">
+                  <legend className="px-1 text-sm font-semibold text-slate-900">{copy.contacts.title}</legend>
+                  <p className="text-xs leading-5 text-slate-600">{copy.contacts.help}</p>
+                  <BaseSelect label={copy.contacts.visibility} name="contactVisibility" value={form.contactVisibility}
+                    onChange={event => updateValue("contactVisibility", event.target.value)} variant="light"
+                    options={["private", "public", "accepted"].map(value => ({value, label: copy.contacts[value as ContactVisibility]}))} />
+                  {CONTACT_METHODS.map(method => <div key={method} className="space-y-2">
+                    <label htmlFor={`player-contact-${method}`} className="block text-sm font-semibold text-slate-700">{copy.contacts.labels[method]}</label>
+                    <BaseTextField id={`player-contact-${method}`} value={form.contactMethods[method] ?? ""} maxLength={300} variant="light"
+                      type={method === "phone" || method === "whatsapp" ? "tel" : "text"}
+                      placeholder={copy.contacts.hints[method]}
+                      onChange={event => setForm(current => ({...current, contactMethods: {...current.contactMethods, [method]: event.target.value}}))} />
+                  </div>)}
+                  <BaseSelect label={copy.contacts.preferred} name="preferredContact" value={form.preferredContact}
+                    onChange={event => updateValue("preferredContact", event.target.value)} variant="light"
+                    options={CONTACT_METHODS.map(value => ({value, label: copy.contacts.labels[value]}))} />
+                </fieldset>
 
                 <fieldset>
                   <legend className="text-sm font-semibold text-slate-700">

@@ -14,6 +14,7 @@ import {
   OAuthButtons,
   type AuthOAuthProvider,
 } from "@/components/auth/oauth-buttons";
+import { isTurnstileEnabled, TurnstileChallenge } from "@/components/auth/turnstile-challenge";
 
 type SignupCopy = {
   nameLabel: string;
@@ -32,6 +33,7 @@ type SignupCopy = {
   namePlaceholder: string;
   googleButton: string;
   lineButton: string;
+  captchaRequired: string;
 };
 
 type SignupFormProps = {
@@ -53,6 +55,7 @@ export function SignupForm({
   const [isMounted, setIsMounted] = useState(false);
   const [oauthLoading, setOauthLoading] =
     useState<AuthOAuthProvider | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const passwordPattern =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
@@ -81,6 +84,10 @@ export function SignupForm({
       });
       return;
     }
+    if (isTurnstileEnabled && !captchaToken) {
+      showToast({ variant: "error", message: copy.captchaRequired });
+      return;
+    }
 
     setSubmitting(true);
     const callbackUrl = new URL("/auth/callback", window.location.origin);
@@ -96,6 +103,7 @@ export function SignupForm({
           full_name: name,
         },
         emailRedirectTo: callbackUrl.toString(),
+        ...(captchaToken ? { captchaToken } : {}),
       },
     });
     setSubmitting(false);
@@ -194,11 +202,12 @@ export function SignupForm({
       </div>
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="signup-name" className="block text-sm font-medium text-slate-700">
           {copy.nameLabel}
         </label>
         <input
           type="text"
+          id="signup-name"
           name="name"
           className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           placeholder={copy.namePlaceholder}
@@ -206,11 +215,12 @@ export function SignupForm({
         />
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="signup-email" className="block text-sm font-medium text-slate-700">
           {copy.emailLabel}
         </label>
         <input
           type="email"
+          id="signup-email"
           name="email"
           className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           placeholder="name@email.com"
@@ -218,12 +228,13 @@ export function SignupForm({
         />
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="signup-password" className="block text-sm font-medium text-slate-700">
           {copy.passwordLabel}
         </label>
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
+            id="signup-password"
             name="password"
             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             placeholder="••••••••"
@@ -242,12 +253,13 @@ export function SignupForm({
         </div>
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="signup-confirm-password" className="block text-sm font-medium text-slate-700">
           {copy.confirmPasswordLabel}
         </label>
         <div className="relative">
           <input
             type={showConfirmPassword ? "text" : "password"}
+            id="signup-confirm-password"
             name="confirmPassword"
             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             placeholder="••••••••"
@@ -273,6 +285,7 @@ export function SignupForm({
       >
         {submitting ? `${copy.button}...` : copy.button}
       </button>
+      <TurnstileChallenge onTokenChange={setCaptchaToken} />
       <p className="text-sm text-slate-500">{copy.agreeTerms}</p>
       <p className="text-sm text-slate-500">{copy.verifyNotice}</p>
       </form>

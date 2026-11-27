@@ -2,6 +2,7 @@ import type { Locale } from "@/lib/i18n";
 import { isPublishedGroupStatus } from "@/lib/group-status";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { supabaseSelect } from "@/lib/supabaseRest";
+import { buildActiveGroupEventsOrFilter } from "@/server/groupEvents";
 import type { OpeningHoursEntry } from "@/lib/opening-hours";
 import { normalizeOpeningHoursEntries } from "@/lib/opening-hours";
 import { buildPostgrestIlikeTerm } from "@/lib/postgrest-search";
@@ -42,6 +43,7 @@ export type CourtRecord = {
   court_photos?: { image_url: string | null; is_primary: boolean | null }[];
   latitude?: number | null;
   longitude?: number | null;
+  distance_km?: number | null;
 };
 
 export type CourtProvinceOption = {
@@ -66,6 +68,7 @@ export type CourtFilterOptions = {
   nearby?: {
     latitude: number;
     longitude: number;
+    maxDistanceKm?: number;
   };
 };
 
@@ -215,7 +218,18 @@ async function fetchNearbyCourtIds(
     throw new Error(error.message);
   }
 
-  return (data ?? []) as NearbyCourtIdRow[];
+  const rows = (data ?? []) as NearbyCourtIdRow[];
+  const maxDistanceKm = filters.nearby.maxDistanceKm;
+
+  if (
+    typeof maxDistanceKm === "number" &&
+    Number.isFinite(maxDistanceKm) &&
+    maxDistanceKm >= 0
+  ) {
+    return rows.filter((row) => row.distance_km <= maxDistanceKm);
+  }
+
+  return rows;
 }
 
 async function fetchCourtIdsByOpeningHours(
@@ -359,6 +373,9 @@ export async function fetchCourtsBySport(
     ]);
 
     const orderById = new Map(courtIds.map((id, index) => [id, index]));
+    const distanceById = new Map(
+      nearbyRows.map((row) => [row.court_id, row.distance_km]),
+    );
     const localizedCourts = await Promise.all(
       (courtsRes.data ?? [])
         .filter((court) => openingHoursMatchTimeWindow(court.opening_hours, filters))
@@ -374,6 +391,7 @@ export async function fetchCourtsBySport(
             ...court,
             district: localized.district,
             province: localized.province,
+            distance_km: distanceById.get(court.id) ?? null,
           };
         }),
     );
@@ -445,6 +463,62 @@ export async function fetchCourtsBySport(
       : (courtsRes.count ?? localizedCourts.length),
     provinces,
   };
+}
+
+export async function fetchPublicCourtsByIds(ids: string[], locale: Locale) {
+  if (ids.length === 0) return [];
+  const { data } = await supabaseSelect<CourtRecord>("courts", {
+    select: "id,name,description,address,district,province,district_id,province_id,price_note,court_photos(image_url,is_primary)",
+    id: `in.(${ids.join(",")})`,
+    is_active: "eq.true",
+    order: "id.asc",
+    limit: String(ids.length),
+  }, { preferCount: false });
+  return Promise.all(data.map(async (court) => ({
+    ...court,
+    ...await localizeThailandLocation(court, locale),
+  })));
+}
+
+export async function fetchNearbyCourtsForDetail({
+  courtId,
+  sportCode,
+  latitude,
+  longitude,
+  locale = "th",
+  limit = 6,
+  maxDistanceKm = 50,
+}: {
+  courtId: string;
+  sportCode: string;
+  latitude: number;
+  longitude: number;
+  locale?: Locale;
+  limit?: number;
+  maxDistanceKm?: number;
+}) {
+  if (
+    !sportCode.trim() ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    limit <= 0
+  ) {
+    return [];
+  }
+
+  const result = await fetchCourtsBySport(
+    sportCode,
+    {
+      nearby: { latitude, longitude, maxDistanceKm },
+      limit: limit + 1,
+      includeProvinces: false,
+    },
+    locale,
+  );
+
+  return result.courts
+    .filter((court) => court.id !== courtId)
+    .slice(0, limit);
 }
 
 export type CourtPhoto = {
@@ -541,7 +615,7 @@ export async function fetchCourtDetail(
         select:
           "id,court_id,starts_at,ends_at,notes,groups(id,name,status,sports(code,name))",
         court_id: `eq.${courtId}`,
-        starts_at: `gte.${new Date().toISOString()}`,
+        or: buildActiveGroupEventsOrFilter(),
         order: "starts_at.asc",
         limit: "12",
       }),
@@ -564,8 +638,16 @@ export async function fetchCourtDetail(
       (groupLinks ?? []).filter((link) =>
         isPublishedGroupStatus(link.groups?.status),
       ),
-    upcomingEvents: (upcomingEvents ?? []).filter((event) =>
-      isPublishedGroupStatus(event.groups?.status),
-    ),
+    upcomingEvents: (upcomingEvents ?? []).filter((event, index, events) => {
+      if (!isPublishedGroupStatus(event.groups?.status)) return false;
+      return (
+        events.findIndex(
+          (candidate) =>
+            candidate.groups?.id === event.groups?.id &&
+            candidate.starts_at === event.starts_at &&
+            candidate.ends_at === event.ends_at,
+        ) === index
+      );
+    }),
   };
 }
