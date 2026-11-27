@@ -29,12 +29,15 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0f766e",
     gradient: "from-rose-500/30 via-orange-500/20 to-amber-500/10",
     coverImage: "/sports/badminton.png",
-    heroHeadline: l("หาก๊วนแบด ก๊วนตีแบด และสนามแบดในที่เดียว", "Badminton courts & groups in one place."),
-    heroDescription: l(
-      "ค้นหาก๊วนแบดและก๊วนตีแบดที่เปิดรับสมาชิก หาเพื่อนตีแบด ค้นหาสนามแบดมินตัน และช่องทางติดต่อ",
-      "Find badminton partners, join local badminton groups, explore verified venues, and contact organizers directly from the same portal.",
+    heroHeadline: l(
+      "หาก๊วนตีแบดและสนามแบดใกล้คุณ",
+      "Find badminton groups and courts near you",
     ),
-    closingTitle: l("มีสนามหรือก๊วนตีแบดใหม่?", "Have new badminton courts or groups?"),
+    heroDescription: l(
+      "ค้นหาสนาม ดูกลุ่มที่เปิดรับสมาชิก และเจอเพื่อนเล่น พร้อมวันเวลาและช่องทางติดต่อ",
+      "Browse badminton courts, groups accepting players, and people looking for a game, with schedules and contact details.",
+    ),
+    closingTitle: l("มีสนามหรือกลุ่มใหม่?", "Have new badminton courts or groups?"),
     closingDetail: l(
       "ส่งรายละเอียดให้ทีมงาน เพื่อให้ชุมชนหาเจอได้ง่ายขึ้น",
       "Send us the details so the community can find them faster.",
@@ -44,8 +47,8 @@ export const SPORT_META: Record<string, SportMeta> = {
       { label: l("ดูสนามแบด", "Browse courts"), href: "/badminton/court-finder" },
     ],
     landingDescription: l(
-      "หาก๊วนตีแบด หาเพื่อนตีแบด และดูสนามที่ยืนยันแล้วทั่วไทย พร้อมช่องทางติดต่อแอดมิน",
-      "Find badminton partners, join weekly badminton groups, and browse verified courts with organizer contacts across Thailand.",
+      "ดูสนามแบด ก๊วนประจำ และผู้เล่นที่กำลังหาเพื่อนตี พร้อมช่องทางติดต่อ",
+      "Browse badminton courts, regular groups, and players looking for a game across Thailand.",
     ),
     landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",
@@ -59,10 +62,10 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#b45309",
     gradient: "from-orange-500/30 via-amber-500/20 to-rose-500/10",
     coverImage: "/sports/padel.png",
-    heroHeadline: l("สนามและกลุ่มพาเดลในที่เดียว", "Padel courts & groups in one place."),
+    heroHeadline: l("สนามและกลุ่มพาเดลในที่เดียว", "Padel courts and groups in one place"),
     heroDescription: l(
-      "หากลุ่มเล่นพาเดล หาเพื่อนเล่นพาเดล และใช้แผนที่สนามเพื่อวางแผนแมตช์ดับเบิลครั้งต่อไปของคุณ",
-      "Find padel partners, join padel groups, and use the live court finder to plan your next doubles session.",
+      "ดูสนาม กลุ่มที่เปิดรับผู้เล่น และคนที่กำลังหาเพื่อนเล่นพาเดล พร้อมข้อมูลที่ใช้วางแผนนัดต่อไป",
+      "Browse padel courts, groups accepting players, and people looking for a match, with details for planning your next session.",
     ),
     closingTitle: l("มีสนามหรือกลุ่มพาเดลใหม่?", "Have new padel courts or groups?"),
     closingDetail: l(
@@ -74,8 +77,8 @@ export const SPORT_META: Record<string, SportMeta> = {
       { label: l("ดูสนามพาเดล", "Browse courts"), href: "/padel/court-finder" },
     ],
     landingDescription: l(
-      "หากลุ่มเล่นพาเดล หาเพื่อนเล่นพาเดล และค้นหาสนามที่เปิดรอคุณอยู่ในกรุงเทพฯ และต่างจังหวัด",
-      "Find padel partners, join padel groups, and explore courts already running across Thailand.",
+      "ดูสนามพาเดล กลุ่มที่นัดเล่นเป็นประจำ และผู้เล่นที่กำลังหาเพื่อน",
+      "Browse padel courts, regular groups, and players looking for a match across Thailand.",
     ),
     landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",
@@ -89,10 +92,10 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#0d9488",
     gradient: "from-lime-400/30 via-emerald-400/20 to-yellow-300/10",
     coverImage: "/sports/pickleball.png",
-    heroHeadline: l("สนามและกลุ่มพิคเคิลบอลในที่เดียว", "Pickleball courts & groups in one place."),
+    heroHeadline: l("สนามและกลุ่มพิคเคิลบอลในที่เดียว", "Pickleball courts and groups in one place"),
     heroDescription: l(
-      "หากลุ่มเล่นพิคเคิลบอล หาเพื่อนเล่นพิคเคิลบอล ค้นหาสนามยืนยันแล้ว และดูช่องทางติดต่อแอดมิน",
-      "Find pickleball partners, join pickleball groups, and discover verified venues with organizer contacts in seconds.",
+      "ดูสนาม กลุ่มที่เปิดรับผู้เล่น และคนที่กำลังหาเพื่อนเล่นพิคเคิลบอล พร้อมวันเวลาและช่องทางติดต่อ",
+      "Browse pickleball courts, groups accepting players, and people looking for a game, with schedules and contact details.",
     ),
     closingTitle: l("มีสนามหรือกลุ่มพิคเคิลบอลใหม่?", "Have new pickleball courts or groups?"),
     closingDetail: l(
@@ -104,8 +107,8 @@ export const SPORT_META: Record<string, SportMeta> = {
       { label: l("ดูสนามพิคเคิลบอล", "Browse courts"), href: "/pickleball/court-finder" },
     ],
     landingDescription: l(
-      "หากลุ่มเล่นพิคเคิลบอล หาเพื่อนเล่นพิคเคิลบอล และดูสนามที่มีอยู่จริงพร้อมช่องทางติดต่อ",
-      "Find pickleball partners, join weekly pickleball groups, and browse real courts with contact info.",
+      "ดูสนามพิคเคิลบอล กลุ่มที่นัดเล่นเป็นประจำ และผู้เล่นที่กำลังหาเพื่อน",
+      "Browse pickleball courts, regular groups, and players looking for a game across Thailand.",
     ),
     landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",
@@ -119,10 +122,10 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#65a30d",
     gradient: "from-emerald-500/30 via-lime-400/20 to-amber-300/10",
     coverImage: "/sports/tennis.png",
-    heroHeadline: l("สนามและกลุ่มเทนนิสในที่เดียว", "Tennis courts & groups in one place."),
+    heroHeadline: l("สนามและกลุ่มเทนนิสในที่เดียว", "Tennis courts and groups in one place"),
     heroDescription: l(
-      "หากลุ่มตีเทนนิส หาเพื่อนตีเทนนิส ค้นหาสนามมาตรฐาน และดูช่องทางติดต่อผู้ดูแลเพื่อสอบถามการจองหรือขอร่วมเล่น",
-      "Find tennis partners, join tennis groups, and discover verified courts with organizer contacts ready to go.",
+      "ดูสนาม กลุ่มที่เปิดรับผู้เล่น และคนที่กำลังหาเพื่อนตีเทนนิส พร้อมวันเวลาและช่องทางติดต่อ",
+      "Browse tennis courts, groups accepting players, and people looking for a match, with schedules and contact details.",
     ),
     closingTitle: l("มีสนามหรือกลุ่มเทนนิสใหม่?", "Have new tennis courts or groups?"),
     closingDetail: l(
@@ -134,8 +137,8 @@ export const SPORT_META: Record<string, SportMeta> = {
       { label: l("ดูสนามเทนนิส", "Browse courts"), href: "/tennis/court-finder" },
     ],
     landingDescription: l(
-      "หากลุ่มตีเทนนิส หาเพื่อนตีเทนนิส และดูสนามเทนนิสพร้อมช่องทางติดต่อ",
-      "Find tennis partners, join weekly tennis groups, and browse courts with organizer contacts.",
+      "ดูสนามเทนนิส กลุ่มที่นัดเล่นเป็นประจำ และผู้เล่นที่กำลังหาคู่ตี",
+      "Browse tennis courts, regular groups, and players looking for a match across Thailand.",
     ),
     landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Court finder",
@@ -149,10 +152,10 @@ export const SPORT_META: Record<string, SportMeta> = {
     accent: "#be185d",
     gradient: "from-purple-500/30 via-fuchsia-400/20 to-pink-400/10",
     coverImage: "/sports/tabletennis.png",
-    heroHeadline: l("สนามปิงปองและกลุ่มซ้อมในที่เดียว", "Table tennis clubs & groups in one place."),
+    heroHeadline: l("สนามปิงปองและกลุ่มซ้อมในที่เดียว", "Table tennis clubs and groups in one place"),
     heroDescription: l(
-      "หากลุ่มตีปิงปอง หาเพื่อนตีปิงปอง ค้นหาสนาม ดูตารางกลุ่มซ้อม และติดต่อผู้จัดได้ทันที",
-      "Find table tennis partners, join practice groups, and browse verified clubs with organizer contacts in seconds.",
+      "ดูสนาม กลุ่มซ้อม และคนที่กำลังหาเพื่อนตีปิงปอง พร้อมตารางเล่นและช่องทางติดต่อ",
+      "Browse table tennis clubs, practice groups, and people looking for a game, with schedules and contact details.",
     ),
     closingTitle: l("มีสนามหรือกลุ่มปิงปองใหม่?", "Have new table tennis clubs or groups?"),
     closingDetail: l(
@@ -164,8 +167,8 @@ export const SPORT_META: Record<string, SportMeta> = {
       { label: l("ดูสนามปิงปอง", "Browse clubs"), href: "/tabletennis/court-finder" },
     ],
     landingDescription: l(
-      "หากลุ่มตีปิงปอง หาเพื่อนตีปิงปอง และดูสนามที่เปิดรับสมาชิกพร้อมช่องทางติดต่อแอดมิน",
-      "Find table tennis partners, join table tennis groups, and browse clubs with direct contact info.",
+      "ดูสนามปิงปอง กลุ่มซ้อม และผู้เล่นที่กำลังหาเพื่อนตี",
+      "Browse table tennis clubs, practice groups, and players looking for a game across Thailand.",
     ),
     landingHighlights: list(["แผนที่สนาม", "กลุ่มประจำ", "ส่งข้อมูลใหม่"], [
       "Club finder",

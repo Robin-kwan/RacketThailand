@@ -3,7 +3,10 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { requireGroupAccess } from "@/server/groupAccess";
 import { syncCourtGroupLinks } from "@/server/groupSessions";
 import { validateCourtIdsForSport } from "@/server/groupCourtValidation";
-import { normalizeGroupEvents } from "@/server/groupEvents";
+import {
+  hasGroupEventEnded,
+  normalizeGroupEvents,
+} from "@/server/groupEvents";
 
 type RouteParams = { groupId: string };
 type RouteParamsInput = Promise<RouteParams>;
@@ -196,15 +199,34 @@ export async function POST(
       );
     }
 
-    const { error: insertError } = await adminSupabase
-      .from("group_sessions")
-      .insert({
-        group_id: resolved.groupId,
-        court_id: courtId,
-        day,
-        start_time: start,
-        end_time: end,
-      });
+    const { data: existingSession, error: existingSessionError } =
+      await adminSupabase
+        .from("group_sessions")
+        .select("id")
+        .eq("group_id", resolved.groupId)
+        .eq("court_id", courtId)
+        .eq("day", day)
+        .eq("start_time", start)
+        .eq("end_time", end)
+        .limit(1)
+        .maybeSingle();
+
+    if (existingSessionError) {
+      return NextResponse.json(
+        { error: existingSessionError.message },
+        { status: 500 },
+      );
+    }
+
+    const { error: insertError } = existingSession
+      ? { error: null }
+      : await adminSupabase.from("group_sessions").insert({
+          group_id: resolved.groupId,
+          court_id: courtId,
+          day,
+          start_time: start,
+          end_time: end,
+        });
 
     if (insertError) {
       return NextResponse.json(
@@ -225,7 +247,7 @@ export async function POST(
       user.id,
     );
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, duplicate: Boolean(existingSession) });
   }
 
   const date = normalizeText(payload.date);
@@ -261,6 +283,36 @@ export async function POST(
       },
       { status: 400 },
     );
+  }
+
+  if (hasGroupEventEnded(event)) {
+    return NextResponse.json(
+      {
+        code: "SESSION_ALREADY_ENDED",
+        error: "Session end time must be later than the current time.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const { data: existingEvent, error: existingEventError } = await adminSupabase
+    .from("group_events")
+    .select("id")
+    .eq("group_id", resolved.groupId)
+    .eq("court_id", event.courtId)
+    .eq("starts_at", event.startsAt)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingEventError) {
+    return NextResponse.json(
+      { error: existingEventError.message },
+      { status: 500 },
+    );
+  }
+
+  if (existingEvent) {
+    return NextResponse.json({ ok: true, duplicate: true });
   }
 
   const { error: insertError } = await adminSupabase
@@ -374,6 +426,16 @@ export async function PATCH(
       return NextResponse.json(
         {
           error: "Court, date, and start time are required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (hasGroupEventEnded(event)) {
+      return NextResponse.json(
+        {
+          code: "SESSION_ALREADY_ENDED",
+          error: "Session end time must be later than the current time.",
         },
         { status: 400 },
       );

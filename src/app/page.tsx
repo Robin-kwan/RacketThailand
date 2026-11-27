@@ -1,6 +1,6 @@
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import type { Metadata } from "next";
-import { CalendarDays, MapPinned, UsersRound } from "lucide-react";
+import { MapPinned, UserRoundSearch, UsersRound } from "lucide-react";
 import { LANDING_SPORTS } from "@/data/sportMeta";
 import { FeedbackForm } from "@/components/feedback-form";
 import { TrackedLink } from "@/components/analytics/tracked-link";
@@ -15,7 +15,9 @@ import {
   buildCanonicalUrl,
   buildLocaleAlternates,
 } from "@/lib/seo";
+import { getGroupContributionAction } from "@/lib/group-contribution";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { fetchOwnedGroupSummaries } from "@/server/ownedGroups";
 
 type SearchParams = {
   lang?: string;
@@ -150,6 +152,18 @@ export default async function Landing({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const ownedGroups =
+    user && !user.is_anonymous
+      ? await fetchOwnedGroupSummaries(user.id)
+      : [];
+  const groupContributionAction = getGroupContributionAction({
+    ownedGroups,
+    locale,
+  });
+  const groupContributionLabel =
+    groupContributionAction.kind === "create_group"
+      ? t("header.createGroup")
+      : t("groups.contribution.addSession");
   const feedbackCopy = {
     title: t("landing.feedbackTitle"),
     subtitle: t("landing.feedbackSubtitle"),
@@ -180,9 +194,9 @@ export default async function Landing({
       icon: MapPinned,
     },
     {
-      title: t("landing.discoveryCasualTitle"),
-      description: t("landing.discoveryCasualDescription"),
-      icon: CalendarDays,
+      title: t("landing.discoveryPlayersTitle"),
+      description: t("landing.discoveryPlayersDescription"),
+      icon: UserRoundSearch,
     },
   ];
   const structuredData = {
@@ -259,7 +273,7 @@ export default async function Landing({
                     alt={`${sport.name[locale]} cover`}
                     fill
                     sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) calc((100vw - 6.5rem) / 2), calc((100vw - 8rem) / 5)"
-                    quality={70}
+                    quality={75}
                     className="object-cover transition-transform duration-500 group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                     priority={sport.code === "badminton"}
                   />
@@ -319,15 +333,15 @@ export default async function Landing({
                 {t("courtSubmission.submit")}
               </TrackedLink>
               <TrackedLink
-                href={buildLocalizedPath("/groups/create", locale)}
+                href={groupContributionAction.href}
                 eventName="landing_cta_click"
                 eventPayload={{
                   surface: "landing_contribute",
-                  cta: "create_group",
+                  cta: groupContributionAction.kind,
                 }}
                 className="rt-btn-group inline-flex items-center justify-center px-5 py-3 text-sm"
               >
-                {t("header.createGroup")}
+                {groupContributionLabel}
               </TrackedLink>
             </div>
           </div>

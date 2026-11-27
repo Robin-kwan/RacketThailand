@@ -172,11 +172,12 @@ export function LoginForm({
     <>
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700">
+          <label htmlFor="login-email" className="block text-sm font-medium text-slate-700">
             {copy.emailLabel}
           </label>
           <input
             type="email"
+            id="login-email"
             name="email"
             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             placeholder="name@email.com"
@@ -184,12 +185,13 @@ export function LoginForm({
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700">
+          <label htmlFor="login-password" className="block text-sm font-medium text-slate-700">
             {copy.passwordLabel}
           </label>
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
+              id="login-password"
               name="password"
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
               placeholder="••••••••"

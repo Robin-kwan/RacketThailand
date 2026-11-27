@@ -1,0 +1,15 @@
+.env*
+.next/
+node_modules/
+.git/
+.codex/
+.codex-audits/
+supabase/.temp/
+output/
+outputs/
+coverage/
+*.tsbuildinfo
+.vercel/
+*.pem
+*.log
+.DS_Store

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy, PhoneCall } from "lucide-react";
 import { showToast } from "@/components/toaster";
+import { track } from "@vercel/analytics";
 
 type ContactActionValueProps = {
   mode: "phone" | "line" | "copy";
@@ -10,6 +11,11 @@ type ContactActionValueProps = {
   copyLabel: string;
   copiedLabel: string;
   callLabel: string;
+  tracking?: {
+    groupId: string;
+    sport?: string;
+    surface: string;
+  };
 };
 
 function normalizePhoneHref(value: string) {
@@ -34,11 +40,23 @@ export function ContactActionValue({
   copyLabel,
   copiedLabel,
   callLabel,
+  tracking,
 }: ContactActionValueProps) {
   const [copied, setCopied] = useState(false);
   const copiedTimeoutRef = useRef<number | null>(null);
   const phoneHref = useMemo(() => normalizePhoneHref(value), [value]);
   const lineHref = useMemo(() => normalizeLineHref(value), [value]);
+  const trackContact = (action: "open" | "call" | "copy") => {
+    if (tracking) {
+      track("group_contact_click", {
+        groupId: tracking.groupId,
+        sport: tracking.sport ?? "",
+        surface: tracking.surface,
+        method: mode,
+        action,
+      });
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -53,6 +71,7 @@ export function ContactActionValue({
       <div className="mt-1 flex min-w-0 max-w-full flex-wrap items-center gap-3">
         <a
           href={phoneHref}
+          onClick={() => trackContact("call")}
           title={value}
           className={valueClassName}
         >
@@ -60,6 +79,7 @@ export function ContactActionValue({
         </a>
         <a
           href={phoneHref}
+          onClick={() => trackContact("call")}
           className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100"
         >
           <PhoneCall
@@ -75,6 +95,7 @@ export function ContactActionValue({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
+      trackContact("copy");
       setCopied(true);
       showToast({
         variant: "success",
@@ -96,6 +117,7 @@ export function ContactActionValue({
       {mode === "line" ? (
         <a
           href={lineHref}
+          onClick={() => trackContact("open")}
           target="_blank"
           rel="noreferrer"
           title={value}

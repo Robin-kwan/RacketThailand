@@ -12,6 +12,8 @@ import {
 } from "@/lib/player-finder";
 import { ensureUserProfile } from "@/server/profile";
 
+import { CONTACT_METHODS, normalizePlayerContacts } from "@/lib/player-contacts";
+
 type PlayerProfilePayload = {
   sportId?: unknown;
   skillLevel?: unknown;
@@ -24,6 +26,9 @@ type PlayerProfilePayload = {
   lookingNote?: unknown;
   looking?: unknown;
   allowGroupInvites?: unknown;
+  contactMethods?: unknown;
+  contactVisibility?: unknown;
+  preferredContact?: unknown;
 };
 
 type PlayerProfileStatusPayload = {
@@ -90,6 +95,17 @@ export async function POST(request: Request) {
     );
   }
 
+  let contactUpdate = {};
+  if (body.contactMethods !== undefined) {
+    try {
+      if (!["public", "accepted", "private"].includes(String(body.contactVisibility))) throw new Error("INVALID_CONTACT");
+      const contacts = normalizePlayerContacts(body.contactMethods);
+      const preferred = CONTACT_METHODS.find(method => method === body.preferredContact) ?? null;
+      contactUpdate = {contact_methods: contacts, contact_visibility: body.contactVisibility, preferred_contact: preferred};
+    } catch {
+      return NextResponse.json({error: "INVALID_CONTACT"}, {status: 400});
+    }
+  }
   const adminSupabase = getSupabaseAdminClient();
   const { error: profileError } = await ensureUserProfile(adminSupabase, user);
   if (profileError) {
@@ -123,11 +139,12 @@ export async function POST(request: Request) {
         looking_until: looking ? buildActiveLookingUntil() : null,
         allow_group_invites: body.allowGroupInvites !== false,
         updated_at: now,
+        ...contactUpdate,
       },
       { onConflict: "profile_id,sport_id" },
     )
     .select(
-      "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites",
+      "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites,contact_methods,contact_visibility,preferred_contact",
     )
     .single();
 
@@ -170,7 +187,7 @@ export async function PATCH(request: Request) {
     .eq("profile_id", user.id)
     .eq("sport_id", sportId)
     .select(
-      "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites",
+      "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites,contact_methods,contact_visibility,preferred_contact",
     )
     .maybeSingle();
 

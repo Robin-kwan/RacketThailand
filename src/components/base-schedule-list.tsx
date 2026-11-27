@@ -10,7 +10,7 @@ export type BaseScheduleEntry = {
 type BaseScheduleListProps = {
   entries: BaseScheduleEntry[];
   className?: string;
-  variant?: "default" | "responsive";
+  variant?: "default" | "responsive" | "sidebar";
 };
 
 export function BaseScheduleList({
@@ -26,7 +26,48 @@ export function BaseScheduleList({
     return (
       <div
         className={[
-          "grid border-y border-slate-200 sm:grid-cols-2 xl:grid-cols-7",
+          "grid overflow-hidden border-y border-slate-200 sm:grid-cols-2 xl:grid-cols-12",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {entries.map((entry, index) => {
+          const lastTwoColumnRow = index >= Math.floor((entries.length - 1) / 2) * 2;
+          const desktopRowEnd = index === 3 || index === entries.length - 1;
+          return (
+            <div
+              key={entry.id ?? index}
+              className={[
+                "flex min-w-0 items-center justify-between gap-4 border-slate-200 bg-white px-3 py-3 text-sm sm:px-4 xl:flex-col xl:items-start xl:justify-start xl:gap-1",
+                index < entries.length - 1 ? "border-b" : "",
+                index % 2 === 0 ? "sm:border-r" : "",
+                lastTwoColumnRow ? "sm:border-b-0" : "sm:border-b",
+                desktopRowEnd ? "xl:border-r-0" : "xl:border-r",
+                index < 4 ? "xl:col-span-3" : "xl:col-span-4",
+                index < 4 && entries.length > 4 ? "xl:border-b" : "xl:border-b-0",
+                entry.highlighted ? "font-semibold text-emerald-700" : "text-slate-700",
+              ].filter(Boolean).join(" ")}
+            >
+              <span className="min-w-0 font-semibold">{entry.label}</span>
+              <span className="shrink-0 whitespace-nowrap text-right text-slate-600 xl:text-left">
+                {entry.value}
+              </span>
+            </div>
+          );
+        })}
+        {entries.length % 2 === 1 ? (
+          <div aria-hidden className="hidden bg-white sm:block xl:hidden" />
+        ) : null}
+      </div>
+    );
+  }
+
+  if (variant === "sidebar") {
+    return (
+      <div
+        className={[
+          "divide-y divide-slate-200 border-b border-slate-200",
           className,
         ]
           .filter(Boolean)
@@ -35,14 +76,14 @@ export function BaseScheduleList({
         {entries.map((entry, index) => (
           <div
             key={entry.id ?? index}
-            className={`flex items-center justify-between gap-4 border-b border-slate-200 py-3 text-sm last:border-b-0 sm:px-4 sm:[&:nth-last-child(-n+2)]:border-b-0 xl:flex-col xl:items-start xl:gap-1 xl:border-b-0 xl:border-r xl:py-3 xl:last:border-r-0 ${
+            className={`grid min-w-0 grid-cols-[minmax(5.5rem,0.7fr)_minmax(0,1.3fr)] items-start gap-3 bg-white px-1 py-3 text-sm ${
               entry.highlighted
                 ? "font-semibold text-emerald-700"
                 : "text-slate-700"
             }`}
           >
-            <span className="font-semibold">{entry.label}</span>
-            <span className="text-right whitespace-nowrap text-slate-600">
+            <span className="min-w-0 font-semibold">{entry.label}</span>
+            <span className="min-w-0 text-right leading-5 text-slate-600">
               {entry.value}
             </span>
           </div>

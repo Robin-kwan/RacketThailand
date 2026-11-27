@@ -4,19 +4,34 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { CalendarDays, LocateFixed, Search } from "lucide-react";
+import {
+  CalendarDays,
+  Clock3,
+  ChevronDown,
+  LoaderCircle,
+  LocateFixed,
+  Search,
+} from "lucide-react";
 import { track } from "@vercel/analytics";
 import type { GroupRecord } from "@/server/groupFinder";
-import {
-  buildLocalizedPath,
-  type Locale,
-} from "@/lib/i18n";
+import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { BaseSelect } from "@/components/base-select";
 import { NearbyMap, type NearbyMapCourt } from "@/components/nearby-map";
 import { GroupCard } from "@/components/group-card";
 import { TimePickerField } from "@/components/time-picker-field";
 import { DatePickerField } from "@/components/date-picker-field";
-import { getThailandTodayDateString } from "@/lib/casual-play";
+import { getThailandTodayDateString } from "@/lib/date-format";
+import type { GroupContributionAction } from "@/lib/group-contribution";
+import { formatDateInputForDisplay } from "@/lib/date-format";
+import {
+  FinderFilterButton,
+  FinderFilterChip,
+  FinderFilterPanel,
+  FinderSearchField,
+  FinderRequestError,
+} from "@/components/finder-filter-ui";
+
+import { groupDiscoverySessions, nextGroupSessionTime } from "@/lib/group-discovery";
 
 type GroupFinderCopy = {
   searchPlaceholder: string;
@@ -56,6 +71,17 @@ type GroupFinderCopy = {
   lineLabel: string;
   createGroupCta: string;
   playerFinderCta: string;
+  filtersLabel: string;
+  moreFiltersTitle: string;
+  applyFiltersLabel: string;
+  closeFiltersLabel: string;
+  removeFilterLabel: string;
+  loadMoreLabel: string;
+  loadingMoreLabel: string;
+  searchError: string;
+  loadMoreError: string;
+  retryLabel: string;
+  loadingLabel: string;
 };
 
 type GroupFinderProps = {
@@ -65,7 +91,10 @@ type GroupFinderProps = {
   copy: GroupFinderCopy;
   dayLabels: Record<string, string>;
   initialGroups: GroupRecord[];
+  initialNow: string;
   total: number;
+  groupActionHref: string;
+  groupActionKind: GroupContributionAction["kind"];
   initialSearch?: string;
   initialDate?: string;
   initialDay?: string;
@@ -77,7 +106,6 @@ type GroupFinderProps = {
 
 const PAGE_SIZE = 12;
 const NEARBY_CANDIDATE_LIMIT = 300;
-const TODAY_DATE = getThailandTodayDateString();
 const NEARBY_TODAY_EVENT = "racketthailand:group-finder-nearby-today";
 type LocationState = { latitude: number; longitude: number };
 type NearbyCourtGroup = {
@@ -132,7 +160,10 @@ export function GroupFinder({
   copy,
   dayLabels,
   initialGroups,
+  initialNow,
   total,
+  groupActionHref,
+  groupActionKind,
   initialSearch = "",
   initialDate = "",
   initialDay = "",
@@ -149,6 +180,7 @@ export function GroupFinder({
   const [endTimeFilter, setEndTimeFilter] = useState(initialEndTime);
   const [playFormatFilter, setPlayFormatFilter] = useState(initialPlayFormat);
   const [walkInFilter, setWalkInFilter] = useState(initialAllowWalkIn);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({
     search: initialSearch,
     date: initialDate,
@@ -165,20 +197,21 @@ export function GroupFinder({
   const [count, setCount] = useState(total);
   const [hasMore, setHasMore] = useState(initialGroups.length < total);
   const [userLocation, setUserLocation] = useState<LocationState | null>(null);
+  const [referenceTimeIso, setReferenceTimeIso] = useState(initialNow);
+  const referenceNow = useMemo(() => new Date(referenceTimeIso), [referenceTimeIso]);
   const [nearbyStatus, setNearbyStatus] = useState<string | null>(null);
   const [locatingNearby, setLocatingNearby] = useState(false);
   const [prioritizeNearby, setPrioritizeNearby] = useState(false);
   const [expandedNearbyCourtIds, setExpandedNearbyCourtIds] = useState<
     Set<string>
   >(new Set());
-  const [allowAutoLoadMore, setAllowAutoLoadMore] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const nearbyTodayHandlerRef = useRef<() => void>(() => undefined);
   const hasSkippedInitialLoadRef = useRef(false);
-  const fallbackGroupName =
-    locale === "th" ? "กลุ่มชุมชน" : "Community group";
-  const fallbackGroupPhotoAlt =
-    locale === "th" ? "รูปกลุ่ม" : "Group photo";
+  const [searchRevision, setSearchRevision] = useState(0);
+  const [loadError, setLoadError] = useState<"search" | "more" | null>(null);
+  const loadMoreAbortRef = useRef<AbortController | null>(null);
+  const fallbackGroupName = locale === "th" ? "กลุ่มชุมชน" : "Community group";
+  const fallbackGroupPhotoAlt = locale === "th" ? "รูปกลุ่ม" : "Group photo";
   const buildCourtHref = useCallback(
     (courtId: string) =>
       buildLocalizedPath(
@@ -188,6 +221,11 @@ export function GroupFinder({
     [locale, sportCode],
   );
   const distanceUnit = locale === "th" ? "กม." : "km";
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setReferenceTimeIso(new Date().toISOString()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -213,10 +251,7 @@ export function GroupFinder({
     if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
       window.history.replaceState(null, "", nextUrl);
     }
-  }, [
-    appliedFilters,
-    pathname,
-  ]);
+  }, [appliedFilters, pathname]);
 
   useEffect(() => {
     setServerGroups(initialGroups);
@@ -224,6 +259,7 @@ export function GroupFinder({
 
   useEffect(() => {
     let isActive = true;
+    const controller = new AbortController();
     const load = async () => {
       if (
         !hasSkippedInitialLoadRef.current &&
@@ -241,15 +277,17 @@ export function GroupFinder({
         return;
       }
       hasSkippedInitialLoadRef.current = true;
+      loadMoreAbortRef.current?.abort();
+      loadMoreAbortRef.current = null;
+      setLoadingMore(false);
+      setLoadError(null);
       setLoading(true);
       try {
         const isNearbyMode = prioritizeNearby && Boolean(userLocation);
         const params = new URLSearchParams({
           sport: sportCode,
           lang: locale,
-          limit: (
-            isNearbyMode ? NEARBY_CANDIDATE_LIMIT : PAGE_SIZE
-          ).toString(),
+          limit: (isNearbyMode ? NEARBY_CANDIDATE_LIMIT : PAGE_SIZE).toString(),
         });
         if (isNearbyMode && userLocation) {
           params.set("nearbyLat", String(userLocation.latitude));
@@ -258,22 +296,29 @@ export function GroupFinder({
         if (appliedFilters.search) params.set("search", appliedFilters.search);
         if (appliedFilters.date) params.set("date", appliedFilters.date);
         if (appliedFilters.day) params.set("day", appliedFilters.day);
-        if (appliedFilters.startTime) params.set("startTime", appliedFilters.startTime);
-        if (appliedFilters.endTime) params.set("endTime", appliedFilters.endTime);
-        if (appliedFilters.playFormat) params.set("playFormat", appliedFilters.playFormat);
-        if (appliedFilters.allowWalkIn) params.set("allowWalkIn", appliedFilters.allowWalkIn);
+        if (appliedFilters.startTime)
+          params.set("startTime", appliedFilters.startTime);
+        if (appliedFilters.endTime)
+          params.set("endTime", appliedFilters.endTime);
+        if (appliedFilters.playFormat)
+          params.set("playFormat", appliedFilters.playFormat);
+        if (appliedFilters.allowWalkIn)
+          params.set("allowWalkIn", appliedFilters.allowWalkIn);
         const response = await fetch(`/api/groups?${params.toString()}`, {
           cache: "no-store",
+          signal: controller.signal,
         });
         const data = await response.json().catch(() => null);
-        if (!response.ok || !data) return;
         if (!isActive) return;
+        if (!response.ok || !Array.isArray(data?.groups)) throw new Error("Group search failed");
         const nextGroups = (data.groups ?? []) as GroupRecord[];
         const nextCount = data.count ?? nextGroups.length;
         setServerGroups(nextGroups);
         setCount(nextCount);
         setPage(1);
         setHasMore(!isNearbyMode && nextGroups.length < nextCount);
+      } catch {
+        if (isActive && !controller.signal.aborted) setLoadError("search");
       } finally {
         if (isActive) setLoading(false);
       }
@@ -281,6 +326,9 @@ export function GroupFinder({
     void load();
     return () => {
       isActive = false;
+      controller.abort();
+      loadMoreAbortRef.current?.abort();
+      loadMoreAbortRef.current = null;
     };
   }, [
     sportCode,
@@ -295,11 +343,15 @@ export function GroupFinder({
     initialStartTime,
     prioritizeNearby,
     userLocation,
+    searchRevision,
   ]);
 
   const loadMoreGroups = useCallback(async () => {
     if (loading || loadingMore || !hasMore || prioritizeNearby) return;
     const nextPage = page + 1;
+    const controller = new AbortController();
+    loadMoreAbortRef.current = controller;
+    setLoadError(null);
     setLoadingMore(true);
     try {
       const params = new URLSearchParams({
@@ -311,18 +363,21 @@ export function GroupFinder({
       if (appliedFilters.search) params.set("search", appliedFilters.search);
       if (appliedFilters.date) params.set("date", appliedFilters.date);
       if (appliedFilters.day) params.set("day", appliedFilters.day);
-      if (appliedFilters.startTime) params.set("startTime", appliedFilters.startTime);
+      if (appliedFilters.startTime)
+        params.set("startTime", appliedFilters.startTime);
       if (appliedFilters.endTime) params.set("endTime", appliedFilters.endTime);
-      if (appliedFilters.playFormat) params.set("playFormat", appliedFilters.playFormat);
-      if (appliedFilters.allowWalkIn) params.set("allowWalkIn", appliedFilters.allowWalkIn);
+      if (appliedFilters.playFormat)
+        params.set("playFormat", appliedFilters.playFormat);
+      if (appliedFilters.allowWalkIn)
+        params.set("allowWalkIn", appliedFilters.allowWalkIn);
 
       const response = await fetch(`/api/groups?${params.toString()}`, {
         cache: "no-store",
+        signal: controller.signal,
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok || !data) {
-        return;
-      }
+      if (controller.signal.aborted) return;
+      if (!response.ok || !Array.isArray(data?.groups)) throw new Error("Group pagination failed");
 
       const nextGroups = (data.groups ?? []) as GroupRecord[];
       const nextCount = data.count ?? count;
@@ -335,8 +390,13 @@ export function GroupFinder({
         setHasMore(values.length < nextCount);
         return values;
       });
+    } catch {
+      if (!controller.signal.aborted) setLoadError("more");
     } finally {
-      setLoadingMore(false);
+      if (loadMoreAbortRef.current === controller) {
+        loadMoreAbortRef.current = null;
+        setLoadingMore(false);
+      }
     }
   }, [
     count,
@@ -349,25 +409,6 @@ export function GroupFinder({
     prioritizeNearby,
     sportCode,
   ]);
-
-  useEffect(() => {
-    const target = sentinelRef.current;
-    if (!target || !hasMore || !allowAutoLoadMore || prioritizeNearby) {
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const firstEntry = entries[0];
-        if (firstEntry?.isIntersecting) {
-          void loadMoreGroups();
-        }
-      },
-      { rootMargin: "500px 0px" },
-    );
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [allowAutoLoadMore, hasMore, loadMoreGroups, prioritizeNearby]);
 
   const handleReset = () => {
     track("finder_filter_used", {
@@ -386,9 +427,15 @@ export function GroupFinder({
     setPrioritizeNearby(false);
     setNearbyStatus(null);
     setExpandedNearbyCourtIds(new Set());
+    setFiltersOpen(false);
     setAppliedFilters({
-      search: "", date: "", day: "", startTime: "", endTime: "",
-      playFormat: "", allowWalkIn: "",
+      search: "",
+      date: "",
+      day: "",
+      startTime: "",
+      endTime: "",
+      playFormat: "",
+      allowWalkIn: "",
     });
   };
 
@@ -399,14 +446,19 @@ export function GroupFinder({
       cta: "search",
     });
     setAppliedFilters({
-      search: search.trim(), date: dateFilter, day: dayFilter,
-      startTime: startTimeFilter, endTime: endTimeFilter,
-      playFormat: playFormatFilter, allowWalkIn: walkInFilter,
+      search: search.trim(),
+      date: dateFilter,
+      day: dayFilter,
+      startTime: startTimeFilter,
+      endTime: endTimeFilter,
+      playFormat: playFormatFilter,
+      allowWalkIn: walkInFilter,
     });
     setUserLocation(null);
     setPrioritizeNearby(false);
     setNearbyStatus(null);
     setExpandedNearbyCourtIds(new Set());
+    setFiltersOpen(false);
   };
 
   const dayOptions = useMemo(
@@ -426,11 +478,7 @@ export function GroupFinder({
       { value: "double", label: copy.playFormatDouble },
       { value: "single", label: copy.playFormatSingle },
     ],
-    [
-      copy.anyPlayFormatLabel,
-      copy.playFormatDouble,
-      copy.playFormatSingle,
-    ],
+    [copy.anyPlayFormatLabel, copy.playFormatDouble, copy.playFormatSingle],
   );
   const walkInOptions = useMemo(
     () => [
@@ -440,13 +488,84 @@ export function GroupFinder({
     ],
     [copy.anyWalkInLabel, copy.walkInsWelcome, copy.walkInsClosed],
   );
+  const advancedFilterCount = [
+    appliedFilters.day,
+    appliedFilters.startTime || appliedFilters.endTime,
+    appliedFilters.playFormat,
+    appliedFilters.allowWalkIn,
+  ].filter(Boolean).length;
+  const hasActiveFilters =
+    Object.values(appliedFilters).some(Boolean) || prioritizeNearby;
+  const activeFilterChips = [
+    appliedFilters.date
+      ? {
+          key: "date",
+          label: `${copy.dateFilterLabel}: ${formatDateInputForDisplay(appliedFilters.date)}`,
+        }
+      : null,
+    appliedFilters.day
+      ? {
+          key: "day",
+          label: `${copy.dayFilterLabel}: ${dayLabels[appliedFilters.day] ?? appliedFilters.day}`,
+        }
+      : null,
+    appliedFilters.startTime || appliedFilters.endTime
+      ? {
+          key: "time",
+          label: appliedFilters.startTime && appliedFilters.endTime
+            ? `${copy.startTimeLabel}: ${appliedFilters.startTime}–${appliedFilters.endTime}`
+            : appliedFilters.startTime
+              ? `${copy.startTimeLabel}: ${appliedFilters.startTime}`
+              : `${copy.endTimeLabel}: ${appliedFilters.endTime}`,
+        }
+      : null,
+    appliedFilters.playFormat
+      ? {
+          key: "playFormat",
+          label: `${copy.playFormatFilterLabel}: ${
+            playFormatOptions.find(
+              (option) => option.value === appliedFilters.playFormat,
+            )?.label ?? appliedFilters.playFormat
+          }`,
+        }
+      : null,
+    appliedFilters.allowWalkIn
+      ? {
+          key: "allowWalkIn",
+          label: `${copy.walkInFilterLabel}: ${
+            walkInOptions.find(
+              (option) => option.value === appliedFilters.allowWalkIn,
+            )?.label ?? appliedFilters.allowWalkIn
+          }`,
+        }
+      : null,
+  ].filter((item): item is { key: string; label: string } => item !== null);
+
+  const clearAppliedFilter = (key: string) => {
+    const nextFilters = { ...appliedFilters };
+    if (key === "time") {
+      nextFilters.startTime = "";
+      nextFilters.endTime = "";
+      setStartTimeFilter("");
+      setEndTimeFilter("");
+    } else if (key in nextFilters) {
+      nextFilters[key as keyof typeof nextFilters] = "";
+      if (key === "date") setDateFilter("");
+      if (key === "day") setDayFilter("");
+      if (key === "playFormat") setPlayFormatFilter("");
+      if (key === "allowWalkIn") setWalkInFilter("");
+    }
+    setAppliedFilters(nextFilters);
+    setUserLocation(null);
+    setPrioritizeNearby(false);
+    setNearbyStatus(null);
+    setExpandedNearbyCourtIds(new Set());
+  };
   const filteredGroups = serverGroups;
   const countSummary =
     locale === "th"
       ? `${count.toLocaleString("th-TH")} กลุ่ม`
       : `${count.toLocaleString("en-US")} groups`;
-  const loadingMoreLabel =
-    locale === "th" ? "กำลังโหลดกลุ่มเพิ่ม..." : "Loading more groups...";
 
   const requestNearby = ({
     cta,
@@ -477,10 +596,13 @@ export function GroupFinder({
           setDayFilter("");
         }
         setAppliedFilters({
-          search: search.trim(), date: date ?? dateFilter,
+          search: search.trim(),
+          date: date ?? dateFilter,
           day: date ? "" : dayFilter,
-          startTime: startTimeFilter, endTime: endTimeFilter,
-          playFormat: playFormatFilter, allowWalkIn: walkInFilter,
+          startTime: startTimeFilter,
+          endTime: endTimeFilter,
+          playFormat: playFormatFilter,
+          allowWalkIn: walkInFilter,
         });
         setUserLocation(coords);
         setPrioritizeNearby(true);
@@ -537,38 +659,10 @@ export function GroupFinder({
     }
   };
 
-  useEffect(() => {
-    if (typeof window === "undefined" || allowAutoLoadMore) return undefined;
-    if (window.scrollY > 0) {
-      setAllowAutoLoadMore(true);
-      return undefined;
-    }
-
-    const enableAutoLoadMore = () => setAllowAutoLoadMore(true);
-    window.addEventListener("scroll", enableAutoLoadMore, {
-      passive: true,
-      once: true,
-    });
-    window.addEventListener("wheel", enableAutoLoadMore, {
-      passive: true,
-      once: true,
-    });
-    window.addEventListener("touchmove", enableAutoLoadMore, {
-      passive: true,
-      once: true,
-    });
-
-    return () => {
-      window.removeEventListener("scroll", enableAutoLoadMore);
-      window.removeEventListener("wheel", enableAutoLoadMore);
-      window.removeEventListener("touchmove", enableAutoLoadMore);
-    };
-  }, [allowAutoLoadMore]);
-
   const groupsWithLocation = useMemo(() => {
     return filteredGroups.map((group) => {
       const sessionsWithCoords =
-        group.group_sessions?.filter((session) => {
+        [...(group.group_sessions ?? []), ...(group.group_events ?? []).map(event => ({courts: event.courts}))].filter((session) => {
           const lat = parseCoordinate(session.courts?.latitude);
           const lng = parseCoordinate(session.courts?.longitude);
           return lat !== null && lng !== null;
@@ -586,62 +680,60 @@ export function GroupFinder({
   }, [filteredGroups]);
 
   const groupsWithDistance = useMemo(() => {
-    return groupsWithLocation.map(({
-      group,
-      sessionsWithCoords,
-      linkedCourtsWithCoords,
-    }) => {
-      if (!userLocation) {
-        return {
-          group,
-          distanceKm: null as number | null,
-          nearestCourt: null as NearbyMapCourt | null,
-        };
-      }
-      const candidateCourts: NearbyCandidateCourt[] = [];
-      const seenCourtIds = new Set<string>();
-      sessionsWithCoords.forEach((session) => {
-        if (session.courts?.id && !seenCourtIds.has(session.courts.id)) {
-          seenCourtIds.add(session.courts.id);
-          candidateCourts.push(session.courts);
-        }
-      });
-      linkedCourtsWithCoords.forEach((court) => {
-        if (court?.id && !seenCourtIds.has(court.id)) {
-          seenCourtIds.add(court.id);
-          candidateCourts.push(court);
-        }
-      });
-
-      let bestDistance = Number.POSITIVE_INFINITY;
-      let bestCourt: NearbyMapCourt | null = null;
-      candidateCourts.forEach((court) => {
-        const lat = parseCoordinate(court.latitude);
-        const lng = parseCoordinate(court.longitude);
-        const courtId = court.id;
-        if (lat === null || lng === null || !courtId) return;
-        const distance = haversineDistance(userLocation, {
-          latitude: lat,
-          longitude: lng,
-        });
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          bestCourt = {
-            id: courtId,
-            name: court.name ?? (locale === "th" ? "สนาม" : "Court"),
-            latitude: lat,
-            longitude: lng,
-            href: buildCourtHref(courtId),
+    return groupsWithLocation.map(
+      ({ group, sessionsWithCoords, linkedCourtsWithCoords }) => {
+        if (!userLocation) {
+          return {
+            group,
+            distanceKm: null as number | null,
+            nearestCourt: null as NearbyMapCourt | null,
           };
         }
-      });
-      return {
-        group,
-        distanceKm:
-          bestCourt && Number.isFinite(bestDistance) ? bestDistance : null,
-        nearestCourt: bestCourt,
-      };
-    });
+        const candidateCourts: NearbyCandidateCourt[] = [];
+        const seenCourtIds = new Set<string>();
+        sessionsWithCoords.forEach((session) => {
+          if (session.courts?.id && !seenCourtIds.has(session.courts.id)) {
+            seenCourtIds.add(session.courts.id);
+            candidateCourts.push(session.courts);
+          }
+        });
+        linkedCourtsWithCoords.forEach((court) => {
+          if (court?.id && !seenCourtIds.has(court.id)) {
+            seenCourtIds.add(court.id);
+            candidateCourts.push(court);
+          }
+        });
+
+        let bestDistance = Number.POSITIVE_INFINITY;
+        let bestCourt: NearbyMapCourt | null = null;
+        candidateCourts.forEach((court) => {
+          const lat = parseCoordinate(court.latitude);
+          const lng = parseCoordinate(court.longitude);
+          const courtId = court.id;
+          if (lat === null || lng === null || !courtId) return;
+          const distance = haversineDistance(userLocation, {
+            latitude: lat,
+            longitude: lng,
+          });
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestCourt = {
+              id: courtId,
+              name: court.name ?? (locale === "th" ? "สนาม" : "Court"),
+              latitude: lat,
+              longitude: lng,
+              href: buildCourtHref(courtId),
+            };
+          }
+        });
+        return {
+          group,
+          distanceKm:
+            bestCourt && Number.isFinite(bestDistance) ? bestDistance : null,
+          nearestCourt: bestCourt,
+        };
+      },
+    );
   }, [buildCourtHref, groupsWithLocation, locale, userLocation]);
 
   const displayedGroups = useMemo(() => {
@@ -652,8 +744,8 @@ export function GroupFinder({
         return aDist - bDist;
       });
     }
-    return groupsWithDistance;
-  }, [groupsWithDistance, prioritizeNearby, userLocation]);
+    return [...groupsWithDistance].sort((a,b) => nextGroupSessionTime(a.group, referenceNow) - nextGroupSessionTime(b.group, referenceNow));
+  }, [groupsWithDistance, prioritizeNearby, referenceNow, userLocation]);
 
   const mapCourts = useMemo(() => {
     const courtMap = new Map<string, NearbyMapCourt>();
@@ -701,27 +793,20 @@ export function GroupFinder({
 
   return (
     <div id="group-finder-results" className="scroll-mt-24 space-y-6">
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_16rem_16rem] md:items-end">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">
-              {copy.searchPlaceholder}
-            </label>
-            <input
-              type="text"
+      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-[minmax(20rem,1fr)_14rem_10rem_auto_auto] lg:items-center">
+          <div className="col-span-2 lg:col-span-1">
+            <FinderSearchField
+              label={copy.searchPlaceholder}
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") handleSearch();
-              }}
-              placeholder={copy.searchPlaceholder}
-              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--rt-primary)] focus:ring-4 focus:ring-[rgb(var(--rt-primary-rgb)/0.12)]"
+              onChange={setSearch}
+              onSubmit={handleSearch}
             />
           </div>
           <DatePickerField
             label={copy.dateFilterLabel}
             value={dateFilter}
-            min={TODAY_DATE}
+            min={getThailandTodayDateString(referenceNow)}
             onChange={(value) => {
               setDateFilter(value);
               setDayFilter("");
@@ -732,110 +817,158 @@ export function GroupFinder({
               });
             }}
             locale={locale}
+            className="[&>label]:sr-only"
+            inputClassName="h-12 md:h-14"
+            suffix={<CalendarDays className="h-4 w-4" aria-hidden />}
           />
-          <BaseSelect
-            label={copy.dayFilterLabel}
-            name="dayFilter"
-            value={dayFilter}
-            onChange={(event) => {
-              setDayFilter(event.target.value);
-              if (event.target.value) setDateFilter("");
-              track("finder_filter_used", {
-                surface: "group_finder",
-                sport: sportCode,
-                cta: "day",
-              });
-            }}
-            options={dayOptions}
-            variant="light"
+          <FinderFilterButton
+            label={copy.filtersLabel}
+            open={filtersOpen}
+            activeCount={advancedFilterCount}
+            onClick={() => setFiltersOpen((current) => !current)}
           />
-        </div>
-        <div className="mt-4 grid gap-4 lg:grid-cols-4">
-          <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:col-span-2">
-            <TimePickerField
-              label={copy.startTimeLabel}
-              value={startTimeFilter}
-              placeholder="--:--"
-              onChange={(value) => {
-                setStartTimeFilter(value);
-                track("finder_filter_used", {
-                  surface: "group_finder",
-                  sport: sportCode,
-                  cta: "start_time",
-                });
-              }}
-              allowClear
-              clearLabel={copy.timeClearLabel}
-              className="min-w-0"
-            />
-            <TimePickerField
-              label={copy.endTimeLabel}
-              value={endTimeFilter}
-              placeholder="--:--"
-              onChange={(value) => {
-                setEndTimeFilter(value);
-                track("finder_filter_used", {
-                  surface: "group_finder",
-                  sport: sportCode,
-                  cta: "end_time",
-                });
-              }}
-              allowClear
-              clearLabel={copy.timeClearLabel}
-              className="min-w-0"
-            />
-          </div>
-          <BaseSelect
-            label={copy.playFormatFilterLabel}
-            name="playFormatFilter"
-            value={playFormatFilter}
-            onChange={(event) => {
-              setPlayFormatFilter(event.target.value);
-              track("finder_filter_used", {
-                surface: "group_finder",
-                sport: sportCode,
-                cta: "play_format",
-              });
-            }}
-            options={playFormatOptions}
-            variant="light"
-          />
-          <BaseSelect
-            label={copy.walkInFilterLabel}
-            name="walkInFilter"
-            value={walkInFilter}
-            onChange={(event) => {
-              setWalkInFilter(event.target.value);
-              track("finder_filter_used", {
-                surface: "group_finder",
-                sport: sportCode,
-                cta: "walk_in",
-              });
-            }}
-            options={walkInOptions}
-            variant="light"
-          />
-        </div>
-        <div className="mt-5 flex flex-wrap justify-end gap-3">
-          <button
-            type="button"
-            onClick={handleSearch}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300"
-          >
-            <Search className="h-4 w-4" aria-hidden />
-            {locale === "th" ? "ค้นหา" : "Search"}
-          </button>
           <button
             type="button"
             onClick={handleRequestNearby}
             disabled={locatingNearby}
-            className="rt-btn-primary inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:border disabled:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:transform-none"
+            className="rt-btn-primary inline-flex h-12 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:border disabled:border-slate-500 disabled:bg-slate-500 disabled:text-white disabled:transform-none md:h-14"
           >
             <LocateFixed className="h-4 w-4" aria-hidden />
             {locatingNearby ? copy.nearbyFinding : copy.nearbyButton}
           </button>
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-300 md:h-14"
+          >
+            <Search className="h-4 w-4" aria-hidden />
+            {locale === "th" ? "ค้นหา" : "Search"}
+          </button>
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+
+        <FinderFilterPanel
+          open={filtersOpen}
+          title={copy.moreFiltersTitle}
+          closeLabel={copy.closeFiltersLabel}
+          onClose={() => setFiltersOpen(false)}
+        >
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <BaseSelect
+              label={copy.dayFilterLabel}
+              name="dayFilter"
+              value={dayFilter}
+              onChange={(event) => {
+                setDayFilter(event.target.value);
+                if (event.target.value) setDateFilter("");
+                track("finder_filter_used", {
+                  surface: "group_finder",
+                  sport: sportCode,
+                  cta: "day",
+                });
+              }}
+              options={dayOptions}
+              variant="light"
+            />
+            <div className="grid min-w-0 grid-cols-2 gap-3">
+              <TimePickerField
+                label={copy.startTimeLabel}
+                value={startTimeFilter}
+                placeholder="--:--"
+                onChange={(value) => {
+                  setStartTimeFilter(value);
+                  track("finder_filter_used", {
+                    surface: "group_finder",
+                    sport: sportCode,
+                    cta: "start_time",
+                  });
+                }}
+                allowClear
+                clearLabel={copy.timeClearLabel}
+                className="min-w-0"
+              />
+              <TimePickerField
+                label={copy.endTimeLabel}
+                value={endTimeFilter}
+                placeholder="--:--"
+                onChange={(value) => {
+                  setEndTimeFilter(value);
+                  track("finder_filter_used", {
+                    surface: "group_finder",
+                    sport: sportCode,
+                    cta: "end_time",
+                  });
+                }}
+                allowClear
+                clearLabel={copy.timeClearLabel}
+                className="min-w-0"
+              />
+            </div>
+            <BaseSelect
+              label={copy.playFormatFilterLabel}
+              name="playFormatFilter"
+              value={playFormatFilter}
+              onChange={(event) => {
+                setPlayFormatFilter(event.target.value);
+                track("finder_filter_used", {
+                  surface: "group_finder",
+                  sport: sportCode,
+                  cta: "play_format",
+                });
+              }}
+              options={playFormatOptions}
+              variant="light"
+            />
+            <BaseSelect
+              label={copy.walkInFilterLabel}
+              name="walkInFilter"
+              value={walkInFilter}
+              onChange={(event) => {
+                setWalkInFilter(event.target.value);
+                track("finder_filter_used", {
+                  surface: "group_finder",
+                  sport: sportCode,
+                  cta: "walk_in",
+                });
+              }}
+              options={walkInOptions}
+              variant="light"
+            />
+          </div>
+          <div className="mt-5 flex items-center justify-end gap-3">
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="px-3 py-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
+              >
+                {copy.reset}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="inline-flex h-11 items-center justify-center rounded-full bg-slate-950 px-5 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              {copy.applyFiltersLabel}
+            </button>
+          </div>
+        </FinderFilterPanel>
+
+        {activeFilterChips.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {activeFilterChips.map((filter) => (
+              <FinderFilterChip
+                key={filter.key}
+                label={filter.label}
+                icon={filter.key === "time" ? <Clock3 className="size-4" /> : filter.key === "date" || filter.key === "day" ? <CalendarDays className="size-4" /> : undefined}
+                removeLabel={copy.removeFilterLabel}
+                onRemove={() => clearAppliedFilter(filter.key)}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-slate-500">
           <p className="inline-flex items-center gap-2">
             <span>{countSummary}</span>
             {loading && (
@@ -861,13 +994,15 @@ export function GroupFinder({
                 {copy.nearbyClear}
               </button>
             )}
-            <button
-              type="button"
-              onClick={handleReset}
-              className="text-slate-700 underline-offset-4 hover:underline"
-            >
-              {copy.reset}
-            </button>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="text-slate-700 underline-offset-4 hover:underline"
+              >
+                {copy.reset}
+              </button>
+            ) : null}
           </div>
         </div>
         {nearbyStatus && (
@@ -882,6 +1017,14 @@ export function GroupFinder({
           </p>
         )}
       </div>
+
+      {loadError === "search" && !loading && (
+        <FinderRequestError
+          message={copy.searchError}
+          retryLabel={copy.retryLabel}
+          onRetry={() => setSearchRevision((current) => current + 1)}
+        />
+      )}
 
       {prioritizeNearby && userLocation && mapCourts.length > 0 && (
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
@@ -914,7 +1057,8 @@ export function GroupFinder({
                       aria-expanded={isExpanded}
                     >
                       <span className="block truncate font-semibold text-slate-900">
-                        {entry.court.name ?? (locale === "th" ? "สนาม" : "Court")}
+                        {entry.court.name ??
+                          (locale === "th" ? "สนาม" : "Court")}
                       </span>
                       <span className="mt-0.5 block text-xs text-slate-500">
                         {copy.distanceLabel}: {entry.distanceKm.toFixed(2)}{" "}
@@ -951,7 +1095,10 @@ export function GroupFinder({
                       {entry.groups.map(({ group }) => (
                         <Link
                           key={`nearby-court-${entry.court.id}-${group.id}`}
-                          href={buildLocalizedPath(`/groups/${group.id}`, locale)}
+                          href={buildLocalizedPath(
+                            `/groups/${group.id}`,
+                            locale,
+                          )}
                           target="_blank"
                           rel="noreferrer"
                           className="block rounded-xl border border-slate-100 px-3 py-2 hover:border-emerald-200 hover:bg-emerald-50/50"
@@ -995,7 +1142,8 @@ export function GroupFinder({
                       {entry.group.name ?? fallbackGroupName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)} {distanceUnit}
+                      {copy.distanceLabel}: {entry.distanceKm?.toFixed(2)}{" "}
+                      {distanceUnit}
                     </p>
                     {typeof entry.group.player_amount === "number" &&
                       Number.isFinite(entry.group.player_amount) && (
@@ -1025,16 +1173,23 @@ export function GroupFinder({
         </div>
       )}
 
-      {displayedGroups.length === 0 ? (
+      {loading && displayedGroups.length === 0 ? (
+        <p role="status" className="py-12 text-center text-sm text-slate-600">{copy.loadingLabel}</p>
+      ) : displayedGroups.length === 0 && loadError !== "search" ? (
         <div className="rounded-lg border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-slate-600">
           <p className="text-xl font-semibold text-slate-900">
             {copy.emptyTitle}
           </p>
           <p className="mt-2 text-sm text-slate-500">{copy.emptyDescription}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
+            {hasActiveFilters && (
+              <button type="button" onClick={handleReset} className="rt-btn-primary min-h-11 px-4 py-2 text-sm">
+                {copy.reset}
+              </button>
+            )}
             <Link
               href={buildLocalizedPath(`/${sportCode}/players`, locale)}
-              className="rt-btn-primary inline-flex items-center justify-center px-4 py-2 text-xs"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2"
               onClick={() =>
                 track("empty_state_cta_click", {
                   surface: "group_finder",
@@ -1046,16 +1201,13 @@ export function GroupFinder({
               {copy.playerFinderCta}
             </Link>
             <Link
-              href={buildLocalizedPath(
-                `/groups/create?sport=${encodeURIComponent(sportCode)}`,
-                locale,
-              )}
-              className="rt-btn-group inline-flex items-center justify-center px-4 py-2 text-xs"
+              href={groupActionHref}
+              className="rt-btn-group inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm"
               onClick={() =>
                 track("empty_state_cta_click", {
                   surface: "group_finder",
                   sport: sportCode,
-                  cta: "create_group",
+                  cta: groupActionKind,
                 })
               }
             >
@@ -1067,16 +1219,39 @@ export function GroupFinder({
         <>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5">
             {displayedGroups.map((entry) => {
-              const { group, distanceKm } = entry;
+              const { group, distanceKm, nearestCourt } = entry;
               const primaryPhoto =
                 group.group_photos?.find((photo) => photo.is_primary)
                   ?.image_url ??
                 group.group_photos?.[0]?.image_url ??
                 fallbackImage;
-              const groupHref = buildLocalizedPath(`/groups/${group.id}`, locale);
+              const groupHref = buildLocalizedPath(
+                `/groups/${group.id}`,
+                locale,
+              );
+              const discoverySessions = groupDiscoverySessions(group, referenceNow);
+              const cardSessions = appliedFilters.date
+                ? (group.matched_sessions ?? [])
+                : discoverySessions;
+              const featuredSession = cardSessions[0];
+              const featuredCourt = featuredSession?.courts;
+              const areaCourt =
+                group.group_events?.find((event) => event.courts?.id === featuredCourt?.id)?.courts ??
+                group.group_sessions?.find((session) => session.courts?.id === featuredCourt?.id)?.courts ??
+                group.group_events?.find((event) => event.courts)?.courts ??
+                group.group_sessions?.find((session) => session.courts)?.courts ??
+                group.court_groups?.find((link) => link.courts)?.courts;
+              const area = [areaCourt?.district, areaCourt?.province].filter(Boolean).join(", ");
+              const isNearestCourtDifferent = Boolean(
+                featuredCourt?.name && nearestCourt && featuredCourt.id !== nearestCourt.id,
+              );
               const distanceLabel =
                 distanceKm !== null
                   ? `${copy.distanceLabel}: ${distanceKm.toFixed(1)} ${distanceUnit}`
+                  : null;
+              const distanceValue =
+                distanceKm !== null
+                  ? `${isNearestCourtDifferent ? locale === "th" ? "ใกล้สุด " : "Nearest " : ""}${distanceKm.toFixed(1)} ${distanceUnit}`
                   : null;
               return (
                 <GroupCard
@@ -1086,31 +1261,46 @@ export function GroupFinder({
                   imageUrl={primaryPhoto}
                   imageAlt={group.name ?? fallbackGroupPhotoAlt}
                   description={group.description}
-                  sessions={
-                    appliedFilters.date
-                      ? group.matched_sessions ?? []
-                      : group.group_sessions ?? []
-                  }
+                  sessions={cardSessions}
+                  featuredSession={featuredSession}
                   playFormat={group.play_format ?? null}
                   allowWalkIn={group.allow_walk_in ?? null}
                   dayLabels={dayLabels}
                   scheduleAnytime={copy.scheduleAnytime}
                   locale={locale}
-                  showSessions={Boolean(appliedFilters.date)}
-                  showDescription
-                  showLocation={false}
+                  showSessions
+                  compactSessions
+                  weeklySessionCount={group.group_sessions?.length ?? 0}
+                  showDescription={false}
+                  location={distanceKm === null ? area : undefined}
+                  showLocation={distanceKm === null && Boolean(area)}
+                  imageAspectClass="aspect-[5/4]"
                   distanceLabel={distanceLabel}
+                  distanceValue={distanceValue}
                   courtSportCode={sportCode}
                 />
               );
             })}
           </div>
-          {hasMore && !prioritizeNearby && (
-            <div
-              ref={sentinelRef}
-              className="flex min-h-16 items-center justify-center text-sm text-slate-500"
-            >
-              {loadingMore ? loadingMoreLabel : ""}
+          {loadError === "more" && (
+            <FinderRequestError message={copy.loadMoreError} retryLabel={copy.retryLabel} onRetry={() => void loadMoreGroups()} />
+          )}
+          {hasMore && !prioritizeNearby && !loading && !loadError && (
+            <div className="flex min-h-20 items-center justify-center pt-4">
+              <button
+                type="button"
+                onClick={() => void loadMoreGroups()}
+                disabled={loadingMore}
+                aria-busy={loadingMore}
+                className="rt-btn-primary inline-flex min-w-40 items-center justify-center gap-2 px-5 py-2.5 text-sm disabled:cursor-wait disabled:opacity-70"
+              >
+                {loadingMore ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <ChevronDown className="h-4 w-4" aria-hidden />
+                )}
+                {loadingMore ? copy.loadingMoreLabel : copy.loadMoreLabel}
+              </button>
             </div>
           )}
         </>
@@ -1129,8 +1319,7 @@ const haversineDistance = (a: LocationState, b: LocationState) => {
   const sinLat = Math.sin(dLat / 2);
   const sinLon = Math.sin(dLon / 2);
   const haversine =
-    sinLat * sinLat +
-    Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon;
+    sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon;
   const c = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
   return EARTH_RADIUS_KM * c;
 };

@@ -2,7 +2,7 @@
 
 import type { TouchEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { ResilientImage as Image } from "./resilient-image";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -17,7 +17,7 @@ type ImageLightboxProps = {
 export function ImageLightbox({
   images,
   initialIndex = 0,
-  unoptimized = false,
+  unoptimized = true,
   variant = "gallery",
   onClose,
 }: ImageLightboxProps) {

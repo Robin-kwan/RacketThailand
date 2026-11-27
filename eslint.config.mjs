@@ -22,7 +22,11 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".vercel/**",
+    ".codex/**",
     "out/**",
+    "output/**",
+    "outputs/**",
     "build/**",
     "next-env.d.ts",
   ]),

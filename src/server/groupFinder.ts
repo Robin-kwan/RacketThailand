@@ -13,6 +13,9 @@ import { supabaseSelect } from "@/lib/supabaseRest";
 import { fetchCourtIdsBySportId } from "@/server/courtSports";
 import { fetchSportRow } from "@/server/courtFinder";
 import { localizeThailandLocation } from "@/server/thailand-location";
+import { buildActiveGroupEventsOrFilter } from "@/server/groupEvents";
+
+import { isActiveDiscoveryEvent, isGroupDiscoverable, nextGroupSessionTime } from "@/lib/group-discovery";
 
 export type GroupPhoto = {
   image_url: string | null;
@@ -26,6 +29,7 @@ export type GroupSessionRecord = {
   end_time: string | null;
   courts?: {
     id: string;
+    is_active?: boolean;
     name: string | null;
     province: string | null;
     province_id?: number | null;
@@ -61,6 +65,7 @@ export type GroupCourtLinkRecord = {
 };
 
 export type GroupRecord = {
+  group_events?: GroupEventRecord[];
   id: string;
   name: string | null;
   description: string | null;
@@ -78,6 +83,9 @@ export type GroupRecord = {
 };
 
 export type GroupFilterOptions = {
+  includeUpcomingEvents?: boolean;
+  prioritizeUpcoming?: boolean;
+  ids?: string[];
   search?: string;
   date?: string;
   day?: string;
@@ -267,15 +275,14 @@ async function fetchEventMatches(
   courtIds?: string[],
 ) {
   const date = resolveDateFilter(filters.date);
-  if (!date || (courtIds && courtIds.length === 0)) {
+  if (courtIds && courtIds.length === 0) {
     return [] as GroupEventRecord[];
   }
 
   const params: Record<string, string> = {
     select:
       "id,group_id,court_id,venue_name,starts_at,ends_at,notes,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id),groups!inner(sport_id,status)",
-    starts_at: `gte.${date.start}`,
-    and: `(starts_at.lt.${date.end})`,
+    ...(date ? {starts_at: `gte.${date.start}`, and: `(starts_at.lt.${date.end})`} : {or: buildActiveGroupEventsOrFilter()}),
     "groups.sport_id": `eq.${sportId}`,
     "groups.status": "eq.published",
     order: "starts_at.asc",
@@ -290,9 +297,11 @@ async function fetchEventMatches(
     params,
     { preferCount: false },
   );
-  return (data ?? []).filter((event) =>
-    eventMatchesTimeWindow(event, filters, date.startMs),
-  );
+  return (data ?? []).filter(event => {
+    const localDate = new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit"}).format(new Date(event.starts_at));
+    const eventDate = date ?? resolveDateFilter(localDate);
+    return Boolean(eventDate && (!filters.day || date || filters.day === eventDate.day) && eventMatchesTimeWindow(event, filters, eventDate.startMs));
+  });
 }
 
 function sessionMatchesTimeWindow(
@@ -420,10 +429,10 @@ export async function fetchGroupsBySport(
     sportRow.id,
     effectiveScheduleFilters,
   );
-  const matchingEvents = dateFilter
+  const matchingEvents = dateFilter || recurringGroupIds !== null
     ? await fetchEventMatches(sportRow.id, filters)
     : [];
-  const scheduleGroupIds = dateFilter
+  const scheduleGroupIds = dateFilter || recurringGroupIds !== null
     ? Array.from(
         new Set([
           ...(recurringGroupIds ?? []),
@@ -434,16 +443,20 @@ export async function fetchGroupsBySport(
 
   const params: Record<string, string> = {
     select:
-      "id,name,description,status,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,court_id,courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id)),court_groups(courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))",
+      "id,name,description,status,updated_at,play_format,player_amount,allow_walk_in,phone,line_id,group_photos(image_url,is_primary),group_sessions(day,start_time,end_time,court_id,courts(id,name,is_active,province,province_id,latitude:lat,longitude:lng,district,district_id)),court_groups(courts(id,name,province,province_id,latitude:lat,longitude:lng,district,district_id))",
       sport_id: `eq.${sportRow.id}`,
       status: "eq.published",
-      order: "updated_at.desc.nullslast",
+    order: "updated_at.desc.nullslast,id.asc",
   };
 
-  if (filters.limit) {
+  if (filters.limit && !filters.prioritizeUpcoming) {
     params.limit = String(filters.limit);
   }
-  if (filters.offset) {
+  if (filters.includeUpcomingEvents || filters.prioritizeUpcoming) {
+    params.select += ",group_events(id,group_id,court_id,venue_name,starts_at,ends_at,notes,courts(id,name,is_active,province,province_id,latitude:lat,longitude:lng,district,district_id))";
+    if (!filters.prioritizeUpcoming) params["group_events.or"] = buildActiveGroupEventsOrFilter();
+  }
+  if (filters.offset && !filters.prioritizeUpcoming) {
     params.offset = String(filters.offset);
   }
   if (filters.search) {
@@ -471,18 +484,67 @@ export async function fetchGroupsBySport(
   if (filters.allowWalkIn === "true" || filters.allowWalkIn === "false") {
     params.allow_walk_in = `eq.${filters.allowWalkIn}`;
   }
-  if (scheduleGroupIds) {
+  const selectedGroupIds = filters.ids
+    ? filters.ids.filter((id) => !scheduleGroupIds || scheduleGroupIds.includes(id))
+    : scheduleGroupIds;
+  if (selectedGroupIds) {
     params.id =
-      scheduleGroupIds.length > 0
-        ? `in.(${scheduleGroupIds.join(",")})`
+      selectedGroupIds.length > 0
+        ? `in.(${selectedGroupIds.join(",")})`
         : "eq.00000000-0000-0000-0000-000000000000";
   }
 
-  const groupsRes = await supabaseSelect<GroupRecord>("groups", params);
-
+  const now = new Date();
+  let selectedGroups: GroupRecord[];
+  let count: number;
+  if (filters.prioritizeUpcoming) {
+    const batchSize = 100;
+    const ranked: { id: string; next: number }[] = [];
+    for (let offset = 0;;) {
+      // Retain past event timestamps to distinguish finished one-time groups
+      // from groups that never posted a dated session.
+      const { data, count: total } = await supabaseSelect<GroupRecord>("groups", {
+        ...params,
+        select: "id,status,group_sessions(day,start_time,end_time),group_events(starts_at,ends_at)",
+        limit: String(batchSize),
+        offset: String(offset),
+      });
+      if (data.length === 0) break;
+      for (const group of data) {
+        if (isGroupDiscoverable(group, now)) {
+          ranked.push({ id: group.id, next: nextGroupSessionTime(group, now) });
+        }
+      }
+      offset += data.length;
+      if (total !== undefined && offset >= total) break;
+    }
+    ranked.sort((a, b) => a.next - b.next);
+    count = ranked.length;
+    const start = filters.offset ?? 0;
+    const page = ranked.slice(start, start + (filters.limit ?? 12));
+    const results = await Promise.all(
+      Array.from({ length: Math.ceil(page.length / batchSize) }, (_, index) =>
+        supabaseSelect<GroupRecord>("groups", {
+          select: params.select,
+          sport_id: params.sport_id,
+          status: params.status,
+          id: `in.(${page.slice(index * batchSize, (index + 1) * batchSize).map(({ id }) => id).join(",")})`,
+          "group_events.or": buildActiveGroupEventsOrFilter(now),
+        }, { preferCount: false }),
+      ),
+    );
+    const byId = new Map(results.flatMap(({ data }) => data.map((group) => [group.id, group] as const)));
+    selectedGroups = page.flatMap(({ id }) => {
+      const group = byId.get(id);
+      return group ? [group] : [];
+    });
+  } else {
+    const { data, count: total } = await supabaseSelect<GroupRecord>("groups", params);
+    selectedGroups = data.filter((group) => isPublishedGroupStatus(group.status));
+    count = total ?? 0;
+  }
   const localizedGroups = await Promise.all(
-    (groupsRes.data ?? [])
-      .filter((group) => isPublishedGroupStatus(group.status))
+    selectedGroups
       .map(async (group) => {
       const displaySessions =
         (effectiveScheduleFilters.day ||
@@ -499,6 +561,7 @@ export async function fetchGroupsBySport(
 
       return {
         ...group,
+        group_events: (group.group_events ?? []).filter(event => isActiveDiscoveryEvent(event, now)),
         matched_sessions: dateFilter
           ? [
               ...(displaySessions ?? []).map((session) => ({
@@ -579,6 +642,6 @@ export async function fetchGroupsBySport(
   return {
     sport: sportRow,
     groups: localizedGroups,
-    count: groupsRes.count ?? 0,
+    count,
   };
 }

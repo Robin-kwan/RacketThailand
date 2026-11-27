@@ -43,6 +43,7 @@ export type GroupSessionFormCopy = {
   error: string;
   required: string;
   dateRangeError: string;
+  sessionEndedError: string;
   courtSportMismatch: string;
   noCourts: string;
   clearTime: string;
@@ -73,6 +74,7 @@ type GroupSessionFormProps = {
   locale: Locale;
   dayOptions: Option[];
   copy: GroupSessionFormCopy;
+  initialCourtId?: string;
 };
 
 const TIME_OPTIONS = createTimeOptions({ minuteStep: 30 });
@@ -102,13 +104,14 @@ export function GroupSessionForm({
   locale,
   dayOptions,
   copy,
+  initialCourtId,
 }: GroupSessionFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [submitting, setSubmitting] = useState(false);
-  const [mode, setMode] = useState<SessionMode>("weekly");
+  const [mode, setMode] = useState<SessionMode>("date");
   const [courtOptions, setCourtOptions] = useState<Option[]>([]);
-  const [courtId, setCourtId] = useState("");
+  const [courtId, setCourtId] = useState(initialCourtId ?? "");
   const [day, setDay] = useState(dayOptions[0]?.value ?? "sunday");
   const [date, setDate] = useState("");
   const [start, setStart] = useState("00:00");
@@ -169,7 +172,7 @@ export function GroupSessionForm({
   }, [locale, sportId]);
 
   const resetAfterSubmit = () => {
-    setMode("weekly");
+    setMode("date");
     setCourtId("");
     setDay(dayOptions[0]?.value ?? "sunday");
     setDate("");
@@ -221,9 +224,11 @@ export function GroupSessionForm({
           message:
             data?.code === "DATE_OUT_OF_RANGE"
               ? copy.dateRangeError
-              : data?.code === "INVALID_COURT_SPORT"
-                ? copy.courtSportMismatch
-                : data?.error ?? copy.error,
+              : data?.code === "SESSION_ALREADY_ENDED"
+                ? copy.sessionEndedError
+                : data?.code === "INVALID_COURT_SPORT"
+                  ? copy.courtSportMismatch
+                  : data?.error ?? copy.error,
         });
         return;
       }
@@ -242,7 +247,10 @@ export function GroupSessionForm({
   };
 
   return (
-    <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-6 sm:p-8">
+    <section
+      id="add-session"
+      className="scroll-mt-24 space-y-5 rounded-lg border border-slate-200 bg-white p-6 sm:p-8"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-[var(--foreground)]">

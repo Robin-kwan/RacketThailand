@@ -56,6 +56,7 @@ export type GroupSessionEditorCopy = {
   clearTime: string;
   empty: string;
   dateRangeError: string;
+  sessionEndedError: string;
   removeCourt: string;
   removeCourtConfirm: string;
   removeCourtSuccess: string;
@@ -795,11 +796,15 @@ export function GroupEventEditor({
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as {
+          code?: string;
           error?: string;
         } | null;
         showToast({
           variant: "error",
-          message: payload?.error ?? copy.error,
+          message:
+            payload?.code === "SESSION_ALREADY_ENDED"
+              ? copy.sessionEndedError
+              : payload?.error ?? copy.error,
         });
         return;
       }

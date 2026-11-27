@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import { Check, X } from "lucide-react";
 import { buildLocalizedPath, type Locale } from "@/lib/i18n";
 import { NotificationsMenu } from "@/components/notifications-menu";

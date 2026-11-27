@@ -1,7 +1,8 @@
 "use client";
 
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import Link from "next/link";
+import { ImageOff } from "lucide-react";
 import type { ElementType, ReactNode } from "react";
 
 type CourtCardProps = {
@@ -9,6 +10,7 @@ type CourtCardProps = {
   href?: string | null;
   imageUrl: string;
   imageAlt?: string;
+  imagePlaceholderLabel?: string;
   location?: string | null;
   details?: string[];
   primaryBadge?: string | null;
@@ -17,6 +19,7 @@ type CourtCardProps = {
   titleClassName?: string;
   imageAspectClass?: string;
   showDetails?: boolean;
+  openInNewTab?: boolean;
   footer?: ReactNode;
 };
 
@@ -25,6 +28,7 @@ export function CourtCard({
   href,
   imageUrl,
   imageAlt,
+  imagePlaceholderLabel,
   location,
   details = [],
   primaryBadge,
@@ -33,11 +37,17 @@ export function CourtCard({
   titleClassName,
   imageAspectClass = "aspect-[4/3]",
   showDetails = true,
+  openInNewTab = true,
   footer,
 }: CourtCardProps) {
   const Wrapper: ElementType = href ? Link : "div";
   const wrapperProps = href
-    ? { href, target: "_blank", rel: "noopener noreferrer" }
+    ? {
+        href,
+        ...(openInNewTab
+          ? { target: "_blank", rel: "noopener noreferrer" }
+          : {}),
+      }
     : {};
 
   return (
@@ -47,13 +57,20 @@ export function CourtCard({
     >
       <div className="overflow-hidden border-b border-slate-100 bg-slate-100">
         <div className={`relative ${imageAspectClass} w-full`}>
-          <Image
-            src={imageUrl}
-            alt={imageAlt ?? name ?? "Court image"}
-            fill
-            sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition duration-300 group-hover:scale-105"
-          />
+          {imagePlaceholderLabel ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[linear-gradient(145deg,#e8f3ed,#f5f8f6)] px-3 text-center text-xs font-medium text-slate-500">
+              <ImageOff className="size-7 text-emerald-700/55" aria-hidden />
+              <span>{imagePlaceholderLabel}</span>
+            </div>
+          ) : (
+            <Image
+              src={imageUrl}
+              alt={imageAlt ?? name ?? "Court image"}
+              fill
+              sizes="(max-width: 640px) calc(100vw - 3rem), (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition duration-300 group-hover:scale-105"
+            />
+          )}
         </div>
       </div>
 

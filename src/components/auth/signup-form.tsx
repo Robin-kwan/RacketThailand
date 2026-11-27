@@ -202,11 +202,12 @@ export function SignupForm({
       </div>
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="signup-name" className="block text-sm font-medium text-slate-700">
           {copy.nameLabel}
         </label>
         <input
           type="text"
+          id="signup-name"
           name="name"
           className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           placeholder={copy.namePlaceholder}
@@ -214,11 +215,12 @@ export function SignupForm({
         />
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="signup-email" className="block text-sm font-medium text-slate-700">
           {copy.emailLabel}
         </label>
         <input
           type="email"
+          id="signup-email"
           name="email"
           className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
           placeholder="name@email.com"
@@ -226,12 +228,13 @@ export function SignupForm({
         />
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="signup-password" className="block text-sm font-medium text-slate-700">
           {copy.passwordLabel}
         </label>
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
+            id="signup-password"
             name="password"
             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             placeholder="••••••••"
@@ -250,12 +253,13 @@ export function SignupForm({
         </div>
       </div>
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="signup-confirm-password" className="block text-sm font-medium text-slate-700">
           {copy.confirmPasswordLabel}
         </label>
         <div className="relative">
           <input
             type={showConfirmPassword ? "text" : "password"}
+            id="signup-confirm-password"
             name="confirmPassword"
             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-slate-400 focus:bg-white"
             placeholder="••••••••"

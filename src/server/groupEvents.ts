@@ -17,6 +17,22 @@ export type NormalizedGroupEvent = {
 
 const THAILAND_UTC_OFFSET = "+07:00";
 
+export function buildActiveGroupEventsOrFilter(now = new Date()) {
+  const timestamp = now.toISOString();
+  return `(ends_at.gte.${timestamp},and(ends_at.is.null,starts_at.gte.${timestamp}))`;
+}
+
+export function hasGroupEventEnded(
+  event: Pick<NormalizedGroupEvent, "startsAt" | "endsAt">,
+  now = new Date(),
+) {
+  const effectiveEnd = new Date(event.endsAt ?? event.startsAt);
+  return (
+    Number.isNaN(effectiveEnd.getTime()) ||
+    effectiveEnd.getTime() <= now.getTime()
+  );
+}
+
 function normalizeText(value?: string | null) {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();

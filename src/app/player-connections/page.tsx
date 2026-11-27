@@ -8,6 +8,9 @@ import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
+import { fetchVisiblePlayerContacts } from "@/server/playerContacts";
+import { PlayerContactLinks } from "@/components/player-finder/player-contact-links";
+
 export const metadata: Metadata = {
   title: "Play requests | RacketThailand",
   robots: { index: false, follow: false },
@@ -51,7 +54,7 @@ export default async function PlayerConnectionsPage({
     adminSupabase
       .from("player_play_requests")
       .select(
-        "id,message,status,created_at,sports(code,name),sender:sender_id(id,display_name,username)",
+        "id,sport_id,message,status,created_at,sports(code,name),sender:sender_id(id,display_name,username)",
       )
       .eq("recipient_id", user.id)
       .order("created_at", { ascending: false })
@@ -59,7 +62,7 @@ export default async function PlayerConnectionsPage({
     adminSupabase
       .from("player_play_requests")
       .select(
-        "id,message,status,created_at,sports(code,name),recipient:recipient_id(id,display_name,username)",
+        "id,sport_id,message,status,created_at,sports(code,name),recipient:recipient_id(id,display_name,username)",
       )
       .eq("sender_id", user.id)
       .order("created_at", { ascending: false })
@@ -87,6 +90,12 @@ export default async function PlayerConnectionsPage({
     genericError: t("playerFinder.genericError"),
   };
 
+  const contactLabels = {line: t("playerFinder.contacts.line"), instagram: t("playerFinder.contacts.instagram"), facebook: t("playerFinder.contacts.facebook"), whatsapp: t("playerFinder.contacts.whatsapp"), phone: t("playerFinder.contacts.phone")};
+  const visibleContacts = new Map<string, Awaited<ReturnType<typeof fetchVisiblePlayerContacts>>>();
+  await Promise.all([...new Set([...incoming, ...outgoing].map(item => item.sport_id))].map(async sportId => {
+    const ids = [...incoming.filter(item => item.sport_id === sportId).map(item => relation(item.sender as ProfilePreview | ProfilePreview[] | null)?.id), ...outgoing.filter(item => item.sport_id === sportId).map(item => relation(item.recipient as ProfilePreview | ProfilePreview[] | null)?.id)].filter((id): id is string => Boolean(id));
+    visibleContacts.set(sportId, await fetchVisiblePlayerContacts(ids,sportId,user.id));
+  }));
   const statusLabel = (status: string) =>
     t(`playerFinder.connections.${status}`);
 
@@ -151,6 +160,7 @@ export default async function PlayerConnectionsPage({
                             {item.message}
                           </p>
                         )}
+                        {sender && visibleContacts.get(item.sport_id)?.has(sender.id) && <div className="mt-3"><PlayerContactLinks {...visibleContacts.get(item.sport_id)!.get(sender.id)!} labels={contactLabels} /></div>}
                         {item.status === "pending" && (
                           <div className="mt-4">
                             <ConnectionActions
@@ -206,7 +216,7 @@ export default async function PlayerConnectionsPage({
                                 {group.name}
                               </Link>
                             )}
-                            {item.status === "pending" && (
+                          {item.status === "pending" && (
                               <ConnectionActions
                                 endpoint={`/api/group-invitations/${item.id}`}
                                 mode="incoming"
@@ -250,6 +260,7 @@ export default async function PlayerConnectionsPage({
                               {item.message}
                             </p>
                           )}
+                          {recipient && visibleContacts.get(item.sport_id)?.has(recipient.id) && <div className="mt-3"><PlayerContactLinks {...visibleContacts.get(item.sport_id)!.get(recipient.id)!} labels={contactLabels} /></div>}
                           {item.status === "pending" && (
                             <div className="mt-4">
                               <ConnectionActions

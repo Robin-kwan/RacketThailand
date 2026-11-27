@@ -36,6 +36,7 @@ export default async function SignupPage({
   const resolvedParams = await resolveSearchParams(searchParams);
   const locale = normalizeLocale(resolvedParams?.lang);
   const redirectTo = sanitizeAuthRedirectPath(resolvedParams?.redirectTo);
+  const creatingGroup = redirectTo.split("?")[0] === "/groups/create";
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -87,7 +88,7 @@ export default async function SignupPage({
             {t("auth.signupTitle")}
           </h1>
           <p className="mt-3 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">
-            {t("auth.signupSubtitle")}
+            {creatingGroup ? t("auth.createGroupIntent") : t("auth.signupSubtitle")}
           </p>
           <SignupForm locale={locale} copy={formCopy} redirectTo={redirectTo} />
           <p className="mt-4 text-sm text-[rgb(var(--foreground-rgb)/0.7)]">

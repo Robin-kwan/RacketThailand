@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { Locale } from "@/lib/i18n";

@@ -34,6 +34,7 @@ type GroupPayload = {
   lineId?: string | null;
   websiteUrl?: string | null;
   status?: string | null;
+  confirmNewGroup?: boolean;
 };
 
 export async function GET(request: Request) {
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
     const result = await fetchGroupsBySport(sport, {
       limit: Number.isFinite(limit) && limit > 0 ? limit : 12,
       offset: Number.isFinite(offset) && offset > 0 ? offset : 0,
+      prioritizeUpcoming: true,
       search,
       date,
       day,
@@ -195,6 +197,34 @@ export async function POST(request: Request) {
   }
 
   const adminSupabase = getSupabaseAdminClient();
+  if (payload.confirmNewGroup !== true) {
+    const { data: existingGroups, error: existingGroupsError } =
+      await adminSupabase
+        .from("groups")
+        .select("id,name")
+        .eq("owner_id", user.id)
+        .eq("sport_id", payload.sportId)
+        .limit(3);
+
+    if (existingGroupsError) {
+      return NextResponse.json(
+        { error: existingGroupsError.message },
+        { status: 500 },
+      );
+    }
+
+    if ((existingGroups ?? []).length > 0) {
+      return NextResponse.json(
+        {
+          code: "EXISTING_GROUPS",
+          error: "Add a session to an existing group instead.",
+          groups: existingGroups,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   const { error: profileError } = await ensureUserProfile(adminSupabase, user);
 
   if (profileError) {

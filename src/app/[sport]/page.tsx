@@ -8,7 +8,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { buildSportPagePayload } from "@/server/sportContent";
-import { fetchCasualPlaysBySport } from "@/server/casualPlays";
 import { SUPPORTED_SPORTS, getSportMeta } from "@/data/sportMeta";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
@@ -23,10 +22,13 @@ import {
   buildCanonicalUrl,
   buildLocaleAlternates,
 } from "@/lib/seo";
-import { getSeoKeyword } from "@/lib/seoKeywords";
+import { getSportDiscoveryCopy } from "@/lib/sport-discovery-copy";
+import {
+  getGroupContributionAction,
+  type OwnedGroupSummary,
+} from "@/lib/group-contribution";
 import { GroupCard } from "@/components/group-card";
 import { CourtCard } from "@/components/court-card";
-import { CasualPlayCard } from "@/components/casual-play-card";
 import {
   PlayerProfileForm,
   type ExistingSportProfile,
@@ -41,6 +43,7 @@ import {
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { getRequestUser } from "@/lib/supabase-server-auth";
 import type { SportFeatureCard } from "@/types/sports";
+import { fetchOwnedGroupSummaries } from "@/server/ownedGroups";
 
 type Params = {
   sport: string;
@@ -234,102 +237,6 @@ function FeatureCarousel({
   );
 }
 
-type CasualPlayPreviewSectionProps = {
-  title: string;
-  subtitle: string;
-  emptyCopy: string;
-  ctaHref: string;
-  ctaLabel: string;
-  locale: Locale;
-  sportCode: string;
-  plays: Awaited<ReturnType<typeof fetchCasualPlaysBySport>>["plays"];
-};
-
-function CasualPlayPreviewSection({
-  title,
-  subtitle,
-  emptyCopy,
-  ctaHref,
-  ctaLabel,
-  locale,
-  sportCode,
-  plays,
-}: CasualPlayPreviewSectionProps) {
-  const hasPlays = plays.length > 0;
-
-  return (
-    <section className="border-t border-slate-200 bg-[#f7fbf9] px-6 py-12 text-[var(--foreground)] md:px-10 md:py-14">
-      <div className="mx-auto max-w-screen-xl">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{title}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {subtitle}
-            </p>
-          </div>
-          <TrackedLink
-            href={ctaHref}
-            eventName="sport_cta_click"
-            eventPayload={{
-              surface: "sport_casual_play_preview",
-              cta: "open_play_invitations",
-              sport: sportCode,
-            }}
-            className="inline-flex items-center gap-2 [background-color:transparent] text-sm font-semibold text-[var(--rt-primary)] hover:text-[var(--rt-primary-border)]"
-          >
-            {ctaLabel}
-            <ChevronRight
-              className="h-4 w-4"
-              strokeWidth={1.8}
-              aria-hidden
-            />
-          </TrackedLink>
-        </div>
-        {hasPlays ? (
-          <div className="-mx-6 mt-8 overflow-x-auto pb-4 md:mx-0">
-            <div className="flex snap-x snap-mandatory gap-4 px-6 md:px-0">
-              {plays.map((play) => {
-                const location = play.location_note ||
-                  [play.courts?.district, play.courts?.province]
-                    .filter(Boolean)
-                    .join(", ");
-                const venueName = play.venue_name || play.courts?.name;
-
-                return (
-                  <div
-                    key={play.id}
-                    className="snap-start w-[240px] shrink-0"
-                  >
-                    <CasualPlayCard
-                      title={play.title || ""}
-                      href={buildLocalizedPath(
-                        `/casual-plays/${play.id}`,
-                        locale,
-                      )}
-                      description={play.description}
-                      venueName={venueName}
-                      location={location || null}
-                      playDate={play.play_date}
-                      startTime={play.start_time}
-                      endTime={play.end_time}
-                      playerAmount={play.player_amount}
-                      locale={locale}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <p className="mt-6 text-sm text-slate-500">
-            {emptyCopy}
-          </p>
-        )}
-      </div>
-    </section>
-  );
-}
-
 export async function generateMetadata({
   params,
   searchParams,
@@ -352,23 +259,19 @@ export async function generateMetadata({
       },
     };
   }
-  const keywordSnippet = getSeoKeyword(resolvedParamsValue.sport, locale, "hero");
-  const discoveryLine =
-    locale === "th"
-      ? "ค้นหาสนามและกลุ่มทั่วไทยได้ในที่เดียว"
-      : "Find active Thailand courts and groups in one portal.";
-  const description = keywordSnippet
-    ? `${meta.heroDescription[locale]} ${keywordSnippet} ${discoveryLine}`
-    : `${meta.heroDescription[locale]} ${discoveryLine}`;
+  const discoveryCopy = getSportDiscoveryCopy(
+    resolvedParamsValue.sport,
+    locale,
+  );
+  const description =
+    discoveryCopy?.sportDescription ?? meta.heroDescription[locale];
   const canonicalPath = `/${resolvedParamsValue.sport}`;
   const canonical = buildCanonicalUrl(canonicalPath, locale);
   const alternates = buildLocaleAlternates(canonicalPath);
   const previewImage = buildAbsoluteUrl(meta.coverImage);
   const previewAlt = `${meta.name[locale]} RacketThailand`;
   const metadataTitle =
-    locale === "th" && resolvedParamsValue.sport === "badminton"
-      ? "แบดมินตัน: หาก๊วนแบดและสนามแบด | RacketThailand"
-      : `${meta.name[locale]} | RacketThailand`;
+    discoveryCopy?.sportTitle ?? `${meta.name[locale]} | RacketThailand`;
   return {
     title: metadataTitle,
     description,
@@ -410,15 +313,8 @@ export default async function SportPage({
   const locale = normalizeLocale(resolvedParams?.lang);
   const resolvedParamsValue = await resolveParams(params);
   const t = await getTranslator(locale);
-  const [sport, casualPlayResult, user] = await Promise.all([
+  const [sport, user] = await Promise.all([
     buildSportPagePayload(resolvedParamsValue.sport, locale),
-    fetchCasualPlaysBySport(
-      resolvedParamsValue.sport,
-      {
-        limit: 10,
-      },
-      locale,
-    ),
     getRequestUser(),
   ]);
 
@@ -429,27 +325,110 @@ export default async function SportPage({
   const isAuthenticated = Boolean(user && !user.is_anonymous);
   let sportProfile: ExistingSportProfile | null = null;
   let hasSportProfileError = false;
+  let ownedSportGroups: OwnedGroupSummary[] = [];
 
   if (isAuthenticated && user) {
-    const result = await getSupabaseAdminClient()
-      .from("profile_sports")
-      .select(
-        "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites",
-      )
-      .eq("profile_id", user.id)
-      .eq("sport_id", sport.id)
-      .maybeSingle();
-    sportProfile = result.data as ExistingSportProfile | null;
-    hasSportProfileError = Boolean(result.error);
+    const [profileResult, groups] = await Promise.all([
+      getSupabaseAdminClient()
+        .from("profile_sports")
+        .select(
+          "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites,contact_methods,contact_visibility,preferred_contact",
+        )
+        .eq("profile_id", user.id)
+        .eq("sport_id", sport.id)
+        .maybeSingle(),
+      fetchOwnedGroupSummaries(user.id, sport.code),
+    ]);
+    sportProfile = profileResult.data as ExistingSportProfile | null;
+    hasSportProfileError = Boolean(profileResult.error);
+    ownedSportGroups = groups;
   }
+
+  const groupContributionAction = getGroupContributionAction({
+    ownedGroups: ownedSportGroups,
+    locale,
+    sportCode: sport.code,
+  });
+  const groupContributionLabel =
+    groupContributionAction.kind === "create_group"
+      ? t("header.createGroup")
+      : t("groups.contribution.addSession");
 
   const courtFeature = sport.features.find((feature) => feature.key === "courts");
   const groupFeature = sport.features.find((feature) => feature.key === "groups");
   const sportMeta = getSportMeta(sport.code);
   const heroImage = sportMeta?.coverImage ?? "/sports/badminton.png";
   const carouselEmptyCopy = t("sport.carouselEmpty");
-  const viewAllLabel = t("sport.viewAll");
+  const discoveryCopy = getSportDiscoveryCopy(sport.code, locale);
+  const courtFinderLinkLabel =
+    discoveryCopy?.courtFinderLinkLabel ?? t("courtFinder.cta");
+  const groupFinderLinkLabel =
+    discoveryCopy?.groupFinderLinkLabel ?? t("sport.groupFinderCta");
   const boardCta = t("community.boardCta");
+  const canonicalUrl = buildCanonicalUrl(`/${sport.code}`, locale);
+  const sportCollections: Record<string, unknown>[] = [];
+
+  if (courtFeature?.cards.length) {
+    sportCollections.push({
+      "@type": "ItemList",
+      name: courtFinderLinkLabel,
+      url: buildCanonicalUrl(`/${sport.code}/court-finder`, locale),
+      numberOfItems: courtFeature.cards.length,
+      itemListElement: courtFeature.cards.flatMap((card, index) =>
+        card.href
+          ? [
+              {
+                "@type": "ListItem",
+                position: index + 1,
+                item: {
+                  "@type": "SportsActivityLocation",
+                  name: card.title,
+                  url: buildCanonicalUrl(card.href, locale),
+                },
+              },
+            ]
+          : [],
+      ),
+    });
+  }
+
+  if (groupFeature?.cards.length) {
+    sportCollections.push({
+      "@type": "ItemList",
+      name: groupFinderLinkLabel,
+      url: buildCanonicalUrl(`/${sport.code}/group-finder`, locale),
+      numberOfItems: groupFeature.cards.length,
+      itemListElement: groupFeature.cards.flatMap((card, index) =>
+        card.href
+          ? [
+              {
+                "@type": "ListItem",
+                position: index + 1,
+                item: {
+                  "@type": "Organization",
+                  name: card.title,
+                  url: buildCanonicalUrl(card.href, locale),
+                },
+              },
+            ]
+          : [],
+      ),
+    });
+  }
+
+  const sportPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": canonicalUrl,
+    url: canonicalUrl,
+    name:
+      discoveryCopy?.sportTitle.replace(" | RacketThailand", "") ??
+      sport.name[locale],
+    description:
+      discoveryCopy?.sportDescription ?? sport.hero.description[locale],
+    inLanguage: locale === "th" ? "th-TH" : "en",
+    mainEntity: sportCollections.length > 0 ? sportCollections : undefined,
+  };
   const sportProfileCopy = {
     sport: t("playerFinder.profile.sport"),
     skillLevel: t("playerFinder.profile.skillLevel"),
@@ -486,6 +465,16 @@ export default async function SportPage({
     yes: t("playerFinder.profile.yes"),
     no: t("playerFinder.profile.no"),
     cancel: t("playerFinder.profile.cancel"),
+    contacts: {
+      title: t("playerFinder.contacts.title"), help: t("playerFinder.contacts.help"),
+      visibility: t("playerFinder.contacts.visibility"), public: t("playerFinder.contacts.public"),
+      accepted: t("playerFinder.contacts.accepted"), private: t("playerFinder.contacts.private"),
+      preferred: t("playerFinder.contacts.preferred"), invalid: t("playerFinder.contacts.invalid"),
+      labels: { line: t("playerFinder.contacts.line"), instagram: t("playerFinder.contacts.instagram"),
+        facebook: t("playerFinder.contacts.facebook"), whatsapp: t("playerFinder.contacts.whatsapp"), phone: t("playerFinder.contacts.phone") },
+      hints: { line: t("playerFinder.contacts.lineHint"), instagram: t("playerFinder.contacts.instagramHint"),
+        facebook: t("playerFinder.contacts.facebookHint"), whatsapp: t("playerFinder.contacts.whatsappHint"), phone: t("playerFinder.contacts.phoneHint") },
+    },
   };
   const renderStatIcon = (key: string) => {
     const Icon = STAT_ICONS[key] ?? Plus;
@@ -501,6 +490,13 @@ export default async function SportPage({
     <div className="min-h-screen bg-[#f7fbf9] text-[var(--foreground)]">
       <HeaderSportScope sportSlug={sport.code} />
       <HeaderSubLabel value={sport.name[locale]} />
+      <script
+        id={`sport-collection-schema-${sport.code}-${locale}`}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(sportPageSchema).replace(/</g, "\\u003c"),
+        }}
+      />
       <section className="relative isolate overflow-hidden border-b border-slate-800 bg-[#10281e] text-white">
         <div
           aria-hidden
@@ -548,7 +544,7 @@ export default async function SportPage({
               }}
               className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-slate-100"
             >
-              {t("courtFinder.cta")}
+              {courtFinderLinkLabel}
             </TrackedLink>
             <TrackedLink
               href={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
@@ -560,25 +556,22 @@ export default async function SportPage({
               }}
               className="inline-flex items-center justify-center rounded-full border border-white/45 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-white/80 hover:bg-white/20"
             >
-              {t("sport.groupFinderCta")}
+              {groupFinderLinkLabel}
             </TrackedLink>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-white/80">
             <TrackedLink
-              href={buildLocalizedPath(
-                `/${sport.code}/players?view=invitations`,
-                locale,
-              )}
+              href={buildLocalizedPath(`/${sport.code}/players`, locale)}
               eventName="sport_cta_click"
               eventPayload={{
                 surface: "sport_hero",
-                cta: "open_play_invitations",
+                cta: "open_player_finder",
                 sport: sport.code,
               }}
               className="transition hover:text-white"
             >
-              {t("sport.casualPlaysCta")}
+              {t("header.playerFinder")}
             </TrackedLink>
             <TrackedLink
               href={buildLocalizedPath(`/${sport.code}/board`, locale)}
@@ -685,23 +678,6 @@ export default async function SportPage({
           </div>
         </section>
       )}
-      {casualPlayResult.plays.length > 0 && (
-        <CasualPlayPreviewSection
-          title={t("sport.latestCasualPlaysTitle")}
-          subtitle={t("sport.latestCasualPlaysSubtitle", {
-            sport: sport.name[locale],
-          })}
-          emptyCopy={carouselEmptyCopy}
-          ctaHref={buildLocalizedPath(
-            `/${sport.code}/players?view=invitations`,
-            locale,
-          )}
-          ctaLabel={t("sport.casualPlaysCta")}
-          locale={locale}
-          sportCode={sport.code}
-          plays={casualPlayResult.plays}
-        />
-      )}
       {groupFeature && (
         <FeatureCarousel
           title={t("sport.latestGroupsTitle")}
@@ -711,13 +687,10 @@ export default async function SportPage({
           cards={groupFeature.cards}
           emptyCopy={carouselEmptyCopy}
           ctaHref={buildLocalizedPath(`/${sport.code}/group-finder`, locale)}
-          ctaLabel={viewAllLabel}
-          secondaryCtaHref={buildLocalizedPath(
-            `/groups/create?sport=${sport.code}`,
-            locale,
-          )}
-          secondaryCtaLabel={t("header.createGroup")}
-          secondaryCtaName="create_group"
+          ctaLabel={groupFinderLinkLabel}
+          secondaryCtaHref={groupContributionAction.href}
+          secondaryCtaLabel={groupContributionLabel}
+          secondaryCtaName={groupContributionAction.kind}
           locale={locale}
           sportCode={sport.code}
           type="group"
@@ -732,7 +705,7 @@ export default async function SportPage({
           cards={courtFeature.cards}
           emptyCopy={carouselEmptyCopy}
           ctaHref={buildLocalizedPath(`/${sport.code}/court-finder`, locale)}
-          ctaLabel={viewAllLabel}
+          ctaLabel={courtFinderLinkLabel}
           secondaryCtaHref={buildLocalizedPath(
             `/courts/new?sport=${sport.code}`,
             locale,

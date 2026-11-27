@@ -12,18 +12,29 @@ import { CourtGallery } from "@/components/court-gallery";
 import { HeaderSubLabel } from "@/components/header-sub-label";
 import { HeaderSportScope } from "@/components/header-sport-scope";
 import { BaseScheduleList } from "@/components/base-schedule-list";
+import { CourtCard } from "@/components/court-card";
 import { SPORT_META } from "@/data/sportMeta";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { fetchCourtDetail } from "@/server/courtFinder";
+import {
+  fetchCourtDetail,
+  fetchNearbyCourtsForDetail,
+} from "@/server/courtFinder";
 import { CourtMap } from "@/components/court-map";
 import { ensureAllDays } from "@/lib/opening-hours";
 import { ViewTracker } from "@/components/view-tracker";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 import type { GroupCardSession } from "@/components/group-card";
 import { CourtGroupRow } from "@/components/court-group-row";
 import { ContactActionValue } from "@/components/contact-action-value";
 import { ShareButton } from "@/components/share-button";
+import { ListingReportDialog } from "@/components/listing-report-dialog";
 import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
+import { getGroupContributionAction } from "@/lib/group-contribution";
 import type { Locale } from "@/lib/i18n";
+import { fetchOwnedGroupSummaries } from "@/server/ownedGroups";
+import { fetchLocationNavigation } from "@/server/locationDirectory";
+import { locationPath } from "@/lib/location-directory";
 import {
   Building2,
   CalendarDays,
@@ -51,6 +62,21 @@ function getGroupCover(group: {
 
 function getCourtFallbackImage(sportCode?: string | null) {
   return SPORT_META[sportCode ?? ""]?.coverImage ?? "/sports/badminton.png";
+}
+
+function getCourtCover(
+  court: {
+    court_photos?:
+      | { image_url: string | null; is_primary: boolean | null }[]
+      | null;
+  },
+  sportCode?: string | null,
+) {
+  return (
+    court.court_photos?.find((photo) => photo.is_primary)?.image_url ??
+    court.court_photos?.[0]?.image_url ??
+    getCourtFallbackImage(sportCode)
+  );
 }
 
 function formatUpcomingEventDateParts(value: string, locale: Locale) {
@@ -437,8 +463,46 @@ export default async function CourtPage({
     !Number.isNaN(numericLatitude) &&
     typeof numericLongitude === "number" &&
     !Number.isNaN(numericLongitude);
+  const [nearbyCourts, ownedGroups, locationDirectory] = await Promise.all([
+    hasMapCoordinates && activeSportCode
+      ? fetchNearbyCourtsForDetail({
+          courtId: detail.court.id,
+          sportCode: activeSportCode,
+          latitude: numericLatitude as number,
+          longitude: numericLongitude as number,
+          locale,
+          limit: 6,
+        })
+      : Promise.resolve([]),
+    user && !user.is_anonymous
+      ? fetchOwnedGroupSummaries(user.id, activeSportCode)
+      : Promise.resolve([]),
+    activeSportCode ? fetchLocationNavigation() : Promise.resolve([]),
+  ]);
+  const groupContributionAction = getGroupContributionAction({
+    ownedGroups,
+    locale,
+    sportCode: activeSportCode,
+    courtId: detail.court.id,
+  });
+  const activeSportName = getSportDisplayName(activeSport, locale);
+  const nearbyLocation = detail.court.province ?? detail.court.district;
+  const groupLocation = locationDirectory.find(
+    (entry) => entry.sport === activeSportCode && entry.groupIds.length > 0 && (
+      entry.provinceId === detail.court.province_id || entry.name[locale] === nearbyLocation
+    ),
+  );
+  const areaGroupFinderHref = activeSportCode
+    ? buildLocalizedPath(
+        groupLocation
+          ? locationPath(activeSportCode, "groups", groupLocation.slug)
+          : `/${activeSportCode}/group-finder`,
+        locale,
+      )
+    : null;
   const todayKey = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
+    timeZone: "Asia/Bangkok",
   })
     .format(new Date())
     .toLowerCase();
@@ -490,7 +554,10 @@ export default async function CourtPage({
     shareAction: t("contactActions.share"),
     linkCopiedAction: t("contactActions.linkCopied"),
     edit: t("courtPage.edit"),
-    createGroup: t("header.createGroup"),
+    groupContribution:
+      groupContributionAction.kind === "create_group"
+        ? t("header.createGroup")
+        : t("groups.contribution.addSession"),
     groupScheduleAny: t("groups.detail.scheduleAny"),
     walkInsWelcome: t("groups.detail.walkInsWelcome"),
     walkInsClosed: t("groups.detail.walkInsClosed"),
@@ -501,6 +568,59 @@ export default async function CourtPage({
     courtPhotos: t("courtPage.courtPhotos"),
     courtDetails: t("courtPage.courtDetails"),
     directions: t("courtPage.directions"),
+    nearbyCourtsTitle: nearbyLocation
+      ? t("courtPage.nearbyCourtsTitle", {
+          sport: activeSportName,
+          location: nearbyLocation,
+        })
+      : t("courtPage.nearbyCourtsTitleNoLocation", {
+          sport: activeSportName,
+        }),
+    nearbyCourtsDescription: t("courtPage.nearbyCourtsDescription"),
+    distanceAway: (distance: number) =>
+      t("courtPage.distanceAway", { distance: distance.toFixed(1) }),
+    courtPhotoAlt: (name: string) =>
+      t("courtPage.nearbyCourtPhotoAlt", { name }),
+    listingReport: {
+      trigger: t("listingReport.trigger"),
+      signInHint: t("listingReport.signInHint"),
+      title: t("listingReport.title"),
+      subtitle: t("listingReport.subtitle", {
+        name:
+          detail.court.name ??
+          (locale === "th" ? "สนามนี้" : "this court"),
+      }),
+      reasonLabel: t("listingReport.reasonLabel"),
+      reasons: {
+        incorrect: {
+          title: t("listingReport.reasons.incorrect.title"),
+          description: t("listingReport.reasons.incorrect.description"),
+        },
+        ownershipClaim: {
+          title: t("listingReport.reasons.ownershipClaim.title"),
+          description: t("listingReport.reasons.ownershipClaim.description"),
+        },
+        other: {
+          title: t("listingReport.reasons.other.title"),
+          description: t("listingReport.reasons.other.description"),
+        },
+      },
+      detailsLabel: t("listingReport.detailsLabel"),
+      detailsPlaceholder: t("listingReport.detailsPlaceholder"),
+      claimNotice: t("listingReport.claimNotice"),
+      claimContactLabel: t("listingReport.claimContactLabel"),
+      claimContactPlaceholder: t("listingReport.claimContactPlaceholder"),
+      proofUrlLabel: t("listingReport.proofUrlLabel"),
+      proofUrlPlaceholder: t("listingReport.proofUrlPlaceholder"),
+      proofUrlHint: t("listingReport.proofUrlHint"),
+      cancel: t("listingReport.cancel"),
+      submit: t("listingReport.submit"),
+      submitting: t("listingReport.submitting"),
+      close: t("listingReport.close"),
+      success: t("listingReport.success"),
+      error: t("listingReport.error"),
+      duplicate: t("listingReport.duplicate"),
+    },
   };
   const fallbackCourtName =
     locale === "th" ? "ยังไม่ระบุชื่อสนาม" : "Unnamed court";
@@ -515,6 +635,17 @@ export default async function CourtPage({
   const canEdit = Boolean(isOwnerViewer || isAdminViewer);
   const canonicalPath = `/courts/${detail.court.id}`;
   const canonicalUrl = buildCanonicalUrl(canonicalPath, locale);
+  const reportReturnParams = new URLSearchParams();
+  if (activeSportCode) reportReturnParams.set("sport", activeSportCode);
+  const reportReturnPath = buildLocalizedPath(
+    `${canonicalPath}${reportReturnParams.size ? `?${reportReturnParams.toString()}` : ""}`,
+    locale,
+  );
+  const reportLoginHref = buildAuthPagePath(
+    "/login",
+    locale,
+    reportReturnPath,
+  );
   const shareTitle = detail.court.name ?? fallbackCourtName;
   const shareText =
     [detail.court.address, detail.court.district, detail.court.province]
@@ -568,6 +699,19 @@ export default async function CourtPage({
       ? openingHoursSpecification
       : undefined,
   };
+  const nearbyCourtsStructuredData = nearbyCourts.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: copy.nearbyCourtsTitle,
+        itemListElement: nearbyCourts.map((court, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: court.name ?? fallbackCourtName,
+          url: buildCanonicalUrl(`/courts/${court.id}`, locale),
+        })),
+      }
+    : null;
   const mapsHref = hasMapCoordinates
     ? detail.court.google_place_id
       ? `https://www.google.com/maps/search/?${new URLSearchParams({
@@ -685,6 +829,19 @@ export default async function CourtPage({
         </section>
 
         <div className="mx-auto max-w-screen-xl px-6 pt-8 md:px-10 md:pt-9">
+          {hasAnyHours ? (
+            <section className="mb-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+                  <Clock3 className="size-4" aria-hidden />
+                </span>
+                <h2 className="text-lg font-semibold text-slate-950">
+                  {copy.hours}
+                </h2>
+              </div>
+              <BaseScheduleList entries={openingHourRows} variant="responsive" className="mt-4" />
+            </section>
+          ) : null}
           <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="min-w-0 space-y-4">
               {detail.photos.length > 0 ? (
@@ -722,21 +879,19 @@ export default async function CourtPage({
                 </section>
               ) : null}
 
-              {hasAnyHours ? (
-                <section className="space-y-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-                  <div className="flex items-center gap-3">
-                    <span className="flex size-10 items-center justify-center rounded-full bg-amber-50 text-amber-700">
-                      <Clock3 className="size-4" aria-hidden />
-                    </span>
-                    <h2 className="text-xl font-semibold text-slate-950">
-                      {copy.hours}
-                    </h2>
-                  </div>
-                  <BaseScheduleList
-                    entries={openingHourRows}
-                    variant="responsive"
+              {hasMapCoordinates ? (
+                <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <CourtMap
+                    name={detail.court.name ?? fallbackCourtName}
+                    latitude={numericLatitude as number}
+                    longitude={numericLongitude as number}
+                    placeId={detail.court.google_place_id}
+                    locale={locale}
+                    eyebrow={copy.mapDirections}
+                    description={copy.mapDescription}
+                    openMapsLabel={copy.openGoogleMaps}
                   />
-                </section>
+                </div>
               ) : null}
 
               {upcomingEvents.length > 0 ? (
@@ -811,15 +966,26 @@ export default async function CourtPage({
                       {copy.groupsTitle}
                     </h2>
                   </div>
-                  <Link
-                    href={buildLocalizedPath(
-                      `/groups/create?${new URLSearchParams({ ...(activeSportCode ? { sport: activeSportCode } : {}), court: detail.court.id }).toString()}`,
-                      locale,
+                  <div className="flex flex-wrap items-center gap-3">
+                    {areaGroupFinderHref && (
+                      <TrackedLink
+                        href={areaGroupFinderHref}
+                        eventName="sport_cta_click"
+                        eventPayload={{ surface: "court_detail_groups", cta: "browse_area_groups", sport: activeSportCode ?? "" }}
+                        className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--rt-primary)] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                      >
+                        {groupLocation
+                          ? t("courtPage.findGroupsInArea", { location: groupLocation.name[locale] })
+                          : t("header.groupFinder")}
+                      </TrackedLink>
                     )}
-                    className="rt-btn-group inline-flex items-center justify-center px-4 py-2 text-sm"
-                  >
-                    {copy.createGroup}
-                  </Link>
+                    <Link
+                      href={groupContributionAction.href}
+                      className="rt-btn-group inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm"
+                    >
+                      {copy.groupContribution}
+                    </Link>
+                  </div>
                 </div>
                 {detail.groups.length === 0 ? (
                   <p className="text-sm text-slate-600">{copy.groupsEmpty}</p>
@@ -901,7 +1067,7 @@ export default async function CourtPage({
               </section>
             </div>
 
-            <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">
+            <aside className="min-w-0 space-y-6">
               <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
                   <span className="flex size-10 items-center justify-center rounded-full bg-cyan-50 text-cyan-700">
@@ -1006,38 +1172,90 @@ export default async function CourtPage({
                 </div>
               </section>
 
-              {hasMapCoordinates ? (
-                <section className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="flex size-10 items-center justify-center rounded-full bg-rose-50 text-rose-700">
-                      <MapPin className="size-4" aria-hidden />
-                    </span>
-                    <h2 className="text-lg font-semibold text-slate-950">
-                      {copy.mapDirections}
-                    </h2>
-                  </div>
-                  <CourtMap
-                    name={detail.court.name ?? fallbackCourtName}
-                    latitude={numericLatitude as number}
-                    longitude={numericLongitude as number}
-                    placeId={detail.court.google_place_id}
-                    locale={locale}
-                    eyebrow={copy.mapDirections}
-                    description={copy.mapDescription}
-                    openMapsLabel={copy.openGoogleMaps}
-                    compact
-                  />
-                </section>
-              ) : null}
+              <ListingReportDialog
+                listingType="court"
+                listingId={detail.court.id}
+                isAuthenticated={Boolean(user && !user.is_anonymous)}
+                canClaimOwnership={!isOwnerViewer && !isAdminViewer}
+                loginHref={reportLoginHref}
+                copy={copy.listingReport}
+              />
             </aside>
           </div>
+
+          {nearbyCourts.length > 0 ? (
+            <section
+              className="mt-10 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:p-6"
+              aria-labelledby="nearby-courts-title"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                  <MapPin className="size-4" aria-hidden />
+                </span>
+                <div>
+                  <h2
+                    id="nearby-courts-title"
+                    className="text-xl font-semibold text-slate-950"
+                  >
+                    {copy.nearbyCourtsTitle}
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {copy.nearbyCourtsDescription}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {nearbyCourts.map((court) => {
+                  const courtName = court.name ?? fallbackCourtName;
+                  const location = [court.district, court.province]
+                    .filter(Boolean)
+                    .join(" · ");
+                  return (
+                    <CourtCard
+                      key={court.id}
+                      name={courtName}
+                      href={buildLocalizedPath(
+                        `/courts/${court.id}${activeSportCode ? `?sport=${encodeURIComponent(activeSportCode)}` : ""}`,
+                        locale,
+                      )}
+                      imageUrl={getCourtCover(court, activeSportCode)}
+                      imageAlt={copy.courtPhotoAlt(courtName)}
+                      location={location || null}
+                      secondaryBadge={
+                        typeof court.distance_km === "number"
+                          ? copy.distanceAway(court.distance_km)
+                          : null
+                      }
+                      showDetails={false}
+                      openInNewTab={false}
+                      imageAspectClass="aspect-[16/10]"
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
         </div>
         <script
+          id={`court-schema-${detail.court.id}-${locale}`}
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
+            __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
           }}
         />
+        {nearbyCourtsStructuredData ? (
+          <script
+            id={`nearby-courts-schema-${detail.court.id}-${locale}`}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(nearbyCourtsStructuredData).replace(
+                /</g,
+                "\\u003c",
+              ),
+            }}
+          />
+        ) : null}
       </main>
     </div>
   );

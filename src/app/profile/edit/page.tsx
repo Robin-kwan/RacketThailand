@@ -101,7 +101,7 @@ export default async function ProfileEditPage({
       adminSupabase
         .from("profile_sports")
         .select(
-          "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites",
+          "profile_id,sport_id,skill_level,rating_system,rating_value,area,availability_days,time_preference,play_format,looking_note,looking_until,allow_group_invites,contact_methods,contact_visibility,preferred_contact",
         )
         .eq("profile_id", user.id),
     ]);
@@ -169,6 +169,16 @@ export default async function ProfileEditPage({
     yes: t("playerFinder.profile.yes"),
     no: t("playerFinder.profile.no"),
     cancel: t("playerFinder.profile.cancel"),
+    contacts: {
+      title: t("playerFinder.contacts.title"), help: t("playerFinder.contacts.help"),
+      visibility: t("playerFinder.contacts.visibility"), public: t("playerFinder.contacts.public"),
+      accepted: t("playerFinder.contacts.accepted"), private: t("playerFinder.contacts.private"),
+      preferred: t("playerFinder.contacts.preferred"), invalid: t("playerFinder.contacts.invalid"),
+      labels: { line: t("playerFinder.contacts.line"), instagram: t("playerFinder.contacts.instagram"),
+        facebook: t("playerFinder.contacts.facebook"), whatsapp: t("playerFinder.contacts.whatsapp"), phone: t("playerFinder.contacts.phone") },
+      hints: { line: t("playerFinder.contacts.lineHint"), instagram: t("playerFinder.contacts.instagramHint"),
+        facebook: t("playerFinder.contacts.facebookHint"), whatsapp: t("playerFinder.contacts.whatsappHint"), phone: t("playerFinder.contacts.phoneHint") },
+    },
   };
 
   return (

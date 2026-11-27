@@ -1,12 +1,19 @@
 # AGENTS.md
 
+## Development Workflow
+
+After completing a development milestone, ask what the user wants to do next.
+When there are meaningful choices, offer two or three concrete options and
+briefly say which you recommend. If there is only one clear follow-up, ask a
+direct question. Keep going through the steps the user has already authorized.
+
 ## Project Snapshot
 
 RacketThailand is a Thai-first multi-sport community platform for racket sports in Thailand. The live product centers on:
 
 - court discovery
 - group discovery
-- one-off casual play listings
+- one-time play sessions within groups
 - sport-specific community boards
 - profiles, notifications, and lightweight admin tooling
 
@@ -115,7 +122,7 @@ Core live data domains in the current repo:
 - court photos
 - groups
 - group sessions
-- casual plays
+- dated group events
 - community posts/comments/likes
 - profiles
 - notifications
@@ -162,14 +169,12 @@ Public discovery:
 
 - `/<sport>/court-finder`
 - `/<sport>/group-finder`
-- `/<sport>/casual-plays`
 - `/<sport>/board`
 
 Authenticated contribution:
 
 - `/courts/new`
 - `/groups/create`
-- `/casual-plays/create`
 - `/profile/edit`
 
 Admin and operational flows:
@@ -177,7 +182,6 @@ Admin and operational flows:
 - `/admin`
 - `/admin/courts`
 - `/admin/groups`
-- `/admin/casual-plays`
 - `/admin/feedback`
 - `/admin/court-owners`
 

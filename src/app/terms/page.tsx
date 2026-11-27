@@ -22,8 +22,8 @@ async function resolveSearchParams(
 }
 
 const LAST_UPDATED = {
-  th: "18 พฤษภาคม 2026",
-  en: "May 18, 2026",
+  th: "31 สิงหาคม 2026",
+  en: "August 31, 2026",
 } as const;
 
 export async function generateMetadata({
@@ -80,7 +80,7 @@ export default async function TermsPage({
           eyebrow: "RacketThailand",
           title: "ข้อกำหนดและประกาศเรื่องเนื้อหา",
           intro:
-            "RacketThailand เป็นเพียงไดเรกทอรีและคอมมูนิตี้สำหรับกีฬาประเภทแร็กเกตในประเทศไทย เรารวบรวมข้อมูลสนาม กลุ่ม นัดเล่น และเนื้อหาคอมมูนิตี้เพื่อช่วยให้ผู้เล่นค้นหาและติดต่อกันได้ง่ายขึ้น",
+            "RacketThailand เป็นเพียงไดเรกทอรีและคอมมูนิตี้สำหรับกีฬาประเภทแร็กเกตในประเทศไทย เรารวบรวมข้อมูลสนาม กลุ่ม รอบเล่น และเนื้อหาคอมมูนิตี้เพื่อช่วยให้ผู้เล่นค้นหาและติดต่อกันได้ง่ายขึ้น",
           updated: `อัปเดตล่าสุด ${LAST_UPDATED.th}`,
           contactLabel: "คำขอลบหรือแก้ไขข้อมูล",
           contactBody:
@@ -136,6 +136,13 @@ export default async function TermsPage({
                 "เราขอสงวนสิทธิในการแก้ไข ปรับปรุง ซ่อน จำกัดการเข้าถึง หรือถอดรายการหรือเนื้อหาบางส่วนออกจากเว็บไซต์ เมื่อเห็นว่าจำเป็นต่อความถูกต้อง ความปลอดภัย คุณภาพแพลตฟอร์ม หรือการปฏิบัติตามกฎหมาย",
               ],
             },
+            {
+              title: "8. การวิเคราะห์การใช้งานและคุกกี้",
+              body: [
+                "เมื่อคุณอนุญาต เว็บไซต์อาจใช้ Google Analytics เพื่อวัดภาพรวมการเข้าชม เช่น หน้าที่เปิด ประเทศโดยประมาณ อุปกรณ์ และช่องทางที่เข้ามา เพื่อช่วยปรับปรุงประสบการณ์ใช้งานและตรวจสอบทราฟฟิกผิดปกติ",
+                "คุณสามารถปฏิเสธการวิเคราะห์ได้จากข้อความขออนุญาต โดยฟังก์ชันหลักของเว็บไซต์ยังคงใช้งานได้ตามปกติ",
+              ],
+            },
           ],
           closing:
             "หากคุณต้องการให้เรารีวิวข้อมูลของสนาม กลุ่ม หรือเนื้อหาใด ๆ เป็นกรณีพิเศษ กรุณาติดต่อเราทางอีเมลด้านล่าง",
@@ -145,7 +152,7 @@ export default async function TermsPage({
           eyebrow: "RacketThailand",
           title: "Terms & Content Notice",
           intro:
-            "RacketThailand is a directory and community platform for racket sports in Thailand. We list courts, groups, play invitations, and community content to help players discover places and connect more easily.",
+            "RacketThailand is a directory and community platform for racket sports in Thailand. We list courts, groups, group sessions, and community content to help players discover places and connect more easily.",
           updated: `Last updated ${LAST_UPDATED.en}`,
           contactLabel: "Removal or correction requests",
           contactBody:
@@ -199,6 +206,13 @@ export default async function TermsPage({
               title: "7. Our moderation rights",
               body: [
                 "We reserve the right to edit, update, hide, restrict, or remove listings or content when reasonably necessary for accuracy, safety, platform quality, or legal compliance.",
+              ],
+            },
+            {
+              title: "8. Usage analytics and cookies",
+              body: [
+                "With your permission, the website may use Google Analytics to measure aggregate usage such as pages viewed, approximate country, device, and acquisition channel. We use this information to improve the experience and investigate unusual traffic.",
+                "You may decline analytics in the consent notice without losing access to the website's core features.",
               ],
             },
           ],

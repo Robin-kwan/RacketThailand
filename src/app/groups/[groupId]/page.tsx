@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { ResilientImage as Image } from "@/components/resilient-image";
 import type { Metadata } from "next";
 import { SPORT_META } from "@/data/sportMeta";
 import { buildLocalizedPath, getTranslator, normalizeLocale } from "@/lib/i18n";
@@ -18,17 +18,24 @@ import { HeaderSportScope } from "@/components/header-sport-scope";
 import { ensureGroupLineQrUrl } from "@/server/lineQr";
 import { ViewTracker } from "@/components/view-tracker";
 import { ContactActionValue } from "@/components/contact-action-value";
+import { GroupJoiningDetails } from "@/components/groups/group-joining-details";
 import { ShareButton } from "@/components/share-button";
+import { ListingReportDialog } from "@/components/listing-report-dialog";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 import { LineQrLightboxImage } from "@/components/line-qr-lightbox-image";
+import { buildAuthPagePath } from "@/lib/auth-redirect";
 import {
   GroupEventEditor,
   GroupWeeklySessionEditor,
 } from "@/components/groups/group-session-editor";
 import { GroupSessionForm } from "@/components/groups/group-session-form";
 import { getPlayFormatLabel } from "@/lib/play-format";
+import { buildActiveGroupEventsOrFilter } from "@/server/groupEvents";
 import { localizeThailandLocation } from "@/server/thailand-location";
 import {
   CalendarDays,
+  CalendarPlus2,
+  CheckCircle2,
   Clock3,
   Eye,
   EyeOff,
@@ -117,6 +124,8 @@ type SearchParams = {
   lang?: string;
   sport?: string;
   guest?: string;
+  created?: string;
+  court?: string;
 };
 
 type ParamsInput = Promise<Params>;
@@ -320,11 +329,22 @@ async function fetchUpcomingGroupEvents(groupId: string) {
       select:
         "id,court_id,venue_name,starts_at,ends_at,notes,courts(id,name,district,district_id,province,province_id)",
       group_id: `eq.${groupId}`,
-      starts_at: `gte.${new Date().toISOString()}`,
+      or: buildActiveGroupEventsOrFilter(),
       order: "starts_at.asc",
       limit: "8",
     });
-    return data ?? [];
+    const seen = new Set<string>();
+    return (data ?? []).filter((event) => {
+      const signature = [
+        event.court_id,
+        event.venue_name,
+        event.starts_at,
+        event.ends_at,
+      ].join("|");
+      if (seen.has(signature)) return false;
+      seen.add(signature);
+      return true;
+    });
   } catch (error) {
     console.warn("Unable to load group upcoming sessions.", error);
     return [];
@@ -825,6 +845,8 @@ export default async function GroupDetailPage({
     walkIn: t("groups.detail.walkIn"),
     walkInsWelcome: t("groups.detail.walkInsWelcome"),
     walkInsClosed: t("groups.detail.walkInsClosed"),
+    walkInsUnknown: t("groups.detail.walkInsUnknown"),
+    joiningHint: t("groups.detail.joiningHint"),
     phone: t("groups.detail.phone"),
     line: t("groups.detail.line"),
     website: t("groups.detail.website"),
@@ -838,11 +860,56 @@ export default async function GroupDetailPage({
     viewAsGuest: t("groups.detail.viewAsGuest"),
     exitGuestView: t("groups.detail.exitGuestView"),
     back: t("groups.detail.back"),
+    postCreate: {
+      title: t("groups.detail.postCreate.title"),
+      description: t("groups.detail.postCreate.description"),
+      addSession: t("groups.detail.postCreate.addSession"),
+      noSession: t("groups.detail.postCreate.noSession"),
+      noSessionHelp: t("groups.detail.postCreate.noSessionHelp"),
+    },
     copyAction: t("contactActions.copy"),
     copiedAction: t("contactActions.copied"),
     callAction: t("contactActions.call"),
     shareAction: t("contactActions.share"),
     linkCopiedAction: t("contactActions.linkCopied"),
+    listingReport: {
+      trigger: t("listingReport.trigger"),
+      signInHint: t("listingReport.signInHint"),
+      title: t("listingReport.title"),
+      subtitle: t("listingReport.subtitle", {
+        name: group.name ?? (locale === "th" ? "กลุ่มนี้" : "this group"),
+      }),
+      reasonLabel: t("listingReport.reasonLabel"),
+      reasons: {
+        incorrect: {
+          title: t("listingReport.reasons.incorrect.title"),
+          description: t("listingReport.reasons.incorrect.description"),
+        },
+        ownershipClaim: {
+          title: t("listingReport.reasons.ownershipClaim.title"),
+          description: t("listingReport.reasons.ownershipClaim.description"),
+        },
+        other: {
+          title: t("listingReport.reasons.other.title"),
+          description: t("listingReport.reasons.other.description"),
+        },
+      },
+      detailsLabel: t("listingReport.detailsLabel"),
+      detailsPlaceholder: t("listingReport.detailsPlaceholder"),
+      claimNotice: t("listingReport.claimNotice"),
+      claimContactLabel: t("listingReport.claimContactLabel"),
+      claimContactPlaceholder: t("listingReport.claimContactPlaceholder"),
+      proofUrlLabel: t("listingReport.proofUrlLabel"),
+      proofUrlPlaceholder: t("listingReport.proofUrlPlaceholder"),
+      proofUrlHint: t("listingReport.proofUrlHint"),
+      cancel: t("listingReport.cancel"),
+      submit: t("listingReport.submit"),
+      submitting: t("listingReport.submitting"),
+      close: t("listingReport.close"),
+      success: t("listingReport.success"),
+      error: t("listingReport.error"),
+      duplicate: t("listingReport.duplicate"),
+    },
     sessionForm: {
       title: t("groups.detail.sessionForm.title"),
       description: t("groups.detail.sessionForm.description"),
@@ -862,6 +929,7 @@ export default async function GroupDetailPage({
       error: t("groups.detail.sessionForm.error"),
       required: t("groups.detail.sessionForm.required"),
       dateRangeError: t("groups.detail.sessionForm.dateRangeError"),
+      sessionEndedError: t("groups.detail.sessionForm.sessionEndedError"),
       courtSportMismatch: t("groups.detail.sessionForm.courtSportMismatch"),
       noCourts: t("groups.detail.sessionForm.noCourts"),
       clearTime: t("groups.detail.sessionForm.clearTime"),
@@ -909,6 +977,7 @@ export default async function GroupDetailPage({
       clearTime: t("groups.detail.sessionForm.clearTime"),
       empty: t("groups.detail.sessionEdit.empty"),
       dateRangeError: t("groups.detail.sessionForm.dateRangeError"),
+      sessionEndedError: t("groups.detail.sessionForm.sessionEndedError"),
       removeCourt: t("groups.detail.sessionEdit.removeCourt"),
       removeCourtConfirm: t("groups.detail.sessionEdit.removeCourtConfirm"),
       removeCourtSuccess: t("groups.detail.sessionEdit.removeCourtSuccess"),
@@ -959,16 +1028,19 @@ export default async function GroupDetailPage({
   const primaryContact = displayGroup.line_id
     ? {
         href: normalizeLineHref(displayGroup.line_id),
+        method: "line",
         external: true,
       }
     : group.phone
       ? {
           href: `tel:${group.phone.replace(/[^\d+]/g, "") || group.phone}`,
+          method: "phone",
           external: false,
         }
       : displayGroup.website_url
         ? {
             href: normalizeExternalHref(displayGroup.website_url),
+            method: "website",
             external: true,
           }
         : null;
@@ -978,6 +1050,14 @@ export default async function GroupDetailPage({
   const guestViewQuery = new URLSearchParams(detailQuery);
   guestViewQuery.set("guest", "1");
   const detailPath = `/groups/${group.id}${detailQuery.size ? `?${detailQuery.toString()}` : ""}`;
+  const postCreateSessionPath = `${detailPath}#add-session`;
+  const showPostCreatePrompt =
+    canEdit && resolvedSearch?.created === "1";
+  const reportLoginHref = buildAuthPagePath(
+    "/login",
+    locale,
+    buildLocalizedPath(detailPath, locale),
+  );
   const guestViewPath = `/groups/${group.id}?${guestViewQuery.toString()}`;
   return (
     <div className="min-h-screen bg-[#f7fbf9] text-[var(--foreground)]">
@@ -1012,15 +1092,17 @@ export default async function GroupDetailPage({
               </div>
               <div className="pointer-events-auto flex shrink-0 flex-wrap items-center gap-3">
                 {primaryContact && (
-                  <a
+                  <TrackedLink
                     href={primaryContact.href}
+                    eventName="group_contact_click"
+                    eventPayload={{ groupId: group.id, sport: sportCode ?? "", method: primaryContact.method, action: primaryContact.method === "phone" ? "call" : "open", surface: "group_detail_hero" }}
                     target={primaryContact.external ? "_blank" : undefined}
                     rel={primaryContact.external ? "noreferrer" : undefined}
                     className="rt-btn-group inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm"
                   >
                     {copy.contactGroup}
                     <ExternalLink className="size-4" aria-hidden />
-                  </a>
+                  </TrackedLink>
                 )}
                 <ShareButton
                   title={shareTitle}
@@ -1065,6 +1147,59 @@ export default async function GroupDetailPage({
         </section>
 
         <div className="mx-auto flex max-w-screen-xl flex-col gap-8 px-6 pt-8 md:px-10 md:pt-9">
+          {showPostCreatePrompt ? (
+            <section
+              className="flex flex-col gap-5 rounded-lg border border-emerald-200 bg-emerald-50 p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6"
+              aria-labelledby="post-create-title"
+            >
+              <div className="flex min-w-0 items-start gap-4">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+                  <CheckCircle2 className="size-5" aria-hidden />
+                </span>
+                <div>
+                  <h2
+                    id="post-create-title"
+                    className="text-lg font-semibold text-slate-950"
+                  >
+                    {copy.postCreate.title}
+                  </h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-700">
+                    {copy.postCreate.description}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {copy.postCreate.noSessionHelp}
+                  </p>
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+                <TrackedLink
+                  href={buildLocalizedPath(postCreateSessionPath, locale)}
+                  eventName="group_post_create_choice"
+                  eventPayload={{
+                    groupId: group.id,
+                    sport: sportCode,
+                    choice: "add_session",
+                  }}
+                  className="rt-btn-group inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm"
+                >
+                  <CalendarPlus2 className="size-4" aria-hidden />
+                  {copy.postCreate.addSession}
+                </TrackedLink>
+                <TrackedLink
+                  href={buildLocalizedPath(detailPath, locale)}
+                  eventName="group_post_create_choice"
+                  eventPayload={{
+                    groupId: group.id,
+                    sport: sportCode,
+                    choice: "no_session_yet",
+                  }}
+                  className="inline-flex items-center justify-center rounded-full border border-emerald-300 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-900 transition hover:border-emerald-400 hover:bg-emerald-100"
+                >
+                  {copy.postCreate.noSession}
+                </TrackedLink>
+              </div>
+            </section>
+          ) : null}
           {groupStatus === "draft" && canManage && !isGuestView ? (
             <section className="rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 text-sm text-amber-900">
               <p className="font-semibold">Draft preview</p>
@@ -1122,6 +1257,7 @@ export default async function GroupDetailPage({
                   locale={locale}
                   dayOptions={dayOptions}
                   copy={copy.sessionForm}
+                  initialCourtId={resolvedSearch?.court}
                 />
               )}
 
@@ -1273,9 +1409,9 @@ export default async function GroupDetailPage({
                             return (
                               <div
                                 key={session.id}
-                                className="grid gap-2 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:items-start"
+                                className="grid gap-2 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-start"
                               >
-                                <p className="font-semibold text-slate-950">
+                                <p className="font-semibold text-slate-950 sm:whitespace-nowrap">
                                   {session.start_time && session.end_time
                                     ? formatTimeRange(
                                         session.start_time,
@@ -1461,16 +1597,7 @@ export default async function GroupDetailPage({
                         </p>
                       </div>
                     )}
-                  <div>
-                    <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
-                      {copy.walkIn}
-                    </p>
-                    <p className="text-base font-semibold text-[var(--foreground)]">
-                      {group.allow_walk_in === false
-                        ? copy.walkInsClosed
-                        : copy.walkInsWelcome}
-                    </p>
-                  </div>
+                  <GroupJoiningDetails allowWalkIn={group.allow_walk_in} hasContact={Boolean(primaryContact || displayGroup.line_qr_url)} copy={copy} />
                   {group.phone && (
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
@@ -1479,6 +1606,7 @@ export default async function GroupDetailPage({
                       <ContactActionValue
                         mode="phone"
                         value={group.phone}
+                        tracking={{ groupId: group.id, sport: sportCode, surface: "group_detail_sidebar" }}
                         copyLabel={copy.copyAction}
                         copiedLabel={copy.copiedAction}
                         callLabel={copy.callAction}
@@ -1493,6 +1621,7 @@ export default async function GroupDetailPage({
                       <ContactActionValue
                         mode="line"
                         value={displayGroup.line_id}
+                        tracking={{ groupId: group.id, sport: sportCode, surface: "group_detail_sidebar" }}
                         copyLabel={copy.copyAction}
                         copiedLabel={copy.copiedAction}
                         callLabel={copy.callAction}
@@ -1504,15 +1633,17 @@ export default async function GroupDetailPage({
                       <p className="text-xs font-semibold uppercase text-[rgb(var(--foreground-rgb)/0.5)]">
                         {copy.website}
                       </p>
-                      <a
+                      <TrackedLink
                         href={normalizeExternalHref(displayGroup.website_url)}
+                        eventName="group_contact_click"
+                        eventPayload={{ groupId: group.id, sport: sportCode ?? "", method: "website", action: "open", surface: "group_detail_sidebar" }}
                         target="_blank"
                         rel="noreferrer"
                         title={displayGroup.website_url}
                         className="mt-1 block min-w-0 max-w-full truncate text-base font-semibold text-[var(--foreground)] underline decoration-dotted underline-offset-4 sm:max-w-[22rem]"
                       >
                         {displayGroup.website_url}
-                      </a>
+                      </TrackedLink>
                     </div>
                   )}
                   {displayGroup.line_qr_url && (
@@ -1530,12 +1661,23 @@ export default async function GroupDetailPage({
                   )}
                 </div>
               </section>
+              <ListingReportDialog
+                listingType="group"
+                listingId={group.id}
+                isAuthenticated={Boolean(
+                  sessionUser && !sessionUser.is_anonymous,
+                )}
+                canClaimOwnership={!isGroupOwner && !isAdminViewer}
+                loginHref={reportLoginHref}
+                copy={copy.listingReport}
+              />
             </aside>
           </div>
           <script
+            id={`group-schema-${group.id}-${locale}`}
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify(structuredData),
+              __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
             }}
           />
         </div>
